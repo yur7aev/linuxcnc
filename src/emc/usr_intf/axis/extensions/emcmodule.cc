@@ -1078,6 +1078,14 @@ static PyObject *home(pyCommandChannel *s, PyObject *o) {
     return Py_None;
 }
 
+static PyObject *sethomed(pyCommandChannel *s, PyObject *o) {
+    EMC_JOINT_SET_HOMED m;
+    if(!PyArg_ParseTuple(o, "i", &m.joint)) return NULL;
+    emcSendCommand(s, m);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static PyObject *unhome(pyCommandChannel *s, PyObject *o) {
     EMC_JOINT_UNHOME m;
     if(!PyArg_ParseTuple(o, "i", &m.joint)) return NULL;

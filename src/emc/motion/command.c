@@ -1516,11 +1516,71 @@ void emcmotCommandHandler(void *arg, long period)
             }
 	    break;
 
+	case EMCMOT_JOINT_SET_HOMED:
+            /* set homed flag for the specified joint, or all joints if -1 */
+            rtapi_print_msg(RTAPI_MSG_DBG, "JOINT_SET_HOMED");
+            rtapi_print_msg(RTAPI_MSG_DBG, " %d", joint_num);
+
+            if (   (emcmotStatus->motion_state != EMCMOT_MOTION_FREE)
+                && (emcmotStatus->motion_state != EMCMOT_MOTION_DISABLED)) {
+                reportError(_("must be in joint mode or disabled to set homed flag"));
+                return;
+            }
+
+            if (joint_num < 0) {
+                /* we want all or none, so these checks need to all be done first.
+                 * but, let's only report the first error.  There might be several,
+                 * for instance if a homing sequence is running. */
+                for (n = 0; n < emcmotConfig->numJoints; n++) {
+                    joint = &joints[n];
+                    if(GET_JOINT_ACTIVE_FLAG(joint)) {
+                        if (GET_JOINT_HOMING_FLAG(joint)) {
+                            reportError(_("Cannot set homed while homing, joint %d"), n);
+                            return;
+                        }
+                        if (!GET_JOINT_INPOS_FLAG(joint)) {
+                            reportError(_("Cannot set homed while moving, joint %d"), n);
+                            return;
+                        }
+                    }
+                }
+                /* we made it through the checks, so set homed them all */
+                for (n = 0; n < emcmotConfig->numJoints; n++) {
+                    joint = &joints[n];
+                    if(GET_JOINT_ACTIVE_FLAG(joint)) {
+                        /* if -2, only home the volatile_home joints */
+                        if(joint_num != -2 || joint->volatile_home) {
+                            SET_JOINT_HOMED_FLAG(joint, 1);
+                        }
+                    }
+                }
+            } else if (joint_num < emcmotConfig->numJoints) {
+                /* request was for only one joint */
+                if(GET_JOINT_ACTIVE_FLAG(joint)) {
+                    if (GET_JOINT_HOMING_FLAG(joint)) {
+                        reportError(_("Cannot set homed while homing, joint %d"), joint_num);
+                        return;
+                    }
+                    if (!GET_JOINT_INPOS_FLAG(joint)) {
+                        reportError(_("Cannot set homed while moving, joint %d"), joint_num);
+                        return;
+                    }
+                    SET_JOINT_HOMED_FLAG(joint, 1);
+                } else {
+                    reportError(_("Cannot set homed inactive joint %d"), joint_num);
+                }
+            } else {
+                /* invalid joint number specified */
+                reportError(_("Cannot set homed invalid joint %d (max %d)"), joint_num, (emcmotConfig->numJoints-1));
+                return;
+            }
+            break;
+
 	case EMCMOT_JOINT_UNHOME:
             /* unhome the specified joint, or all joints if -1 */
             rtapi_print_msg(RTAPI_MSG_DBG, "JOINT_UNHOME");
             rtapi_print_msg(RTAPI_MSG_DBG, " %d", joint_num);
-            
+
             if (   (emcmotStatus->motion_state != EMCMOT_MOTION_FREE)
                 && (emcmotStatus->motion_state != EMCMOT_MOTION_DISABLED)) {
                 reportError(_("must be in joint mode or disabled to unhome"));
@@ -1574,7 +1634,6 @@ void emcmotCommandHandler(void *arg, long period)
                 reportError(_("Cannot unhome invalid joint %d (max %d)"), joint_num, (emcmotConfig->numJoints-1));
                 return;
             }
-
             break;
 
 	case EMCMOT_CLEAR_PROBE_FLAGS:

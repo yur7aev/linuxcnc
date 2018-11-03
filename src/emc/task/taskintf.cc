@@ -743,6 +743,18 @@ int emcJointHome(int joint)
     return usrmotWriteEmcmotCommand(&emcmotCommand);
 }
 
+int emcJointSetHomed(int joint)
+{
+	if (joint < -2 || joint >= EMCMOT_MAX_JOINTS) {
+		return 0;
+	}
+
+	emcmotCommand.command = EMCMOT_JOINT_SET_HOMED;
+	emcmotCommand.joint = joint;
+
+	return usrmotWriteEmcmotCommand(&emcmotCommand);
+}
+
 int emcJointUnhome(int joint)
 {
 	if (joint < -2 || joint >= EMCMOT_MAX_JOINTS) {
