@@ -3300,7 +3300,7 @@ default_jog_linear_speed = (
 
 max_angular_speed = (
     inifile.find("DISPLAY","MAX_AJOG_VELOCITY")
-    inifile.find("DISPLAY","MAX_ANGULAR_VELOCITY")
+    or inifile.find("DISPLAY","MAX_ANGULAR_VELOCITY")
     or inifile.find("TRAJ","MAX_ANGULAR_VELOCITY")
     or None)
 default_jog_angular_speed = (
@@ -4002,6 +4002,8 @@ widgets.rapidoverride.set(100)
 commands.set_rapidrate(100)
 widgets.spinoverride.set(100)
 commands.set_spindlerate(100)
+
+commands.set_maxvel(vars.maxvel_speed.get())
 
 def forget(widget, *pins):
     if os.environ.has_key("AXIS_NO_AUTOCONFIGURE"): return
