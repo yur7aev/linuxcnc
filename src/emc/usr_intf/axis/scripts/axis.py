@@ -192,6 +192,7 @@ help1 = [
     (_("Shift-Home"), _("Zero G54 offset for active axis")),
     (_("End"), _("Set G54 offset for active axis")),
     (_("Ctrl-End"), _("Set tool offset for loaded tool")),
+    (_("Shift-End"), _("Move G54 offset to the center")),
     ("-, =", _("Jog active axis or joint")),
     (";, '", _("Select Max velocity")),
 
@@ -737,7 +738,7 @@ class LivePlotter:
 
     def error_task(self):
         error = e.poll()
-        while error: 
+        while error:
             kind, text = error
             if kind in (linuxcnc.NML_ERROR, linuxcnc.OPERATOR_ERROR):
                 icon = "error"
@@ -1261,7 +1262,7 @@ tabs_preview = str(root_window.tk.call("set", "_tabs_preview"))
 tabs_numbers = str(root_window.tk.call("set", "_tabs_numbers"))
 pane_top = str(root_window.tk.call("set", "pane_top"))
 pane_bottom = str(root_window.tk.call("set", "pane_bottom"))
-widgets = nf.Widgets(root_window, 
+widgets = nf.Widgets(root_window,
     ("help_window", Toplevel, ".keys"),
     ("about_window", Toplevel, ".about"),
     ("text", Text, pane_bottom + ".t.text"),
@@ -1420,7 +1421,7 @@ def set_hal_jogincrement():
 def jogspeed_listbox_change(dummy, value):
     global jogincr_index_last
     # pdb.set_trace()
-    # FJ: curselection is not always up to date here, so 
+    # FJ: curselection is not always up to date here, so
     #     do a linear search by hand
     iterator = root_window.call(widgets.jogincr._w, "list", "get", "0", "end")
     idx = 0
@@ -1460,7 +1461,7 @@ def jogspeed_incremental(dir=1):
             jogincr_index_last -= 1
         if jogincr_index_last < 1:
             jogincr_index_last = 1
-    root_window.call(widgets.jogincr._w, "select", jogincr_index_last)   
+    root_window.call(widgets.jogincr._w, "select", jogincr_index_last)
     set_hal_jogincrement()
 
 
@@ -1637,7 +1638,7 @@ class _prompt_float:
             else:
                 self.w.set(value)
 
-        if ok: 
+        if ok:
             self.ok.configure(state="normal")
         else:
             self.ok.configure(state="disabled")
@@ -1704,7 +1705,7 @@ class _prompt_touchoff(_prompt_float):
             mb.configure(takefocus=1)
             l.pack(side="left")
             mb.pack(side="left")
-        f.pack(side="top") 
+        f.pack(side="top")
         self.buttons.tkraise()
         if not tool_only:
             for i in [1,2,3,4,5,6,7,8,9]:
@@ -1727,7 +1728,7 @@ class _prompt_touchoff(_prompt_float):
     def result(self):
         if self.u.get(): return self.v.get(), self.c.get()
         return None, None
-        
+
 def prompt_touchoff(title, text, default, tool_only, system=None):
     t = _prompt_touchoff(title=title,
                          text_pattern=text,
@@ -1925,7 +1926,7 @@ class TclCommands(nf.TclCommands):
 
     def toggle_tto_g11(event=None):
         ap.putpref("tto_g11", vars.tto_g11.get())
-        
+
     def toggle_optional_stop(event=None):
         c.set_optional_stop(vars.optional_stop.get())
         ap.putpref("optional_stop", vars.optional_stop.get())
@@ -2383,7 +2384,7 @@ class TclCommands(nf.TclCommands):
                     if history_size != -1:
                         for idx in range(history_size - 1):
                             f.write("%s\n" % widgets.mdi_history.get(idx, idx))
-                finally:    
+                finally:
                     f.close()
             except IOError:
                 print >>sys.stderr, "Can't open MDI history file [%s] for writing" % file_name
@@ -2636,7 +2637,7 @@ class TclCommands(nf.TclCommands):
         s.poll()
         o.tkRedraw()
         reload_file(False)
-        
+
     def touch_off_system(event=None, new_axis_value = None):
         global system
         if not manual_ok(): return
@@ -2675,6 +2676,28 @@ class TclCommands(nf.TclCommands):
         ensure_mode(save_task_mode)
         set_motion_teleop(1)
         o.redraw_dro()
+
+    def touch_off_center(event=None, new_axis_value = None):
+        global system
+        if not manual_ok(): return
+        if joints_mode(): return
+
+	system = vars.touch_off_system.get().split()[0]
+        a = vars.current_axis.get()
+        offset_command = "G10 L20 %s %c[#<_%c> / 2]" % (system, a, a)
+
+        doit = prompt_areyousure(_("Confirm center"), _("Center %c axis in system %s?\n%s") % (a, system, offset_command))
+
+        if doit:
+	    ensure_mode(linuxcnc.MODE_MDI)
+            s.poll()
+            c.mdi(offset_command)
+            c.wait_complete()
+            ensure_mode(linuxcnc.MODE_MANUAL)
+            s.poll()
+
+        o.tkRedraw()
+        reload_file(False)
 
     def touch_off_tool(event=None, new_axis_value = None):
         global system
@@ -2874,7 +2897,7 @@ class TclCommands(nf.TclCommands):
 
 commands = TclCommands(root_window)
 
-vars = nf.Variables(root_window, 
+vars = nf.Variables(root_window,
     ("linuxcnctop_command", StringVar),
     ("emcini", StringVar),
     ("mdi_command", StringVar),
@@ -3044,6 +3067,7 @@ root_window.bind("<KP_Home>", kp_wrap(commands.home_joint, "KeyPress"))
 root_window.bind("<Control-Home>", commands.home_all_joints)
 root_window.bind("<Shift-Home>", commands.set_axis_offset)
 root_window.bind("<End>", commands.touch_off_system)
+root_window.bind("<Shift-End>", commands.touch_off_center)
 root_window.bind("<Control-End>", commands.touch_off_tool)
 root_window.bind("<Control-KP_Home>", kp_wrap(commands.home_all_joints, "KeyPress"))
 root_window.bind("<Shift-KP_Home>", kp_wrap(commands.set_axis_offset, "KeyPress"))
@@ -3084,7 +3108,7 @@ try:
                 history_size += 1
             else:
                 skip -= 1
-    finally:    
+    finally:
         f.close()
 except IOError:
     pass
@@ -3117,7 +3141,7 @@ def get_jog_mode():
 jog_after = [None]  * linuxcnc.MAX_JOINTS
 jog_cont  = [False] * linuxcnc.MAX_JOINTS
 jogging   = [0]     * linuxcnc.MAX_JOINTS
-def jog_on(a, b):
+def jog_on(a, b, c = 0):
     if not manual_ok(): return
     if not manual_tab_visible(): return
     if a < 3 or a > 5:
@@ -3129,10 +3153,10 @@ def jog_on(a, b):
         return
     jogincr = widgets.jogincr.get()
     jjogmode = get_jog_mode()
-    if jogincr != _("Continuous"):
+    if jogincr != _("Continuous") or c > 0:
         s.poll()
         if s.state != 1: return
-        distance = parse_increment(jogincr)
+        distance = c if c > 0 else parse_increment(jogincr)
         jog(linuxcnc.JOG_INCREMENT, jjogmode, a, b, distance)
         jog_cont[a] = False
     else:
@@ -3195,6 +3219,8 @@ def bind_axis(a, b, d):
     root_window.bind("<KeyPress-%s>" % b, kp_wrap(lambda e: jog_on_map(d, get_jog_speed_map(d)), "KeyPress"))
     root_window.bind("<Shift-KeyPress-%s>" % a, lambda e: jog_on_map(d, -get_max_jog_speed_map(d)))
     root_window.bind("<Shift-KeyPress-%s>" % b, lambda e: jog_on_map(d, get_max_jog_speed_map(d)))
+    root_window.bind("<Control-KeyPress-%s>" % a, lambda e: jog_on(d, -get_max_jog_speed(d), 0.01))
+    root_window.bind("<Control-KeyPress-%s>" % b, lambda e: jog_on(d, get_max_jog_speed(d), 0.01))
     root_window.bind("<KeyRelease-%s>" % a, lambda e: jog_off_map(d))
     root_window.bind("<KeyRelease-%s>" % b, lambda e: jog_off_map(d))
 
@@ -3262,20 +3288,24 @@ has_linear_joint_or_axis = (    ("LINEAR" in joint_type)
 
 # Search rules for slider items
 max_linear_speed = (
-    inifile.find("DISPLAY","MAX_LINEAR_VELOCITY")
+    inifile.find("DISPLAY","MAX_JOG_VELOCITY")
+    or inifile.find("DISPLAY","MAX_LINEAR_VELOCITY")
     or inifile.find("TRAJ","MAX_LINEAR_VELOCITY")
     or None)
 default_jog_linear_speed = (
-    inifile.find("DISPLAY", "DEFAULT_LINEAR_VELOCITY")
+    inifile.find("DISPLAY", "DEFAULT_JOG_VELOCITY")
+    or inifile.find("DISPLAY", "DEFAULT_LINEAR_VELOCITY")
     or inifile.find("TRAJ", "DEFAULT_LINEAR_VELOCITY")
     or None)
 
 max_angular_speed = (
+    inifile.find("DISPLAY","MAX_AJOG_VELOCITY")
     inifile.find("DISPLAY","MAX_ANGULAR_VELOCITY")
     or inifile.find("TRAJ","MAX_ANGULAR_VELOCITY")
     or None)
 default_jog_angular_speed = (
-    inifile.find("DISPLAY", "DEFAULT_ANGULAR_VELOCITY")
+    inifile.find("DISPLAY", "DEFAULT_AJOG_VELOCITY")
+    or inifile.find("DISPLAY", "DEFAULT_ANGULAR_VELOCITY")
     or inifile.find("TRAJ", "DEFAULT_ANGULAR_VELOCITY")
     or None)
 
