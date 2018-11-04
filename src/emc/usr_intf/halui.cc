@@ -857,7 +857,7 @@ int halui_hal_init(void)
     for (joint=0; joint < num_joints ; joint++) {
 	retval =  hal_pin_bit_newf(HAL_IN, &(halui_data->joint_home[joint]), comp_id, "halui.joint.%d.home", joint);
 	if (retval < 0) return retval;
-	retval =  hal_pin_bit_newf(HAL_IN, &(halui_data->joint_set_homes[joint]), comp_id, "halui.joint.%d.set-homed", joint);
+	retval =  hal_pin_bit_newf(HAL_IN, &(halui_data->joint_set_homed[joint]), comp_id, "halui.joint.%d.set-homed", joint);
 	if (retval < 0) return retval;
 	retval =  hal_pin_bit_newf(HAL_IN, &(halui_data->joint_unhome[joint]), comp_id, "halui.joint.%d.unhome", joint);
 	if (retval < 0) return retval;
