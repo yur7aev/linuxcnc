@@ -591,6 +591,7 @@ Suggestion: Split this in to an Error and a Status flag register..
 	double min_ferror;	/* zero speed following error limit */
 	double max_ferror;	/* max speed following error limit */
 	double home_offset;	/* dir/dist from switch to home point */
+	double motor_offset;	/* motor pos - joint pos diff */
     } emcmot_joint_status_t;
 
 
