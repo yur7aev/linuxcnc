@@ -1004,6 +1004,16 @@ The <letter> specifies one of: X Y Z A B C U V W
     Example: loadrt motmod ... unlock_joints_mask=0x38
     creates  unlock  pins for joints 3,4,5
 
+* 'OFFSET_AV_RATIO = 0.1' - If nonzero, this item enables the use of
+   hal input pins for external axis offsets:
+
+   'axis.<letter>.eoffset-enable'
+   'axis.<letter>.eoffset-counts'
+   'axis.<letter>.eoffset-scale'
+
+See the chapter: <<cha:external-offsets, 'External Axis Offsets'>> for
+usage information.
+
 [[sec:joint-section]](((INI File, JOINT Section)))
 
 === [JOINT_<num>] Section
@@ -1061,6 +1071,8 @@ For more information on kinematics modules see the manpage: '$ man kins'
     axis to jerk as it changes direction. If a COMP_FILE is specificed for an
     axis BACKLASH is not used.
 
+// add a link to machine units
+
 * 'COMP_FILE = file.extension' -
     (((Compensation))) The compensation file consists of map of position
     information for the joint. Compensation file values are in machine units.
@@ -1085,7 +1097,7 @@ For more information on kinematics modules see the manpage: '$ man kins'
     (decreasing value).
     +
     +
-    Type 0 Example
+Type 0 Example
 +
 ----
 -1.000 -1.005 -0.995
