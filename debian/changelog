@@ -1,3 +1,9 @@
+linuxcnc (1:2.8.0nyx1~pre1) wheezy; urgency=low
+
+  * save motor_offset to position file
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Tue, 06 Nov 2018 01:24:28 +0300
+
 linuxcnc (1:2.8.0~pre1) wheezy; urgency=low
 
   * Upcoming release, any year now!  Watch this space!
