@@ -527,7 +527,7 @@ void GET_EXTERNAL_PARAMETER_FILE_NAME(char *name, int max_size) {
 }
 int GET_EXTERNAL_LENGTH_UNIT_TYPE() { return CANON_UNITS_INCHES; }
 CANON_TOOL_TABLE GET_EXTERNAL_TOOL_TABLE(int pocket) {
-    CANON_TOOL_TABLE t = {-1,{{0,0,0},0,0,0,0,0,0},0,0,0,0};
+    CANON_TOOL_TABLE t = {-1,-1,{{0,0,0},0,0,0,0,0,0},0,0,0,0};
     if(interp_error) return t;
     PyObject *result =
         callmethod(callback, "get_tool", "i", pocket);
@@ -574,6 +574,21 @@ int GET_EXTERNAL_FEED_OVERRIDE_ENABLE() {return 1;}
 int GET_EXTERNAL_SPINDLE_OVERRIDE_ENABLE(int spindle) {return 1;}
 int GET_EXTERNAL_ADAPTIVE_FEED_ENABLE() {return 0;}
 int GET_EXTERNAL_FEED_HOLD_ENABLE() {return 1;}
+
+int GET_EXTERNAL_OFFSET_APPLIED() {return 0;}
+EmcPose GET_EXTERNAL_OFFSETS() {
+    EmcPose e;
+    e.tran.x = 0;
+    e.tran.y = 0;
+    e.tran.z = 0;
+    e.a      = 0;
+    e.b      = 0;
+    e.c      = 0;
+    e.u      = 0;
+    e.v      = 0;
+    e.w      = 0;
+    return e;
+};
 
 int GET_EXTERNAL_AXIS_MASK() {
     if(interp_error) return 7;
@@ -1035,5 +1050,4 @@ initgcode(void) {
     PyObject_SetAttrString(m, "MIN_ERROR",
             PyInt_FromLong(INTERP_MIN_ERROR));
 }
-
 // vim:ts=8:sts=4:sw=4:et:
