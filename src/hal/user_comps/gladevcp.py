@@ -45,6 +45,8 @@ import signal
 import gladevcp.makepins
 from gladevcp.gladebuilder import GladeBuilder
 from gladevcp import xembed
+from hal_glib import GStat
+GSTAT = GStat()
 
 options = [ Option( '-c', dest='component', metavar='NAME'
                   , help="Set component name to NAME. Default is basename of UI file")
@@ -113,7 +115,7 @@ def load_handlers(usermod,halcomp,builder,useropts):
             mod = __import__(basename)
         except ImportError,msg:
             print "module '%s' skipped - import error: %s" %(basename,msg)
-	    continue
+            continue
         dbg("module '%s' imported OK" % mod.__name__)
         try:
             # look for 'get_handlers' function
@@ -288,7 +290,7 @@ def main():
 
     # User components are set up so report that we are ready
     halcomp.ready()
-
+    GSTAT.forced_update()
     if handlers.has_key(signal_func):
         dbg("Register callback '%s' for SIGINT and SIGTERM" %(signal_func))
         signal.signal(signal.SIGTERM, handlers[signal_func])
