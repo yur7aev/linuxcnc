@@ -1,0 +1,75 @@
+#
+# nyx v1.3
+#
+# http://www.yurtaev.com
+#
+
+loadrt trivkins
+
+loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]SERVO_PERIOD servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[TRAJ]AXES
+addf motion-command-handler servo-thread
+addf motion-controller servo-thread
+
+loadrt sscii
+addf sscii.0 servo-thread
+
+#-------- limits --------
+
+#net x-pos-limit axis.0.pos-lim-sw-in <= sscii.0.gpio.0.in-not
+#net x-neg-limit axis.0.neg-lim-sw-in <= sscii.0.gpio.1.in-not
+#net y-pos-limit axis.1.pos-lim-sw-in <= sscii.0.gpio.2.in-not
+#net y-neg-limit axis.1.neg-lim-sw-in <= sscii.0.gpio.3.in-not
+#net z-pos-limit axis.2.pos-lim-sw-in <= sscii.0.gpio.5.in-not
+#net z-neg-limit axis.2.neg-lim-sw-in <= sscii.0.gpio.4.in-not
+
+# shared home/limits
+#net x-neg-limit => axis.0.home-sw-in
+#net y-neg-limit => axis.1.home-sw-in
+#net z-pos-limit => axis.2.home-sw-in
+
+#-------- motion --------
+
+setp sscii.0.servo.0.pos-scale [AXIS_0]SCALE
+setp sscii.0.servo.1.pos-scale [AXIS_1]SCALE
+setp sscii.0.servo.2.pos-scale [AXIS_2]SCALE
+
+net x-pos-fb axis.0.motor-pos-fb <= sscii.0.servo.0.pos-fb
+net y-pos-fb axis.1.motor-pos-fb <= sscii.0.servo.1.pos-fb
+net z-pos-fb axis.2.motor-pos-fb <= sscii.0.servo.2.pos-fb
+
+net x-cmd axis.0.motor-pos-cmd => sscii.0.servo.0.pos-cmd
+net y-cmd axis.1.motor-pos-cmd => sscii.0.servo.1.pos-cmd
+net z-cmd axis.2.motor-pos-cmd => sscii.0.servo.2.pos-cmd
+
+net alarm0 sscii.0.servo.0.alarm
+net alarm1 sscii.0.servo.1.alarm
+net alarm2 sscii.0.servo.2.alarm
+net alarm3 sscii.0.servo.3.alarm
+net alarm4 sscii.0.servo.4.alarm
+net alarm5 sscii.0.servo.5.alarm
+
+#net alarm0 => axis.0.amp-fault-in
+#net alarm1 => axis.1.amp-fault-in
+#net alarm2 => axis.2.amp-fault-in
+
+net x-enable axis.0.amp-enable-out => sscii.0.servo.0.enable
+net y-enable axis.1.amp-enable-out => sscii.0.servo.1.enable
+net z-enable axis.2.amp-enable-out => sscii.0.servo.2.enable
+
+net trq0 <= sscii.0.servo.0.trq-fb
+net trq1 <= sscii.0.servo.1.trq-fb
+net trq2 <= sscii.0.servo.2.trq-fb
+net trq3 <= sscii.0.servo.3.trq-fb
+net trq4 <= sscii.0.servo.4.trq-fb
+net trq5 <= sscii.0.servo.5.trq-fb
+
+net estop => sscii.0.servo.0.power
+net estop => sscii.0.servo.1.power
+net estop => sscii.0.servo.2.power
+
+#-------- misc --------
+
+net estop iocontrol.0.user-enable-out
+net estop iocontrol.0.emc-enable-in
+
+#setp sscii.0.encoder.0.cpr 400

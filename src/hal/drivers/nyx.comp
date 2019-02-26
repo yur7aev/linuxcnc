@@ -1,0 +1,495 @@
+component nyx "YSSC2P/YSSC3P/YMDS2P Mitsubishi servo PCI interface card driver";
+
+param rw  signed servo-##.origin[16 : personality] = 0;		// 32bit servo command-feedback offset to prevent integer overflow
+param rw   float servo-##.pos-scale[16 : personality] = 5.0;	// travel units per revolution (5mm)
+param rw   float servo-##.vel-scale[16 : personality] = 10.0;	// rpm (1.0 rpm resolution)
+
+pin out unsigned servo-##.debug[16 : personality];
+pin out      bit servo-##.online[16 : personality] "drive detected";
+pin out      bit servo-##.offline[16 : personality] "no drive detected";
+pin out      bit servo-##.ready[16 : personality]   "drive is ready";
+pin out      bit servo-##.enabled[16 : personality] "servo is on";
+pin out      bit servo-##.alarm[16 : personality];
+pin out      bit servo-##.warning[16 : personality];
+pin out unsigned servo-##.alarm-code[16 : personality];
+pin out      bit servo-##.zero-speed[16 : personality];
+pin out      bit servo-##.in-position[16 : personality];
+pin out      bit servo-##.at-speed[16 : personality];
+pin out      bit servo-##.absolute[16 : personality];
+pin out      bit servo-##.abs-lost[16 : personality];
+
+pin out   signed servo-##.counts[16 : personality];
+pin out   signed servo-##.counts-cmd[16 : personality];
+
+pin  in      bit servo-##.power[16 : personality] "turn on power";
+pin  in      bit servo-##.enable[16 : personality] "turn on servo";
+pin  in      bit servo-##.reset-alarm[16 : personality];
+
+pin  in    float servo-##.forward-torque[16 : personality];
+pin  in    float servo-##.reverse-torque[16 : personality];
+pin  in      bit servo-##.limit-torque[16 : personality];
+pin out      bit servo-##.torque-clamped[16 : personality];
+
+pin  in    float servo-##.pos-cmd[16 : personality];
+pin out    float servo-##.pos-fb[16 : personality];
+
+pin  in      bit servo-##.velocity-mode[16 : personality];
+pin  in    float servo-##.vel-cmd[16 : personality];
+pin out    float servo-##.vel-fb[16 : personality];
+pin out    float servo-##.trq-fb[16 : personality];
+pin out   signed servo-##.droop[16 : personality];
+
+pin out   signed servo-##.error-cnt[16 : personality] "drive feedback error count";
+
+pin  in      bit servo-##.spindle-fwd[16 : personality];
+pin  in      bit servo-##.spindle-rev[16 : personality];
+pin  in      bit servo-##.spindle-orient[16 : personality];
+pin  out     bit servo-##.spindle-orienting[16 : personality];
+pin  out     bit servo-##.spindle-oriented[16 : personality];
+
+pin out      bit servo-##.di1[16 : personality];
+pin out      bit servo-##.di2[16 : personality];
+pin out      bit servo-##.di3[16 : personality];
+
+pin out      bit ready "controller in sync with NC";
+pin out    float phase "sync deviation, should be <40us";
+pin out   signed error-cnt	"number of controller comm errors";
+pin out unsigned debug;
+//pin  in      bit enable;
+
+pin out      bit in-##[17];
+pin out      bit in-##-not[17];
+pin  in      bit out-##[8];
+
+pin  io      bit encoder-##.index-enable[2];
+pin out    float encoder-##.pos[2];
+param rw   float encoder-##.cpr[2] = -10000;
+pin out    float encoder-##.velocity[2];
+param rw   float encoder-##.min-speed-estimate[2] = 1;
+pin out   signed encoder-##.counts[2];
+
+pin  in    float dac-##.value[2];
+param rw   float dac-##.scale[2] = 1;
+
+////////////////////////////
+
+option extra_setup;
+option extra_cleanup;
+option rtapi_app no;
+option count_function yes;
+
+variable int glitch_len;
+variable int enc_counts[2];
+variable int enc_changed[2];
+
+function _;
+variable unsigned inum;
+
+license "GPL";
+;;
+
+struct io_pins {
+	hal_bit_t *in[16][16];
+	hal_bit_t *in_not[16][16];
+	hal_bit_t *out[16][16];
+	hal_bit_t *alarm[16];
+	hal_s32_t *yio_error_cnt[16];
+	uint32_t yi16, yo16;		// set bit indicates corresponding slave is present
+};
+
+//#include "../../../hal/drivers/nyx/nyx2.h"
+//#include "../../../hal/drivers/nyx/y.h"
+#include "nyx2.h"
+#include "../../../hal/drivers/nyx/y.h"
+//#include "y.h"
+
+char *param_file[] = {0,};
+RTAPI_MP_ARRAY_STRING(param_file, YSSC2_MAX_BOARDS, "Servo parameter file names");
+
+static int export_io(char *prefix, int inst_num)
+{
+	int i, j;
+	int r = 0;
+	struct io_pins *io = hal_malloc(sizeof(struct io_pins));
+	YSSC2 *y = yssc2_board(inst_num);
+
+	yssc2_receive(y);
+	io->yi16 = io->yo16 = 0;
+
+	for (i = 0; i < 16; i++) {
+		uint32_t iotype = yssc2_yi(y, i) >> 24;
+
+		if (iotype) {
+			r = hal_pin_bit_newf(HAL_OUT, &(io->alarm[i]), comp_id,
+					"%s.yio-%02d.alarm", prefix, i);
+			if(r != 0) return r;
+
+			r = hal_pin_s32_newf(HAL_OUT, &(io->yio_error_cnt[i]), comp_id,
+					"%s.yio-%02d.error-cnt", prefix, i);
+			if(r != 0) return r;
+		}
+
+		if (iotype == 1) {
+			io->yi16 |= 1<<i;
+			for (j = 0; j < 16; j++) {
+				r = hal_pin_bit_newf(HAL_OUT, &(io->in[i][j]), comp_id,
+					            "%s.yio-%02d.in-%02d", prefix, i, j);
+				if(r != 0) return r;
+				r = hal_pin_bit_newf(HAL_OUT, &(io->in_not[i][j]), comp_id,
+					            "%s.yio-%02d.in-%02d-not", prefix, i, j);
+				if(r != 0) return r;
+			}
+		} else if (iotype == 2) {
+			io->yo16 |= 1<<i;
+			for (j = 0; j < 16; j++) {
+				r = hal_pin_bit_newf(HAL_IN, &(io->out[i][j]), comp_id,
+					            "%s.yio-%02d.out-%02d", prefix, i, j);
+				if(r != 0) return r;
+			}
+		}
+	}
+
+	y->io = io;
+
+	return 0;
+
+#define yio_pin_in(a,b) (*(y->io->in[a][b]))
+#define yio_pin_in_not(a,b) (*(y->io->in_not[a][b]))
+#define yio_pin_out(a,b) (*(y->io->out[a][b]))
+#define yio_pin_alarm(a) (*(y->io->alarm[a]))
+#define yio_pin_error_cnt(a) (*(y->io->yio_error_cnt[a]))
+#define yio_yi16(a) (y->io->yi16 & (1<<a))
+#define yio_yo16(a) (y->io->yo16 & (1<<a))
+
+}
+
+// ========================================================================
+
+void ts_add_nsec(int n, struct timespec *t)
+{
+	const int NS_PER_S = 1000000000;
+
+	t->tv_nsec += n;
+	while (t->tv_nsec >= NS_PER_S) {
+		t->tv_nsec -= NS_PER_S;
+		t->tv_sec++;
+	}
+}
+
+// ========================================================================
+
+static int nodma;
+RTAPI_MP_INT(nodma, "disable PCI DMA: read (1), write (2), both (3)");
+
+static int axis;
+RTAPI_MP_INT(axis, "max number of drives");
+
+int rtapi_app_main(void) {
+	int i, count, r = 0;
+
+	if (axis < 1) axis = 1;
+	if (axis > 16) axis = 16;
+	if (axis > NYX_AXES) axis = NYX_AXES;
+
+	comp_id = hal_init("nyx");
+	yssc2_init();
+	count = get_count();
+	if (comp_id < 0) return comp_id;
+
+	for (i = r = 0; !r && i < count; i++) {
+		YSSC2 *y = yssc2_board(i);
+		static char prefix[HAL_NAME_LEN + 1];
+		rtapi_snprintf(prefix, sizeof(prefix), "nyx.%d", i);
+
+		yssc2_start(i);
+		r |= export(prefix, i, yssc2_axes(y));
+		r |= export_io(prefix, i);
+		//rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: %d axes\n", i, yssc2_axes(y));
+	}
+	if (r) {
+		extra_cleanup();
+		hal_exit(comp_id);
+	} else {
+		hal_ready(comp_id);
+	}
+	return r;
+}
+
+void rtapi_app_exit(void) {
+	yssc2_cleanup();
+	hal_exit(comp_id);
+}
+
+EXTRA_SETUP()
+{
+
+	if (yssc2_board(inum = extra_arg) == NULL) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: no board #%d\n", inum);
+		return -EINVAL;
+	}
+
+	/*
+	int a;
+	for (a = 0; a < axis; a++) {
+		servo_online(a) = 0;
+		servo_offline(a) = 1;
+		servo_ready(a) = 0;
+		servo_enabled(a) = 0;
+		servo_alarm(a) = 0;
+		servo_warning(a) = 0;
+		servo_pos_fb(a) = 0;
+		servo_vel_fb(a) = 0;
+		servo_trq_fb(a) = 0;
+		servo_droop(a) = 0;
+		servo_torque_clamped(a) = 0;
+		servo_absolute(a) = 0;
+		servo_abs_lost(a) = 0;
+	}
+	*/
+
+	enc_changed[0] = -1;
+	enc_changed[1] = -1;
+
+	return 0;
+}
+
+EXTRA_CLEANUP()
+{
+	// yssc2_cleanup();
+	// rtapi_print_msg(RTAPI_MSG_INFO, "nyx: unloaded\n");
+}
+
+// calculate event frequency
+// 1125 hz ~= 1024 hz = 256 * 4 * 4 = 4 sec;
+int freq(YSSC2 *y, int event)
+{
+	if (y->freq.i & 0xff) {
+		y->freq.bucket += event;
+	} else {
+		y->freq.j = y->freq.i >> 8;
+		// if(j < 0 || j > 15) rtapi_print_msg(RTAPI_MSG_ERR, "nyx: FANDANGO! %d\n", j);
+		y->freq.sum -= y->freq.b[y->freq.j];
+		y->freq.sum += (y->freq.b[y->freq.j] = y->freq.bucket + event);
+		y->freq.bucket = 0;
+	}
+	++y->freq.i;
+	y->freq.i &= 0xfff;
+
+	return y->freq.sum;
+}
+
+FUNCTION(_)
+{
+	int a, insync;
+	uint32_t u;
+	YSSC2 *y = yssc2_board(inum);
+	uint32_t status = 0;
+
+	if (y == NULL) return;
+
+	yssc2_receive(y);	// should be the very first routine
+
+	if (yssc2_magic(y) == (0x55c20000 | (NYX_VER_MAJ<<8) | NYX_VER_MIN)) {	// check if the board hasn't gone away
+		phase = yssc2_irq_time_us(y);
+		status = yssc2_fb_seq(y);
+		insync = status & YS_INSYNC;
+	} else {
+		phase = 0;
+		insync = 0;
+	}
+
+#define MAX_GLITCH 5
+#define MAX_ERRORS 5
+
+	if (freq(y, !insync) == 0) y->errors_shown = 0;	// reset message inhibit
+	if (y->initial_delay) --y->initial_delay;
+
+	if (insync) {
+		if (!ready) {
+			if(!y->initial_delay) {
+				if (++y->errors_shown < MAX_ERRORS) {
+					rtapi_print_msg(RTAPI_MSG_ERR, "nyx: sync glitch, %d ticks\n", glitch_len);
+				} else if (y->errors_shown == MAX_ERRORS) {
+					rtapi_print_msg(RTAPI_MSG_ERR, "nyx: sync glitch, %d ticks. check servo thread period!\n", glitch_len);
+				} else {
+					y->errors_shown = MAX_ERRORS + 1;
+				}
+			}
+			ready = 1;
+		}
+		glitch_len = 0;
+	} else {
+		if (++glitch_len >= MAX_GLITCH) {
+			ready = 0;
+		}
+		++error_cnt;
+	}
+
+	{
+		if (!ready && glitch_len == 1125 * 3 && y->errors_shown < MAX_ERRORS) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: board firmware NOT READY\n");
+			++y->errors_shown;
+		}
+		y->was_ready = ready;
+	}
+
+	yssc2_process(y);	// state machine, request servo data: absolute origin, encoder res, etc
+
+	debug = yssc2_fb_seq(y);
+	// process received data
+	for (a = 0; a < yssc2_axes(y); a++) {
+		servo_debug(a) = yssc2_dbg(y, a);
+		if (ready && yssc2_online(y, a)) {
+			int32_t fb;
+
+			if (yssc2_has_fb(y) && !yssc2_valid(y, a)) {
+				++servo_error_cnt(a);
+				continue;
+			}
+
+			if (yssc2_feedback_res(y, a) == 0)
+				continue;
+
+			fb = (servo_counts(a) = yssc2_pos_fb(y, a)) - servo_origin(a);
+
+			servo_online(a) = 1;
+			servo_offline(a) = 0;
+			servo_ready(a) = yssc2_ready(y, a);
+			servo_enabled(a) = yssc2_enabled(y, a);
+			servo_alarm(a) = yssc2_alarm(y, a) | yssc2_warning(y, a);
+			servo_warning(a) = yssc2_warning(y, a);
+			servo_zero_speed(a) = yssc2_zero_speed(y, a);
+			servo_in_position(a) = yssc2_in_position(y, a);
+			servo_at_speed(a) = yssc2_at_speed(y, a);
+			servo_spindle_oriented(a) = yssc2_oriented(y, a);
+			servo_spindle_orienting(a) = yssc2_orienting(y, a);
+
+			servo_pos_fb(a) = fb * servo_pos_scale(a) / yssc2_feedback_res(y, a);
+			servo_vel_fb(a) = yssc2_vel_fb(y, a) / servo_vel_scale(a);
+			servo_trq_fb(a) = yssc2_trq_fb(y, a) / 10.0;
+			servo_alarm_code(a) = yssc2_alarm_code(y, a);
+			servo_droop(a) = yssc2_droop(y, a);
+			servo_torque_clamped(a) = yssc2_torque_clamped(y, a);
+			servo_absolute(a) = yssc2_absolute(y, a);
+			servo_abs_lost(a) = yssc2_abs_lost(y, a);
+
+			servo_di1(a) = yssc2_di(y, a, 0);	// J3 DI# pins
+			servo_di2(a) = yssc2_di(y, a, 1);
+			servo_di3(a) = yssc2_di(y, a, 2);
+
+			// input pins
+			yssc2_power(y, a, servo_power(a));
+			yssc2_enable(y, a, servo_enable(a));
+			yssc2_vel_ctl(y, a, servo_velocity_mode(a));
+			yssc2_vel_cmd(y, a, servo_vel_cmd(a) * servo_vel_scale(a));
+			{
+				int64_t cmd = servo_pos_cmd(a) * yssc2_feedback_res(y, a) / servo_pos_scale(a) + servo_origin(a);
+				cmd &= 0xffffffff;
+				yssc2_pos_cmd(y, a, cmd);
+				servo_counts_cmd(a) = cmd;
+			}
+			yssc2_reset_alarm(y, a, servo_reset_alarm(a));
+			yssc2_limit_torque(y, a, servo_limit_torque(a));
+			yssc2_forward_torque(y, a, servo_forward_torque(a));
+			yssc2_reverse_torque(y, a, servo_reverse_torque(a));
+			yssc2_fwd(y, a, servo_spindle_fwd(a));
+			yssc2_rev(y, a, servo_spindle_rev(a));
+			yssc2_orient(y, a, servo_spindle_orient(a));
+		} else {
+			servo_online(a) = 0;
+			servo_offline(a) = 1;
+			servo_ready(a) = 0;
+			servo_enabled(a) = 0;
+			servo_alarm(a) = 1;
+			servo_alarm_code(a) = 0;
+		//	yssc2_power(y, a, 0);	// the controller will do that
+		//	yssc2_enable(y, a, 0);
+		}
+	}
+
+
+	for (a = 0; a < 2; a++) {
+		int c;
+
+		if (!y->index_req[a] && encoder_index_enable(a)) yssc2_index_req(y, a);	// rising
+		y->index_req[a] = encoder_index_enable(a);
+		if (yssc2_falling_index(y, a)) encoder_index_enable(a) = 0;
+
+		encoder_counts(a) = c = yssc2_enc(y, a);
+		encoder_pos(a) = c / encoder_cpr(a);
+
+		if (enc_changed[a] >= 0) {
+			if (c != enc_counts[a]) {
+				int d = c - enc_counts[a];
+				if (d > -10000000 && d < 1000000) {      // just ignore integer overflow
+					double v = d * 60 / fperiod / encoder_cpr(a) / (enc_changed[a] + 1); // rpm
+					if (v < 0) v = -v;
+					if (v < encoder_min_speed_estimate(a)) v = 0;
+						encoder_velocity(a) = v;
+				}
+				enc_changed[a] = 0;
+				enc_counts[a] = c;
+			} else {
+				enc_changed[a]++;
+			}
+		} else {
+			enc_counts[a] = c;      // initialization
+			enc_changed[a] = 0;
+		}
+	}
+
+	u = yssc2_gpi(y);
+	for (a = 0; a < 17; a++) {
+		in_not(a) = !(in(a) = u & 1);
+		u >>= 1;
+	}
+	u = 0;
+	for (a = 0; a <= 7; a++) {
+		if (out(a)) u |= 0x100;
+		u >>= 1;
+	}
+	yssc2_gpo(y, u);
+
+        for (a = 0; a < 2; a++) {
+		double s = dac_scale(a) != 0 ? dac_scale(a) : 1;
+                double f = dac_value(a) / s;
+                if (f < 0) f = 0;
+                if (f > 1) f = 1;
+                yssc2_dac(y, a, f * 65535);
+        }
+
+	// YIO
+
+	for (a = 0; a < 16; a++) {
+		int n;
+		uint32_t i, o;
+		if (yio_yo16(a)) {	// output board - input pins
+			i = yssc2_yi(y, a);
+			for (o = n = 0; n < 16; n++) {
+				if (yio_pin_out(a, n)) o |= 0x10000;
+				o >>= 1;
+			}
+			yssc2_yo(y, a, o);
+			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
+			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
+		}
+		if (yio_yi16(a)) {
+			i = yssc2_yi(y, a);
+			for (n = 0; n < 16; n++) {
+				yio_pin_in_not(a, n) = !(yio_pin_in(a, n) = (i & (1<<n)) ? 1 : 0);
+			}
+			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
+			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
+		}
+	}
+
+	yssc2_transmit(y);
+}
+
+#ifdef __KERNEL__
+#include "../../../hal/drivers/nyx/y-rtai.c"
+//#include "y-rtai.c"
+#else
+#include "../../../hal/drivers/nyx/y-uspace.c"
+//#include "y-uspace.c"
+#endif
