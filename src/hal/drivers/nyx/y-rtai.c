@@ -194,19 +194,19 @@ void yssc2_cleanup()
 int yssc2_start(int instance, int maxdrives)
 {
 	int i;
-	YSSC2 *y = &yssc2_brd[no];
+	YSSC2 *y = &yssc2_brd[instance];
 
 	memset(y->par, 0, sizeof(*(y->par)));
 
 	for (i = 0; i <= instance; i++) {
 		if(param_file[i] == NULL) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no params", no);
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no params", instance);
 			return -1;
 		}
 	}
 
 	if (y->axes > maxdrives) y->axes = maxdrives;
-	load_params(y->par, param_file[no], y->axes);
+	load_params(y->par, param_file[instance], y->axes);
 
 	return 0;
 }

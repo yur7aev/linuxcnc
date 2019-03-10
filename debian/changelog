@@ -1,4 +1,4 @@
-linuxcnc (1:2.8.0nyx2~pre1) stretch; urgency=low
+linuxcnc (1:2.8.0nyx3~pre1) stretch; urgency=low
 
   * fix sample configs for joints/axes
   * rename nyx module param "axis/axes" to "maxdrives", make it working
