@@ -63,7 +63,7 @@ typedef struct yssc2 {
 } YSSC2;
 
 uint32_t yssc2_magic(YSSC2 *y)		{ return y->dpram->magic; }
-int yssc2_axes(YSSC2 *y)		{ return y->dpram->config & 0xff; }
+int yssc2_axes(YSSC2 *y)		{ return y->axes; }
 int yssc2_fb_seq(YSSC2 *y)		{ return y->dpram->fb.seq; }
 double yssc2_irq_time_us(YSSC2 *y)	{ return y->dpram->fb.irq_time / 45.0; }
 ///double yssc2_dbg(YSSC2 *y, int n)	{ return 0; } ///y->dpram->dbg[n]; }
@@ -135,7 +135,7 @@ void yssc2_torque_rev(YSSC2 *y, int a, int e);
 */
 
 int  yssc2_init(void);
-int  yssc2_start(int no);
+int  yssc2_start(int instance, int maxdrives);
 void yssc2_cleanup(void);
 void yssc2_receive(YSSC2 *y);
 void yssc2_process(YSSC2 *y);

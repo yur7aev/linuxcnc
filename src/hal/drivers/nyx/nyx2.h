@@ -22,10 +22,7 @@
 #define NYX_VER_MAJ 2
 #define NYX_VER_MIN 1
 
-#ifndef NYX_AXES
-#define NYX_AXES 8
-#endif
-
+#define NYX_AXES 10
 #define MAX_AXES 18
 
 // per-axis nyx_servo_cmd.flags

@@ -123,6 +123,12 @@ static int yssc2_pci_probe(struct rtapi_pci_dev *dev, const struct rtapi_pci_dev
 	y->dpram->magic = y->iomem->dpram.magic;
 	y->dpram->config = y->iomem->dpram.config;
 
+	y->axes = y->dpram->config & 0xff;
+	if (y->axes > NYX_AXES) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: card has %d axes, limited to %d", y->axes, NYX_AXES);
+		y->axes = NYX_AXES;
+	}
+
 	++num_boards;
 	return 0;
 
@@ -185,21 +191,22 @@ void yssc2_cleanup()
 	}
 }
 
-int yssc2_start(int no)
+int yssc2_start(int instance, int maxdrives)
 {
 	int i;
 	YSSC2 *y = &yssc2_brd[no];
 
 	memset(y->par, 0, sizeof(*(y->par)));
 
-	for (i = 0; i <= no; i++) {
+	for (i = 0; i <= instance; i++) {
 		if(param_file[i] == NULL) {
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no params", no);
 			return -1;
 		}
 	}
 
-	load_params(y->par, param_file[no], yssc2_axes(y));
+	if (y->axes > maxdrives) y->axes = maxdrives;
+	load_params(y->par, param_file[no], y->axes);
 
 	return 0;
 }
@@ -343,7 +350,7 @@ void yssc2_receive(YSSC2 *y)
 		y->_status_falling = y->dpram->fb.seq & ~y->iomem->dpram.fb.seq;
 		y->dpram->magic = y->iomem->dpram.magic;
 		//memcpy(&y->dpram->fb, &y->iomem->dpram.fb, sizeof(nyx_dp_fb));
-		memcpy(&y->dpram->fb, (void*)&y->iomem->dpram.fb, offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * yssc2_axes(y));
+		memcpy(&y->dpram->fb, (void*)&y->iomem->dpram.fb, offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * y->axes);
 	} else {
 		size_t offs = offsetof(struct nyx_dpram, fb);	// should be 512
 		y->_status_falling = y->dpram->fb.seq & ~y->iomem->dpram.fb.seq;
@@ -352,7 +359,7 @@ void yssc2_receive(YSSC2 *y)
 		y->iomem->dma_dst = y->dpram_bus_addr + offs;
 		y->iomem->dma_src = offs;	// start of fb in dpram
 		//y->iomem->dma_len = sizeof(nyx_dp_fb);
-		y->iomem->dma_len = offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * yssc2_axes(y);
+		y->iomem->dma_len = offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * y->axes;
 		y->iomem->jtag = 0x40;    // start DMA transfer ram write <- pci
 
 		do { udelay(5); } while (y->iomem->jtag & 0x40);
@@ -365,7 +372,7 @@ void yssc2_receive(YSSC2 *y)
 void yssc2_process(YSSC2 *y)
 {
 	int a;
-	for (a = 0; a < yssc2_axes(y); a++) {
+	for (a = 0; a < y->axes; a++) {
 //		if (yssc2_online(y, a)) {
 			nyx_servo_fb *fb = &y->dpram->fb.servo_fb[a];
 			nyx_servo_cmd *cmd = &y->dpram->cmd.servo_cmd[a];
@@ -410,7 +417,7 @@ int yssc2_transmit(YSSC2 *y)
 		y->dpram->cmd.seq = (y->dpram->fb.seq & YS_SEQ);
 		y->iomem->dpram.fb.seq = y->dpram->fb.seq;	// index request bits
 		//memcpy(&y->iomem->dpram.cmd, &y->dpram->cmd, sizeof(nyx_dp_cmd));
-		memcpy((void*)&y->iomem->dpram.cmd, &y->dpram->cmd, offsetof(struct nyx_dp_cmd, servo_cmd) + sizeof(nyx_servo_cmd) * yssc2_axes(y));
+		memcpy((void*)&y->iomem->dpram.cmd, &y->dpram->cmd, offsetof(struct nyx_dp_cmd, servo_cmd) + sizeof(nyx_servo_cmd) * y->axes);
 	} else {
 		size_t offs = offsetof(struct nyx_dpram, cmd);	// should be 256
 
@@ -419,7 +426,7 @@ int yssc2_transmit(YSSC2 *y)
 		y->iomem->dma_dst = y->dpram_bus_addr + offs;
 		y->iomem->dma_src = offs;	// start of cmd in dpram
 		///y->iomem->dma_len = sizeof(nyx_dp_cmd);
-		y->iomem->dma_len = offsetof(struct nyx_dp_cmd, servo_cmd) + sizeof(nyx_servo_cmd) * yssc2_axes(y);
+		y->iomem->dma_len = offsetof(struct nyx_dp_cmd, servo_cmd) + sizeof(nyx_servo_cmd) * y->axes;
 		// do {
 			y->iomem->jtag = 0x60;	// start DMA transfer ram read -> pci
 			do { udelay(5); } while (y->iomem->jtag & 0x40);

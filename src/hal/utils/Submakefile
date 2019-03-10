@@ -101,6 +101,15 @@ objects/%.py: %.g
 	@mkdir -p $(dir $@)
 	$(Q)yapps $< $@
 
+# nyx
+
+NYXFLASHSRCS := hal/utils/nyxflash.c
+
+../bin/nyxflash: $(NYXFLASHSRCS)
+	$(ECHO) Compiling $(notdir $@)
+	gcc -o $@ $^ -lpci
+TARGETS += ../bin/nyxflash
+
 ../bin/nyxq: ../bin/%: hal/utils/%.py
 	@$(ECHO) Syntax checking python script $(notdir $@)
 	$(Q)$(PYTHON) -c 'import sys; compile(open(sys.argv[1]).read(), sys.argv[1], "exec")' $<

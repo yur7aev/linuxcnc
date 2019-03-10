@@ -7,11 +7,11 @@ param rw   float servo-##.vel-scale[16 : personality] = 10.0;	// rpm (1.0 rpm re
 pin out unsigned servo-##.debug[16 : personality];
 pin out      bit servo-##.online[16 : personality] "drive detected";
 pin out      bit servo-##.offline[16 : personality] "no drive detected";
-pin out      bit servo-##.ready[16 : personality]   "drive is ready";
-pin out      bit servo-##.enabled[16 : personality] "servo is on";
+pin out      bit servo-##.ready[16 : personality]   "READY ON";
+pin out      bit servo-##.enabled[16 : personality] "SERVO ON";
 pin out      bit servo-##.alarm[16 : personality];
 pin out      bit servo-##.warning[16 : personality];
-pin out unsigned servo-##.alarm-code[16 : personality];
+pin out unsigned servo-##.alarm-code[16 : personality] "amp display, in hex";
 pin out      bit servo-##.zero-speed[16 : personality];
 pin out      bit servo-##.in-position[16 : personality];
 pin out      bit servo-##.at-speed[16 : personality];
@@ -21,8 +21,8 @@ pin out      bit servo-##.abs-lost[16 : personality];
 pin out   signed servo-##.counts[16 : personality];
 pin out   signed servo-##.counts-cmd[16 : personality];
 
-pin  in      bit servo-##.power[16 : personality] "turn on power";
-pin  in      bit servo-##.enable[16 : personality] "turn on servo";
+pin  in      bit servo-##.power[16 : personality]	"turn on power relay";
+pin  in      bit servo-##.enable[16 : personality]	"turn on servo";
 pin  in      bit servo-##.reset-alarm[16 : personality];
 
 pin  in    float servo-##.forward-torque[16 : personality];
@@ -47,19 +47,18 @@ pin  in      bit servo-##.spindle-orient[16 : personality];
 pin  out     bit servo-##.spindle-orienting[16 : personality];
 pin  out     bit servo-##.spindle-oriented[16 : personality];
 
-pin out      bit servo-##.di1[16 : personality];
-pin out      bit servo-##.di2[16 : personality];
-pin out      bit servo-##.di3[16 : personality];
+pin out      bit servo-##.di1[16 : personality] "MR-J3-B DI1 input";
+pin out      bit servo-##.di2[16 : personality] "MR-J3-B DI2 input";
+pin out      bit servo-##.di3[16 : personality] "MR-J3-B DI3 input";
 
 pin out      bit ready "controller in sync with NC";
 pin out    float phase "sync deviation, should be <40us";
-pin out   signed error-cnt	"number of controller comm errors";
+pin out   signed error-cnt "number of controller comm errors";
 pin out unsigned debug;
-//pin  in      bit enable;
 
-pin out      bit in-##[17];
-pin out      bit in-##-not[17];
-pin  in      bit out-##[8];
+pin out      bit in-##[17] "CN1 inputs";
+pin out      bit in-##-not[17] "CN1 inputs, inverted";
+pin  in      bit out-##[8] "CN3 outputs";
 
 pin  io      bit encoder-##.index-enable[2];
 pin out    float encoder-##.pos[2];
@@ -94,6 +93,7 @@ struct io_pins {
 	hal_bit_t *out[16][16];
 	hal_bit_t *alarm[16];
 	hal_s32_t *yio_error_cnt[16];
+	hal_bit_t *mon[16][16];		// mirrors either input or outpus pins for monitoring
 	uint32_t yi16, yo16;		// set bit indicates corresponding slave is present
 };
 
@@ -105,6 +105,15 @@ struct io_pins {
 
 char *param_file[] = {0,};
 RTAPI_MP_ARRAY_STRING(param_file, YSSC2_MAX_BOARDS, "Servo parameter file names");
+
+static int nodma;
+RTAPI_MP_INT(nodma, "disable PCI DMA: read (1), write (2), both (3)");
+
+static int maxdrives;
+RTAPI_MP_INT(maxdrives, "max number of drives");
+
+static int mon;
+RTAPI_MP_INT(mon, "duplicate YIO pins for monitoring connection");
 
 static int export_io(char *prefix, int inst_num)
 {
@@ -138,6 +147,12 @@ static int export_io(char *prefix, int inst_num)
 				r = hal_pin_bit_newf(HAL_OUT, &(io->in_not[i][j]), comp_id,
 					            "%s.yio-%02d.in-%02d-not", prefix, i, j);
 				if(r != 0) return r;
+
+				if (mon) {
+					r = hal_pin_bit_newf(HAL_OUT, &(io->mon[i][j]), comp_id,
+						"%s.yio-%02d.mon-%02d", prefix, i, j);
+					if(r != 0) return r;
+				}
 			}
 		} else if (iotype == 2) {
 			io->yo16 |= 1<<i;
@@ -145,6 +160,11 @@ static int export_io(char *prefix, int inst_num)
 				r = hal_pin_bit_newf(HAL_IN, &(io->out[i][j]), comp_id,
 					            "%s.yio-%02d.out-%02d", prefix, i, j);
 				if(r != 0) return r;
+				if (mon) {
+					r = hal_pin_bit_newf(HAL_OUT, &(io->mon[i][j]), comp_id,
+						            "%s.yio-%02d.mon-%02d", prefix, i, j);
+					if(r != 0) return r;
+				}
 			}
 		}
 	}
@@ -156,6 +176,7 @@ static int export_io(char *prefix, int inst_num)
 #define yio_pin_in(a,b) (*(y->io->in[a][b]))
 #define yio_pin_in_not(a,b) (*(y->io->in_not[a][b]))
 #define yio_pin_out(a,b) (*(y->io->out[a][b]))
+#define yio_pin_mon(a,b) (*(y->io->mon[a][b]))
 #define yio_pin_alarm(a) (*(y->io->alarm[a]))
 #define yio_pin_error_cnt(a) (*(y->io->yio_error_cnt[a]))
 #define yio_yi16(a) (y->io->yi16 & (1<<a))
@@ -178,18 +199,12 @@ void ts_add_nsec(int n, struct timespec *t)
 
 // ========================================================================
 
-static int nodma;
-RTAPI_MP_INT(nodma, "disable PCI DMA: read (1), write (2), both (3)");
-
-static int axis;
-RTAPI_MP_INT(axis, "max number of drives");
-
 int rtapi_app_main(void) {
 	int i, count, r = 0;
 
-	if (axis < 1) axis = 1;
-	if (axis > 16) axis = 16;
-	if (axis > NYX_AXES) axis = NYX_AXES;
+	if (maxdrives < 1) maxdrives = 1;
+	if (maxdrives > 18) maxdrives = 18;
+	if (maxdrives > NYX_AXES) maxdrives = NYX_AXES;
 
 	comp_id = hal_init("nyx");
 	yssc2_init();
@@ -201,7 +216,7 @@ int rtapi_app_main(void) {
 		static char prefix[HAL_NAME_LEN + 1];
 		rtapi_snprintf(prefix, sizeof(prefix), "nyx.%d", i);
 
-		yssc2_start(i);
+		yssc2_start(i, maxdrives);
 		r |= export(prefix, i, yssc2_axes(y));
 		r |= export_io(prefix, i);
 		//rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: %d axes\n", i, yssc2_axes(y));
@@ -227,25 +242,6 @@ EXTRA_SETUP()
 		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: no board #%d\n", inum);
 		return -EINVAL;
 	}
-
-	/*
-	int a;
-	for (a = 0; a < axis; a++) {
-		servo_online(a) = 0;
-		servo_offline(a) = 1;
-		servo_ready(a) = 0;
-		servo_enabled(a) = 0;
-		servo_alarm(a) = 0;
-		servo_warning(a) = 0;
-		servo_pos_fb(a) = 0;
-		servo_vel_fb(a) = 0;
-		servo_trq_fb(a) = 0;
-		servo_droop(a) = 0;
-		servo_torque_clamped(a) = 0;
-		servo_absolute(a) = 0;
-		servo_abs_lost(a) = 0;
-	}
-	*/
 
 	enc_changed[0] = -1;
 	enc_changed[1] = -1;
@@ -466,8 +462,9 @@ FUNCTION(_)
 		if (yio_yo16(a)) {	// output board - input pins
 			i = yssc2_yi(y, a);
 			for (o = n = 0; n < 16; n++) {
-				if (yio_pin_out(a, n)) o |= 0x10000;
+				if (yio_pin_mon(a, n) = yio_pin_out(a, n)) o |= 0x10000;
 				o >>= 1;
+				if (mon) yio_pin_mon(a, n) = yio_pin_out(a, n);
 			}
 			yssc2_yo(y, a, o);
 			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
@@ -476,7 +473,8 @@ FUNCTION(_)
 		if (yio_yi16(a)) {
 			i = yssc2_yi(y, a);
 			for (n = 0; n < 16; n++) {
-				yio_pin_in_not(a, n) = !(yio_pin_in(a, n) = (i & (1<<n)) ? 1 : 0);
+				yio_pin_in_not(a, n) = !(yio_pin_mon(a, n) = yio_pin_in(a, n) = (i & (1<<n)) ? 1 : 0);
+				if (mon) yio_pin_mon(a, n) = yio_pin_in(a, n);
 			}
 			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
 			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;

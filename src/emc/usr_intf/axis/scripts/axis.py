@@ -3667,6 +3667,7 @@ bind_axis("KP_4", "KP_6", 0)
 bind_axis("KP_2", "KP_8", 1)
 bind_axis("KP_3", "KP_9", 2)
 bind_axis("bracketleft", "bracketright", 3)
+bind_axis("semicolon", "quoteright", 4)
 
 if len(jog_order) < 3:
     root_window.bind("<KeyPress-KP_Next>", kp_wrap(lambda e: None, "KeyPress"))

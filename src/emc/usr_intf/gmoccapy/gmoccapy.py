@@ -1623,18 +1623,22 @@ class gmoccapy(object):
     # toggle emergency button
     def on_tbtn_estop_toggled(self, widget, data=None):
         if widget.get_active():  # estop is active, open circuit
-            self.command.state(linuxcnc.STATE_ESTOP)
-            self.command.wait_complete()
-            self.stat.poll()
-            if self.stat.task_state == linuxcnc.STATE_ESTOP_RESET:
-                widget.set_active(False)
+            for _ in xrange(3):
+                self.command.state(linuxcnc.STATE_ESTOP)
+                self.command.wait_complete()
+                self.stat.poll()
+                if self.stat.task_state == linuxcnc.STATE_ESTOP:
+                    return
+            widget.set_active(False)
         else:  # estop circuit is fine
-            self.command.state(linuxcnc.STATE_ESTOP_RESET)
-            self.command.wait_complete()
-            self.stat.poll()
-            if self.stat.task_state == linuxcnc.STATE_ESTOP:
-                widget.set_active(True)
-                self._show_error((11, _("ERROR : External ESTOP is set, could not change state!")))
+            for _ in xrange(3):
+                self.command.state(linuxcnc.STATE_ESTOP_RESET)
+                self.command.wait_complete()
+                self.stat.poll()
+                if self.stat.task_state == linuxcnc.STATE_ESTOP_RESET:
+                    return
+            widget.set_active(True)
+            self._show_error((11, _("ERROR : External ESTOP is set, could not change state!")))
 
     # toggle machine on / off button
     def on_tbtn_on_toggled(self, widget, data=None):

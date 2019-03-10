@@ -93,8 +93,12 @@ int yssc2_init()
 	read(y->fd, y->dpram, 16);
 
 	y->axes = y->dpram->config & 0xff;
+	if (y->axes > NYX_AXES) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: card has %d axes, limited to %d", y->axes, NYX_AXES);
+		y->axes = NYX_AXES;
+	}
 
-	rtapi_print_msg(RTAPI_MSG_ERR, "nyx: magic: %x, %d axes", y->dpram->magic, y->axes );
+//	rtapi_print_msg(RTAPI_MSG_ERR, "nyx: magic: %x, %d axes", y->dpram->magic, y->axes );
 
 	y->initial_delay = 1125 * 3;	// time to wait for sync
 	y->errors_shown = 0;
@@ -118,7 +122,7 @@ void yssc2_cleanup()
 
 }
 
-int yssc2_start(int no)
+int yssc2_start(int no, int maxdrives)
 {
 	int i;
 	YSSC2 *y = &yssc2_brd[no];
@@ -132,6 +136,7 @@ int yssc2_start(int no)
 		}
 	}
 
+	if (y->axes > maxdrives) y->axes = maxdrives;
 	load_params(y->par, param_file[no], y->axes);
 
 	return 0;

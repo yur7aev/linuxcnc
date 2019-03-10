@@ -1,6 +1,25 @@
-linuxcnc (1:2.8.0nyx1~pre1) wheezy; urgency=low
+linuxcnc (1:2.8.0nyx2~pre1) stretch; urgency=low
+
+  * fix sample configs for joints/axes
+  * rename nyx module param "axis/axes" to "maxdrives", make it working
+  * add nyx module param "mon" - duplicate YI/YO pins for monitoring
+  * add 5th axis jog keys to axis: ;/'
+  * work around E-Stop race condition in gmoccapy
+  * set NYX_AXES to 10 (for 2 stepgens)
+  * separate RTAI/uspace into nyx/y-rtai.c and y-uspace.c
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sun, 10 Mar 2019 16:12:24 +0300
+
+linuxcnc (1:2.8.0nyx2~pre1) stretch; urgency=low
+
+  * add nyxflash
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sat, 02 Mar 2019 15:45:12 +0300
+
+linuxcnc (1:2.8.0nyx1~pre1) stretch; urgency=low
 
   * save motor_offset to position file
+  * added nyx module
 
  -- Dmitry Yurtaev <dmitry@yurtaev.com>  Tue, 06 Nov 2018 01:24:28 +0300
 
