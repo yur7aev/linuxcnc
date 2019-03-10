@@ -7,6 +7,7 @@ linuxcnc (1:2.8.0nyx2~pre1) stretch; urgency=low
   * work around E-Stop race condition in gmoccapy
   * set NYX_AXES to 10 (for 2 stepgens)
   * separate RTAI/uspace into nyx/y-rtai.c and y-uspace.c
+  * add passthru comp
 
  -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sun, 10 Mar 2019 16:12:24 +0300
 
