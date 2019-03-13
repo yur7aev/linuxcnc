@@ -462,7 +462,7 @@ FUNCTION(_)
 		if (yio_yo16(a)) {	// output board - input pins
 			i = yssc2_yi(y, a);
 			for (o = n = 0; n < 16; n++) {
-				if (yio_pin_mon(a, n) = yio_pin_out(a, n)) o |= 0x10000;
+				if (yio_pin_out(a, n)) o |= 0x10000;
 				o >>= 1;
 				if (mon) yio_pin_mon(a, n) = yio_pin_out(a, n);
 			}
@@ -473,7 +473,7 @@ FUNCTION(_)
 		if (yio_yi16(a)) {
 			i = yssc2_yi(y, a);
 			for (n = 0; n < 16; n++) {
-				yio_pin_in_not(a, n) = !(yio_pin_mon(a, n) = yio_pin_in(a, n) = (i & (1<<n)) ? 1 : 0);
+				yio_pin_in_not(a, n) = !(yio_pin_in(a, n) = (i & (1<<n)) ? 1 : 0);
 				if (mon) yio_pin_mon(a, n) = yio_pin_in(a, n);
 			}
 			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;

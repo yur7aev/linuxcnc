@@ -1,0 +1,3 @@
+
+$(patsubst ./hal/drivers/nyx/%,../include/%,$(wildcard ./hal/drivers/nyx/*.h)): ../include/%.h: ./hal/drivers/nyx/%.h
+	cp $^ $@
