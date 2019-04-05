@@ -356,6 +356,13 @@ def servo_mon():
 #		)
 
 
+def pll(y, p, i, s):
+	dp.buf.dword[0] = int(y)
+	dp.buf.dword[1] = int(p)
+	dp.buf.dword[2] = int(i)
+	dp.buf.dword[4] = int(s)
+	req(0x00090000, 0, 0, 4)
+
 #------------------------------
 def dump(b, a=0):
 	i = 0
@@ -488,7 +495,7 @@ def arg(n, m, d=None):
 	n += first_arg
 	if len(sys.argv) <= n:
 		if d != None: return d
-		print "nyxq v2.1e"
+		print "nyxq v2.1z"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n]
@@ -516,6 +523,12 @@ elif cmd == 'servo':
 		print "error: nyxq servo ?"
 elif cmd == 'reboot':
 	reboot()
+elif cmd == 'pll':
+	y = arg(2, "pll insync P I step")
+	p = arg(3, "pll insync P I step")
+	i = arg(4, "pll insync P I step")
+	s = arg(5, "pll insync P I step")
+	pll(y, p, i, s)
 elif cmd == 'dbg':
 	dbg()
 elif cmd == 'io':

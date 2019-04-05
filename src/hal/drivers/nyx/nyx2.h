@@ -188,6 +188,8 @@ typedef struct nyx_servo_fb {
 #define REQ_FLASH	0x00050000
 #define REQ_REBOOT	0x00060000
 #define REQ_SNOOP	0x00070000
+#define REQ_DNA		0x00080000
+#define REQ_PLL		0x00090000
 
 #define REQ_FUNC	0x0000ffff
 #define REQ_CODE	0xffff0000

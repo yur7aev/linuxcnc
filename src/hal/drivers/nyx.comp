@@ -4,6 +4,7 @@ param rw  signed servo-##.origin[16 : personality] = 0;		// 32bit servo command-
 param rw   float servo-##.pos-scale[16 : personality] = 5.0;	// travel units per revolution (5mm)
 param rw   float servo-##.vel-scale[16 : personality] = 10.0;	// rpm (1.0 rpm resolution)
 
+pin out   signed servo-##.dbg[16 : personality];
 pin out unsigned servo-##.debug[16 : personality];
 pin out      bit servo-##.online[16 : personality] "drive detected";
 pin out      bit servo-##.offline[16 : personality] "no drive detected";
@@ -55,6 +56,9 @@ pin out      bit ready "controller in sync with NC";
 pin out    float phase "sync deviation, should be <40us";
 pin out   signed error-cnt "number of controller comm errors";
 pin out unsigned debug;
+pin out   signed dbg0;
+pin out   signed dbg1;
+pin out   signed dbg2;
 
 pin out      bit in-##[17] "CN1 inputs";
 pin out      bit in-##-not[17] "CN1 inputs, inverted";
@@ -286,7 +290,7 @@ FUNCTION(_)
 	yssc2_receive(y);	// should be the very first routine
 
 	if (yssc2_magic(y) == (0x55c20000 | (NYX_VER_MAJ<<8) | NYX_VER_MIN)) {	// check if the board hasn't gone away
-		phase = yssc2_irq_time_us(y);
+		phase = yssc2_irq_time_us(y) * 45.0;
 		status = yssc2_fb_seq(y);
 		insync = status & YS_INSYNC;
 	} else {
@@ -332,6 +336,11 @@ FUNCTION(_)
 	yssc2_process(y);	// state machine, request servo data: absolute origin, encoder res, etc
 
 	debug = yssc2_fb_seq(y);
+	dbg0 = yssc2_yi(y, 13);
+	dbg1 = yssc2_yi(y, 14);
+	dbg2 = yssc2_yi(y, 15);
+	debug = yssc2_fb_seq(y);
+	debug = yssc2_fb_seq(y);
 	// process received data
 	for (a = 0; a < yssc2_axes(y); a++) {
 		servo_debug(a) = yssc2_dbg(y, a);
@@ -348,6 +357,7 @@ FUNCTION(_)
 
 			fb = (servo_counts(a) = yssc2_pos_fb(y, a)) - servo_origin(a);
 
+			servo_dbg(a) = yssc2_rx_time(y, a);
 			servo_online(a) = 1;
 			servo_offline(a) = 0;
 			servo_ready(a) = yssc2_ready(y, a);
