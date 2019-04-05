@@ -33,16 +33,16 @@
 static uint32_t boot[16] = {
 	0xFFFFFFFF,    //  DUMMYWORD,  DUMMYWORD
 	0xAA995566,    //  SYNCWORD
-	0x31E1FFFF,     
+	0x31E1FFFF,
 	0x32610000 + (BOOT_OFFS&0xffff),     //  GENERAL1 multiboot[15:0] = 0000
 	0x32810300 + ((BOOT_OFFS>>16)&0xff), //  GENERAL2 SPIx1 read cmd = 03, multiboot[23:16] = 08
 	0x32A10000 + (SAFE_OFFS&0xffff),    //  GENERAL3 fallback[15:0] =  0000
 	0x32C10300 + ((SAFE_OFFS>>16)&0xff), //  GENERAL4 read cmd, fallbach[23:16] = 01
-	0x32E10000,    
+	0x32E10000,
 	0x30A10000,
 	0x33012100,
 	0x3201001F,
-	0x30A1000E,    
+	0x30A1000E,
 	0x20002000,    //  NOOP, NOOP
 	0x20002000,
 	0x20002000,
@@ -66,8 +66,9 @@ void fatal(const char *msg, ...) {
 	fputc('\n', stderr);
 	va_end(ptr);
 	exit(EXIT_FAILURE);
-} 
-										//
+}
+
+//
 void dump(uint8_t *p, size_t len, uint32_t start) {
 	int i = 0;
 
@@ -110,7 +111,7 @@ char *concat(char *dir, char *name)
 	snprintf(s, NAME_MAX+32, "%s/%s", dir, name);
 	return s;
 }
-	
+
 int fread_hex(char *dir, char *name)
 {
 	FILE *f;
@@ -249,8 +250,8 @@ int main(int argc, char* argv[])
 			size = ftell(f);
 			fseek(f, 0, SEEK_SET);
 
-			if (size != 340604) msg("suspicious bitstream size: %d", size); 
-	
+			if (size != 340604) msg("suspicious bitstream size: %d", size);
+
 			buf = calloc(size, 255);
 			if (!buf) fatal("bitsream buffer calloc(%d) failed\n", size);
 
@@ -321,7 +322,7 @@ int main(int argc, char* argv[])
 				if(l <= 0) break;
 				if(l > CHUNK) l = CHUNK;
 
-				for(j = 0; j < CHUNK; j++) 
+				for(j = 0; j < CHUNK; j++)
 					dpm->data[j] = buf[a + i + j];
 
 				//memcpy((void*)dpm->data, buf + a + i, CHUNK);
@@ -329,7 +330,7 @@ int main(int argc, char* argv[])
 
 				program(addr, l);
 				read_bytes(addr, l);
-		
+
 				for(j = 0; j < l; j++) if(dpm->data2[j] != buf[a + i + j]) { ++sector_errors; ++verify_errors; }
 			}
 			if(sector_errors) fprintf(stderr, ":ERR");
@@ -374,7 +375,6 @@ int main(int argc, char* argv[])
 
 		pci_cleanup(pacc);
 	}
-		
 
 	msg("exiting monitor");
 	dpm->cmd = 0x99999999;

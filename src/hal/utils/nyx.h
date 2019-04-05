@@ -111,7 +111,7 @@ typedef struct nyx_dpram {
 	uint32_t seq;		// 4
 	uint32_t status;	// 8
 	uint32_t req;		// c
-	
+
 	nyx_cmd cmd[NYX_AXES];	// 4*8*6 = 192 bytes
 	nyx_fb fb[NYX_AXES];	// offs:D0 4*9*6 = 216(d8) bytes
 

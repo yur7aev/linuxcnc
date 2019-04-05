@@ -21,7 +21,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA.
 
 
-    This is a userspace program that interfaces the ESQ VFD. Based on GS2 VFD 
+    This is a userspace program that interfaces the ESQ VFD. Based on GS2 VFD
     component.
 
 */
@@ -394,7 +394,7 @@ int main(int argc, char **argv)
     retval = hal_pin_bit_newf(HAL_IN, &(haldata->fwd), hal_comp_id, "%s.fwd", modname); if (retval!=0) goto out_closeHAL;
     retval = hal_pin_bit_newf(HAL_IN, &(haldata->rev), hal_comp_id, "%s.rev", modname); if (retval!=0) goto out_closeHAL;
     retval = hal_pin_float_newf(HAL_RW, &(haldata->freq_cmd), hal_comp_id, "%s.freq-cmd", modname); if (retval!=0) goto out_closeHAL;
-    
+
     /* make default data match what we expect to use */
     *(haldata->ready) = 0;
     *(haldata->running_fwd) = 0;
@@ -411,7 +411,7 @@ int main(int argc, char **argv)
     haldata->old_freq = -1;		// make sure the initial value gets output
     haldata->old_ctl = -1;
     haldata->error_cnt = 0;
-    
+
     // Activate HAL component
     hal_ready(hal_comp_id);
 
@@ -426,9 +426,9 @@ int main(int argc, char **argv)
         nanosleep(&loop_timespec, &remaining);
 
             read_data(mb_ctx, haldata);
-            write_data(mb_ctx, haldata);   
+            write_data(mb_ctx, haldata);
     }
-    
+
     retval = 0;	/* if we get here, then everything is fine, so just clean up and exit */
 out_closeHAL:
     hal_exit(hal_comp_id);

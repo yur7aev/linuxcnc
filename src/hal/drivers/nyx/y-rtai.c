@@ -148,13 +148,13 @@ static void yssc2_pci_remove(struct rtapi_pci_dev *dev) {
 			dma_free_coherent(&dev->dev, sizeof(nyx_dpram), y->dpram, y->dpram_bus_addr);
 			y->dpram = NULL;
 		}
-	       	if (y->iomem != NULL) {
+		if (y->iomem != NULL) {
 			rtapi_iounmap(y->iomem);
 			y->iomem = NULL;
 		}
 		y->dev = NULL;
 	}
-	
+
 	rtapi_pci_disable_device(dev);
 	rtapi_pci_set_drvdata(dev, NULL);
 }
@@ -229,7 +229,7 @@ int load_params(struct servo_params *p, const char *name, int axes)
 
 		for (a = 0; a < axes; a++, p++) {
 			memset(p, 0, sizeof(*p));
-	                
+
 			s = f->f_op->read(f, (char *)&p->magic, 6, &f->f_pos);	// read the header
 			if (s != 6) {
 				if (s) rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params short read 1, axis=%d", a);
@@ -244,13 +244,13 @@ int load_params(struct servo_params *p, const char *name, int axes)
 				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params ng > 16");
 				goto skip;
 			}
-	                
+
 			s = f->f_op->read(f, (char *)&p->np, 2*p->ng, &f->f_pos);	// read number of params in each of ng group
 			if (s != 2*p->ng) {
 				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params short read 2");
 				goto skip;
 			}
-	                
+
 			for (i = l = 0; i < p->ng; i++) {		// calc space needed for params+masks
 				if (p->np[i] > 1024) {
 					rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params too many params");
@@ -258,28 +258,28 @@ int load_params(struct servo_params *p, const char *name, int axes)
 				}
 				l += (p->np[i] + 15) / 16 + p->np[i];	// mask data + param data
 			}
-	                
+
 			l *= 2;					// shorts
-	                
+
 			p->buf = kmalloc(l, GFP_KERNEL);
 			if (!p->buf) {
 				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params kalloc");
 				goto skip;
 			}
-	                
+
 			s = f->f_op->read(f, (char *)p->buf, l, &f->f_pos);		// read param data
 			if (s != l) {
 				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params short read 3");
 				goto skip;
 			}
-	                
+
 			for (i = l = 0; i < p->ng; i++) {		// fill pointer arrays
 				p->mask[i] = &p->buf[l];
 				l += (p->np[i] + 15) / 16;
 				p->par[i] = &p->buf[l];
 				l += p->np[i];
 			}
-	                
+
 			continue;
 skip:			memset(p, 0, sizeof(*p));
 		}
@@ -379,10 +379,12 @@ void yssc2_process(YSSC2 *y)
 
 			switch (fb->state & Y_TYPE) {
 			case Y_TYPE_ORIGIN:
-				y->amp[a].fbres = fb->fbres;
-				y->amp[a].cyc0 = fb->cyc0;
-				y->amp[a].abs0 = fb->abs0;
-				//rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d fbres=%d", a, y->amp[a].fbres);
+				if (y->amp[a].fbres == 0) {
+					y->amp[a].fbres = fb->fbres;
+					y->amp[a].cyc0 = fb->cyc0;
+					y->amp[a].abs0 = fb->abs0;
+					//rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d fbres=%d", a, y->amp[a].fbres);
+				}
 				break;
 			case Y_TYPE_PARAM: {
 				nyx_param_req *pq = (nyx_param_req*)fb;
@@ -392,18 +394,18 @@ void yssc2_process(YSSC2 *y)
 				pr->first = pq->first;
 				pr->count = 10;
 				//rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d param req %x\n", a, pq->first);
-				} 
+				}
 				break;
 			}
 
-				if (yssc2_valid(y, a)) {
-					if (y->amp[a].fbres == 0) {	// cant start until feedback resolution and origin is known
-						cmd->flags = (cmd->flags & ~Y_TYPE) | Y_TYPE_ORIGIN;
-						fb->state &= ~YF_VALID;
-					} else {
-						cmd->flags = (cmd->flags & ~Y_TYPE) | Y_TYPE_FB;
-					}
+			if (yssc2_valid(y, a)) {
+				if (y->amp[a].fbres == 0) {	// cant start until feedback resolution and origin is known
+					cmd->flags = (cmd->flags & ~Y_TYPE) | Y_TYPE_ORIGIN;
+					fb->state &= ~YF_VALID;
+				} else {
+					cmd->flags = (cmd->flags & ~Y_TYPE) | Y_TYPE_FB;
 				}
+			}
 //		}
 	}
 }

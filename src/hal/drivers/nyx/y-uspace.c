@@ -323,14 +323,14 @@ void yssc2_process(YSSC2 *y)
 				break;
 			}
 
-				if (yssc2_valid(y, a)) {
-					if (y->amp[a].fbres == 0) {	// cant start until feedback resolution and origin is known
-						cmd->flags = (cmd->flags & ~Y_TYPE) | Y_TYPE_ORIGIN;
-						fb->state &= ~YF_VALID;
-					} else {
-						cmd->flags = (cmd->flags & ~Y_TYPE) | Y_TYPE_FB;
-					}
+			if (yssc2_valid(y, a)) {
+				if (y->amp[a].fbres == 0) {	// cant start until feedback resolution and origin is known
+					cmd->flags = (cmd->flags & ~Y_TYPE) | Y_TYPE_ORIGIN;
+					fb->state &= ~YF_VALID;
+				} else {
+					cmd->flags = (cmd->flags & ~Y_TYPE) | Y_TYPE_FB;
 				}
+			}
 //		}
 	}
 }
