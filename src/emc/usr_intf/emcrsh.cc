@@ -287,6 +287,9 @@
   joint_limit 0 | 1 | ...
   Returns "ok", "minsoft", "minhard", "maxsoft", "maxhard"
 
+  joint_limits 0 | 1 | ...
+  Returns minLimit maxLimit
+
   joint_fault 0 | 1 | ...
   Returns "ok" or "fault"
 
@@ -437,7 +440,7 @@ typedef enum {
   scProgramAngularUnits, scUserLinearUnits, scUserAngularUnits, scDisplayLinearUnits,
   scDisplayAngularUnits, scLinearUnitConversion,  scAngularUnitConversion, scProbeClear, 
   scProbeTripped, scProbeValue, scProbe, scTeleopEnable, scKinematicsType, scOverrideLimits, 
-  scSpindleOverride, scOptionalStop, scUnknown
+  scSpindleOverride, scOptionalStop, scInputs, scOutputs, scJointLimits, scUnknown
   } setCommandType;
   
 typedef enum {
@@ -486,7 +489,7 @@ const char *setCommands[] = {
   "USER_LINEAR_UNITS", "USER_ANGULAR_UNITS", "DISPLAY_LINEAR_UNITS", "DISPLAY_ANGULAR_UNITS", 
   "LINEAR_UNIT_CONVERSION", "ANGULAR_UNIT_CONVERSION", "PROBE_CLEAR", "PROBE_TRIPPED", 
   "PROBE_VALUE", "PROBE", "TELEOP_ENABLE", "KINEMATICS_TYPE", "OVERRIDE_LIMITS", 
-  "SPINDLE_OVERRIDE", "OPTIONAL_STOP", ""};
+  "SPINDLE_OVERRIDE", "OPTIONAL_STOP", "INPUTS", "OUTPUTS", "JOINT_LIMITS", ""};
 
 const char *commands[] = {"HELLO", "SET", "GET", "QUIT", "SHUTDOWN", "HELP", ""};
 
@@ -1405,6 +1408,9 @@ int commandSet(connectionRecType *context)
     case scOverrideLimits: ret = setOverrideLimits(strtok(NULL, delims), context); break;
     case scSpindleOverride: ret = setSpindleOverride(pch, context); break;
     case scOptionalStop: ret = setOptionalStop(strtok(NULL, delims), context); break;
+    case scInputs: ret = rtStandardError;
+    case scOutputs: ret = rtStandardError;
+    case scJointLimits: ret = rtStandardError;
     case scUnknown: ret = rtStandardError;
     }
   switch (ret) {
@@ -1656,7 +1662,7 @@ static cmdResponseType getSpindle(char *s, connectionRecType *context)
   int n;
   s = strtok(NULL, delims);
   if (sscanf(s, "%d", &spindle) < 0) spindle = -1; // no spindle number given return all
-  for (n = 0; n < emcStatus->motion.traj.spindles; n++){
+  for (n = 0; n < emcStatus->motion.traj.spindles; n++) {
 	  if (n == spindle || spindle == -1){
 		  if (emcStatus->motion.spindle[n].increasing > 0)
 			sprintf(context->outBuf, pSpindleStr, n, "INCREASE");
@@ -1802,27 +1808,27 @@ static cmdResponseType getRelCmdPos(char *s, connectionRecType *context)
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 0)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.position.tran.x - emcStatus->task.g5x_offset.tran.x - emcStatus->task.g92_offset.tran.x);
+    sprintf(buf, " %f", emcStatus->motion.traj.position.tran.x - emcStatus->task.g5x_offset.tran.x - emcStatus->task.g92_offset.tran.x - emcStatus->task.toolOffset.tran.x);
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 1)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.position.tran.y - emcStatus->task.g5x_offset.tran.y - emcStatus->task.g92_offset.tran.y);
+    sprintf(buf, " %f", emcStatus->motion.traj.position.tran.y - emcStatus->task.g5x_offset.tran.y - emcStatus->task.g92_offset.tran.y - emcStatus->task.toolOffset.tran.y);
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 2)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.position.tran.z - emcStatus->task.g5x_offset.tran.z - emcStatus->task.g92_offset.tran.z);
+    sprintf(buf, " %f", emcStatus->motion.traj.position.tran.z - emcStatus->task.g5x_offset.tran.z - emcStatus->task.g92_offset.tran.z - emcStatus->task.toolOffset.tran.z);
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 3)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.position.a - emcStatus->task.g5x_offset.a - emcStatus->task.g92_offset.a);
+    sprintf(buf, " %f", emcStatus->motion.traj.position.a - emcStatus->task.g5x_offset.a - emcStatus->task.g92_offset.a - emcStatus->task.toolOffset.a);
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 4)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.position.b - emcStatus->task.g5x_offset.b - emcStatus->task.g92_offset.b);
+    sprintf(buf, " %f", emcStatus->motion.traj.position.b - emcStatus->task.g5x_offset.b - emcStatus->task.g92_offset.b - emcStatus->task.toolOffset.b);
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 5)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.position.c - emcStatus->task.g5x_offset.c - emcStatus->task.g92_offset.c);
+    sprintf(buf, " %f", emcStatus->motion.traj.position.c - emcStatus->task.g5x_offset.c - emcStatus->task.g92_offset.c - emcStatus->task.toolOffset.c);
     strcat(context->outBuf, buf);
     }
   return rtNoError;
@@ -1842,27 +1848,27 @@ static cmdResponseType getRelActPos(char *s, connectionRecType *context)
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 0)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.tran.x - emcStatus->task.g5x_offset.tran.x - emcStatus->task.g92_offset.tran.x);
+    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.tran.x - emcStatus->task.g5x_offset.tran.x - emcStatus->task.g92_offset.tran.x - emcStatus->task.toolOffset.tran.x);
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 1)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.tran.y - emcStatus->task.g5x_offset.tran.y - emcStatus->task.g92_offset.tran.y);
+    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.tran.y - emcStatus->task.g5x_offset.tran.y - emcStatus->task.g92_offset.tran.y - emcStatus->task.toolOffset.tran.y);
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 2)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.tran.z - emcStatus->task.g5x_offset.tran.z - emcStatus->task.g92_offset.tran.z);
+    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.tran.z - emcStatus->task.g5x_offset.tran.z - emcStatus->task.g92_offset.tran.z - emcStatus->task.toolOffset.tran.z);
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 3)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.a - emcStatus->task.g5x_offset.a - emcStatus->task.g92_offset.a);
+    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.a - emcStatus->task.g5x_offset.a - emcStatus->task.g92_offset.a - emcStatus->task.toolOffset.a);
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 4)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.b - emcStatus->task.g5x_offset.b - emcStatus->task.g92_offset.b);
+    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.b - emcStatus->task.g5x_offset.b - emcStatus->task.g92_offset.b - emcStatus->task.toolOffset.b);
     strcat(context->outBuf, buf);
     }
   if ((axis == -1) || (axis == 5)) {
-    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.c - emcStatus->task.g5x_offset.c - emcStatus->task.g92_offset.c);
+    sprintf(buf, " %f", emcStatus->motion.traj.actualPosition.c - emcStatus->task.g5x_offset.c - emcStatus->task.g92_offset.c - emcStatus->task.toolOffset.c);
     strcat(context->outBuf, buf);
     }
   return rtNoError;
@@ -1874,17 +1880,19 @@ static cmdResponseType getJointPos(char *s, connectionRecType *context)
   int joint, i;
   char buf[16];
   
-  if (s == NULL) joint = -1; // Return all axes
+  if (s == NULL) joint = -1; // Return all joints
   else joint = atoi(s);
   if (joint == -1) {
     strcpy(context->outBuf, pJointPos);
-    for (i=0; i<6; i++) {
+    for (i = 0; i < EMCMOT_MAX_JOINTS; i++) {
       sprintf(buf, " %f", emcStatus->motion.joint[i].input);
       strcat(context->outBuf, buf);
       }
     }
-  else
+  else if (joint > 0 && joint < EMCMOT_MAX_JOINTS)
     sprintf(context->outBuf, "%s %d %f", pJointPos, joint, emcStatus->motion.joint[joint].input);
+  else
+    return rtStandardError;
   
   return rtNoError;
 }
@@ -1896,31 +1904,31 @@ static cmdResponseType getPosOffset(char *s, connectionRecType *context)
   
   if (s == NULL) {
     strcpy(context->outBuf, pPosOffset);
-    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.x + emcStatus->task.g92_offset.tran.x));
+    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.x + emcStatus->task.g92_offset.tran.x + emcStatus->task.toolOffset.tran.x));
     strcat(context->outBuf, buf);
-    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.y + emcStatus->task.g92_offset.tran.y));
+    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.y + emcStatus->task.g92_offset.tran.y + emcStatus->task.toolOffset.tran.y));
     strcat(context->outBuf, buf);
-    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.z + emcStatus->task.g92_offset.tran.z));
+    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.z + emcStatus->task.g92_offset.tran.z + emcStatus->task.toolOffset.tran.z));
     strcat(context->outBuf, buf);
-    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.a + emcStatus->task.g92_offset.a));
+    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.a + emcStatus->task.g92_offset.a + emcStatus->task.toolOffset.a));
     strcat(context->outBuf, buf);
-    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.b + emcStatus->task.g92_offset.b));
+    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.b + emcStatus->task.g92_offset.b + emcStatus->task.toolOffset.b));
     strcat(context->outBuf, buf);
-    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.c + emcStatus->task.g92_offset.c));
+    sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.c + emcStatus->task.g92_offset.c + emcStatus->task.toolOffset.c));
     strcat(context->outBuf, buf);
     }
   else
     {
       switch (s[0]) {
-        case 'X': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.x + emcStatus->task.g92_offset.tran.x)); break;
-        case 'Y': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.y + emcStatus->task.g92_offset.tran.y)); break;
-        case 'Z': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.z + emcStatus->task.g92_offset.tran.z)); break;
+        case 'X': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.x + emcStatus->task.g92_offset.tran.x + emcStatus->task.toolOffset.tran.x)); break;
+        case 'Y': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.y + emcStatus->task.g92_offset.tran.y + emcStatus->task.toolOffset.tran.y)); break;
+        case 'Z': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.tran.z + emcStatus->task.g92_offset.tran.z + emcStatus->task.toolOffset.tran.z)); break;
         case 'A': 
-        case 'R': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.a + emcStatus->task.g92_offset.a)); break;
+        case 'R': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.a + emcStatus->task.g92_offset.a + emcStatus->task.toolOffset.a)); break;
         case 'B': 
-        case 'P': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.b + emcStatus->task.g92_offset.b)); break;
+        case 'P': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.b + emcStatus->task.g92_offset.b + emcStatus->task.toolOffset.b)); break;
         case 'C': 
-        case 'W': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.c + emcStatus->task.g92_offset.c));
+        case 'W': sprintf(buf, " %f", convertLinearUnits(emcStatus->task.g5x_offset.c + emcStatus->task.g92_offset.c + emcStatus->task.toolOffset.c));
       }
       sprintf(context->outBuf, "%s %c %s", pPosOffset, s[0], buf);
     }
@@ -1935,7 +1943,7 @@ static cmdResponseType getJointLimit(char *s, connectionRecType *context)
   
   if (s == NULL) {
     strcpy(context->outBuf, pJointLimit);
-    for (i=0; i<6; i++) {
+    for (i = 0; i < EMCMOT_MAX_JOINTS; i++) {
       if (emcStatus->motion.joint[i].minHardLimit)
         strcpy(buf, " MINHARD");
       else
@@ -1954,6 +1962,7 @@ static cmdResponseType getJointLimit(char *s, connectionRecType *context)
   else
     {
       joint = atoi(s);
+      if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) return rtStandardError;
       if (emcStatus->motion.joint[joint].minHardLimit)
         strcpy(buf, "MINHARD");
       else
@@ -1971,6 +1980,46 @@ static cmdResponseType getJointLimit(char *s, connectionRecType *context)
   return rtNoError;
 }
 
+static cmdResponseType getJointLimits(char *s, connectionRecType *context)
+{
+  int j;
+
+  s = strtok(NULL, delims);
+
+  if (s == NULL || sscanf(s, "%d", &j) <= 0) {
+     sprintf(context->outBuf, "JOINT_LIMITS"
+	" %.3g %.3g"
+	" %.3g %.3g"
+	" %.3g %.3g"
+	" %.3g %.3g"
+	" %.3g %.3g"
+	" %.3g %.3g",
+	emcStatus->motion.joint[0].minPositionLimit,
+	emcStatus->motion.joint[0].maxPositionLimit,
+	emcStatus->motion.joint[1].minPositionLimit,
+	emcStatus->motion.joint[1].maxPositionLimit,
+	emcStatus->motion.joint[2].minPositionLimit,
+	emcStatus->motion.joint[2].maxPositionLimit,
+	emcStatus->motion.joint[3].minPositionLimit,
+	emcStatus->motion.joint[3].maxPositionLimit,
+	emcStatus->motion.joint[4].minPositionLimit,
+	emcStatus->motion.joint[4].maxPositionLimit,
+	emcStatus->motion.joint[5].minPositionLimit,
+	emcStatus->motion.joint[5].maxPositionLimit
+    );
+  } else {
+      if (j < 0 || j > EMCMOT_MAX_JOINTS) return rtStandardError;
+
+      sprintf(context->outBuf, "JOINT_LIMITS %d %.3g %.3g", j,
+	emcStatus->motion.joint[j].minPositionLimit,
+	emcStatus->motion.joint[j].maxPositionLimit
+      );
+  }
+  return rtNoError;
+}
+
+
+
 static cmdResponseType getJointFault(char *s, connectionRecType *context)
 {
   const char *pJointFault = "JOINT_FAULT";
@@ -1979,7 +2028,7 @@ static cmdResponseType getJointFault(char *s, connectionRecType *context)
   
   if (s == NULL) {
     strcpy(context->outBuf, pJointFault);
-    for (i=0; i<6; i++) {
+    for (i = 0; i < EMCMOT_MAX_JOINTS; i++) {
       if (emcStatus->motion.joint[i].fault)
         strcat(context->outBuf, " FAULT");
       else strcat(context->outBuf, " OK");
@@ -1987,6 +2036,7 @@ static cmdResponseType getJointFault(char *s, connectionRecType *context)
     }
   else {
       joint = atoi(s);
+      if (joint < 0 || joint > EMCMOT_MAX_JOINTS) return rtStandardError;
       if (emcStatus->motion.joint[joint].fault)
         strcpy(buf, "FAULT");
       else strcpy(buf, "OK");
@@ -2011,7 +2061,7 @@ static cmdResponseType getJointHomed(char *s, connectionRecType *context)
   
   if (s == NULL) {
     strcpy(context->outBuf, pJointHomed);
-    for (i=0; i<6; i++) {
+    for (i = 0; i < EMCMOT_MAX_JOINTS; i++) {
       if (emcStatus->motion.joint[i].homed)
         strcat(context->outBuf, " YES");
       else strcat(context->outBuf, " NO");
@@ -2019,6 +2069,7 @@ static cmdResponseType getJointHomed(char *s, connectionRecType *context)
     }
   else {
       joint = atoi(s);
+      if (joint < 0 || joint > EMCMOT_MAX_JOINTS) return rtStandardError;
       if (emcStatus->motion.joint[joint].homed)
         strcpy(buf, "YES");
       else strcpy(buf, "NO");
@@ -2043,7 +2094,7 @@ static cmdResponseType getProgramLine(char *s, connectionRecType *context)
   const char *pProgramLine = "PROGRAM_LINE %d";
   int lineNo;
   
-  if ((programStartLine< 0) || (emcStatus->task.readLine < programStartLine))
+  if ((programStartLine < 0) || (emcStatus->task.readLine < programStartLine))
     lineNo = emcStatus->task.readLine;
   else
     if (emcStatus->task.currentLine > 0)
@@ -2077,7 +2128,7 @@ static cmdResponseType getProgramCodes(char *s, connectionRecType *context)
   
   buf[0] = 0;
   strcpy(context->outBuf, pProgramCodes);
-  for (i=1; i<ACTIVE_G_CODES; i++) {
+  for (i = 1; i < ACTIVE_G_CODES; i++) {
       code = emcStatus->task.activeGCodes[i];
       if (code == -1) continue;
       if (code % 10) sprintf(buf, "G%.1f ", (double) code / 10.0);
@@ -2099,7 +2150,7 @@ static cmdResponseType getJointType(char *s, connectionRecType *context)
   
   if (s == NULL) {
     strcpy(context->outBuf, pJointType);
-    for (i=0; i<6; i++) {
+    for (i = 0; i < EMCMOT_MAX_JOINTS; i++) {
       switch (emcStatus->motion.joint[i].jointType) {
         case EMC_LINEAR: strcat(context->outBuf, " LINEAR"); break;
 	case EMC_ANGULAR: strcat(context->outBuf, " ANGULAR"); break;
@@ -2109,6 +2160,7 @@ static cmdResponseType getJointType(char *s, connectionRecType *context)
     }
   else {
       joint = atoi(s);
+      if (joint < 0 || joint > EMCMOT_MAX_JOINTS) return rtStandardError;
       switch (emcStatus->motion.joint[joint].jointType) {
         case EMC_LINEAR: strcpy(buf, " LINEAR"); break;
 	case EMC_ANGULAR: strcpy(buf, " ANGULAR"); break;
@@ -2382,6 +2434,50 @@ static cmdResponseType getOptionalStop(char *s, connectionRecType *context)
   return rtNoError;
 }
 
+static cmdResponseType getInputs(char *s, connectionRecType *context)
+{
+  int i, j, l;
+  char *p = context->outBuf;
+
+  s = strtok(NULL, delims);
+  if (s == NULL || sscanf(s, "%d", &i) <= 0) i = 0;
+  s = strtok(NULL, delims);
+  if (s == NULL || sscanf(s, "%d", &j) <= 0) j = EMCMOT_MAX_DIO-1;
+  if (i < 0 || j < 0 || i > j || j > EMCMOT_MAX_DIO-1) return rtStandardError;
+
+  p += l = sprintf(p, "INPUTS");
+  if (l < 0) return rtStandardError;
+
+  for (; i <= j; i++) {
+    p += l = sprintf(p, " %d", emcStatus->motion.synch_di[i]);
+    if (l < 0) return rtStandardError;
+  }
+
+  return rtNoError;
+}
+
+static cmdResponseType getOutputs(char *s, connectionRecType *context)
+{
+  int i, j, l;
+  char *p = context->outBuf;
+
+  s = strtok(NULL, delims);
+  if (s == NULL || sscanf(s, "%d", &i) <= 0) i = 0;
+  s = strtok(NULL, delims);
+  if (s == NULL || sscanf(s, "%d", &j) < 0) j = EMCMOT_MAX_DIO-1;
+  if (i < 0 || j < 0 || i > j || j > EMCMOT_MAX_DIO-1) return rtStandardError;
+
+  p += l = sprintf(p, "OUTPUTS");
+  if (l < 0) return rtStandardError;
+
+  for (; i <= j; i++) {
+    p += l = sprintf(p, " %d", emcStatus->motion.synch_do[i]);
+    if (l < 0) return rtStandardError;
+  }
+
+  return rtNoError;
+}
+
 int commandGet(connectionRecType *context)
 {
   const static char *setNakStr = "GET NAK\r\n";
@@ -2476,6 +2572,9 @@ int commandGet(connectionRecType *context)
     case scOverrideLimits: ret = getOverrideLimits(pch, context); break;
     case scSpindleOverride: ret = getSpindleOverride(pch, context); break;
     case scOptionalStop: ret = getOptionalStop(pch, context); break;
+    case scInputs: ret = getInputs(pch, context); break;
+    case scOutputs: ret = getOutputs(pch, context); break;
+    case scJointLimits: ret = getJointLimits(pch, context); break;
     case scUnknown: ret = rtStandardError;
     }
   switch (ret) {
@@ -2565,9 +2664,11 @@ static int helpGet(connectionRecType *context)
   strcat(context->outBuf, "    Feed_override\n\r");
   strcat(context->outBuf, "    Flood\n\r");
   strcat(context->outBuf, "    Inifile\n\r");
+  strcat(context->outBuf, "    Inputs [<first> [<last>]]\n\r");
   strcat(context->outBuf, "    Joint_fault\n\r");
   strcat(context->outBuf, "    Joint_homed\n\r");
   strcat(context->outBuf, "    Joint_limit\n\r");
+  strcat(context->outBuf, "    Joint_limits\n\r");
   strcat(context->outBuf, "    Joint_pos\n\r");
   strcat(context->outBuf, "    Joint_type\n\r");
   strcat(context->outBuf, "    Joint_units\n\r");
@@ -2581,6 +2682,7 @@ static int helpGet(connectionRecType *context)
   strcat(context->outBuf, "    Operator_display\n\r");
   strcat(context->outBuf, "    Operator_text\n\r");
   strcat(context->outBuf, "    Optional_stop\n\r");
+  strcat(context->outBuf, "    Outputs [<first> [<last>]]\n\r");
   strcat(context->outBuf, "    Override_limits\n\r");
   strcat(context->outBuf, "    Plat\n\r");
   strcat(context->outBuf, "    Pos_offset\n\r");

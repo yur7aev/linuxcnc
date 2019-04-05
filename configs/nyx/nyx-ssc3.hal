@@ -36,6 +36,10 @@ setp nyx.0.servo-00.pos-scale [JOINT_0]SCALE
 setp nyx.0.servo-01.pos-scale [JOINT_1]SCALE
 setp nyx.0.servo-02.pos-scale [JOINT_2]SCALE
 
+setp nyx.0.servo-00.vel-scale 100
+setp nyx.0.servo-01.vel-scale 100
+setp nyx.0.servo-02.vel-scale 100
+
 net x-pos-fb joint.0.motor-pos-fb <= nyx.0.servo-00.pos-fb
 net y-pos-fb joint.1.motor-pos-fb <= nyx.0.servo-01.pos-fb
 net z-pos-fb joint.2.motor-pos-fb <= nyx.0.servo-02.pos-fb

@@ -304,10 +304,12 @@ void yssc2_process(YSSC2 *y)
 
 			switch (fb->state & Y_TYPE) {
 			case Y_TYPE_ORIGIN:
-				y->amp[a].fbres = fb->fbres;
-				y->amp[a].cyc0 = fb->cyc0;
-				y->amp[a].abs0 = fb->abs0;
-				//rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d fbres=%d", a, y->amp[a].fbres);
+				if (y->amp[a].fbres == 0) {
+					y->amp[a].fbres = fb->fbres;
+					y->amp[a].cyc0 = fb->cyc0;
+					y->amp[a].abs0 = fb->abs0;
+					//rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d fbres=%d cyc=%d abs=%d", a, y->amp[a].fbres, y->amp[a].cyc0, y->amp[a].abs0);
+				}
 				break;
 			case Y_TYPE_PARAM: {
 				nyx_param_req *pq = (nyx_param_req*)fb;

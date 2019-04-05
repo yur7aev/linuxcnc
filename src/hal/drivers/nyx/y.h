@@ -68,6 +68,7 @@ int yssc2_fb_seq(YSSC2 *y)		{ return y->dpram->fb.seq; }
 double yssc2_irq_time_us(YSSC2 *y)	{ return y->dpram->fb.irq_time / 45.0; }
 ///double yssc2_dbg(YSSC2 *y, int n)	{ return 0; } ///y->dpram->dbg[n]; }
 double yssc2_dbg(YSSC2 *y, int n)	{ return y->dpram->fb.servo_fb[n].state; }
+double yssc2_rx_time(YSSC2 *y, int n)	{ return y->dpram->fb.servo_fb[n].smth3; }
 
 int yssc2_has_fb(YSSC2 *y)		{ return (y->dpram->fb.seq & YS_FB) && 1; }
 int yssc2_valid(YSSC2 *y, int a)	{ return (y->dpram->fb.valid & (1<<a)) && (y->dpram->fb.servo_fb[a].state & YF_VALID); }
