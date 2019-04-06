@@ -1,0 +1,39 @@
+.TH TANGENT "9" "2019-03-28" "LinuxCNC Documentation" "HAL Component"
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.SH NAME
+
+tangent \- Output tangent angle in degrees
+.SH SYNOPSIS
+.HP
+.B loadrt tangent [count=\fIN\fB|names=\fIname1\fB[,\fIname2...\fB]]
+
+.SH FUNCTIONS
+.TP
+\fBtangent.\fIN\fB\fR
+(requires a floating-point thread)
+
+.SH PINS
+.TP
+.B tangent.\fIN\fB.x\fR
+float in
+\fR
+.TQ
+.B tangent.\fIN\fB.y\fR
+float in
+\fR
+.TQ
+.B tangent.\fIN\fB.follow\fR
+bit in
+\fR
+.TQ
+.B tangent.\fIN\fB.a\fR
+float out
+\fR
+.SH LICENSE
+
+GPL

@@ -1,0 +1,23 @@
+[[cha:nyx-driver]]
+
+= NYX Driver
+
+YSSCxP SSCNET interface card driver.
+
+== Installing
+
+----
+loadrt nyx
+----
+
+== Pins
+
+* '(bit) ax5214.<boardnum>.out-<pinnum>' -- Drives a physical output pin.
+
+== Parameters
+
+* '(bit) ax5214.<boardnum>.out-<pinnum>-invert' -- Inverts an output pin.
+== Functions
+
+* '(funct) nyx.<boardnum>' -- Process all
+
