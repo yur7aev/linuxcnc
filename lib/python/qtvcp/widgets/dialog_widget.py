@@ -15,9 +15,9 @@
 
 import os
 
-from PyQt5.QtWidgets import QMessageBox, QFileDialog, QDesktopWidget, \
-        QDialog, QDialogButtonBox, QVBoxLayout, QPushButton, QHBoxLayout, \
-        QHBoxLayout, QLineEdit, QPushButton
+from PyQt5.QtWidgets import (QMessageBox, QFileDialog, QDesktopWidget,
+        QDialog, QDialogButtonBox, QVBoxLayout, QPushButton, QHBoxLayout,
+        QHBoxLayout, QLineEdit, QPushButton, QDialogButtonBox)
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtProperty
 
@@ -28,6 +28,7 @@ from qtvcp.widgets.camview_widget import CamView
 from qtvcp.widgets.macro_widget import MacroTab
 from qtvcp.widgets.versa_probe import VersaProbe
 from qtvcp.widgets.entry_widget import TouchInputWidget
+from qtvcp.widgets.calculator import Calculator
 from qtvcp.lib.notify import Notify
 from qtvcp.core import Status, Action, Info
 from qtvcp import logger
@@ -47,53 +48,101 @@ LOG = logger.getLogger(__name__)
 # LOG.setLevel(logger.INFO) # One of DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 
-class LcncDialog(QMessageBox):
+class LcncDialog(QMessageBox, _HalWidgetBase):
     def __init__(self, parent=None):
         super(LcncDialog, self).__init__(parent)
         self.setTextFormat(Qt.RichText)
         self.setText('<b>Sample Text?</b>')
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setIcon(QMessageBox.Critical)
-        self.setDetailedText('Sample Detail Text')
+        self.setDetailedText('')
         self.OK_TYPE = 1
         self.YN_TYPE = 0
         self._state = False
         self._color = QColor(0, 0, 0, 150)
         self.focus_text = ''
+        self._request_name = 'MESSAGE'
         self.hide()
+
+    def _hal_init(self):
+        x = self.geometry().x()
+        y = self.geometry().y()
+        w = self.geometry().width()
+        h = self.geometry().height()
+        geo = '%s %s %s %s'% (x,y,w,h)
+        self._default_geometry=[x,y,w,h]
+        if self.PREFS_:
+            self._geometry_string = self.PREFS_.getpref('LcncDialog-geometry', geo, str, 'DIALOG_OPTIONS')
+        else:
+            self._geometry_string = 'default'
+        self.topParent = self.QTVCP_INSTANCE_
+        STATUS.connect('dialog-request', self._external_request)
+
+    # this processes STATUS called dialog requests
+    # We check the cmd to see if it was for us
+    # then we check for a id string
+    # if all good show the dialog
+    # and then send back the dialog response via a general message
+    def _external_request(self, w, message):
+        if message.get('NAME') == self._request_name:
+            t = message.get('TITLE')
+            if t:
+                self.title = t
+            else:
+                self.title = 'Entry'
+            mess = message.get('MESSAGE') or None
+            more = message.get('MORE') or None
+            details = message.get('DETAILS') or None
+            ok_type = message.get('TYPE')
+            if ok_type == None: ok_type = True
+            icon = message.get('ICON') or 'INFO'
+            pin = message.get('PINNAME') or None
+            ftext = message.get('FOCUS_TEXT') or None
+            fcolor = message.get('FOCUS_COLOR') or None
+            alert = message.get('PLAY_ALERT') or None
+            rtrn = self.showdialog(mess, more, details, ok_type, 
+                                    icon, pin, ftext, fcolor, alert)
+            message['RETURN'] = rtrn
+            STATUS.emit('general', message)
 
     def showdialog(self, message, more_info=None, details=None, display_type=1,
                    icon=QMessageBox.Information, pinname=None, focus_text=None,
                    focus_color=None, play_alert=None):
-        if focus_text:
-            self.focus_text = focus_text
-        if focus_color:
-            self._color = focus_color
-        self.OK_TYPE = 1
-        self.YN_TYPE = 0
-        self.QUESTION = QMessageBox.Question
-        self.INFO = QMessageBox.Information
-        self.WARNING = QMessageBox.Warning
-        self.CRITICAL = QMessageBox.Critical
+
         self.setWindowModality(Qt.ApplicationModal)
         self.setWindowFlags(self.windowFlags() | Qt.Tool |
                             Qt.FramelessWindowHint | Qt.Dialog |
                             Qt.WindowStaysOnTopHint | Qt.WindowSystemMenuHint)
                             #Qt.X11BypassWindowManagerHint
+
+        if focus_text is not None:
+            self.focus_text = focus_text
+        if focus_color is not None:
+            color = focus_color
+        else:
+            color = self._color
+
+        if icon == 'QUESTION': icon = QMessageBox.Question
+        elif icon == 'INFO' or isinstance(icon,str): icon = QMessageBox.Information
+        elif icon == 'WARNING': icon = QMessageBox.Warning
+        elif icon == 'CRITICAL': icon = QMessageBox.Critical
         self.setIcon(icon)
+
         self.setText('<b>%s</b>' % message)
-        if more_info:
+        if more_info is not None:
             self.setInformativeText(more_info)
         else:
             self.setInformativeText('')
-        if details:
+        if details is not None:
             self.setDetailedText(details)
+        else:
+            self.setDetailedText('')
         if display_type == self.OK_TYPE:
             self.setStandardButtons(QMessageBox.Ok)
         else:
             self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.buttonClicked.connect(self.msgbtn)
-        STATUS.emit('focus-overlay-changed', True, self.focus_text, self._color)
+        STATUS.emit('focus-overlay-changed', True, self.focus_text, color)
         if play_alert:
             STATUS.emit('play-alert', play_alert)
         retval = self.exec_()
@@ -265,13 +314,13 @@ class FileDialog(QFileDialog, _HalWidgetBase):
     def __init__(self, parent=None):
         super(FileDialog, self).__init__(parent)
         self._state = False
-        self._request_name = 'FILE'
+        self._load_request_name = 'LOAD'
+        self._save_request_name = 'SAVE'
         self._color = QColor(0, 0, 0, 150)
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         self.setOptions(options)
         self.setWindowModality(Qt.ApplicationModal)
-        self.setFileMode(QFileDialog.ExistingFile)
         exts = INFO.get_qt_filter_extensions()
         self.setNameFilter(exts)
         self.default_path = (os.path.join(os.path.expanduser('~'), 'linuxcnc/nc_files/examples'))
@@ -287,7 +336,6 @@ class FileDialog(QFileDialog, _HalWidgetBase):
             self._geometry_string = self.PREFS_.getpref('FileDialog-geometry', geo, str, 'DIALOG_OPTIONS')
         else:
             self._geometry_string = 'default'
-        STATUS.connect('load-file-request', lambda w: self.load_dialog())
         STATUS.connect('dialog-request', self._external_request)
         if self.PREFS_:
             self.play_sound = self.PREFS_.getpref('fileDialog_play_sound', True, bool, 'DIALOG_OPTIONS')
@@ -298,15 +346,22 @@ class FileDialog(QFileDialog, _HalWidgetBase):
             self.play_sound = False
 
     def _external_request(self, w, message):
-        if message['NAME'] == self._request_name:
-            if message['ID']:
+        if message.get('NAME') == self._load_request_name:
+            # if there is an ID then a file name response is expected
+            if message.get('ID'):
                 message['RETURN'] = self.load_dialog(True)
                 STATUS.emit('general', message)
             else:
                 self.load_dialog()
+        elif message.get('NAME') == self._save_request_name:
+            if message.get('ID'):
+                message['RETURN'] = self.save_dialog()
+                STATUS.emit('general', message)
 
     def load_dialog(self, return_path=False):
-
+        self.setFileMode(QFileDialog.ExistingFile)
+        self.setAcceptMode(QFileDialog.AcceptOpen)
+        self.setWindowTitle('Open')
         STATUS.emit('focus-overlay-changed', True, 'Open Gcode', self._color)
         if self.play_sound:
             STATUS.emit('play-alert', self.sound_type)
@@ -323,6 +378,28 @@ class FileDialog(QFileDialog, _HalWidgetBase):
                 self.PREFS_.putpref('last_file_path', path, str, 'BOOK_KEEPING')
             ACTION.OPEN_PROGRAM(fname)
             STATUS.emit('update-machine-log', 'Loaded: ' + fname, 'TIME')
+        return fname
+
+    def save_dialog(self):
+        self.setFileMode(QFileDialog.AnyFile)
+        self.setAcceptMode(QFileDialog.AcceptSave)
+        self.setWindowTitle('Save')
+        STATUS.emit('focus-overlay-changed', True, 'Save Gcode', self._color)
+        if self.play_sound:
+            STATUS.emit('play-alert', self.sound_type)
+        self.calculate_placement()
+        fname = None
+        if (self.exec_()):
+            fname = self.selectedFiles()[0]
+            path = self.directory().absolutePath()
+            self.setDirectory(path)
+        else:
+            fname = None
+        STATUS.emit('focus-overlay-changed', False, None, None)
+        record_geometry(self,'FileDialog-geometry')
+        if fname: 
+            if self.PREFS_:
+                self.PREFS_.putpref('last_file_path', path, str, 'BOOK_KEEPING')
         return fname
 
     def calculate_placement(self):
@@ -872,7 +949,7 @@ class EntryDialog(QDialog, _HalWidgetBase):
         self.Num = QLineEdit()
         # actiate touch input
         self.Num.keyboard_type = 'numeric'
-        self.Num.returnPressed.connect(lambda: self.close())
+        self.Num.returnPressed.connect(lambda: self.accept())
 
         gl = QVBoxLayout()
         gl.addWidget(self.Num)
@@ -880,8 +957,8 @@ class EntryDialog(QDialog, _HalWidgetBase):
         self.bBox = QDialogButtonBox()
         self.bBox.addButton('Apply', QDialogButtonBox.AcceptRole)
         self.bBox.addButton('Cancel', QDialogButtonBox.RejectRole)
-        self.bBox.rejected.connect(lambda: self.close())
-        self.bBox.accepted.connect(lambda: self.close())
+        self.bBox.rejected.connect(self.reject)
+        self.bBox.accepted.connect(self.accept)
 
         gl.addWidget(self.bBox)
         o.setLayout(gl)
@@ -930,10 +1007,12 @@ class EntryDialog(QDialog, _HalWidgetBase):
         STATUS.emit('focus-overlay-changed', False, None, None)
         record_geometry(self,'EntryDialog-geometry')
         LOG.debug("Value of pressed button: {}".format(retval))
-        try:
-            return float(self.Num.text())
-        except:
-            return None
+        if retval is not None:
+            try:
+                return float(self.Num.text())
+            except Exception as e:
+                print e
+        return None
 
     def calculate_placement(self):
         geometry_parsing(self,'EntryDialog-geometry')
@@ -946,6 +1025,84 @@ class EntryDialog(QDialog, _HalWidgetBase):
         self._color = QColor(0, 0, 0, 150)
 
     overlay_color = pyqtProperty(QColor, getColor, setColor)
+
+############################################
+# Calculator Dialog
+############################################
+class CalculatorDialog(Calculator, _HalWidgetBase):
+    def __init__(self, parent=None):
+        super(CalculatorDialog, self).__init__(parent)
+        self._color = QColor(0, 0, 0, 150)
+        self.play_sound = False
+        self._request_name = 'CALCULATOR'
+        self.title = 'Calculator Entry'
+        self.setWindowFlags(self.windowFlags() | Qt.Tool |
+                            Qt.Dialog | Qt.WindowStaysOnTopHint |
+                            Qt.WindowSystemMenuHint)
+
+    def _hal_init(self):
+        x = self.geometry().x()
+        y = self.geometry().y()
+        w = self.geometry().width()
+        h = self.geometry().height()
+        geo = '%s %s %s %s'% (x,y,w,h)
+        self._default_geometry=[x,y,w,h]
+        if self.PREFS_:
+            self._geometry_string = self.PREFS_.getpref('CalculatorDialog-geometry', geo, str, 'DIALOG_OPTIONS')
+        else:
+            self._geometry_string = 'default'
+        if self.PREFS_:
+            self.play_sound = self.PREFS_.getpref('CalculatorDialog_play_sound', True, bool, 'DIALOG_OPTIONS')
+            self.sound_type = self.PREFS_.getpref('CalculatorDialog_sound_type', 'RING', str, 'DIALOG_OPTIONS')
+        else:
+            self.play_sound = False
+        STATUS.connect('dialog-request', self._external_request)
+
+    # this processes STATUS called dialog requests
+    # We check the cmd to see if it was for us
+    # then we check for a id string
+    # if all good show the dialog
+    # and then send back the dialog response via a general message
+    def _external_request(self, w, message):
+        if message.get('NAME') == self._request_name:
+            t = message.get('TITLE')
+            if t:
+                self.title = t
+            else:
+                self.title = 'Entry'
+            num = self.showdialog()
+            message['RETURN'] = num
+            STATUS.emit('general', message)
+
+    def showdialog(self):
+        STATUS.emit('focus-overlay-changed', True, 'Origin Setting', self._color)
+        self.setWindowTitle(self.title);
+        if self.play_sound:
+            STATUS.emit('play-alert', self.sound_type)
+        self.calculate_placement()
+        retval = self.exec_()
+        STATUS.emit('focus-overlay-changed', False, None, None)
+        record_geometry(self,'EntryDialog-geometry')
+        LOG.debug("Value of pressed button: {}".format(retval))
+        if retval is not None:
+            try:
+                return float(self.display.text())
+            except:
+                pass
+        return None
+
+    def calculate_placement(self):
+        geometry_parsing(self,'EntryDialog-geometry')
+
+    def getColor(self):
+        return self._color
+    def setColor(self, value):
+        self._color = value
+    def resetState(self):
+        self._color = QColor(0, 0, 0, 150)
+
+    overlay_color = pyqtProperty(QColor, getColor, setColor)
+
 
 # This general function parses the geometry string and places
 # the dialog based on what it finds.
@@ -1015,11 +1172,11 @@ def record_geometry(widget, prefname):
 ################################
 def main():
     import sys
-    from PyQt4.QtGui import QApplication
+    from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    widget = ToolDialog()
-    widget.show()
+    widget = CalculatorDialog()
+    widget.showdialog()
     sys.exit(app.exec_())
 if __name__ == "__main__":
     main()

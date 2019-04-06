@@ -45,7 +45,8 @@ class AxisToolButton(QToolButton, _HalWidgetBase):
         self._last = 0
         self._block_signal = False
         self._halpin_option = True
-        self.request_dialog_code = 'ENTRY'
+        self.dialog_code = 'ENTRY'
+        self.display_units_mm = 0
 
         SettingMenu = QMenu()
         exitButton = QAction(QIcon('exit24.png'), 'Zero', self)
@@ -67,7 +68,7 @@ class AxisToolButton(QToolButton, _HalWidgetBase):
         def homed_on_test():
             return (STATUS.machine_is_on()
                     and (STATUS.is_all_homed() or INFO.NO_HOME_REQUIRED))
-
+        STATUS.connect('metric-mode-changed', self._switch_units)
         STATUS.connect('state-off', lambda w: self.setEnabled(False))
         STATUS.connect('state-estop', lambda w: self.setEnabled(False))
         STATUS.connect('interp-idle', lambda w: self.setEnabled(homed_on_test()))
@@ -90,7 +91,7 @@ class AxisToolButton(QToolButton, _HalWidgetBase):
     def SetOrigin(self):
         axis, now = self._a_from_j(self._joint)
         if axis:
-            mess = {'NAME':self.request_dialog_code,'ID':'%s__' % self.objectName(),
+            mess = {'NAME':self.dialog_code,'ID':'%s__' % self.objectName(),
             'AXIS':axis,'CURRENT':now,'TITLE':'Set %s Origin'% axis}
             STATUS.emit('dialog-request', mess)
             LOG.debug('message sent:{}'.format (mess))
@@ -99,8 +100,8 @@ class AxisToolButton(QToolButton, _HalWidgetBase):
     def return_value(self, w, message):
         num = message['RETURN']
         code = bool(message['ID'] == '%s__'% self.objectName())
-        name = bool(message['NAME'] == self.request_dialog_code)
-        if num and code and name:
+        name = bool(message['NAME'] == self.dialog_code)
+        if num is not None and code and name:
             LOG.debug('message return:{}'.format (message))
             axis = message['AXIS']
             self._last = message['CURRENT']
@@ -137,6 +138,8 @@ class AxisToolButton(QToolButton, _HalWidgetBase):
             LOG.error("can't zero origin for specified joint {}".format(jnum))
             return None, None
         p,r,d = STATUS.get_position()
+        if self.display_units_mm != INFO.MACHINE_IS_METRIC:
+            r = INFO.convert_units_9(r)
         return axis, r[jnum]
 
     def SelectAxis(self):
@@ -154,6 +157,11 @@ class AxisToolButton(QToolButton, _HalWidgetBase):
             if self._halpin_option and self._joint != -1:
                 self.hal_pin.set(False)
 
+    def _switch_units(self, widget, data):
+        self.display_units_mm = data
+        if self.display_units_mm != INFO.MACHINE_IS_METRIC:
+            self._last = INFO.convert_units(self._last)
+
     #########################################################################
     # This is how designer can interact with our widget properties.
     # designer will show the pyqtProperty properties in the editor
@@ -169,6 +177,7 @@ class AxisToolButton(QToolButton, _HalWidgetBase):
         return self._joint
     def reset_joint(self):
         self._joint = -1
+    joint_number = pyqtProperty(int, get_joint, set_joint, reset_joint)
 
     def set_halpin_option(self, value):
         self._halpin_option = value
@@ -176,9 +185,15 @@ class AxisToolButton(QToolButton, _HalWidgetBase):
         return self._halpin_option
     def reset_halpin_option(self):
         self._halpin_option = True
-
-    joint_number = pyqtProperty(int, get_joint, set_joint, reset_joint)
     halpin_option = pyqtProperty(bool, get_halpin_option, set_halpin_option, reset_halpin_option)
+
+    def set_dialog_code(self, data):
+        self.dialog_code = data
+    def get_dialog_code(self):
+        return self.dialog_code
+    def reset_dialog_code(self):
+        self.dialog_code = 'ENTRY'
+    dialog_code_string = pyqtProperty(str, get_dialog_code, set_dialog_code, reset_dialog_code)
 
 # for testing without editor:
 def main():

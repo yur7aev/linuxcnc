@@ -42,7 +42,7 @@ except ImportError as e:
     sys.exit(1)
 
 from qtvcp.widgets.widget_baseclass import _HalWidgetBase
-from qtvcp.core import Status, Info
+from qtvcp.core import Status, Info, Action
 from qtvcp import logger
 
 # Instantiate the libraries with global reference
@@ -51,6 +51,7 @@ from qtvcp import logger
 # LOG is for running code logging
 STATUS = Status()
 INFO = Info()
+ACTION = Action()
 LOG = logger.getLogger(__name__)
 
 # Set the log level for this module
@@ -314,7 +315,6 @@ class GcodeDisplay(EditorBase, _HalWidgetBase):
         self.auto_show_manual = False
         self.auto_show_preference = True
         self.last_line = None
-        #self.setEolVisibility(True)
 
     def _hal_init(self):
         self.cursorPositionChanged.connect(self.line_changed)
@@ -402,15 +402,18 @@ class GcodeDisplay(EditorBase, _HalWidgetBase):
     def emit_percent(self, percent):
         pass
 
-    def set_line_number(self, w, line):
-        pass
+    def set_line_number(self, line):
+        STATUS.emit('gcode-line-selected', line)
 
     def line_changed(self, line, index):
-        #LOG.debug('Line changed: {}'.format(STATUS.is_auto_mode()))
-        self.line_text = str(self.text(line)).strip()
-        self.line = line
-        if STATUS.is_mdi_mode() and STATUS.is_auto_running() is False:
-            STATUS.emit('mdi-line-selected', self.line_text, self._last_filename)
+        #LOG.debug('Line changed: {}'.format(line))
+        if STATUS.is_auto_running() is False:
+            self.markerDeleteAll(-1)
+            if STATUS.is_mdi_mode():
+                line_text = str(self.text(line)).strip()
+                STATUS.emit('mdi-line-selected', line_text, self._last_filename)
+            else:
+                self.set_line_number(line)
 
     def select_lineup(self, w):
         line, col = self.getCursorPosition()
@@ -444,6 +447,10 @@ class GcodeEditor(QWidget, _HalWidgetBase):
 
     def __init__(self, parent=None):
         super(GcodeEditor, self).__init__(parent)
+        self.load_dialog_code = 'LOAD'
+        self.save_dialog_code = 'SAVE'
+        STATUS.connect('general',self.returnFromDialog)
+
         self.isCaseSensitive = 0
 
         self.setMinimumSize(QSize(300, 200))    
@@ -455,9 +462,11 @@ class GcodeEditor(QWidget, _HalWidgetBase):
 
         # make editor
         self.editor = GcodeDisplay(self)
+
         # class patch editor's function to ours
         # so we get the lines percent update
         self.editor.emit_percent = self.emit_percent
+
         self.editor.setReadOnly(True)
         self.editor.setModified(False)
 
@@ -635,8 +644,9 @@ class GcodeEditor(QWidget, _HalWidgetBase):
     def openCall(self):
         self.open()
     def open(self):
-        f = self.getFileName()
-        self.editor.load_text(f)
+        self.getFileName()
+    def openReturn(self,f):
+        ACTION.OPEN_PROGRAM(f)
         self.editor.setModified(False)
 
     def pythonLexerCall(self):
@@ -657,7 +667,11 @@ class GcodeEditor(QWidget, _HalWidgetBase):
     def saveCall(self):
         self.save()
     def save(self):
-        self.saveFile()
+        self.getSaveFileName()
+    def saveReturn(self, fname):
+        ACTION.SAVE_PROGRAM(self.editor.text(), fname)
+        self.editor.setModified(False)
+        ACTION.OPEN_PROGRAM(fname)
 
     def undoCall(self):
         self.undo()
@@ -682,8 +696,27 @@ class GcodeEditor(QWidget, _HalWidgetBase):
         self.editor.setReadOnly(True)
 
     def getFileName(self):
-        name = QFileDialog.getOpenFileName(self, 'Open File')
-        return str(name[0])
+        mess = {'NAME':self.load_dialog_code,'ID':'%s__' % self.objectName(),
+            'TITLE':'Load Editor'}
+        STATUS.emit('dialog-request', mess)
+
+    def getSaveFileName(self):
+        mess = {'NAME':self.save_dialog_code,'ID':'%s__' % self.objectName(),
+            'TITLE':'Save Editor'}
+        STATUS.emit('dialog-request', mess)
+
+    # process the STATUS return message
+    def returnFromDialog(self, w, message):
+        if message.get('NAME') == self.load_dialog_code:
+            path = message.get('RETURN')
+            code = bool(message.get('ID') == '%s__'% self.objectName())
+            if path and code:
+                self.openReturn(path)
+        elif message.get('NAME') == self.save_dialog_code:
+            path = message.get('RETURN')
+            code = bool(message.get('ID') == '%s__'% self.objectName())
+            if path and code:
+                self.saveReturn(path)
 
     def killCheck(self):
         choice = QMessageBox.question(self, 'Warning!!',
@@ -693,16 +726,6 @@ class GcodeEditor(QWidget, _HalWidgetBase):
             return True
         else:
             return False
-
-    def saveFile(self):
-        if self.editor.text() == '': return
-        name = QFileDialog.getSaveFileName(self, 'Save File')
-        print name
-        if name[0]:
-            file = open(name[0],'w')
-            file.write(self.editor.text())
-            file.close()
-            self.editor.setModified(False)
 
     def emit_percent(self, percent):
         self.percentDone.emit(percent)
