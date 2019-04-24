@@ -115,7 +115,7 @@ static int yssc2_pci_probe(struct rtapi_pci_dev *dev, const struct rtapi_pci_dev
 	y->errors_shown = 0;
 	freq_init(y);
 	y->was_ready = 0;
-	memset(y->index_req, 0, sizeof(y->index_req));
+	y->prev_fb_seq = 0;
 
 	y->dev = dev;
 	rtapi_pci_set_drvdata(dev, y);
@@ -347,18 +347,14 @@ void yssc2_receive(YSSC2 *y)
 	y->iomem->jtag = 0;
 
 	if (nodma & 2) {
-		y->_status_falling = y->dpram->fb.seq & ~y->iomem->dpram.fb.seq;
-		y->dpram->magic = y->iomem->dpram.magic;
-		//memcpy(&y->dpram->fb, &y->iomem->dpram.fb, sizeof(nyx_dp_fb));
+		y->dpram->magic = y->iomem->dpram.magic;	// ???
 		memcpy(&y->dpram->fb, (void*)&y->iomem->dpram.fb, offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * y->axes);
 	} else {
 		size_t offs = offsetof(struct nyx_dpram, fb);	// should be 512
-		y->_status_falling = y->dpram->fb.seq & ~y->iomem->dpram.fb.seq;
-		y->dpram->magic = y->iomem->dpram.magic;
+		y->dpram->magic = y->iomem->dpram.magic;	// ???
 
 		y->iomem->dma_dst = y->dpram_bus_addr + offs;
 		y->iomem->dma_src = offs;	// start of fb in dpram
-		//y->iomem->dma_len = sizeof(nyx_dp_fb);
 		y->iomem->dma_len = offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * y->axes;
 		y->iomem->jtag = 0x40;    // start DMA transfer ram write <- pci
 
@@ -367,6 +363,10 @@ void yssc2_receive(YSSC2 *y)
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: DMA mem write error\n");
 		}
 	}
+
+	y->dpram->cmd.seq =
+		(y->dpram->cmd.seq & ~YS_SEQ) |
+		(y->dpram->fb.seq  &  YS_SEQ);
 }
 
 void yssc2_process(YSSC2 *y)
@@ -415,16 +415,12 @@ int yssc2_transmit(YSSC2 *y)
 	if (y == NULL) return -1;
 	if (y->iomem == NULL) return -1;
 
+	y->prev_fb_seq = y->dpram->fb.seq;
 	if (nodma & 1) {
-		y->dpram->cmd.seq = (y->dpram->fb.seq & YS_SEQ);
-		y->iomem->dpram.fb.seq = y->dpram->fb.seq;	// index request bits
-		//memcpy(&y->iomem->dpram.cmd, &y->dpram->cmd, sizeof(nyx_dp_cmd));
 		memcpy((void*)&y->iomem->dpram.cmd, &y->dpram->cmd, offsetof(struct nyx_dp_cmd, servo_cmd) + sizeof(nyx_servo_cmd) * y->axes);
 	} else {
 		size_t offs = offsetof(struct nyx_dpram, cmd);	// should be 256
 
-		y->dpram->cmd.seq = (y->dpram->fb.seq & YS_SEQ);
-		y->iomem->dpram.fb.seq = y->dpram->fb.seq;	// index request bits
 		y->iomem->dma_dst = y->dpram_bus_addr + offs;
 		y->iomem->dma_src = offs;	// start of cmd in dpram
 		///y->iomem->dma_len = sizeof(nyx_dp_cmd);

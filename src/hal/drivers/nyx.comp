@@ -417,9 +417,8 @@ FUNCTION(_)
 	for (a = 0; a < 2; a++) {
 		int c;
 
-		if (!y->index_req[a] && encoder_index_enable(a)) yssc2_index_req(y, a);	// rising
-		y->index_req[a] = encoder_index_enable(a);
-		if (yssc2_falling_index(y, a)) encoder_index_enable(a) = 0;
+		if (yssc2_index_falling(y, a)) encoder_index_enable(a) = 0;
+		yssc2_index_req(y, a, encoder_index_enable(a));	// rising
 
 		encoder_counts(a) = c = yssc2_enc(y, a);
 		encoder_pos(a) = c / encoder_cpr(a);

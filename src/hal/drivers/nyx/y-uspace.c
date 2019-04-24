@@ -45,36 +45,6 @@ void freq_init(YSSC2 *y)
 	y->freq.sum = 0;
 }
 
-/*
-{
-		uint32_t magic = y->iomem->dpram.magic;
-		int rev_min = magic & 0xff;
-		int rev_maj = (magic & 0xff00) >> 8;
-
-		if (magic != (0x55c20000 | (NYX_VER_MAJ<<8) | NYX_VER_MIN)) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: this driver v%d.%d is not compatible with YSSCxP (%x) v%d.%d at %s\n",
-					NYX_VER_MAJ, NYX_VER_MIN, magic, rev_maj, rev_min, rtapi_pci_name(dev));
-			r = -ENODEV;
-			goto fail1;
-		}
-
-	y->initial_delay = 1125 * 3;	// time to wait for sync
-	y->errors_shown = 0;
-	freq_init(y);
-	y->was_ready = 0;
-	memset(y->index_req, 0, sizeof(y->index_req));
-
-	y->dev = dev;
-	rtapi_pci_set_drvdata(dev, y);
-
-	y->dpram->magic = y->iomem->dpram.magic;
-	y->dpram->config = y->iomem->dpram.config;
-
-	++num_boards;
-	return 0;
-}
-*/
-
 int load_params(struct servo_params *p, const char *name, int axes);
 void free_params(struct servo_params *p, int axes);
 
@@ -104,7 +74,7 @@ int yssc2_init()
 	y->errors_shown = 0;
 	freq_init(y);
 	y->was_ready = 0;
-	memset(y->index_req, 0, sizeof(y->index_req));
+	y->prev_fb_seq = 0;
 
 	return 0;
 }
@@ -286,12 +256,13 @@ void yssc2_receive(YSSC2 *y)
 	if (y == NULL) return;
 
 	lseek(y->fd, offsetof(struct nyx_dpram, fb), SEEK_SET);
-	//read(y->fd, &y->dpram->fb, offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * y->axes);
 	rc = read(y->fd, &y->dpram->fb, offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * y->axes);
 	if (rc <= 0)
 		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:read err %d", rc);
-	y->_status_falling = y->dpram->cmd.seq & ~y->dpram->fb.seq;
-	y->dpram->cmd.seq = y->dpram->fb.seq;
+
+	y->dpram->cmd.seq =
+		(y->dpram->cmd.seq & ~YS_SEQ) |
+		(y->dpram->fb.seq  &  YS_SEQ);
 }
 
 void yssc2_process(YSSC2 *y)
@@ -340,8 +311,9 @@ int yssc2_transmit(YSSC2 *y)
 	int rc;
 	if (y == NULL) return -1;
 
+	y->prev_fb_seq = y->dpram->fb.seq;
+
 	lseek(y->fd, offsetof(struct nyx_dpram, cmd), SEEK_SET);
-	//write(y->fd, &y->dpram->fb, offsetof(struct nyx_dp_cmd, servo_cmd) + sizeof(nyx_servo_cmd) * y->axes);
 	rc = write(y->fd, &y->dpram->cmd, offsetof(struct nyx_dp_cmd, servo_cmd) + sizeof(nyx_servo_cmd) * y->axes);
 	if (rc <= 0)
 		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:write %d\n", rc);

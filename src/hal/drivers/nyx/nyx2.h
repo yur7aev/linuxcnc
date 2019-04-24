@@ -20,9 +20,13 @@
 #define NYX_H
 
 #define NYX_VER_MAJ 2
-#define NYX_VER_MIN 1
+#define NYX_VER_MIN 2
+#define NYX_VER_REV 0
 
+#ifndef NYX_AXES
 #define NYX_AXES 10
+#endif
+
 #define MAX_AXES 18
 
 // per-axis nyx_servo_cmd.flags
@@ -45,11 +49,11 @@
 #define YC_REQ_HOME	0x00008000
 #define YC_WR_PARAM	0x00010000
 #define YC_PARAM_ACK	0x00020000	// param change notofy acknowledge
-//#define YC_5		0x00040000
+#define YC_RD_PARAM	0x00040000	// ??
 #define YC_VEL_CTL	0x00080000
 //#define YC_		0x00100000
 //#define YC_		0x00200000
-#define YC_ORIENT	0x00400000	/* spindle */
+#define YC_ORIENT	0x00400000	// MDS spindle
 //#define YC_		0x00800000
 
 #define Y_TYPE		0xf0000000
@@ -57,6 +61,7 @@
 #define Y_TYPE_PARAM	0x10000000	// number of params transfered per frame sscnet2:10, sscnet1:33, mds:20, sscnet3:16
 #define Y_TYPE_ORIGIN	0x20000000	// absolute encoder position and resolution
 #define Y_TYPE_FB	0x30000000	// normal servo feedback
+#define Y_TYPE_PLL	0x40000000	// PLL timing debug
 
 // per-axis nyx_servo_fb.state
 
@@ -84,7 +89,7 @@
 #define YF_PARAM_NFY	0x00100000	/* amplifier parameter w[10] changed to w[11] */
 #define YF_VEL_CTL	0x00200000
 #define YF_ORIENTED	0x00400000	/* spindle */
-#define YF_ORIENTING	0x00800000	/* spindle */
+#define YF_ORIENTING	0x00800000
 #define YF_FWD		0x01000000
 #define YF_REV		0x02000000
 #define YF_OD3		0x04000000
@@ -162,18 +167,18 @@ typedef struct nyx_servo_fb {
 	uint16_t pval, pno;
 #endif
 	union {
-		struct {
+		struct {		// Y_TYPE_FB
 			uint32_t fbres;	// 6
 			uint32_t cyc0;	// 7
 			uint32_t abs0;	// 8
 		};
-		uint8_t monb[12];
+		uint8_t monb[12];	// 6 7 8
 		uint16_t monw[6];
-		uint32_t monl[3];	// 6 7 8
-		struct {
+		uint32_t monl[3];
+		struct {		// Y_TYPE_ORIGIN
 			int32_t droop;	// 6
 			int32_t smth2;	// 7
-			int32_t smth3;	// 8
+			int32_t rxtime;	// 8 !!!DEBUG!!!
 		};
 	};
 } _P nyx_servo_fb;	// 8 dwords 32 bytes
@@ -205,8 +210,8 @@ typedef struct nyx_servo_fb {
 #define SERVO_SSCNET	1
 #define SERVO_SSCNET2	2
 #define SERVO_SSCNET3	3
+#define SERVO_MLINK2	4
 #define SERVO_MDS	11
-#define SERVO_MTL2	4
 
 #define FUNC_SV_GET	0x0011
 #define FUNC_SV_SET	0x0012
@@ -252,11 +257,12 @@ struct nyx_req_flash {
 	uint8_t buf[480];
 } _P;
 
-struct nyx_snoop {
+typedef struct nyx_snoop {
+	uint32_t _empty[3];
 	volatile uint32_t seq;
 	uint32_t len;
-	uint8_t buf[480];
-} _P;
+	uint8_t buf[768-5*4];
+} _P nyx_snoop;
 
 //
 //
@@ -272,6 +278,7 @@ typedef struct nyx_dp_fb {
 	uint32_t seq;		// YS_ goes here
 	int32_t irq_time;
 	uint32_t valid;		// servo_fb valid bitmap
+	//
 	uint32_t gpi;		// base card inputs 0-12, YSSC3: 31..24 outputs open load, 23..16: outputs overload
 	uint32_t enc[2];
 	uint32_t yi[16];	// YIO inputs
@@ -331,6 +338,7 @@ typedef struct nyx_dpram {
 	union {				// host <- board
 		uint8_t fbpage[768];
 		nyx_dp_fb fb;
+		nyx_snoop snoop;
 	};
 	union {				// host -> board
 		uint8_t cmdpage[768];
