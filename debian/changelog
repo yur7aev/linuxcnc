@@ -1,11 +1,18 @@
+linuxcnc (1:2.8.0nyx6~pre1) stretch; urgency=low
+
+  * v2.2.0
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Wed, 24 Apr 2019 17:17:37 +0300
+
 linuxcnc (1:2.8.0nyx5~pre1) stretch; urgency=low
 
   * tangent.comp, plotlimits.comp
   * nyx.comp not to overwrite fbres/abs/cyc after initial reception
   * new commands in linuxcncrsh, relative position tool offset fix
   * nyxq DPLL control
+  * encoder index request preempt_rt fix
 
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Fri, 5 Apr 2019 18:41:37 +0300
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Tue, 23 Apr 2019 17:39:44 +0300
 
 linuxcnc (1:2.8.0nyx4~pre1) stretch; urgency=low
 

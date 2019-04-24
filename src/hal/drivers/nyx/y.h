@@ -50,14 +50,13 @@ typedef struct yssc2 {
 
 	YSSC2_amp amp[NYX_AXES];
 
-	uint32_t _status_falling;
+	uint32_t prev_fb_seq;	// to detect index req change
 
 	struct io_pins *io;
 	int initial_delay;
 	int errors_shown;
 	struct freq_data freq;
 	int was_ready;
-	int index_req[2];
 
 	struct servo_params par[NYX_AXES];
 } YSSC2;
@@ -147,8 +146,16 @@ YSSC2 *yssc2_board(int i);
 uint32_t yssc2_gpi(YSSC2 *y) { return y->dpram->fb.gpi; }
 void yssc2_gpo(YSSC2 *y, int a) { y->dpram->cmd.gpo = a; }
 
-void yssc2_index_req(YSSC2 *y, int a) { y->dpram->fb.seq |= YS_INDEX0 << a; }
-int  yssc2_falling_index(YSSC2 *y, int a) { return (y->_status_falling & (YS_INDEX0 << a)) && 1; }
+void yssc2_index_req(YSSC2 *y, int a, int n) {
+	if (n) {
+		y->dpram->cmd.seq |= YS_INDEX0 << a;
+	} else {
+		y->dpram->cmd.seq &= ~(YS_INDEX0 << a);
+	}
+}
+int  yssc2_index_falling(YSSC2 *y, int a) {
+	return (y->prev_fb_seq & (YS_INDEX0<<a)) && !(y->dpram->fb.seq & (YS_INDEX0<<a));
+}
 int  yssc2_enc(YSSC2 *y, int a) { return (y->dpram->fb.enc[a]); }
 
 void yssc2_dac(YSSC2 *y, int a, uint16_t v) { y->dpram->cmd.dac[a] = v; }
