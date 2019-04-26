@@ -340,48 +340,45 @@ FUNCTION(_)
 	dbg1 = yssc2_yi(y, 14);
 	dbg2 = yssc2_yi(y, 15);
 	debug = yssc2_fb_seq(y);
-	debug = yssc2_fb_seq(y);
 	// process received data
 	for (a = 0; a < yssc2_axes(y); a++) {
 		servo_debug(a) = yssc2_dbg(y, a);
 		if (ready && yssc2_online(y, a)) {
-			int32_t fb;
+			if (yssc2_feedback_res(y, a) == 0) continue;
+			if (yssc2_has_fb(y)) {
+				if (yssc2_valid(y, a)) {
+					int32_t fb = (servo_counts(a) = yssc2_pos_fb(y, a)) - servo_origin(a);
 
-			if (yssc2_has_fb(y) && !yssc2_valid(y, a)) {
-				++servo_error_cnt(a);
-				continue;
+					servo_dbg(a) = yssc2_rx_time(y, a);
+					servo_online(a) = 1;
+					servo_offline(a) = 0;
+					servo_ready(a) = yssc2_ready(y, a);
+					servo_enabled(a) = yssc2_enabled(y, a);
+					servo_warning(a) = yssc2_warning(y, a);
+					servo_alarm(a) = yssc2_alarm(y, a);
+					servo_alarm_code(a) = yssc2_alarm_code(y, a);
+					servo_zero_speed(a) = yssc2_zero_speed(y, a);
+					servo_in_position(a) = yssc2_in_position(y, a);
+					servo_at_speed(a) = yssc2_at_speed(y, a);
+					servo_spindle_oriented(a) = yssc2_oriented(y, a);
+					servo_spindle_orienting(a) = yssc2_orienting(y, a);
+
+					servo_pos_fb(a) = fb * servo_pos_scale(a) / yssc2_feedback_res(y, a);
+					servo_vel_fb(a) = yssc2_vel_fb(y, a) / servo_vel_scale(a);
+					servo_trq_fb(a) = yssc2_trq_fb(y, a) / 10.0;
+					servo_droop(a) = yssc2_droop(y, a);
+					servo_torque_clamped(a) = yssc2_torque_clamped(y, a);
+					servo_absolute(a) = yssc2_absolute(y, a);
+					servo_abs_lost(a) = yssc2_abs_lost(y, a);
+
+					servo_di1(a) = yssc2_di(y, a, 0);	// J3 DI# pins
+					servo_di2(a) = yssc2_di(y, a, 1);
+					servo_di3(a) = yssc2_di(y, a, 2);
+				} else {
+					servo_dbg(a) = 0;
+					++servo_error_cnt(a);
+				}
 			}
-
-			if (yssc2_feedback_res(y, a) == 0)
-				continue;
-
-			fb = (servo_counts(a) = yssc2_pos_fb(y, a)) - servo_origin(a);
-
-			servo_dbg(a) = yssc2_rx_time(y, a);
-			servo_online(a) = 1;
-			servo_offline(a) = 0;
-			servo_ready(a) = yssc2_ready(y, a);
-			servo_enabled(a) = yssc2_enabled(y, a);
-			servo_alarm(a) = yssc2_alarm(y, a) | yssc2_warning(y, a);
-			servo_warning(a) = yssc2_warning(y, a);
-			servo_zero_speed(a) = yssc2_zero_speed(y, a);
-			servo_in_position(a) = yssc2_in_position(y, a);
-			servo_at_speed(a) = yssc2_at_speed(y, a);
-			servo_spindle_oriented(a) = yssc2_oriented(y, a);
-			servo_spindle_orienting(a) = yssc2_orienting(y, a);
-
-			servo_pos_fb(a) = fb * servo_pos_scale(a) / yssc2_feedback_res(y, a);
-			servo_vel_fb(a) = yssc2_vel_fb(y, a) / servo_vel_scale(a);
-			servo_trq_fb(a) = yssc2_trq_fb(y, a) / 10.0;
-			servo_alarm_code(a) = yssc2_alarm_code(y, a);
-			servo_droop(a) = yssc2_droop(y, a);
-			servo_torque_clamped(a) = yssc2_torque_clamped(y, a);
-			servo_absolute(a) = yssc2_absolute(y, a);
-			servo_abs_lost(a) = yssc2_abs_lost(y, a);
-
-			servo_di1(a) = yssc2_di(y, a, 0);	// J3 DI# pins
-			servo_di2(a) = yssc2_di(y, a, 1);
-			servo_di3(a) = yssc2_di(y, a, 2);
 
 			// input pins
 			yssc2_power(y, a, servo_power(a));

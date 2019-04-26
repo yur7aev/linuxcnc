@@ -187,7 +187,7 @@ if len(boards):
 #	print "-------", boards[instance], "-------"
 
 try:
-	if dp.magic != 0x55c20201:
+	if dp.magic != 0x55c20201 and dp.magic != 0x55c20202:
 		print "unsupported firmware %x" % dp.magic
 		exit(1)
 except:
@@ -226,6 +226,10 @@ def info():
 #			print chr(q[i]),
 #		print
 #		print ''.join(chr(i) for i in q)
+		print cstr(dp.buf.byte)
+
+def dna():
+	if req(0x00080000):
 		print cstr(dp.buf.byte)
 
 def bin(a, l):
@@ -495,7 +499,7 @@ def arg(n, m, d=None):
 	n += first_arg
 	if len(sys.argv) <= n:
 		if d != None: return d
-		print "nyxq v2.1z"
+		print "nyxq v2.2.0"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n]
@@ -529,10 +533,10 @@ elif cmd == 'pll':
 	i = arg(4, "pll insync P I step")
 	s = arg(5, "pll insync P I step")
 	pll(y, p, i, s)
-elif cmd == 'dbg':
-	dbg()
 elif cmd == 'io':
 	io_info()
+elif cmd == 'dna':
+	dna()
 elif cmd == 'flash':
 	subcmd = arg(2, "flash [dump|erase|program|bootloader] ...")
 	if subcmd == 'dump':
