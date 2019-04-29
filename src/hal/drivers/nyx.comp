@@ -302,11 +302,11 @@ FUNCTION(_)
 #define MAX_ERRORS 5
 
 	if (freq(y, !insync) == 0) y->errors_shown = 0;	// reset message inhibit
-	if (y->initial_delay) --y->initial_delay;
+	if (y->initial_delay < 1000000) ++y->initial_delay;
 
 	if (insync) {
 		if (!ready) {
-			if(!y->initial_delay) {
+			if(y->initial_delay > 1000000000 / period * 3) {
 				if (++y->errors_shown < MAX_ERRORS) {
 					rtapi_print_msg(RTAPI_MSG_ERR, "nyx: sync glitch, %d ticks\n", glitch_len);
 				} else if (y->errors_shown == MAX_ERRORS) {
@@ -326,7 +326,7 @@ FUNCTION(_)
 	}
 
 	{
-		if (!ready && glitch_len == 1125 * 3 && y->errors_shown < MAX_ERRORS) {
+		if (!ready && glitch_len == 1000000000 / period * 3 && y->errors_shown < MAX_ERRORS) {
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: board firmware NOT READY\n");
 			++y->errors_shown;
 		}

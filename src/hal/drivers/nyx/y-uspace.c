@@ -70,7 +70,7 @@ int yssc2_init()
 
 //	rtapi_print_msg(RTAPI_MSG_ERR, "nyx: magic: %x, %d axes", y->dpram->magic, y->axes );
 
-	y->initial_delay = 1125 * 3;	// time to wait for sync
+	y->initial_delay = 0;
 	y->errors_shown = 0;
 	freq_init(y);
 	y->was_ready = 0;
@@ -223,7 +223,7 @@ int get_params(struct servo_params *p, int group, int first, int count, uint16_t
 	if (dm) memset(dm, 0, 2*(count/16+1));
 
 	if (group > 15) {
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:get_params group > 15");
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:get_params P%d.%d..%d group > 15", group, first, first+count-1);
 		return 0;
 	}
 
