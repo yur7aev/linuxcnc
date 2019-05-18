@@ -306,7 +306,7 @@ FUNCTION(_)
 
 	if (insync) {
 		if (!ready) {
-			if(y->initial_delay > 1000000000 / period * 3) {
+			if(y->initial_delay > 1000000000 / period * 5) {
 				if (++y->errors_shown < MAX_ERRORS) {
 					rtapi_print_msg(RTAPI_MSG_ERR, "nyx: sync glitch, %d ticks\n", glitch_len);
 				} else if (y->errors_shown == MAX_ERRORS) {
@@ -326,7 +326,7 @@ FUNCTION(_)
 	}
 
 	{
-		if (!ready && glitch_len == 1000000000 / period * 3 && y->errors_shown < MAX_ERRORS) {
+		if (!ready && glitch_len == 1000000000 / period * 5 && y->errors_shown < MAX_ERRORS) {
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: board firmware NOT READY\n");
 			++y->errors_shown;
 		}
