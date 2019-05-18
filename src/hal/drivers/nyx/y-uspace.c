@@ -60,7 +60,7 @@ int yssc2_init()
 
 	num_boards = 1;
 	y->dpram = calloc(sizeof(nyx_dpram), 1);
-	read(y->fd, y->dpram, 16);
+	read(y->fd, y->dpram, 16);	// includes "magic" and "config" field
 
 	y->axes = y->dpram->config & 0xff;
 	if (y->axes > NYX_AXES) {
@@ -268,6 +268,9 @@ void yssc2_receive(YSSC2 *y)
 void yssc2_process(YSSC2 *y)
 {
 	int a;
+
+	if (!(y->dpram->fb.seq & YS_INSYNC)) return;	// do nothing until insync
+
 	for (a = 0; a < y->axes; a++) {
 //		if (yssc2_online(y, a)) {
 			nyx_servo_fb *fb = &y->dpram->fb.servo_fb[a];

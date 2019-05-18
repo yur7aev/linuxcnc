@@ -194,19 +194,19 @@ void yssc2_cleanup()
 int yssc2_start(int instance, int maxdrives)
 {
 	int i;
-	YSSC2 *y = &yssc2_brd[instance];
+	YSSC2 *y = &yssc2_brd[no];
 
 	memset(y->par, 0, sizeof(*(y->par)));
 
-	for (i = 0; i <= instance; i++) {
+	for (i = 0; i <= no; i++) {
 		if(param_file[i] == NULL) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no params", instance);
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no params", no);
 			return -1;
 		}
 	}
 
 	if (y->axes > maxdrives) y->axes = maxdrives;
-	load_params(y->par, param_file[instance], y->axes);
+	load_params(y->par, param_file[no], y->axes);
 
 	return 0;
 }
@@ -311,7 +311,7 @@ int get_params(struct servo_params *p, int group, int first, int count, uint16_t
 	if (dm) memset(dm, 0, 2*(count/16+1));
 
 	if (group > 15) {
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:get_params P%d.%d..%d group > 15", group, first, first+count-1);
+		// rtapi_print_msg(RTAPI_MSG_ERR, "nyx:get_params P%d.%d..%d group > 15", group, first, first+count-1);
 		return 0;
 	}
 
@@ -347,11 +347,9 @@ void yssc2_receive(YSSC2 *y)
 	y->iomem->jtag = 0;
 
 	if (nodma & 2) {
-		y->dpram->magic = y->iomem->dpram.magic;	// ???
 		memcpy(&y->dpram->fb, (void*)&y->iomem->dpram.fb, offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * y->axes);
 	} else {
 		size_t offs = offsetof(struct nyx_dpram, fb);	// should be 512
-		y->dpram->magic = y->iomem->dpram.magic;	// ???
 
 		y->iomem->dma_dst = y->dpram_bus_addr + offs;
 		y->iomem->dma_src = offs;	// start of fb in dpram
@@ -372,6 +370,9 @@ void yssc2_receive(YSSC2 *y)
 void yssc2_process(YSSC2 *y)
 {
 	int a;
+
+	if (!(y->dpram->fb.seq & YS_INSYNC)) return;	// do nothing until insync
+
 	for (a = 0; a < y->axes; a++) {
 //		if (yssc2_online(y, a)) {
 			nyx_servo_fb *fb = &y->dpram->fb.servo_fb[a];
