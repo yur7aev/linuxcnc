@@ -248,8 +248,8 @@ class _Lcnc_Action(object):
     def RESTORE_RECORDED_MODE(self):
         self.ensure_mode(self.last_mode)
 
-    def SET_SELECTED_AXIS(self, data):
-        STATUS.set_selected_axis(data)
+    def SET_SELECTED_JOINT(self, data):
+        STATUS.set_selected_joint(data)
 
     # jog based on STATUS's rate and distance
     # use joint number for joint or axis joging
@@ -314,6 +314,14 @@ class _Lcnc_Action(object):
                     'pan-left','pan-right','rotate-up',
                 'rotate-down', 'rotate-cw','rotate-ccw'):
             STATUS.emit('view-changed',view)
+
+    def SHUT_SYSTEM_DOWN_PROMPT(self):
+        import subprocess
+        subprocess.call('''gnome-session-quit --power-off''', shell=True)
+
+    def SHUT_SYSTEM_DOWN_NOW(self):
+        import subprocess
+        subprocess.call('shutdown now')
 
     ######################################
     # Action Helper functions

@@ -1,3 +1,7 @@
+linuxcnc (1:2.8.0nyx7~pre1) stretch; urgency=low
+  * merged with 2.8 branch
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Wed, 10 Jul 2019 18:54:28 +0300
+
 linuxcnc (1:2.8.0nyx6~pre1) stretch; urgency=low
 
   * v2.2.0
@@ -47,11 +51,12 @@ linuxcnc (1:2.8.0nyx1~pre1) stretch; urgency=low
 
  -- Dmitry Yurtaev <dmitry@yurtaev.com>  Tue, 06 Nov 2018 01:24:28 +0300
 
-linuxcnc (1:2.8.0~pre1) wheezy; urgency=low
-
-  * Upcoming release, any year now!  Watch this space!
-
- -- Sebastian Kuzminsky <seb@highlab.com>  Sun, 26 Oct 2014 23:17:34 -0600
+linuxcnc (1:2.8.0~pre1) rosa; urgency=low
+  * New external axis offsets
+  * New support for Mesa 7i96 ethernet card
+  * New experimental QT based VCP
+  * New G52 local coordinate system offset
+  * New support for multiple spindles up to 9
 
 linuxcnc (1:2.7.14) unstable; urgency=medium
 

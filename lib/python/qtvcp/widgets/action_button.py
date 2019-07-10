@@ -46,6 +46,7 @@ class ActionButton(Indicated_PushButton, _HalWidgetBase):
     def __init__(self, parent=None):
         super(ActionButton, self).__init__(parent)
         self._block_signal = False
+        self._designer_block_signal = False
         self.estop = False
         self.machine_on = False
         self.home = False
@@ -421,7 +422,7 @@ class ActionButton(Indicated_PushButton, _HalWidgetBase):
             self._toggle_state = self._toggle_state * -1
         elif self.view_change:
             try:
-                STATUS.emit('view-changed', '%s' % self.view_type)
+                STATUS.emit('graphics-view-changed', '%s' % self.view_type)
             except:
                 pass
         elif self.spindle_fwd:
@@ -504,7 +505,7 @@ class ActionButton(Indicated_PushButton, _HalWidgetBase):
     # If direction = 0 (button release) and distance is not 0, then we are
     # doing a jog increment so don't stop jog on release.
     def jog_selected_action(self, direction):
-        number = STATUS.get_selected_axis()
+        number = STATUS.get_selected_joint()
         if direction == 0:
             if number in (3,4,5): # angualr axis
                 if STATUS.get_jog_increment_angular() != 0: return
@@ -561,11 +562,13 @@ class ActionButton(Indicated_PushButton, _HalWidgetBase):
         ACTION.SET_JOG_INCR_ANGULAR(incr , text)
 
     def _set_text(self, data):
-            tmpl = lambda s: str(self._textTemplate) % s
-            self.setText(tmpl(data))
+        if self._designer_block_signal: return
+        tmpl = lambda s: str(self._textTemplate) % s
+        self.setText(tmpl(data))
     def _set_alt_text(self, data):
-            tmpl = lambda s: str(self._alt_textTemplate) % s
-            self.setText(tmpl(data))
+        if self._designer_block_signal: return
+        tmpl = lambda s: str(self._alt_textTemplate) % s
+        self.setText(tmpl(data))
 
     #########################################################################
     # This is how designer can interact with our widget properties.

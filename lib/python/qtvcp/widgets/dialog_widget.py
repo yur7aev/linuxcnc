@@ -30,17 +30,20 @@ from qtvcp.widgets.versa_probe import VersaProbe
 from qtvcp.widgets.entry_widget import TouchInputWidget
 from qtvcp.widgets.calculator import Calculator
 from qtvcp.lib.notify import Notify
-from qtvcp.core import Status, Action, Info
+from qtvcp.core import Status, Action, Info, Tool
 from qtvcp import logger
 
 # Instantiate the libraries with global reference
 # STATUS gives us status messages from linuxcnc
 # ACTION gives commands to linuxcnc
-# INFO holds INI dile details
+# INFO holds INI file details
+# TOOL gives tool file access
+# NOTICE is for the desktop notify system
 # LOG is for running code logging
 STATUS = Status()
 ACTION = Action()
 INFO = Info()
+TOOL = Tool()
 NOTICE = Notify()
 LOG = logger.getLogger(__name__)
 
@@ -144,7 +147,7 @@ class LcncDialog(QMessageBox, _HalWidgetBase):
         self.buttonClicked.connect(self.msgbtn)
         STATUS.emit('focus-overlay-changed', True, self.focus_text, color)
         if play_alert:
-            STATUS.emit('play-alert', play_alert)
+            STATUS.emit('play-sound', play_alert)
         retval = self.exec_()
         STATUS.emit('focus-overlay-changed', False, None, None)
         LOG.debug("Value of pressed button: {}".format(retval))
@@ -269,14 +272,16 @@ class ToolDialog(LcncDialog, _HalWidgetBase):
     def tool_change(self, change):
         if change:
             MORE = 'Please Insert Tool %d' % self.tool_number.get()
+            tool_table_line = TOOL.GET_TOOL_INFO(self.tool_number.get())
+            comment = str(tool_table_line[TOOL.COMMENTS])
             MESS = 'Manual Tool Change Request'
-            DETAILS = ' Tool Info:'
+            DETAILS = ' Tool Info: %s'% comment
 
             STATUS.emit('focus-overlay-changed', True, MESS, self._color)
             if self.speak:
-                STATUS.emit('play-alert', 'speak %s' % MORE)
+                STATUS.emit('play-sound', 'speak %s' % MORE)
             if self.play_sound:
-                STATUS.emit('play-alert', self.sound_type)
+                STATUS.emit('play-sound', self.sound_type)
 
             # desktop notify dialog
             if self.useDesktopDialog:
@@ -346,25 +351,37 @@ class FileDialog(QFileDialog, _HalWidgetBase):
             self.play_sound = False
 
     def _external_request(self, w, message):
+        ext = message.get('EXTENTIONS')
+        pre = message.get('FILENAME')
+        dir = message.get('DIRECTORY')
         if message.get('NAME') == self._load_request_name:
             # if there is an ID then a file name response is expected
             if message.get('ID'):
-                message['RETURN'] = self.load_dialog(True)
+                print message.get('ID')
+                message['RETURN'] = self.load_dialog(ext, pre, dir, True)
                 STATUS.emit('general', message)
             else:
-                self.load_dialog()
+                self.load_dialog(extentions = ext)
         elif message.get('NAME') == self._save_request_name:
             if message.get('ID'):
-                message['RETURN'] = self.save_dialog()
+                message['RETURN'] = self.save_dialog(ext, pre, dir)
                 STATUS.emit('general', message)
 
-    def load_dialog(self, return_path=False):
+    def load_dialog(self, extentions = None, preselect = None, directory = None, return_path=False):
         self.setFileMode(QFileDialog.ExistingFile)
         self.setAcceptMode(QFileDialog.AcceptOpen)
+        if extentions:
+            self.setNameFilter(extentions)
+        if preselect:
+            self.selectFile(preselect)
+        else:
+            self.selectFile('')
+        if directory:
+            self.setDirectory(directory)
         self.setWindowTitle('Open')
         STATUS.emit('focus-overlay-changed', True, 'Open Gcode', self._color)
         if self.play_sound:
-            STATUS.emit('play-alert', self.sound_type)
+            STATUS.emit('play-sound', self.sound_type)
         self.calculate_placement()
         fname = None
         if (self.exec_()):
@@ -380,13 +397,21 @@ class FileDialog(QFileDialog, _HalWidgetBase):
             STATUS.emit('update-machine-log', 'Loaded: ' + fname, 'TIME')
         return fname
 
-    def save_dialog(self):
+    def save_dialog(self, extentions = None, preselect = None, directory = None):
         self.setFileMode(QFileDialog.AnyFile)
         self.setAcceptMode(QFileDialog.AcceptSave)
+        if extentions:
+            self.setNameFilter(extensions)
+        if preselect:
+            self.selectFile(preselect)
+        else:
+            self.selectFile('')
+        if directory:
+            self.setDirectory(directory)
         self.setWindowTitle('Save')
         STATUS.emit('focus-overlay-changed', True, 'Save Gcode', self._color)
         if self.play_sound:
-            STATUS.emit('play-alert', self.sound_type)
+            STATUS.emit('play-sound', self.sound_type)
         self.calculate_placement()
         fname = None
         if (self.exec_()):
@@ -753,10 +778,10 @@ class CamViewDialog(QDialog, _HalWidgetBase):
 class MacroTabDialog(QDialog, _HalWidgetBase):
     def __init__(self, parent=None):
         super(MacroTabDialog, self).__init__(parent)
+        self.setWindowTitle('Qtvcp Macro Menu')
         self._color = QColor(0, 0, 0, 150)
         self._state = False
         self._request_name = 'MACROTAB'
-
         self.setWindowModality(Qt.ApplicationModal)
         self.setWindowFlags(self.windowFlags() | Qt.Tool |
                             Qt.Dialog |
@@ -767,8 +792,10 @@ class MacroTabDialog(QDialog, _HalWidgetBase):
         # original methods (Gotta do before instantiation)
         MacroTab.closeChecked = self._close
         MacroTab.runChecked = self._run
+        MacroTab.setTitle = self._setTitle
         # ok now instantiate patched class
         self.tab = MacroTab()
+        self.tab.setObjectName('macroTabInternal_')
         l = QVBoxLayout()
         self.setLayout(l)
         l.addWidget(self.tab)
@@ -807,6 +834,9 @@ class MacroTabDialog(QDialog, _HalWidgetBase):
     def _run(self):
         self.tab.runMacro()
         self.close()
+
+    def _setTitle(self, string):
+        self.setWindowTitle(string)
 
     def load_dialog(self):
         STATUS.emit('focus-overlay-changed', True, 'Lathe Macro Dialog', self._color)
@@ -1001,7 +1031,7 @@ class EntryDialog(QDialog, _HalWidgetBase):
         STATUS.emit('focus-overlay-changed', True, 'Origin Setting', self._color)
         self.setWindowTitle(self.title);
         if self.play_sound:
-            STATUS.emit('play-alert', self.sound_type)
+            STATUS.emit('play-sound', self.sound_type)
         self.calculate_placement()
         retval = self.exec_()
         STATUS.emit('focus-overlay-changed', False, None, None)
@@ -1079,7 +1109,7 @@ class CalculatorDialog(Calculator, _HalWidgetBase):
         STATUS.emit('focus-overlay-changed', True, 'Origin Setting', self._color)
         self.setWindowTitle(self.title);
         if self.play_sound:
-            STATUS.emit('play-alert', self.sound_type)
+            STATUS.emit('play-sound', self.sound_type)
         self.calculate_placement()
         if preload is not None:
             self.display.setText(str(preload))
