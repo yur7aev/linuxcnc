@@ -1,0 +1,19 @@
+component passthru "LinuxCNC HAL pass-thru component, 16 pins max";
+
+pin in bit in-##[16 : personality & 0xff];
+pin out bit out-##[16 : personality & 0xff];
+function _ nofp;
+
+description """
+Pass signals from in-N pin to out-N
+""";
+license "GPL"; // indicates GPL v2 or later
+;;
+
+FUNCTION(_) {
+    int i;
+
+    for(i=0; i < (personality & 0xff); i++) {
+        out(i) = in(i);
+    }
+}

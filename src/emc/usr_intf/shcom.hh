@@ -123,6 +123,7 @@ extern int sendBrakeEngage(int spindle);
 extern int sendBrakeRelease(int spindle);
 extern int sendAbort();
 extern int sendHome(int jnum);
+extern int sendSetHomed(int jnum);
 extern int sendUnHome(int jnum);
 extern int sendFeedOverride(double override);
 extern int sendRapidOverride(double override);

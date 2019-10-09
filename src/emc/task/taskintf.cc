@@ -743,6 +743,18 @@ int emcJointHome(int joint)
     return usrmotWriteEmcmotCommand(&emcmotCommand);
 }
 
+int emcJointSetHomed(int joint)
+{
+	if (joint < -2 || joint >= EMCMOT_MAX_JOINTS) {
+		return 0;
+	}
+
+	emcmotCommand.command = EMCMOT_JOINT_SET_HOMED;
+	emcmotCommand.joint = joint;
+
+	return usrmotWriteEmcmotCommand(&emcmotCommand);
+}
+
 int emcJointUnhome(int joint)
 {
 	if (joint < -2 || joint >= EMCMOT_MAX_JOINTS) {
@@ -1658,7 +1670,8 @@ int emcPositionSave() {
     FILE *f = fopen(posfile, "w");
     if(!f) return -1;
     for(int i=0; i<EMCMOT_MAX_JOINTS; i++) {
-	int r = fprintf(f, "%.17f\n", emcmotStatus.joint_status[i].pos_fb);
+	// int r = fprintf(f, "%.17f\n", emcmotStatus.joint_status[i].pos_fb);
+	int r = fprintf(f, "%.17f\n", -emcmotStatus.joint_status[i].motor_offset);
 	if(r < 0) { fclose(f); return -1; }
     }
     fclose(f);

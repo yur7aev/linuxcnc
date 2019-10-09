@@ -1,3 +1,6 @@
+linuxcnc (1:2.8.0nyx8~pre1) rosa; urgency=low
+  * merged with 2.8 branch
+
 linuxcnc (1:2.8.0~pre1) rosa; urgency=low
   * New external axis offsets
   * New support for Mesa 7i96 ethernet card

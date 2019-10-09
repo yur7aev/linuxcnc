@@ -1498,6 +1498,13 @@ void emcmotCommandHandler(void *arg, long period)
             }
 	    break;
 
+	case EMCMOT_JOINT_SET_HOMED:
+	    /* mark the specified joint homed */
+	    rtapi_print_msg(RTAPI_MSG_DBG, "JOINT_SET_HOMED");
+	    rtapi_print_msg(RTAPI_MSG_DBG, " %d", joint_num);
+	    if (joint) SET_JOINT_HOMED_FLAG(joint, 1);
+	    break;
+
 	case EMCMOT_JOINT_UNHOME:
             /* unhome the specified joint, or all joints if -1 */
             rtapi_print_msg(RTAPI_MSG_DBG, "JOINT_UNHOME");
@@ -1556,7 +1563,6 @@ void emcmotCommandHandler(void *arg, long period)
                 reportError(_("Cannot unhome invalid joint %d (max %d)"), joint_num, (emcmotConfig->numJoints-1));
                 return;
             }
-
             break;
 
 	case EMCMOT_CLEAR_PROBE_FLAGS:

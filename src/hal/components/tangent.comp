@@ -1,0 +1,43 @@
+component tangent "Output tangent angle in degrees";
+pin  in float x;
+pin  in float y;
+pin  in   bit follow;
+pin out float a;
+pin  in   bit homed;
+pin  in   bit enable;
+
+variable double xo;
+variable double yo;
+
+function _;
+license "GPL"; // indicates GPL v2 or later
+;;
+
+#include "rtapi_math.h"
+
+FUNCTION(_) {
+	double dx, dy, a1;
+
+	if (!homed) {
+		a = 0;	// zero offset during homing
+		xo = x;
+		yo = y;
+	} else if (enable) {
+		dx = x - xo;
+		dy = y - yo;
+		if (fabs(dx) > 1e-2 || fabs(dy) > 1e-2) {
+			// wait for significant change before orienting
+			a1 = atan2(dy, dx) * (180.0 / M_PI);
+			if (follow) {
+				while (a1 > a + 180.0) a1 -= 360.0;
+				while (a1 < a - 180.0) a1 += 360.0;
+			}
+			a = a1;
+			xo = x;
+			yo = y;
+		}
+	} else {	// update current position
+		xo = x;
+		yo = y;
+	}
+}

@@ -1,0 +1,18 @@
+component plotoffsets "Output tangent angle in degrees";
+pin  in float in0;
+pin  in float in1;
+pin  in float offs0;
+pin  in float offs1;
+pin out float out0;
+pin out float out1;
+
+function _;
+license "GPL"; // indicates GPL v2 or later
+;;
+
+#include "rtapi_math.h"
+
+FUNCTION(_) {
+	out0 = in0 - offs0;
+	out1 = in1 - offs1;
+}
