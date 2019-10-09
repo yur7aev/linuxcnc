@@ -55,10 +55,10 @@ pin out      bit servo-##.di3[16 : personality] "MR-J3-B DI3 input";
 pin out      bit ready "controller in sync with NC";
 pin out    float phase "sync deviation, should be <40us";
 pin out   signed error-cnt "number of controller comm errors";
-pin out unsigned debug;
 pin out   signed dbg0;
 pin out   signed dbg1;
 pin out   signed dbg2;
+pin out unsigned dbg3;
 
 pin out      bit in-##[17] "CN1 inputs";
 pin out      bit in-##-not[17] "CN1 inputs, inverted";
@@ -336,11 +336,10 @@ FUNCTION(_)
 
 	yssc2_process(y);	// state machine, request servo data: absolute origin, encoder res, etc
 
-	debug = yssc2_fb_seq(y);
 	dbg0 = yssc2_yi(y, 13);
 	dbg1 = yssc2_yi(y, 14);
 	dbg2 = yssc2_yi(y, 15);
-	debug = yssc2_fb_seq(y);
+	dbg3 = yssc2_fb_seq(y);
 	// process received data
 	for (a = 0; a < yssc2_axes(y); a++) {
 		servo_debug(a) = yssc2_debug(y, a);

@@ -496,6 +496,7 @@ Suggestion: Split this in to an Error and a Status flag register..
 
 	double motor_offset;	/* diff between internal and motor pos, used
 				   to set position to zero during homing */
+	double home_offset;
 	int old_jjog_counts;	/* prior value, used for deltas */
 	double big_vel;		/* used for "debouncing" velocity */
     } emcmot_joint_t;

@@ -11,7 +11,8 @@ license "GPL"; // indicates GPL v2 or later
 ;;
 
 FUNCTION(_) {
-    int i, a=1, o=0, x=0;
+    int i;
+
     for(i=0; i < (personality & 0xff); i++) {
         out(i) = in(i);
     }
