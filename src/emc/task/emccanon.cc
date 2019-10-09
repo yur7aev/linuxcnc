@@ -145,7 +145,6 @@ static void flush_segments(void);
   defined here that are used for convenience but no longer have decls
   in the 6-axis canon.hh. So, we declare them here now.
 */
-extern void CANON_ERROR(const char *fmt, ...) __attribute__((format(printf,1,2)));
 
 #ifndef D2R
 #define D2R(r) ((r)*M_PI/180.0)
@@ -154,7 +153,8 @@ extern void CANON_ERROR(const char *fmt, ...) __attribute__((format(printf,1,2))
 static void rotate(double &x, double &y, double theta) {
     double xx, yy;
     double t = D2R(theta);
-    xx = x, yy = y;
+    xx = x;
+    yy = y;
     x = xx * cos(t) - yy * sin(t); 
     y = xx * sin(t) + yy * cos(t);
 }
@@ -852,6 +852,10 @@ struct pt { double x, y, z, a, b, c, u, v, w; int line_no;};
 
 static std::vector<struct pt> chained_points;
 
+static void drop_segments(void) {
+    chained_points.clear();
+}
+
 static void flush_segments(void) {
     if(chained_points.empty()) return;
 
@@ -917,7 +921,7 @@ static void flush_segments(void) {
     }
     canonUpdateEndPoint(x, y, z, a, b, c, u, v, w);
 
-    chained_points.clear();
+    drop_segments();
 }
 
 static void get_last_pos(double &lx, double &ly, double &lz) {
@@ -995,6 +999,11 @@ see_segment(int line_number,
 void FINISH() {
     flush_segments();
 }
+
+void ON_RESET() {
+    drop_segments();
+}
+
 
 void STRAIGHT_TRAVERSE(int line_number,
                        double x, double y, double z,
@@ -1524,6 +1533,11 @@ void ARC_FEED(int line_number,
             break;
         case CANON_PLANE_YZ:
             shift_ind = -1;
+            break;
+        case CANON_PLANE_UV:
+        case CANON_PLANE_VW:
+        case CANON_PLANE_UW:
+            CANON_ERROR("Can't set plane in UVW axes, assuming XY");
             break;
     }
 
@@ -2605,7 +2619,7 @@ CANON_POSITION GET_EXTERNAL_POSITION()
     CANON_POSITION position;
     EmcPose pos;
 
-    chained_points.clear();
+    drop_segments();
 
     pos = emcStatus->motion.traj.position;
 
@@ -2782,8 +2796,12 @@ int GET_EXTERNAL_POCKETS_MAX()
     return CANON_POCKETS_MAX;
 }
 
-char _parameter_file_name[LINELEN];	/* Not static.Driver
-					   writes */
+static char _parameter_file_name[LINELEN];
+
+void SET_PARAMETER_FILE_NAME(const char *name)
+{
+  strncpy(_parameter_file_name, name, PARAMETER_FILE_NAME_LENGTH);
+}
 
 void GET_EXTERNAL_PARAMETER_FILE_NAME(char *file_name,	/* string: to copy
 							   file name into */

@@ -64,6 +64,34 @@ class HandlerClass:
             if commands.lower().replace('probe-test','').strip():
                 self.probeTimer = float(commands.lower().replace('probe-test','').strip()) + time.time()
             hal.set_p('plasmac.probe-test','1')
+        elif 'cut-type' in commands.lower() and not hal.get_value('halui.program.is-running') and self.s.file:
+            self.cutType ^= 1
+            if not 'PlaSmaC' in self.s.file:
+                self.inFile = self.s.file
+            self.inPath = os.path.realpath(os.path.dirname(self.inFile))
+            self.inBase = os.path.basename(self.inFile)
+            if self.cutType:
+                hal.set_p('plasmac_run.cut-type','1')
+                self.outFile = '{}/PlaSmaC1_{}'.format(self.inPath,self.inBase)
+            else:
+                hal.set_p('plasmac_run.cut-type','0')
+                self.outFile = '{}/PlaSmaC0_{}'.format(self.inPath,self.inBase)
+            import subprocess
+            outBuf = open(self.outFile, 'w')
+            filter = subprocess.Popen(['sh', '-c', '%s \'%s\'' % ('./plasmac_gcode.py', self.inFile)],
+                                  stdin=subprocess.PIPE,
+                                  stdout=outBuf,
+                                  stderr=subprocess.PIPE)
+            filter.stdin.close()
+            stderr_text = []
+            try:
+                while filter.poll() is None:
+                    pass
+            finally:
+                outBuf.close()
+            self.c.program_open(self.outFile)
+            hal.set_p('plasmac_run.cut-type','0')
+
         else:
             for command in commands.split('\\'):
                 if command.strip()[0] == '%':
@@ -120,6 +148,12 @@ class HandlerClass:
                 print('*** configuration file, {} is invalid ***'.format(self.prefFile))
         gtk.settings_get_default().set_property('gtk-theme-name', theme)
 
+    def set_style(self,button):
+        self.buttonPlain = self.builder.get_object('button1').get_style().copy()
+        self.buttonOrange = self.builder.get_object('button1').get_style().copy()
+        self.buttonOrange.bg[gtk.STATE_NORMAL] = gtk.gdk.color_parse('orange')
+        self.buttonOrange.bg[gtk.STATE_PRELIGHT] = gtk.gdk.color_parse('dark orange')
+
     def periodic(self):
         self.s.poll()
         isIdleHomed = True
@@ -140,7 +174,7 @@ class HandlerClass:
                     self.builder.get_object('button' + str(n)).set_sensitive(True)
                 else:
                     self.builder.get_object('button' + str(n)).set_sensitive(False)
-            elif not self.iniButtonCode[n].startswith('%'):
+            elif not 'cut-type' in self.iniButtonCode[n] and not self.iniButtonCode[n].startswith('%'):
                 if isIdleHomed:
                     self.builder.get_object('button' + str(n)).set_sensitive(True)
                 else:
@@ -150,13 +184,22 @@ class HandlerClass:
                 self.probeTimer = 0
                 if not self.probePressed:
                     hal.set_p('plasmac.probe-test','0')
+        if self.inFile and self.inFile != self.s.file:
+            if not 'PlaSmaC' in self.s.file or 'PlaSmaC0' in self.s.file:
+                self.builder.get_object(self.cutButton).set_style(self.buttonPlain)
+                self.builder.get_object(self.cutButton).set_label('Pierce & Cut')
+                self.cutType = 0
+            elif 'PlaSmaC1' in self.s.file:
+                self.builder.get_object(self.cutButton).set_style(self.buttonOrange)
+                self.builder.get_object(self.cutButton).set_label('Pierce Only')
+                self.cutType = 1
         return True
 
     def __init__(self, halcomp,builder,useropts):
         self.halcomp = halcomp
         self.builder = builder
         self.i = linuxcnc.ini(os.environ['INI_FILE_NAME'])
-        self.s = linuxcnc.stat();
+        self.s = linuxcnc.stat()
         self.c = linuxcnc.command()
         self.prefFile = self.i.find('EMC', 'MACHINE') + '.pref'
         self.iniButtonName = ['Names']
@@ -164,10 +207,16 @@ class HandlerClass:
         self.probePressed = False
         self.probeTimer = 0
         self.probeButton = ''
+        self.cutType = 0
+        self.inFile = ''
+        self.cutButton = ''
         for button in range(1,5):
             bname = self.i.find('PLASMAC', 'BUTTON_' + str(button) + '_NAME') or '0'
             self.iniButtonName.append(bname)
-            self.iniButtonCode.append(self.i.find('PLASMAC', 'BUTTON_' + str(button) + '_CODE'))
+            code = self.i.find('PLASMAC', 'BUTTON_' + str(button) + '_CODE')
+            self.iniButtonCode.append(code)
+            if code == 'cut-type':
+                self.cutButton = 'button{}'.format(button)
             if bname != '0':
                 bname = bname.split('\\')
                 if len(bname) > 1:
@@ -177,6 +226,7 @@ class HandlerClass:
                 self.builder.get_object('button' + str(button)).set_label(blabel)
                 self.builder.get_object('button' + str(button)).children()[0].set_justify(gtk.JUSTIFY_CENTER)
         self.set_theme()
+        self.builder.get_object('button1').connect('realize', self.set_style)
         gobject.timeout_add(100, self.periodic)
 
 def get_handlers(halcomp,builder,useropts):

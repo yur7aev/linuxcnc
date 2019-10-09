@@ -46,7 +46,9 @@ class ActionButtonPlugin(QPyDesignerCustomWidgetPlugin):
 
     # This factory method creates new instances of our custom widget
     def createWidget(self, parent):
-        return ActionButton(parent)
+        a =  ActionButton(parent)
+        a._designer_running = True
+        return a
 
     # This method returns the name of the custom widget class
     def name(self):
@@ -156,11 +158,16 @@ class ActionButtonDialog(QtWidgets.QDialog):
         node_1 = (('Estop',['estop', 0], []),
                  ('Machine On',['machine_on', 0], []),
                 ('Home',['home', 1], []),
+                ('Unhome',['unhome', 1], []),
                 ('Run',['run', 0], []),
                 ('Abort',['abort', 0], []),
                  ('Pause',['pause', 0], []),
+                 ('Step',['step', 0], []),
                 ('Override Limits',['limits_override', 0], []),
                 ('Zero Axis',['zero_axis', 1], []),
+                ('Zero G5x',['zero_g5x', 0], []),
+                ('Zero G92',['zero_g92', 0], []),
+                ('Zero Z Rotaional',['zero_zrot', 0], []),
                 ('Block Delete',['block_delete', 0], []),
                 ('Optional Stop',['optional_stop', 0], []),
                 ('Food Coolant',['flood', 0], []),
@@ -175,6 +182,7 @@ class ActionButtonDialog(QtWidgets.QDialog):
         node_3 = (('Load Dialog',['load_dialog', 0], []),
                 ('Macro Dialog',['macro_dialog', 0], []),
                 ('CamView Dialog',['camview_dialog', 0], []),
+                ('Machine Log Dialog',['machine_log_dialog', 0], []),
                 ('Origin Offset Dialog',['origin_offset_dialog', 0], []))
         node_4 = (('Launch HALmeter',['launch_halmeter', 0], []),
                 ('Launch Status',['launch_status', 0], []),

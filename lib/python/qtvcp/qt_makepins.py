@@ -21,7 +21,6 @@
 import gobject
 from qtvcp.widgets.simple_widgets import _HalWidgetBase
 from qtvcp.widgets.screen_options import ScreenOptions
-from qtvcp.core import QComponent
 from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QDesktopWidget
 
@@ -29,17 +28,16 @@ from PyQt5.QtWidgets import QDesktopWidget
 import logger
 LOG = logger.getLogger(__name__)
 # Set the log level for this module
-#LOG.setLevel(logger.DEBUG) # One of DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG.setLevel(logger.INFO) # One of DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 class QTPanel():
     def __init__(self,halcomp,path,window,debug):
         xmlname = path.XML
         self.window = window
-        window['PREFS_'] = None
+        self.window['PREFS_'] = None
         self._screenOptions = None
         self._geo_string = ''
 
-        self.hal = QComponent(halcomp)
         # see if a screenoptions widget is present
         # if is is then initiate the preference file
         # and pass a preference object to the window
@@ -50,9 +48,10 @@ class QTPanel():
                 if isinstance(widget, ScreenOptions):
                     self._screenOptions = widget
                     try:
-                        window['PREFS_'], pref_fn = widget._pref_init()
-                    except:
-                        window['PREFS_'], pref_fn = (None,None)
+                        self.window['PREFS_'], pref_fn = widget._pref_init()
+                    except Exception as e:
+                        LOG.warning('Preferebce instance error: {}'.format(e))
+                        self.window['PREFS_'], pref_fn = (None,None)
                     path.PREFS_FILENAME = pref_fn
         # parse for HAL objects:
         # initiate the hal function on each
@@ -61,7 +60,7 @@ class QTPanel():
             if isinstance(widget, _HalWidgetBase):
                 idname = widget.objectName()
                 LOG.debug('HAL-ified instance found: {}'.format(idname))
-                widget.hal_init(self.hal, str(idname), widget, window, window. PATHS, window['PREFS_'])
+                widget.hal_init(halcomp, str(idname), widget, window, window. PATHS, self.window['PREFS_'])
 
     # Search all hal-ifed widgets for closing clean up functions and call them
     # used for such things as preference recording current settings
@@ -73,7 +72,7 @@ class QTPanel():
             if isinstance(widget, _HalWidgetBase):
                 if 'closing_cleanup__' in dir(widget):
                     idname = widget.objectName()
-                    LOG.debug('Closing cleanup on: {}'.format(idname))
+                    LOG.info('Closing cleanup on: {}'.format(idname))
                     widget.closing_cleanup__()
 
     # if there is a prefrence file and it is has digits (so no key word), then record
@@ -95,7 +94,7 @@ class QTPanel():
         if self.window['PREFS_']:
             self.geometry_parsing()
         else:
-            LOG.debug('No preference file - can not set preference geometry.')
+            LOG.info('No preference file - can not set preference geometry.')
 
     def geometry_parsing(self):
         def go(x,y,w,h):

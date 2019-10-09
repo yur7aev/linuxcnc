@@ -35,13 +35,13 @@ ACTION = Action()
 LOG = logger.getLogger(__name__)
 
 # Set the log level for this module
-# LOG.setLevel(logger.INFO) # One of DEBUG, INFO, WARNING, ERROR, CRITICAL
+if not INFO.LINUXCNC_IS_RUNNING:
+    LOG.setLevel(logger.ERROR) # One of DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 try:
     from PyQt5 import QtSvg
 except:
     LOG.critical("Qtvcp error with macro_widget - is package python-pyqt5.qtsvg installed?")
-
 
 ###############################################################
 # helper widget for SVG display on Button
@@ -52,7 +52,7 @@ class CustomButton(QtWidgets.QPushButton):
     def __init__(self, parent=None, path=None, layer=0):
         super(CustomButton, self).__init__(parent)
         if path is None:
-            tpath = os.path.expanduser(INFO.SUB_PATH)
+            tpath = os.path.expanduser(INFO.MACRO_PATH)
             path = os.path.join(tpath, 'LatheMacro.svg')
         self.r = QtSvg.QSvgRenderer(path)
         self.basename = 'layer'
@@ -118,7 +118,7 @@ class MacroTab(QtWidgets.QWidget, _HalWidgetBase):
     def __init__(self, parent=None):
         super(MacroTab, self).__init__(parent)
         try:
-            tpath = os.path.expanduser(INFO.SUB_PATH)
+            tpath = os.path.expanduser(INFO.MACRO_PATH)
             self.filepath = os.path.join(tpath, '')
         except:
             self.filepath = 'None'
