@@ -1,14 +1,10 @@
 #
-# nyx v2.1
+# nyx v2.2
 #
 # http://www.yurtaev.com
 #
 
-# first load all the RT modules that will be needed
-# kinematics
 loadrt [KINS]KINEMATICS
-
-# motion controller, get name and thread periods from ini file
 loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS
 addf motion-command-handler servo-thread
 addf motion-controller servo-thread
@@ -45,8 +41,8 @@ net y-cmd joint.1.motor-pos-cmd => nyx.0.servo-01.pos-cmd
 net z-cmd joint.2.motor-pos-cmd => nyx.0.servo-02.pos-cmd
 
 #net alarm0 nyx.0.servo-00.alarm => joint.0.amp-fault-in
-#net alarm1 nyx.0.servo-00.alarm => joint.1.amp-fault-in
-#net alarm2 nyx.0.servo-00.alarm => joint.2.amp-fault-in
+#net alarm1 nyx.0.servo-01.alarm => joint.1.amp-fault-in
+#net alarm2 nyx.0.servo-02.alarm => joint.2.amp-fault-in
 
 net x-enable joint.0.amp-enable-out => nyx.0.servo-00.enable
 net y-enable joint.1.amp-enable-out => nyx.0.servo-01.enable

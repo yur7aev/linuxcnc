@@ -74,6 +74,7 @@ pin out   signed encoder-##.counts[2];
 pin  in    float dac-##.value[2];
 param rw   float dac-##.scale[2] = 1;
 
+
 ////////////////////////////
 
 option extra_setup;
@@ -342,7 +343,7 @@ FUNCTION(_)
 	debug = yssc2_fb_seq(y);
 	// process received data
 	for (a = 0; a < yssc2_axes(y); a++) {
-		servo_debug(a) = yssc2_dbg(y, a);
+		servo_debug(a) = yssc2_debug(y, a);
 		if (ready && yssc2_online(y, a)) {
 			if (yssc2_feedback_res(y, a) == 0) continue;
 			if (yssc2_has_fb(y)) {

@@ -177,7 +177,7 @@ typedef struct nyx_servo_fb {
 		uint32_t monl[3];
 		struct {		// Y_TYPE_ORIGIN
 			int32_t droop;	// 6
-			int32_t smth2;	// 7
+			int32_t debug;	// 7
 			int32_t rxtime;	// 8 !!!DEBUG!!!
 		};
 	};
