@@ -1,0 +1,74 @@
+/*
+   yop.comp
+   YOP rotary switch handler
+
+   Copyright (C) 2019 Dmitry Yurtaev (dmitry@yurtaev.com)
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2 of the License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the program; if not, write to the Free
+   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+   MA 02110-1301 USA.
+ */
+
+component yop "YOP rotary switch handler";
+pin in signed sw-in;
+pin in bit rapid-in;
+
+pin out signed feed-override;
+pin out bit jog;
+pin out float jog-speed;
+pin out bit mpg;
+pin out float mpg-scale;
+pin out bit off;
+
+function _;
+license "GPL"; // indicates GPL v2 or later
+;;
+
+FUNCTION(_) {
+	int n = sw_in;
+	if (n < 0) n = 0;
+	if (n > 23) n = 23;
+
+	jog = mpg = off = 0;
+	jog_speed = 0;
+
+	switch (n) {
+	case 0: off = 1; break;
+
+//	case 1: mpg_scale = 0.1; mpg = 1; break;
+//	case 2: mpg_scale = 0.01; mpg = 1; break;
+//	case 3: mpg_scale = 0.001; mpg = 1; break;
+
+	case 16: jog_speed = 10000; jog = 1; break;
+	case 15: jog_speed = 1000; jog = 1; break;
+	case 14: jog_speed = 100; jog = 1; break;
+	case 13: jog_speed = 10; jog = 1; break;
+	case 12: jog_speed = 1; jog = 1; break;
+
+//	default: {
+//		static float override_value[15] = { 0, 2, 4, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120 };
+//		feed_override = override_value[n - 9];
+//		break;
+//		}
+	}
+
+	if (rapid_in) jog_speed *= 2;
+
+//	jog_x_enable = mpg && jog_x_selected;
+//	jog_y_enable = mpg && jog_y_selected;
+//	jog_z_enable = mpg && jog_z_selected;
+//	jog_a_enable = mpg && jog_a_selected;
+
+//	mpg_out = mpg1_in + mpg2_in;
+}

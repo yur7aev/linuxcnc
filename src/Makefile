@@ -835,6 +835,8 @@ obj-$(CONFIG_STREAMER) += streamer.o
 streamer-objs := hal/components/streamer.o $(MATHSTUB)
 obj-$(CONFIG_SAMPLER) += sampler.o
 sampler-objs := hal/components/sampler.o $(MATHSTUB)
+obj-$(CONFIG_ZMAP) += zmap.o
+zmap-objs := hal/components/zmap.o $(MATHSTUB)
 
 # Subdirectory: hal/drivers
 obj-$(CONFIG_HAL_PARPORT) += hal_parport.o
@@ -1098,6 +1100,7 @@ endif
 ../rtlib/modmath$(MODULE_EXT): $(addprefix objects/rt,$(modmath-objs))
 ../rtlib/streamer$(MODULE_EXT): $(addprefix objects/rt,$(streamer-objs))
 ../rtlib/sampler$(MODULE_EXT): $(addprefix objects/rt,$(sampler-objs))
+../rtlib/zmap$(MODULE_EXT): $(addprefix objects/rt,$(zmap-objs))
 ../rtlib/hal_parport$(MODULE_EXT): $(addprefix objects/rt,$(hal_parport-objs))
 #../rtlib/uparport$(MODULE_EXT): $(addprefix objects/rt,$(uparport-objs))
 ../rtlib/pci_8255$(MODULE_EXT): $(addprefix objects/rt,$(pci_8255-objs))

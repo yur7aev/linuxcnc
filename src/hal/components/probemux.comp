@@ -1,0 +1,27 @@
+component probemux "2 probex mux";
+
+pin in bit touch-in;
+pin in bit height-in;
+pin in bit decel-in;
+pin in bit default-in = 1;
+
+pin in bit touch-enable;
+pin in bit height-enable;
+pin in bit decel-enable;
+pin out bit out;
+
+function _ nofp;
+
+license "GPL"; // indicates GPL v2 or later
+;;
+
+FUNCTION(_) {
+
+	if (touch_enable) {
+		out = touch_in;
+	} else if (height_enable) {
+		out = (decel_enable && decel_in) || height_in;
+	} else {
+		out = default_in;
+	}
+}

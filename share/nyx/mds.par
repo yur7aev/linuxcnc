@@ -19,15 +19,15 @@ SV014	300	300	300	300	300	300	300	; ILMTsp current limit special	0-500%
 SV015	0	0	0	0	0	0	0	; FFC	acc rate ff gain	0-999%
 SV016	0	0	0	0	0	0	0	; LMC1	lost motion comp	-1-200%
 SV017	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; SPEC	abs=0x80 nocap=0x800
-SV018	10	10	10	5	5	5	5	; PIT	ballscrew pitch		1..32767
-SV019	8	100	100	8	8	8	8	; RNG1	position detector res	8,16,25,100
-SV020	8	100	100	8	8	8	8	; RNG2	speed detector res	8,16,25,100
+SV018	10	10	10	10	10	10	10	; PIT	ballscrew pitch		1..32767
+SV019	25	25	25	25	25	25	25	; RNG1	position detector res	8,16,25,100
+SV020	25	25	25	25	25	25	25	; RNG2	speed detector res	8,16,25,100
 SV021	60	60	60	60	60	60	60	; OLT	ovl detect time const	1-300s
 SV022	150	150	150	150	150	150	150	; OLL	ovl detect level	50-180%
-SV023	0	0	0	5100	5100	5100	5100	; OD1	error excessive svon	0-32767mm
+SV023	0	0	0	0	0	0	0	; OD1	error excessive svon	0-32767mm
 SV024	50	50	50	50	50	50	50	; INP	in position		0-32767um
 SV025	0x2290	0x2290	0x2290	0x2290	0x2290	0x2290	0x2290	; MTYP
-SV026	0	0	0	5100	5100	5100	5100	; OD2	error excessive svoff	0-32767mm
+SV026	0	0	0	0	0	0	0	; OD2	error excessive svoff	0-32767mm
 SV027	0x4000	0x4000	0x4000	0x4000	0x4000	0x4000	0x4000	; SSF1			-----------
 SV028	-	-	-	-	-	-	-	;
 SV029	-	-	-	-	-	-	-	;
@@ -48,7 +48,7 @@ SV043	0	0	0	0	0	0	0	; OBS1	dist obsrv filter freq	0-1000rad/s
 SV044	0	0	0	0	0	0	0     	; OBS2	obsrv gain		0-1000%
 SV045	0	0	0	0	0	0	0     	; TRUB	frictional torque	0-100%
 SV046	-	-	-	-	-	-	-     	;
-SV047	100	100	100	100	100	100	10	; EC	induct volage comp gain	0-200%
+SV047	100	100	100	100	100	100	100	; EC	induct volage comp gain	0-200%
 SV048	0	0	0	0	0	0	0	; EMGrt	v axis droop prevention	0-2000ms
 SV049	15	15	15	15	15	15	15	; PGN1sp				0-200rad/s
 SV050	0	0	0	0	0	0	0	; PGN2sp				0-9999rad/s

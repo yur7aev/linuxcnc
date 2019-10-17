@@ -1,0 +1,24 @@
+component toggle2 "level + toggle";
+
+pin in bit in-on;
+pin in bit in-toggle;
+pin out bit out;
+
+variable int prev_on;
+variable int prev_off;
+variable int prev_toggle;
+
+function _;
+license "GPL"; // indicates GPL v2 or later
+;;
+
+FUNCTION(_) {
+	if (in_on && !prev_on) {
+		out = 1;
+	}
+	if (in_toggle && !prev_toggle) {
+		out = !out;
+	}
+	prev_on = in_on;
+	prev_toggle = in_toggle;
+}

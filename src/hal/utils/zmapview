@@ -1,0 +1,3 @@
+#!/bin/bash
+
+probe2stl <$1 | stlvis

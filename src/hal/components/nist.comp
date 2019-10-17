@@ -1,0 +1,24 @@
+component nist "pushbutton to nist";
+
+pin in bit in;
+pin in bit is-on;
+pin out bit on;
+pin out bit off;
+variable int state;
+
+function _;
+license "GPL"; // indicates GPL v2 or later
+;;
+
+FUNCTION(_) {
+	if (in) {
+		if (!state) {
+			on = !is_on;
+			off = is_on;
+			state = 1;
+		}
+	} else {
+		state = 0;
+		on = off = false;
+	}
+}

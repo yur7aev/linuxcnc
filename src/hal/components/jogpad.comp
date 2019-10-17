@@ -1,0 +1,70 @@
+/*
+  jogpad.comp
+
+  slow start / fast stop jogging
+ 
+  Copyright (C) 2018 Dmitry Yurtaev (dmitry@yurtaev.com)
+ */
+
+component jogpad """Hardware jog buttons + 2 GP keys""";
+
+pin in bit enable;
+pin in bit up "Y- button";
+pin in bit down "Y+ button";
+pin in bit left "X+ button";
+pin in bit right "X- button";
+pin in bit shift "alternate functions: Z+,Z-,A+,A-";       
+
+pin out s32 jog-counts-#[4] "joints 0..3, max step 100 counts per period";
+pin out bit jogging "jog enable output";
+
+param rw float accel-time = 1.0;
+
+variable int was_shift;
+variable int jog_duration;
+variable int acc_duration;
+
+function _;
+license "GPL";
+;;
+
+/*
+period is 222222
+1000000000 / 222222 = 4500
+*/
+
+//#include "rtapi_math.h"
+
+FUNCTION(_) {
+	if (enable) {
+		if (left || right || up || down) {
+			if (!jogging) {
+				was_shift = shift;
+				jogging = 1;
+				int p = period;
+				if (p < 222222) p = 222222;
+				acc_duration = 1e9 / p * accel_time;
+			}
+			if (jog_duration < acc_duration) jog_duration++; 
+		} else {
+			jogging = 0;
+			jog_duration = 0;
+		}		
+
+		if (acc_duration > 0) {
+			int step = jog_duration * 100 / acc_duration;
+			if (left && !right && !was_shift)	jog_counts(0) -= step;
+			if (right && !left && !was_shift)	jog_counts(0) += step;
+			if (down && !up && !was_shift)		jog_counts(1) -= step;
+			if (up && !down && !was_shift)		jog_counts(1) += step;
+			if (left && !right && was_shift)	jog_counts(3) -= step;
+			if (right && !left && was_shift)	jog_counts(3) -= step;
+			if (down && !up && was_shift)		jog_counts(2) += step;
+			if (up && !down && was_shift)		jog_counts(2) -= step;
+		}
+	} else {
+		jogging = 0;
+	}
+		
+
+}

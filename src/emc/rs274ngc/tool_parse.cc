@@ -93,7 +93,7 @@ int loadToolTable(const char *filename,
 			 char *ttcomments[],
 			 int random_toolchanger)
 {
-    int fakepocket = 0;
+//    int fakepocket = 0;
     int realpocket = 0;
     int t;
     FILE *fp;
@@ -166,6 +166,7 @@ int loadToolTable(const char *filename,
                     break;
                 }
                 realpocket = pocket;
+		/*
                 if (!random_toolchanger) {
                     fakepocket++;
                     if (fakepocket >= CANON_POCKETS_MAX) {
@@ -175,9 +176,16 @@ int loadToolTable(const char *filename,
                     }
                     pocket = fakepocket;
                 }
+		*/
                 if (pocket < 0 || pocket >= CANON_POCKETS_MAX) {
                     printf("max pocket number is %d. skipping tool %d\n", CANON_POCKETS_MAX - 1, toolno);
                     valid = 0;
+                    break;
+                }
+                if (toolTable[pocket].pocketno >= 0) {
+                    printf("duplicate pocket number %d for tool %d, in use by tool %d\n", pocket, toolno, toolTable[pocket].toolno);
+                    valid = 0;
+			return -1;
                     break;
                 }
                 break;
