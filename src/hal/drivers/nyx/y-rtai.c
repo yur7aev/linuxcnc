@@ -4,12 +4,6 @@
  * (c) 2016, dmitry@yurtaev.com
  */
 
-//#include <stdlib.h>
-//#include <string.h>
-//#include <sys/types.h>
-//#include <sys/stat.h>
-//#include <sys/mman.h>
-//#include <fcntl.h>
 #include <rtapi_pci.h>
 #include <linux/byteorder/generic.h>
 #include <linux/string.h>
@@ -87,7 +81,7 @@ static int yssc2_pci_probe(struct rtapi_pci_dev *dev, const struct rtapi_pci_dev
 		int rev_min = magic & 0xff;
 		int rev_maj = (magic & 0xff00) >> 8;
 
-		if (magic != (0x55c20000 | (NYX_VER_MAJ<<8) | NYX_VER_MIN)) {
+		if ((0xffffff00 & magic) != (0x55c20000 | (NYX_VER_MAJ<<8))) {
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: this driver v%d.%d is not compatible with YSSCxP (%x) v%d.%d at %s\n",
 					NYX_VER_MAJ, NYX_VER_MIN, magic, rev_maj, rev_min, rtapi_pci_name(dev));
 			r = -ENODEV;
@@ -95,7 +89,7 @@ static int yssc2_pci_probe(struct rtapi_pci_dev *dev, const struct rtapi_pci_dev
 		}
 
 
-		rtapi_print_msg(RTAPI_MSG_INFO, "nyx: YSSC3P-A v%d.%d #%d at %s, mapped to %p..%p, y=%p\n", rev_maj, rev_min,
+		rtapi_print_msg(RTAPI_MSG_INFO, "nyx: YSSC3P v%d.%d #%d at %s, mapped to %p..%p, y=%p\n", rev_maj, rev_min,
 			num_boards, rtapi_pci_name(dev), y->iomem, y->iomem - y->iolen, y);
 	}
 

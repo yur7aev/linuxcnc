@@ -3,7 +3,9 @@
  *
  *  YSSC2P/YMDS2 servo interface adapter board firmware
  *
- *  (c) 2016-2018, dmitry@yurtaev.com
+ *  DPRAM definition
+ *
+ *  (c) 2016-2019, dmitry@yurtaev.com
  */
 
 #define RELEASE
@@ -14,17 +16,15 @@
 
 #define _P __attribute__((__packed__))
 
-// DPRAM description
-
 #ifndef NYX_H
 #define NYX_H
 
 #define NYX_VER_MAJ 2
-#define NYX_VER_MIN 2
+#define NYX_VER_MIN 3
 #define NYX_VER_REV 0
 
 #ifndef NYX_AXES
-#define NYX_AXES 10
+#define NYX_AXES 8
 #endif
 
 #define MAX_AXES 18
@@ -71,8 +71,8 @@
 #define YF_DI3		0x00000008
 #define YF_ONLINE	0x00000010	/* drive configured/detected */
 //#define YF_		0x00000020
-//#define YF_		0x00000040
 					/// servo reply-derived flags below:
+#define YF_Z_PASSED	0x00000040
 #define YF_READY	0x00000080	/* power relay on */
 #define YF_ENABLED	0x00000100	/* servo is on */
 #define YF_IN_POSITION	0x00000200
@@ -167,7 +167,7 @@ typedef struct nyx_servo_fb {
 	uint16_t pval, pno;
 #endif
 	union {
-		struct {		// Y_TYPE_FB
+		struct {		// Y_TYPE_ORIGIN
 			uint32_t fbres;	// 6
 			uint32_t cyc0;	// 7
 			uint32_t abs0;	// 8
@@ -175,7 +175,7 @@ typedef struct nyx_servo_fb {
 		uint8_t monb[12];	// 6 7 8
 		uint16_t monw[6];
 		uint32_t monl[3];
-		struct {		// Y_TYPE_ORIGIN
+		struct {		// Y_TYPE_FB
 			int32_t droop;	// 6
 			int32_t dbg;	// 7
 			int32_t rxtime;	// 8 !!!DEBUG!!!
@@ -215,6 +215,8 @@ typedef struct nyx_servo_fb {
 
 #define FUNC_SV_GET	0x0011
 #define FUNC_SV_SET	0x0012
+#define FUNC_PARAM_GET	0x0011
+#define FUNC_PARAM_SET	0x0012
 #define FUNC_SP_GET	0x0013
 #define FUNC_SP_SET	0x0014
 #define FUNC_LOAD	0x0015
@@ -243,9 +245,12 @@ struct nyx_req {
 
 struct nyx_req_param {			// unused
 	volatile uint32_t code;
-	uint32_t axis;
+	uint32_t axis;			// mask
 	uint32_t first;
-	uint32_t count;
+	union {
+		uint32_t count;
+		uint32_t second;
+	};
 	uint16_t param[240];
 } _P;
 
@@ -297,22 +302,6 @@ typedef struct nyx_dp_cmd {
 	nyx_servo_cmd servo_cmd[MAX_AXES];
 } _P nyx_dp_cmd;
 
-//
-
-typedef struct nyx_dp_debug {
-	uint32_t magic;
-	uint32_t t_recv_start;
-	uint32_t t_recv_end;
-	uint32_t t_sync_start;
-	uint32_t t_sync_end;
-	uint32_t t_proc_start;
-	uint32_t t_proc_end;
-	uint32_t t_send_start;
-	uint32_t t_send_end;
-	uint32_t dpll_shift;
-	uint32_t cmd_seq_miss;	// number of out-of-seq cmd's
-} _P nyx_dp_debug;
-
 // controller status
 #define STATUS_REALTIME		0x01
 #define STATUS_READY		0x02
@@ -363,4 +352,4 @@ typedef struct nyx_iomem {
 	struct nyx_dpram dpram;
 } _P nyx_iomem;
 
-#endif
+#endif // NYX_H

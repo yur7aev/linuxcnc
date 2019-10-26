@@ -290,7 +290,7 @@ FUNCTION(_)
 
 	yssc2_receive(y);	// should be the very first routine
 
-	if (yssc2_magic(y) == (0x55c20000 | (NYX_VER_MAJ<<8) | NYX_VER_MIN)) {	// check if the board hasn't gone away
+	if ((0xffffff00 & yssc2_magic(y)) == (0x55c20000 | (NYX_VER_MAJ<<8))) {	// check if the board hasn't gone away
 		phase = yssc2_irq_time_us(y) * 45.0;
 		status = yssc2_fb_seq(y);
 		insync = status & YS_INSYNC;

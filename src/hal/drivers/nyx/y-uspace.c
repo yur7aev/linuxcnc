@@ -1,24 +1,16 @@
 /*
  * N Y X
  *
- * (c) 2016, dmitry@yurtaev.com
+ * (c) 2016-2019, dmitry@yurtaev.com
  */
 
-//#include <stdlib.h>
-//#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-//#include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 #include <rtapi_slab.h>
 #include <rtapi_io.h>
-//u//#include <linux/byteorder/generic.h>
-//u//#include <linux/string.h>
-//i//#include <linux/delay.h>
-
-//#define be32toh be32_to_cpu
 
 #include "y.h"
 
@@ -57,6 +49,9 @@ int yssc2_init()
 		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: can't open /dev/nyx0");
 		return -1;
 	}
+
+	if (ioctl(y->fd, 1, nodma))
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:init dma ioctl failed - old driver?");
 
 	num_boards = 1;
 	y->dpram = calloc(sizeof(nyx_dpram), 1);

@@ -2,7 +2,7 @@
 #
 # nyxq - YSSC2P/YSSC3P/YMDS2P control utility
 #
-# 2018, dmitry@yurtaev.com
+# 2018-2019, dmitry@yurtaev.com
 #
 
 from glob import glob
@@ -13,6 +13,8 @@ import time
 import sys
 import re
 import string
+
+# TODO: generate from nyx2.h
 
 class servo_fb(Structure):
 	_fields_ = [
@@ -70,7 +72,6 @@ class nyx_data(Union):
 		( "servo_info", servo_info ),
 		]
 
-
 class nyx_dpram(Structure):
 	_fields_ = [
 		( "magic",    c_uint ),
@@ -87,16 +88,11 @@ class nyx_dpram(Structure):
 		( "cmd",      nyx_cmd ),
 		]
 
-#------------------------------
+# ------------------------------
 
 def flip32(data):
 	sl = struct.Struct('<I')
 	sb = struct.Struct('>I')
-#	try:
-#		b = buffer(data)
-#	except NameError:
-#		# Python 3 does not have 'buffer'
-#		b = data
 	b = ''.join(map(chr, data))
 	d = bytearray(len(data))
 	for offset in range(0, len(data), 4):
@@ -132,9 +128,7 @@ def read_bitfile(filename):
 			raise Exception("unexpected EOF")
 		elif k == b'e':
 			l = ulong.unpack(bitfile.read(4))[0]
-			#print("Found binary data: %s" % l)
 			d = bitfile.read(l)
-			# d = flip32(d)
 			bitfile.close()
 			print "size: %d/%x" % (len(d), len(d))
 			return d
@@ -147,12 +141,13 @@ def read_bitfile(filename):
 			l = short.unpack(bitfile.read(2))[0]
 			d = bitfile.read(l)
 
-#==============================================================================
-# /sys/bus/pci/devices/0000:05:09.0
+# ------------------------------
 
 instance = -1
 boards = []
 first_arg = 0
+vendor_ids = [ 0x1067,  0x1313 ]
+device_ids = [ 0x55c3,  0x55c2,  0x4d32 ]
 
 if len(sys.argv) > 1:
 	if sys.argv[1] == '-0': instance = 0
@@ -166,7 +161,7 @@ try:
 	for dir in glob("/sys/bus/pci/devices/*"):
 		vendor = int(open(dir + "/vendor", "r").read(), 16)
 		device = int(open(dir + "/device", "r").read(), 16)
-		if vendor == 0x1067 and (device == 0x55c3 or device == 0x55c2):
+                if (vendor in vendor_ids) and (device in device_ids):
 			boards.append(dir)
 			if i >= instance and not 'mem' in globals():
 				with open(dir + "/resource0", "r+b" ) as f:
@@ -187,14 +182,14 @@ if len(boards):
 #	print "-------", boards[instance], "-------"
 
 try:
-	if dp.magic != 0x55c20201 and dp.magic != 0x55c20202:
+	if (0xffffff00 & dp.magic) != 0x55c20200:
 		print "unsupported firmware %x" % dp.magic
 		exit(1)
 except:
-	print "can't find any YSSC2P/YSSC3P/YMDS2P card"
+	print "can't find any YSSC2P/YSSC3P/YMDS2P/YMTL2P card"
 	exit(1)
 
-#------------------------------
+# ------------------------------
 
 def req(code, a1=0, a2=0, a3=0):
 	dp.code = 0
@@ -212,20 +207,12 @@ def req(code, a1=0, a2=0, a3=0):
 		return False
 	return True
 
-#------------------------------
-
 def cstr(arr):
 	return cast(arr, c_char_p).value.split(b'\0',1)[0]
 
 def info():
-#	print "magic: %x" % dp.magic,
-	if dp.status&1: print "realtime"
+	if dp.status & 1: print "realtime"
 	if req(0x00010000):
-#		q =  dp.buf.byte[:]
-#		for i in range(32):
-#			print chr(q[i]),
-#		print
-#		print ''.join(chr(i) for i in q)
 		print cstr(dp.buf.byte)
 
 def dna():
@@ -270,35 +257,7 @@ def io_info():
 				print
 	print "------- fedcba9876543210"
 
-#------------------------------
-
-def servo_enable(p):
-	proto = {
-		"sscnet": 1,
-		"sscnet2": 2,
-		"sscnet3": 3,
-		"mds": 11,
-		"m-ii": 22
-	};
-	if p in proto.keys():
-		req(0x00030002, proto[p])
-	else:
-		print "usage: nyxq servo enable [" + string.joinfields(sorted(proto.keys()), '|') + ']'
-
-def servo_disable():
-	req(0x00030003)
-
-def servo_start():
-	req(0x00030004)
-
-def servo_stop():
-	req(0x00030005)
-
-def servo_run(en):
-	req(0x00030006, en)
-
 def servo_info():
-	conn = 0
 	if req(0x00030001):
 		print cstr(dp.buf.byte)
 		# dump(dp.buf.byte)
@@ -317,8 +276,6 @@ def servo_info():
 				if s & 0x08000: print "abs",
 				if s & 0x10000: print "abslost",
 				print
-	return conn
-
 
 def servo_cmd():
 	for a in range(8):
@@ -331,7 +288,6 @@ def servo_cmd():
 		if s & 0x00400: print "Ilim",
 		if s & 0x80000: print "vel",
 		print
-	return 0
 
 def servo_fw():
 		for a in range(8):
@@ -339,8 +295,6 @@ def servo_fw():
 				print "%d:" % a, cstr(dp.buf.byte)
 
 def servo_mon():
-#	seq = dp.reserved
-#	while (seq == dp.reserved): pass
 	print "seq=%d %x res=%x" % (dp.rly.seq, dp.cmd.seq, dp.reserved)
 	for a in range(7):
 		r = dp.rly.fb[a]
@@ -350,15 +304,6 @@ def servo_mon():
 					a, r.alarm, r.state, r.pos, r.vel, r.trq, r.mon[3],
 					c.flags, c.cmd
 					)
-#	print "sy:%d..%d pr:%d..%d se:%d..%d" % (
-#		dp.dbg.sync_start, dp.dbg.sync_end,
-#		dp.dbg.proc_start, dp.dbg.proc_end,
-#		dp.dbg.send_start, dp.dbg.send_end,
-#		)
-#	print "seq_miss:%d dpll_shift:%d" % (
-#		dp.dbg.cmd_seq_miss, dp.dbg.dpll_shift
-#		)
-
 
 def pll(y, p, i, s):
 	dp.buf.dword[0] = int(y)
@@ -367,7 +312,8 @@ def pll(y, p, i, s):
 	dp.buf.dword[4] = int(s)
 	req(0x00090000, 0, 0, 4)
 
-#------------------------------
+# ------------------------------
+
 def dump(b, a=0):
 	i = 0
 	for x in b:
@@ -381,27 +327,18 @@ import subprocess
 
 def reboot():
 	conf = subprocess.check_output(['/usr/bin/setpci', '-s', pcidev, '10.l', '4.w', 'latency_timer']).split()
-
-	#req(0x00060000, 1);
 	dp.code = 0
 	while (dp.status & 2) == 0: time.sleep(0.01)
 	dp.arg1 = 1
 	dp.code = 0x00060000
-
 	print "rebooting..."
 	time.sleep(2)
-
-	# print '/usr/bin/setpci', '-s', pcidev, '10.l='+conf[0], '4.w='+conf[1], 'latency_timer='+conf[2]
 	res = subprocess.check_output(['/usr/bin/setpci', '-s', pcidev, '10.l='+conf[0], '4.w='+conf[1], 'latency_timer='+conf[2]])
 	print res
 
-
-
 def flash_read(a):
-	#print [hex(x) for x in list(dp.buf.byte)[0:256]]
 	while True:
 		req(0x00050021, 0xdeadbeef, a, 256)
-		#dump(list(dp.buf.byte)[0:256], a)
 		d = flip32(dp.buf.byte[0:256])
 		dump(d, a)
 		if raw_input("next? ") in ['q', "n", 'x']:
@@ -443,8 +380,6 @@ def flash_bootloader():
 	else:
 		print "success"
 
-	return
-
 def flash_program(f, a=0x80000, verify_only=0):
 	d = read_bitfile(f)
 	l = len(d)
@@ -462,7 +397,6 @@ def flash_program(f, a=0x80000, verify_only=0):
 			s = min(256, l - o)
 			sys.stdout.write(".")
 			sys.stdout.flush()
-			#dp.buf.byte[0:s] = (c_ubyte * s).from_buffer_copy(d[o:o+s])
 			fd = flip32((c_ubyte * s).from_buffer_copy(d[o:o+s]))
 			dp.buf.byte[0:s] = fd
 			req(0x00050023, 0xdeadbeef, a+o, s)
@@ -485,41 +419,23 @@ def flash_program(f, a=0x80000, verify_only=0):
 	else:
 		print "success"
 
-def dbg():
-	print "seq:%x gpi:%x enc0:%x enc1:%x" % (
-			dp.rly.seq,
-			dp.rly.gpi,
-			dp.rly.enc[0], dp.rly.enc[1],
-			)
-	for a in range(8):
-		r = dp.rly.fb[a]
-		print "%x: %x pos=%d" % (a, r.state, r.pos)
+# ==============================
 
 def arg(n, m, d=None):
 	n += first_arg
 	if len(sys.argv) <= n:
 		if d != None: return d
-		print "nyxq v2.2.0"
+		print "nyxq v2.3.0"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n]
 
-cmd = arg(1, "[info|servo|flash|reboot] ...")
-
+cmd = arg(1, "[info|servo|io|flash|reboot|pll] ...")
 if cmd == 'info':
 	info()
 elif cmd == 'servo':
-	subcmd = arg(2, "servo [info|enable|disable|start|run|stop|mon] ...")
+	subcmd = arg(2, "servo [info||mon|fw|cmd] ...")
 	if subcmd == 'info':		servo_info()
-	elif subcmd == 'enable':
-		proto = arg(3, "servo enable [mds|sscnet|sscnet2]")
-		servo_enable(proto)
-	elif subcmd == 'disable':	servo_disable()
-	elif subcmd == 'start':		servo_start()
-	elif subcmd == 'run':
-		mask = int(arg(3, "servo run <mask>", d=0))
-		servo_run(mask)
-	elif subcmd == 'stop':		servo_stop()
 	elif subcmd == 'mon':		servo_mon()
 	elif subcmd == 'fw':		servo_fw()
 	elif subcmd == 'cmd':		servo_cmd()
@@ -558,6 +474,6 @@ elif cmd == 'flash':
 	elif subcmd == 'bootloader':
 		flash_bootloader()
 	else:
-		print "invalid command"
+		print "error: nyxq flash ?"
 else:
-	print "invalid command"
+	print "error: nyx ?"

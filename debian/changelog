@@ -1,3 +1,6 @@
+linuxcnc (1:2.8.0nyx9~pre1) rosa; urgency=low
+  * nyx 2.3
+
 linuxcnc (1:2.8.0nyx8~pre1) rosa; urgency=low
   * merged with 2.8 branch
 
