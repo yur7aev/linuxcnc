@@ -58,9 +58,16 @@ int yssc2_init()
 	read(y->fd, y->dpram, 16);	// includes "magic" and "config" field
 
 	y->axes = y->dpram->config & 0xff;
+	y->yios = (y->dpram->config >> 8) & 0xff;
+
 	if (y->axes > NYX_AXES) {
 		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: card has %d axes, limited to %d", y->axes, NYX_AXES);
 		y->axes = NYX_AXES;
+	}
+
+	if (y->yios > 16) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: yio nodes number %d, limited to 16", y->yios);
+		y->yios = 16;
 	}
 
 //	rtapi_print_msg(RTAPI_MSG_ERR, "nyx: magic: %x, %d axes", y->dpram->magic, y->axes );

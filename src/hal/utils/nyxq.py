@@ -147,7 +147,7 @@ instance = -1
 boards = []
 first_arg = 0
 vendor_ids = [ 0x1067,  0x1313 ]
-device_ids = [ 0x55c3,  0x55c2,  0x4d32 ]
+device_ids = [ 0x55c2,  0x55c3,  0x0712 ]
 
 if len(sys.argv) > 1:
 	if sys.argv[1] == '-0': instance = 0
@@ -186,7 +186,7 @@ try:
 		print "unsupported firmware %x" % dp.magic
 		exit(1)
 except:
-	print "can't find any YSSC2P/YSSC3P/YMDS2P/YMTL2P card"
+	print "can't find any YxxxnP card"
 	exit(1)
 
 # ------------------------------
@@ -211,9 +211,9 @@ def cstr(arr):
 	return cast(arr, c_char_p).value.split(b'\0',1)[0]
 
 def info():
-	if dp.status & 1: print "realtime"
 	if req(0x00010000):
 		print cstr(dp.buf.byte)
+	if dp.status & 1: print "realtime"
 
 def dna():
 	if req(0x00080000):

@@ -1,0 +1,101 @@
+;
+; MDS-DJ-V1 / HF-KP23
+;
+
+;	0	1	2	3
+SV001	1	1	1	1	; PC1	Motor side gear ratio
+SV002	1	1	1	1	; PC2	Machine side gear ratio
+SV003	33	33	33	33	; PGN1	Position loop gain
+SV004	0	0	0	0	; PGN2	Position loop gain
+SV005	5	5	5	5	; VGN1	Speed loop gain 1
+SV006	0	0	0	0	; VGN2	Speed loop gain 2
+SV007	0	0	0	0	; VIL	Speed loop delay compensation
+SV008	1364	1364	1364	1364	; VIA	Speed loop lead compensation
+SV009	20480	20480	20480	20480	; IQA	Current loop q axis lead compensation
+SV010	20480	20480	20480	20480	; IDA	Current loop d axis lead compensation
+SV011	2048	2048	2048	2048	; IQG	Current loop q axis gain
+SV012	2048	2048	2048	2048	; IDG	Current loop d axis gain
+SV013	300	300	300	300	; ILMT	Current limit value
+SV014	300	300	300	300	; ILMTsp Current limit value in special control
+SV015	0	0	0	0	; FFC	Acceleration rate feed forward gain
+SV016	0	0	0	0	; LMC1	Lost motion compensation 1
+SV017	0xE000	0x1000	0x1000	0x1000	; SPEC1	Servo specification 1
+SV018	10	10	10	10	; PIT	Ball screw pitch/Magnetic pole pitch
+SV019	100	260	260	260	; RNG1	Sub side encoder resolution
+SV020	100	260	260	260	; RNG2	Main side encoder resolution
+SV021	60	60	60	60	; OLT	Overload detection time constant
+SV022	150	150	150	150	; OLL	Overload detection level
+SV023	6	6	6	6	; OD1	Excessive error detection width during servo ON
+SV024	50	50	50	50	; INP	In-position detection width
+SV025	0x22FA	0x22EA	0x22EA	0x22EA	; MTYP	Motor/Encoder type
+SV026	6	6	6	6	; OD2	Excessive error detection width during servo OFF
+SV027	0x4000	0x4000	0x4000	0x4000	; SSF1	Servo function 1
+SV028	-       -       -       -       
+SV029	-       -       -       -       
+SV030	-       -       -       -       
+SV031	-       -       -       -       
+SV032	0	0	0	0	; TOF	Torque offset
+SV033	0x0000	0x0000	0x0000	0x0000	; SSF2	Servo function 2
+SV034	0x0000	0x0000	0x0000	0x0000	; SSF3	Servo function 3
+SV035	0x0000	0x0000	0x0000	0x0000	; SSF4	Servo function 4
+SV036	0x1000	0x1000	0x1000	0x1000	; PTYP	Power supply type/ Regenerative resistor type
+SV037	0	0	0	0	; JL	Load inertia scale
+SV038	-       -       -       -       
+SV039	-       -       -       -       
+SV040	-       -       -       -       
+SV041	-       -       -       -       
+SV042	-       -       -       -       
+SV043	-       -       -       -       
+SV044	-       -       -       -       
+SV045	-       -       -       -       
+SV046	0	0	0	0	; FHz2	Notch filter frequency 2
+SV047	100	100	100	100	; EC	Inductive voltage compensation gain
+SV048	0	0	0	0	; EMGrt	Vertical axis drop prevention time
+SV049	15	15	15	15	; PGN1sp Position loop gain 1 in spindle synchronous control
+SV050	0	0	0	0	; PGN2sp Position loop gain 2 in spindle synchronous control
+SV051	-       -       -       -       
+SV052	-       -       -       -       
+SV053	-       -       -       -       
+SV054	-       -       -       -       
+SV055	-       -       -       -       
+SV056	-       -       -       -       
+SV057	-       -       -       -       
+SV058	-       -       -       -       
+SV059	-       -       -       -       
+SV060	-       -       -       -       
+SV061	-       -       -       -       
+SV062	-       -       -       -       
+SV063	-       -       -       -       
+SV064	-       -       -       -       
+SV065	0	0	0	0	; TLC	Machine end compensation gain
+SV066	-       -       -       -       
+SV067	-       -       -       -       
+SV068	-       -       -       -       
+SV069	-       -       -       -       
+SV070	-       -       -       -       
+SV071	-       -       -       -       
+SV072	-       -       -       -       
+SV073	0	0	0	0	; FEEDout Specified speed output speed
+SV074	-       -       -       -       
+SV075	-       -       -       -       
+SV076	-       -       -       -       
+SV077	-       -       -       -       
+SV078	-       -       -       -       
+SV079	-       -       -       -       
+SV080	-       -       -       -       
+SV081	0x0000	0x0000	0x0000	0x0000	; SPEC2	Servo specification 2
+SV082	0x0000	0x0000	0x0000	0x0000	; SSF5	Servo function 5
+SV083	0x0000	0x0000	0x0000	0x0000	; SSF6	Servo function 6
+SV084	0x0000	0x0000	0x0000	0x0000	; SSF7	Servo function 7
+SV085	0	0	0	0	; LMCk	Lost motion compensation 3 spring constant
+SV086	-       -       -       -       
+SV087	-       -       -       -       
+SV088	-       -       -       -       
+SV089	-       -       -       -       
+SV090	-       -       -       -       
+SV091	-       -       -       -       
+SV092	-       -       -       -       
+SV093	0       0       0       0       
+SV094	10	10	10	10	; MPV	Magnetic pole position error detection speed
+SV095	0	0	0	0	; ZUPD	Vertical axis pull up distance
+SV096	-       -       -       -       

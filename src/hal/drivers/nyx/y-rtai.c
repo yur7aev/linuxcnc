@@ -1,7 +1,7 @@
 /*
  * N Y X
  *
- * (c) 2016, dmitry@yurtaev.com
+ * (c) 2016-2019, dmitry@yurtaev.com
  */
 
 #include <rtapi_pci.h>
@@ -28,6 +28,12 @@ static struct rtapi_pci_device_id yssc2_pci_tbl[] = {
 		.device = YSSC2P_A_DEVICE_ID,
 		.subvendor = YSSC2_VENDOR_ID,
 		.subdevice = YSSC2P_A_DEVICE_ID,
+	},
+	{
+		.vendor = YMTL2_VENDOR_ID,
+		.device = YMTL2P_A_DEVICE_ID,
+		.subvendor = YMTL2_VENDOR_ID,
+		.subdevice = YMTL2P_A_DEVICE_ID,
 	},
 	{0,},
 };
@@ -82,14 +88,14 @@ static int yssc2_pci_probe(struct rtapi_pci_dev *dev, const struct rtapi_pci_dev
 		int rev_maj = (magic & 0xff00) >> 8;
 
 		if ((0xffffff00 & magic) != (0x55c20000 | (NYX_VER_MAJ<<8))) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: this driver v%d.%d is not compatible with YSSCxP (%x) v%d.%d at %s\n",
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: this driver v%d.%d is not compatible with YxxxnP (%x) v%d.%d at %s\n",
 					NYX_VER_MAJ, NYX_VER_MIN, magic, rev_maj, rev_min, rtapi_pci_name(dev));
 			r = -ENODEV;
 			goto fail1;
 		}
 
 
-		rtapi_print_msg(RTAPI_MSG_INFO, "nyx: YSSC3P v%d.%d #%d at %s, mapped to %p..%p, y=%p\n", rev_maj, rev_min,
+		rtapi_print_msg(RTAPI_MSG_INFO, "nyx: YxxxnP v%d.%d #%d at %s, mapped to %p..%p, y=%p\n", rev_maj, rev_min,
 			num_boards, rtapi_pci_name(dev), y->iomem, y->iomem - y->iolen, y);
 	}
 
@@ -118,9 +124,16 @@ static int yssc2_pci_probe(struct rtapi_pci_dev *dev, const struct rtapi_pci_dev
 	y->dpram->config = y->iomem->dpram.config;
 
 	y->axes = y->dpram->config & 0xff;
+	y->yios = (y->dpram->config >> 8) & 0xff;
+
 	if (y->axes > NYX_AXES) {
 		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: card has %d axes, limited to %d", y->axes, NYX_AXES);
 		y->axes = NYX_AXES;
+	}
+
+	if (y->yios > 16) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: yio nodes number %d, limited to 16", y->yios);
+		y->yios = 16;
 	}
 
 	++num_boards;

@@ -1,7 +1,7 @@
 <!--
-    NYX v2.2
+    NYX v2.3 LinuxCNC 2.8 sample PyVCP config, 8 axes
 
-    http://www.yurtaev.com
+    2019, http://www.yurtaev.com
 -->
 
 <pyvcp>

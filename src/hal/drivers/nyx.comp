@@ -130,10 +130,10 @@ static int export_io(char *prefix, int inst_num)
 	yssc2_receive(y);
 	io->yi16 = io->yo16 = 0;
 
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < y->yios; i++) {
 		uint32_t iotype = yssc2_yi(y, i) >> 24;
 
-		if (iotype) {
+		if (iotype >= 1 && iotype <= 2) {	// known YIO module
 			r = hal_pin_bit_newf(HAL_OUT, &(io->alarm[i]), comp_id,
 					"%s.yio-%02d.alarm", prefix, i);
 			if(r != 0) return r;
@@ -145,7 +145,7 @@ static int export_io(char *prefix, int inst_num)
 
 		if (iotype == 1) {
 			io->yi16 |= 1<<i;
-			for (j = 0; j < 16; j++) {
+			for (j = 0; j < y->yios; j++) {
 				r = hal_pin_bit_newf(HAL_OUT, &(io->in[i][j]), comp_id,
 					            "%s.yio-%02d.in-%02d", prefix, i, j);
 				if(r != 0) return r;
@@ -161,7 +161,7 @@ static int export_io(char *prefix, int inst_num)
 			}
 		} else if (iotype == 2) {
 			io->yo16 |= 1<<i;
-			for (j = 0; j < 16; j++) {
+			for (j = 0; j < y->yios; j++) {
 				r = hal_pin_bit_newf(HAL_IN, &(io->out[i][j]), comp_id,
 					            "%s.yio-%02d.out-%02d", prefix, i, j);
 				if(r != 0) return r;
@@ -462,12 +462,12 @@ FUNCTION(_)
 
 	// YIO
 
-	for (a = 0; a < 16; a++) {
+	for (a = 0; a < y->yios; a++) {
 		int n;
 		uint32_t i, o;
 		if (yio_yo16(a)) {	// output board - input pins
 			i = yssc2_yi(y, a);
-			for (o = n = 0; n < 16; n++) {
+			for (o = n = 0; n < y->yios; n++) {
 				if (yio_pin_out(a, n)) o |= 0x10000;
 				o >>= 1;
 				if (mon) yio_pin_mon(a, n) = yio_pin_out(a, n);
@@ -478,7 +478,7 @@ FUNCTION(_)
 		}
 		if (yio_yi16(a)) {
 			i = yssc2_yi(y, a);
-			for (n = 0; n < 16; n++) {
+			for (n = 0; n < y->yios; n++) {
 				yio_pin_in_not(a, n) = !(yio_pin_in(a, n) = (i & (1<<n)) ? 1 : 0);
 				if (mon) yio_pin_mon(a, n) = yio_pin_in(a, n);
 			}

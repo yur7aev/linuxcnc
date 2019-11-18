@@ -1,7 +1,7 @@
 #
-# NYX v1.3
+# NYX v1.3 YSSC2P LinuxCNC 2.8 sample PyVCP config
 #
-# http://www.yurtaev.com
+# 2019, http://www.yurtaev.com
 #
 
 net trq0 => pyvcp.trq0

@@ -1,15 +1,19 @@
 #
-# NYX v1.3
+# NYX v1.3 YSSC2P LinuxCNC 2.8 sample HAL config
 #
-# http://www.yurtaev.com
+# 2019, http://www.yurtaev.com
 #
 
+# first load all the RT modules that will be needed
+# kinematics
 loadrt [KINS]KINEMATICS
+
+# motion controller, get name and thread periods from ini file
 loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS
 addf motion-command-handler servo-thread
 addf motion-controller servo-thread
 
-loadrt sscii nodma=0
+loadrt sscii nodma=1
 
 #-------- limits --------
 

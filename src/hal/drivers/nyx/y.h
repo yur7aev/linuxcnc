@@ -39,6 +39,7 @@ typedef struct yssc2 {
 	// uspace
 	int fd;			// nyx device file descriptor
 	int axes;
+	int yios;
 
 	// RTAI
 #ifdef __KERNEL__
@@ -118,6 +119,8 @@ void yssc2_orient(YSSC2 *y, int a, int e) { if (e) y->dpram->cmd.servo_cmd[a].fl
 #define YSSC2P_A_DEVICE_ID 0x55c2
 #define YSSC3_VENDOR_ID 0x1067
 #define YSSC3P_A_DEVICE_ID 0x55c3
+#define YMTL2_VENDOR_ID 0x1313
+#define YMTL2P_A_DEVICE_ID 0x0712
 #define YSSC2_MAX_BOARDS 8
 
 /*
