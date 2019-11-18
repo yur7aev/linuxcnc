@@ -198,7 +198,7 @@ void yssc2_cleanup()
 	}
 }
 
-int yssc2_start(int instance, int maxdrives)
+int yssc2_start(int no, int maxdrives)
 {
 	int i;
 	YSSC2 *y = &yssc2_brd[no];

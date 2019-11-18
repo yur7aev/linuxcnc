@@ -124,7 +124,7 @@ function _ ;
 
 ;;
 
-#include <math.h>
+#include <rtapi_math.h>
 
 int default_pockets = 8;
 int default_code = 'G';
@@ -155,7 +155,7 @@ FUNCTION(_){
     int p = 0;
     unsigned int mask;
 
-    int pocket_number = roundf(pocket_number_f);
+    int pocket_number = (int)round(pocket_number_f);
 
     switch inst_code {
     case 'G': // Gray Code
