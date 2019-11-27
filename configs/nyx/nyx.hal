@@ -4,11 +4,8 @@
 # 2019, http://www.yurtaev.com
 #
 
-# first load all the RT modules that will be needed
-# kinematics
 loadrt [KINS]KINEMATICS
 
-# motion controller, get name and thread periods from ini file
 loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS
 addf motion-command-handler servo-thread
 addf motion-controller servo-thread
@@ -65,5 +62,3 @@ net estop => nyx.0.servo-02.power
 
 net estop <= iocontrol.0.user-enable-out
 net estop => iocontrol.0.emc-enable-in
-
-#setp nyx.0.encoder-0.cpr 400

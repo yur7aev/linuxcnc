@@ -6,16 +6,21 @@
 
 <pyvcp>
 <label>
-    <text>"Torque:"</text>
+    <text>"Torque (%)"</text>
 </label>
-<bar> <halpin>"trq0"</halpin> <min_>-150</min_> <max_>150</max_> </bar>
-<bar> <halpin>"trq1"</halpin> <min_>-150</min_> <max_>150</max_> </bar>
-<bar> <halpin>"trq2"</halpin> <min_>-150</min_> <max_>150</max_> </bar>
-<bar> <halpin>"trq3"</halpin> <min_>-150</min_> <max_>150</max_> </bar>
-<bar> <halpin>"trq4"</halpin> <min_>-150</min_> <max_>150</max_> </bar>
-<bar> <halpin>"trq5"</halpin> <min_>-150</min_> <max_>150</max_> </bar>
-<bar> <halpin>"trq6"</halpin> <min_>-150</min_> <max_>150</max_> </bar>
-<bar> <halpin>"trq7"</halpin> <min_>-150</min_> <max_>150</max_> </bar>
+<bar> <halpin>"trq0"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>26</canvas_height> </bar>
+<bar> <halpin>"trq1"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>26</canvas_height> </bar>
+<bar> <halpin>"trq2"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>26</canvas_height> </bar>
+<bar> <halpin>"trq3"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>26</canvas_height> </bar>
+<bar> <halpin>"trq4"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>26</canvas_height> </bar>
+<bar> <halpin>"trq5"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>26</canvas_height> </bar>
+<bar> <halpin>"trq6"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>26</canvas_height> </bar>
+<bar> <halpin>"trq7"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>42</canvas_height> </bar>
+
+<label>
+    <text>"Speed (rpm)"</text>
+</label>
+<bar> <halpin>"s-vel"</halpin> <min_>-5000</min_> <max_>5000</max_> </bar>
 
 <labelframe text="Controller">
     <hbox>

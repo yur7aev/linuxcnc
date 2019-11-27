@@ -16,6 +16,8 @@ net trq5 nyx.0.servo-05.trq-fb => pyvcp.trq5
 net trq6 nyx.0.servo-06.trq-fb => pyvcp.trq6
 net trq7 nyx.0.servo-07.trq-fb => pyvcp.trq7
 
+net s-vel-fb => pyvcp.s-vel
+
 net offline0 nyx.0.servo-00.offline => pyvcp.led-offline0
 net offline1 nyx.0.servo-01.offline => pyvcp.led-offline1
 net offline2 nyx.0.servo-02.offline => pyvcp.led-offline2
