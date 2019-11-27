@@ -1,8 +1,8 @@
 linuxcnc (1:2.8.0nyx9~pre1) rosa; urgency=low
   * nyx 2.3
-
-linuxcnc (1:2.8.0nyx8~pre1) rosa; urgency=low
   * merged with 2.8 branch
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Thu, 28 Nov 2019 03:37:16 +0300
 
 linuxcnc (1:2.8.0~pre1) rosa; urgency=low
   * New external axis offsets
