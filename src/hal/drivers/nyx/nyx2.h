@@ -51,17 +51,18 @@
 #define YC_PARAM_ACK	0x00020000	// param change notofy acknowledge
 #define YC_RD_PARAM	0x00040000	// ??
 #define YC_VEL_CTL	0x00080000
-//#define YC_		0x00100000
+#define YC_VFF		0x00100000      // ----Y M-II velocity feed-forward
 //#define YC_		0x00200000
 #define YC_ORIENT	0x00400000	// MDS spindle
 //#define YC_		0x00800000
 
 #define Y_TYPE		0xf0000000
 #define Y_TYPE_NONE	0x00000000
-#define Y_TYPE_PARAM	0x10000000	// number of params transfered per frame sscnet2:10, sscnet1:33, mds:20, sscnet3:16
+#define Y_TYPE_PARAM	0x10000000	// number of params transfered per frame sscnet2:10, sscnet1:33, mds:20, sscnet3:16, mds3:16, 
 #define Y_TYPE_ORIGIN	0x20000000	// absolute encoder position and resolution
 #define Y_TYPE_FB	0x30000000	// normal servo feedback
 #define Y_TYPE_PLL	0x40000000	// PLL timing debug
+#define Y_TYPE_RNDPAR	0x50000000	// number of params transfered per frame mechatrolink2:1
 
 // per-axis nyx_servo_fb.state
 
@@ -138,7 +139,7 @@ typedef struct nyx_servo_cmd {
 //
 
 typedef struct nyx_param_req {
-	uint32_t flags;			// 1 YC_something
+	uint32_t flags;			// Y_TYPE_PARAM
 #ifdef __BIG_ENDIAN__
 	uint16_t group, first;
 	uint16_t count, mask;
@@ -148,6 +149,14 @@ typedef struct nyx_param_req {
 #endif
 	uint16_t param[10];
 } _P nyx_param_req;	// 8 dwords
+
+// ask the nyx driver for up to 6 defined params
+
+typedef struct nyx_rnd_param_req {
+	uint32_t flags;			// Y_TYPE_RNDPAR
+	uint16_t pno[7];
+	uint16_t pval[7];
+} _P nyx_rnd_param_req;	// 8 dwords
 
 //
 //
@@ -177,7 +186,7 @@ typedef struct nyx_servo_fb {
 		uint32_t monl[3];
 		struct {		// Y_TYPE_FB
 			int32_t droop;	// 6
-			int32_t dbg;	// 7
+			int32_t smth2;	// 7
 			int32_t rxtime;	// 8 !!!DEBUG!!!
 		};
 	};
@@ -210,15 +219,13 @@ typedef struct nyx_servo_fb {
 #define SERVO_SSCNET	1
 #define SERVO_SSCNET2	2
 #define SERVO_SSCNET3	3
-#define SERVO_MLINK2	4
+#define SERVO_MTL2	4
+#define SERVO_SSCNET3H	5
 #define SERVO_MDS	11
+#define SERVO_MDS3	13
 
-#define FUNC_SV_GET	0x0011
-#define FUNC_SV_SET	0x0012
-#define FUNC_PARAM_GET	0x0011
-#define FUNC_PARAM_SET	0x0012
-#define FUNC_SP_GET	0x0013
-#define FUNC_SP_SET	0x0014
+#define FUNC_RD_PARAM	0x0011
+#define FUNC_WR_PARAM	0x0012
 #define FUNC_LOAD	0x0015
 #define FUNC_SAVE	0x0016
 #define FUNC_PMASK_GET	0x0017
@@ -227,6 +234,15 @@ typedef struct nyx_servo_fb {
 #define FUNC_READ	0x0021
 #define FUNC_ERASE	0x0022
 #define FUNC_WRITE	0x0023
+
+#define ERR_BAD_CODE	1	/* invalid request code */
+#define ERR_BAD_FUNC	2	/* invalid function */
+#define ERR_BAD_AXIS	3	/* axis no out of range */
+#define ERR_BAD_ARG	4	/*  */
+#define ERR_NO_AXIS	5	/* axis disconnected */
+#define ERR_FAILED	6	/* amplifier error */
+#define ERR_UNAVAIL	7	/* unavailable (yet) */
+#define ERR_TIMEOUT	8	/* param read timeout */
 
 struct nyx_req {
 	volatile uint32_t code;

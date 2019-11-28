@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# nyxq - YSSC2P/YSSC3P/YMDS2P control utility
+# nyxq - Yxxx2P control utility
 #
 # 2018-2019, dmitry@yurtaev.com
 #
@@ -82,7 +82,7 @@ class nyx_dpram(Structure):
 		( "code",     c_uint ),
 		( "arg1",     c_uint ),
 		( "arg2",     c_uint ),
-		( "len",      c_uint ),
+		( "arg3",     c_uint ),
 		( "buf",      nyx_data ),
 		( "rly",      nyx_rly ),
 		( "cmd",      nyx_cmd ),
@@ -196,7 +196,7 @@ def req(code, a1=0, a2=0, a3=0):
 	while (dp.status & 2) == 0: time.sleep(0.01)
 	dp.arg1 = a1
 	dp.arg2 = a2
-	dp.len = a3
+	dp.arg3 = a3
 	dp.code = code
 	while (dp.status & 2) != 0: time.sleep(0.01)
 	while (dp.status & 0x0c) == 0: time.sleep(0.01)
@@ -275,7 +275,7 @@ def servo_info():
 				if s & 0x04000: print "wrn",
 				if s & 0x08000: print "abs",
 				if s & 0x10000: print "abslost",
-				print
+				print "%x"%(s)
 
 def servo_cmd():
 	for a in range(8):
@@ -304,6 +304,33 @@ def servo_mon():
 					a, r.alarm, r.state, r.pos, r.vel, r.trq, r.mon[3],
 					c.flags, c.cmd
 					)
+
+def param2no(s):
+	s = s.upper()
+	j4g = "ABCDEFGHJOSLTN"
+	m = re.match('^P(['+j4g+'])(\d{1,2})$', s)	# J3/J4
+	if m:
+		g = j4g.find(m.group(1))
+		if g < 0: exit(1)
+		return (g << 8) + int(m.group(2))
+	m = re.match('(P|SV|SP)(\d+)$', s)		# J2/J2S/MDS
+	if m: return int(m.group(2))
+	m = re.match('PN([0-9A-F]+)$', s)		# SGDS/SGDV
+	if m: return int(m.group(1), 16)
+	print "invalid parameter number"
+	exit(1)
+
+# param read
+def servo_pr(a, p):
+	pn = param2no(p)
+	if req(0x00030011, a, pn):
+		print "%s = %d %04x\n" % (p, dp.arg3, dp.arg3)
+# param write
+def servo_pw(a, p, v):
+	pn = param2no(p)
+	pv = int(v, 0)
+	if req(0x00030012, a, pn, pv):
+		print "%s = %d %04x\n" % (p, dp.arg3, dp.arg3)
 
 def pll(y, p, i, s):
 	dp.buf.dword[0] = int(y)
@@ -425,7 +452,7 @@ def arg(n, m, d=None):
 	n += first_arg
 	if len(sys.argv) <= n:
 		if d != None: return d
-		print "nyxq v2.3.0"
+		print "nyxq v2.3.2"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n]
@@ -434,11 +461,20 @@ cmd = arg(1, "[info|servo|io|flash|reboot|pll] ...")
 if cmd == 'info':
 	info()
 elif cmd == 'servo':
-	subcmd = arg(2, "servo [info||mon|fw|cmd] ...")
-	if subcmd == 'info':		servo_info()
+	subcmd = arg(2, "servo [info||mon|fw|cmd|pr|pw] ...")
+	if   subcmd == 'info':		servo_info()
 	elif subcmd == 'mon':		servo_mon()
 	elif subcmd == 'fw':		servo_fw()
 	elif subcmd == 'cmd':		servo_cmd()
+	elif subcmd == 'pr':
+		a = int(arg(3, "servo pr <axis> <param>"), 10)
+		p = arg(4, "servo pr <axis> <param>")
+		servo_pr(a, p)
+	elif subcmd == 'pw':
+		a = int(arg(3, "servo pw <axis> <param> <value>"), 10)
+		p = arg(4, "servo pr <axis> <param> <value>")
+		v = arg(5, "servo pr <axis> <param> <value>")
+		servo_pw(a, p, v)
 	else:
 		print "error: nyxq servo ?"
 elif cmd == 'reboot':
