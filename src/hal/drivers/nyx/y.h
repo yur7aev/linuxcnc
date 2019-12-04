@@ -26,11 +26,19 @@ struct freq_data {
 // params for single axis
 struct servo_params {
 	uint32_t magic;
-	uint16_t ng;            // number of groups - 16 max
-	uint16_t np[16];        // number of params in a group
-	uint16_t *mask[16];     // pointer to mask for params 0..15
-	uint16_t *par[16];      // pointer to first param
+	uint16_t ng;		// number of groups - 16 max
+	uint16_t np[16];	// number of params in a group
+	uint16_t *mask[16];	// pointer to mask for params 0..15
+	uint16_t *par[16];	// pointer to first param
 	uint16_t *buf;
+};
+
+// yaskawa params, sent to drives one-by-one
+struct servo_params2 {
+	uint32_t magic;
+	uint16_t np;		// number of parameters
+	uint32_t *pno;		// parameter number array,
+	uint32_t *pval;		// values array
 };
 
 typedef struct yssc2 {

@@ -203,7 +203,13 @@ def req(code, a1=0, a2=0, a3=0):
 	s = dp.status
 	dp.code = 0
 	if s & 0x8:
-		print "req error", "%d." % dp.arg1
+		errtxt = [ "NO_ERROR", "BAD_CODE", "BAD_FUNC", "BAD_AXIS", "BAD_ARG", "NO_AXIS", "FAILED", "UNAVAIL", "TIMEOUT" ];
+
+		print "req error", "%d" % dp.arg1,
+		if dp.arg1 < len(errtxt):
+			print errtxt[dp.arg1]
+		else:
+			print
 		return False
 	return True
 
@@ -452,7 +458,7 @@ def arg(n, m, d=None):
 	n += first_arg
 	if len(sys.argv) <= n:
 		if d != None: return d
-		print "nyxq v2.3.2"
+		print "nyxq v2.3.3"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n]

@@ -5,6 +5,7 @@
 #
 
 setp nyx.0.servo-05.vel-scale [NYX]VEL_SCALE
+setp nyx.0.servo-05.pos-scale 1
 setp nyx.0.servo-05.velocity-mode 1
 net estop => nyx.0.servo-05.power
 net s-enable spindle.0.on => nyx.0.servo-05.enable
@@ -32,5 +33,5 @@ net s-index-enable nyx.0.encoder-00.index-enable <=> spindle.0.index-enable
 net s-pos nyx.0.encoder-00.pos => spindle.0.revs
 
 # enable spindle reverse
-net trick1 spindle.0.forward
-net trick2 spindle.0.reverse
+net s-fwd spindle.0.forward
+net s-rev spindle.0.reverse
