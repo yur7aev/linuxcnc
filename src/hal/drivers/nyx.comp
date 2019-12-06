@@ -18,6 +18,7 @@ pin out      bit servo-##.in-position[16 : personality];
 pin out      bit servo-##.at-speed[16 : personality];
 pin out      bit servo-##.absolute[16 : personality];
 pin out      bit servo-##.abs-lost[16 : personality];
+pin out      bit servo-##.abs-ok[16 : personality];
 
 pin out   signed servo-##.counts[16 : personality];
 pin out   signed servo-##.counts-cmd[16 : personality];
@@ -370,6 +371,7 @@ FUNCTION(_)
 					servo_torque_clamped(a) = yssc2_torque_clamped(y, a);
 					servo_absolute(a) = yssc2_absolute(y, a);
 					servo_abs_lost(a) = yssc2_abs_lost(y, a);
+					servo_abs_ok(a) = yssc2_absolute(y, a) && !yssc2_abs_lost(y, a);
 
 					servo_di1(a) = yssc2_di(y, a, 0);	// J3 DI# pins
 					servo_di2(a) = yssc2_di(y, a, 1);
