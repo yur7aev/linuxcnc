@@ -45,10 +45,20 @@ net x-cmd joint.0.motor-pos-cmd => nyx.0.servo-00.pos-cmd
 net y-cmd joint.1.motor-pos-cmd => nyx.0.servo-01.pos-cmd
 net z-cmd joint.2.motor-pos-cmd => nyx.0.servo-02.pos-cmd
 
-# alarms disable for testing
+# alarms are disabled for testing
 #net alarm0 nyx.0.servo-00.alarm => joint.0.amp-fault-in
 #net alarm1 nyx.0.servo-00.alarm => joint.1.amp-fault-in
 #net alarm2 nyx.0.servo-00.alarm => joint.2.amp-fault-in
+
+# set homed is absolute position is valid
+net x-absolute halui.joint.0.set-homed <= nyx.0.servo-00.abs-ok
+net y-absolute halui.joint.1.set-homed <= nyx.0.servo-01.abs-ok
+net z-absolute halui.joint.2.set-homed <= nyx.0.servo-02.abs-ok
+
+# unhome axes on servo loss
+net offline0 halui.joint.0.unhome <= nyx.0.servo-00.offline
+net offline1 halui.joint.1.unhome <= nyx.0.servo-01.offline
+net offline2 halui.joint.2.unhome <= nyx.0.servo-02.offline
 
 net x-enable joint.0.amp-enable-out => nyx.0.servo-00.enable
 net y-enable joint.1.amp-enable-out => nyx.0.servo-01.enable
