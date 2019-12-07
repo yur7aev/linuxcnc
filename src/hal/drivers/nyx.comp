@@ -407,6 +407,9 @@ FUNCTION(_)
 			servo_enabled(a) = 0;
 			servo_alarm(a) = 1;
 			servo_alarm_code(a) = 0;
+			servo_absolute(a) = 0;
+			servo_abs_lost(a) = 1;
+			servo_abs_ok(a) = 0;
 		//	yssc2_power(y, a, 0);	// the controller will do that
 		//	yssc2_enable(y, a, 0);
 		}
