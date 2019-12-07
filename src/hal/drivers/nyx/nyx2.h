@@ -58,7 +58,7 @@
 
 #define Y_TYPE		0xf0000000
 #define Y_TYPE_NONE	0x00000000
-#define Y_TYPE_PARAM	0x10000000	// number of params transfered per frame sscnet2:10, sscnet1:33, mds:20, sscnet3:16, mds3:16, 
+#define Y_TYPE_PARAM	0x10000000	// number of params transfered per frame sscnet2:10, sscnet1:33, mds:20, sscnet3:16, mds3:16
 #define Y_TYPE_ORIGIN	0x20000000	// absolute encoder position and resolution
 #define Y_TYPE_FB	0x30000000	// normal servo feedback
 #define Y_TYPE_PLL	0x40000000	// PLL timing debug
