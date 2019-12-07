@@ -1,12 +1,16 @@
 #!/usr/bin/perl
+#
+# convert .par text file to binary
+#
+# 2019, http://yurtaev.com
+#
 
 # $p[group][axis][param]
-
 my @param;
 my @mask;
 
 my %g = (
-	# J3/J4
+	# Mitsubishi MR-J3/J4
 	PA => 0,
 	PB => 1,
 	PC => 2,
@@ -20,13 +24,13 @@ my %g = (
 	PS => 10,
 	PL => 11,
 	PT => 12,
-	PN => 13,
-	# J2/J2S
+	PM => 13,
+	# Mitsubishi MR-J/J2/J2S
 	P => 0,		# 0-based
-	# MDS
+	# Mitsubishi MDS-A/B/C/D
 	SV => 0,
 	SP => 1,
-	# MTL
+	# Yaskawa SGDH/SGDS/SGDV/SGD7
 	PN0 => 0,
 	PN1 => 0,
 	PN2 => 0,

@@ -48,6 +48,13 @@ net offline3 => pyvcp.led-alarm3.disable
 net offline4 => pyvcp.led-alarm4.disable
 net offline5 => pyvcp.led-alarm5.disable
 
+net warning0 pyvcp.led-warning0
+net warning1 pyvcp.led-warning1
+net warning2 pyvcp.led-warning2
+net warning3 pyvcp.led-warning3
+net warning4 pyvcp.led-warning4
+net warning5 pyvcp.led-warning5
+
 net enabled0 sscii.0.servo.0.enabled => pyvcp.led-enabled0
 net enabled1 sscii.0.servo.1.enabled => pyvcp.led-enabled1
 net enabled2 sscii.0.servo.2.enabled => pyvcp.led-enabled2
