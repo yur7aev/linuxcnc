@@ -141,6 +141,10 @@ def read_bitfile(filename):
 			l = short.unpack(bitfile.read(2))[0]
 			d = bitfile.read(l)
 
+def fatal(msg):
+	sys.stderr.write("error: ")
+	sys.exit(msg)
+
 # ------------------------------
 
 instance = -1
@@ -205,7 +209,7 @@ def req(code, a1=0, a2=0, a3=0):
 	if s & 0x8:
 		errtxt = [ "NO_ERROR", "BAD_CODE", "BAD_FUNC", "BAD_AXIS", "BAD_ARG", "NO_AXIS", "FAILED", "UNAVAIL", "TIMEOUT" ];
 
-		print "req error", "%d" % dp.arg1,
+		print "req error", "%d (%04x %04x)" % (dp.arg1, dp.arg2, dp.arg3),
 		if dp.arg1 < len(errtxt):
 			print errtxt[dp.arg1]
 		else:
@@ -326,17 +330,51 @@ def param2no(s):
 	print "invalid parameter number"
 	exit(1)
 
+def axrange(s):
+	l = []
+	for i in s.split(','):
+		m = re.match("(\d+)-(\d+)", i)
+		if m:
+			l += range(int(m.group(1)), int(m.group(2))+1)
+		else:
+			l.append(int(i))
+	return list(set(l))
+
 # param read
 def servo_pr(a, p):
 	pn = param2no(p)
 	if req(0x00030011, a, pn):
 		print "%s = %d %04x\n" % (p, dp.arg3, dp.arg3)
 # param write
-def servo_pw(a, p, v):
-	pn = param2no(p)
-	pv = int(v, 0)
-	if req(0x00030012, a, pn, pv):
-		print "%s = %d %04x\n" % (p, dp.arg3, dp.arg3)
+def servo_pw(l):
+	first = 0
+	second = 0
+	for s in l:
+		r = re.match('([0-9,-]+):(\S+)=([0-9a-fA-Fx]+)', s)		# J2/J2S/MDS
+		if r:
+			ax = axrange(r.group(1))
+			v = int(r.group(3), 0)
+			p = param2no(r.group(2))
+			for a in ax:
+				if a >= 0 and a < 32:
+					m = 1<<a
+					if second & m:
+						sys.exit('more than 2 params for axis %d in %s' % (a, s))
+					elif first & m:
+						dp.buf.dword[a*2+2] = p
+						dp.buf.dword[a*2+3] = v
+						second |= m
+					else:
+						dp.buf.dword[a*2] = p
+						dp.buf.dword[a*2+1] = v
+						dp.buf.dword[a*2+2] = 0	# unused param
+						first |= m
+				else:
+					sys.exit('bad axis %d' % a)
+		else:
+			sys.exit('bad parameter no %s' % s)
+	if req(0x00030012, first):
+		pass
 
 def pll(y, p, i, s):
 	dp.buf.dword[0] = int(y)
@@ -463,6 +501,15 @@ def arg(n, m, d=None):
 		exit(1)
 	return sys.argv[n]
 
+def args(n, m):
+	n += first_arg
+	if len(sys.argv) <= n:
+		print "nyxq v2.3.3"
+		print "usage: nyxq " + m
+		exit(1)
+	return sys.argv[n:]
+	
+
 cmd = arg(1, "[info|servo|io|flash|reboot|pll] ...")
 if cmd == 'info':
 	info()
@@ -477,10 +524,8 @@ elif cmd == 'servo':
 		p = arg(4, "servo pr <axis> <param>")
 		servo_pr(a, p)
 	elif subcmd == 'pw':
-		a = int(arg(3, "servo pw <axis> <param> <value>"), 10)
-		p = arg(4, "servo pr <axis> <param> <value>")
-		v = arg(5, "servo pr <axis> <param> <value>")
-		servo_pw(a, p, v)
+		p = args(3, "servo pw <axis>:<param>=<value> ...")
+		servo_pw(p)
 	else:
 		print "error: nyxq servo ?"
 elif cmd == 'reboot':
