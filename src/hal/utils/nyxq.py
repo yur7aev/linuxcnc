@@ -285,7 +285,8 @@ def servo_info():
 				if s & 0x04000: print "wrn",
 				if s & 0x08000: print "abs",
 				if s & 0x10000: print "abslost",
-				print "%x"%(s)
+				# print "[%x]"%(s)
+				print
 
 def servo_cmd():
 	for a in range(8):
@@ -341,10 +342,41 @@ def axrange(s):
 	return list(set(l))
 
 # param read
-def servo_pr(a, p):
-	pn = param2no(p)
-	if req(0x00030011, a, pn):
-		print "%s = %d %04x\n" % (p, dp.arg3, dp.arg3)
+def servo_pr(l):
+	first = 0
+	second = 0
+	for s in l:
+		r = re.match('([0-9,-]+):(\S+)', s)
+		if r:
+			ax = axrange(r.group(1))
+			p = param2no(r.group(2))
+			for a in ax:
+				if a >= 0 and a < 16:
+					m = 1<<a
+					if second & m:
+						sys.exit('more than 2 params for axis %d in %s' % (a, s))
+					elif first & m:
+						dp.buf.dword[a+32] = p
+						second |= m
+					else:
+						dp.buf.dword[a] = p
+						dp.buf.dword[a+32] = 0	# unused param
+						first |= m
+				else:
+					sys.exit('bad axis %d' % a)
+		else:
+			sys.exit('bad parameter format <axis>:<param>, %s' % s)
+	if req(0x00030011, first):
+		for a in seq(15):
+			if first & (1<<a):
+				p = dp.buf.dword[a+0]
+				v = dp.buf.dword[a+16]
+				print "%d:P%d=%d 0x%x" % (a, p, v)
+			if second & (1<<a):
+				p = dp.buf.dword[a+32]
+				v = dp.buf.dword[a+48]
+				print "%d:P%d=%d 0x%x" % (a, p, v)
+
 # param write
 def servo_pw(l):
 	first = 0
@@ -356,23 +388,23 @@ def servo_pw(l):
 			v = int(r.group(3), 0)
 			p = param2no(r.group(2))
 			for a in ax:
-				if a >= 0 and a < 32:
+				if a >= 0 and a < 16:
 					m = 1<<a
 					if second & m:
 						sys.exit('more than 2 params for axis %d in %s' % (a, s))
 					elif first & m:
-						dp.buf.dword[a*2+2] = p
-						dp.buf.dword[a*2+3] = v
+						dp.buf.dword[a+32] = p
+						dp.buf.dword[a+48] = v
 						second |= m
 					else:
-						dp.buf.dword[a*2] = p
-						dp.buf.dword[a*2+1] = v
-						dp.buf.dword[a*2+2] = 0	# unused param
+						dp.buf.dword[a] = p
+						dp.buf.dword[a+16] = v
+						dp.buf.dword[a+32] = 0	# unused param
 						first |= m
 				else:
 					sys.exit('bad axis %d' % a)
 		else:
-			sys.exit('bad parameter no %s' % s)
+			sys.exit('bad parameter format <axis>:<param>=<value>, %s' % s)
 	if req(0x00030012, first):
 		pass
 
@@ -520,9 +552,8 @@ elif cmd == 'servo':
 	elif subcmd == 'fw':		servo_fw()
 	elif subcmd == 'cmd':		servo_cmd()
 	elif subcmd == 'pr':
-		a = int(arg(3, "servo pr <axis> <param>"), 10)
-		p = arg(4, "servo pr <axis> <param>")
-		servo_pr(a, p)
+		p = args(3, "servo pr <axis>:<param> ...")
+		servo_pr(p)
 	elif subcmd == 'pw':
 		p = args(3, "servo pw <axis>:<param>=<value> ...")
 		servo_pw(p)

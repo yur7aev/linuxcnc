@@ -33,19 +33,19 @@ SV021	60	60	60	; OLT	ovl detect time const	1-300s
 SV022	150	150	150	; OLL	ovl detect level	50-180%
 SV023	0	0	0	; OD1	error excessive svon	0-32767mm
 SV024	50	50	50	; INP	in position		0-32767um
-SV025	0x2290	0x22fa	0x0000	; MTYP  HA-MH43, HC-KFS23
+SV025	0x2290	0x22fa	0x0000	; MTYP  2290=HA-MH43, 22fa=HC-KFS23
 SV026	0	0	0	; OD2	error excessive svoff	0-32767mm
 SV027	0x4000	0x4000	0x4000	; SSF1
 SV028	-	-	-	;
 SV029	-	-	-	;
-SV030	-	-	0	; IVC	J2 volt dead time comp	0-200%
-SV031	-	-	0	; OVS1	J2 overshoot comp 1	-1-100%
+SV030	-	0	0	; IVC	J2 volt dead time comp	0-200%
+SV031	-	0	0	; OVS1	J2 overshoot comp 1	-1-100%
 SV032	0	0	0	; TOF	unbalance torque offs	-100-100%
 SV033	0x0000	0x0000	0x0000	; SSF2	filters
 SV034	0x0000	0x0000	0x0000	; SSF3	analog monitor
 SV035	0x0000	0x0000	0x0000	; SSF4	collision det
 SV036	0x1000	0x1000	0x1000	; PTYP	regen resistor type
-SV037	-	-	0	; JL	J2 load inertia scale	0-5000%
+SV037	-	0	0	; JL	J2 load inertia scale	0-5000%
 SV038	0	0	0	; FHz1	notch filter freq 1	0-3000Hz
 SV039	-	-	-	; LMCD	J2 lost mot comp timing	-1-2000ms
 SV040	0	0	0	; LMCT	non-sens band		0-100um
@@ -76,7 +76,7 @@ SV064	-	-	-	; MA2MPY
 SV065	-	-	-	;
 SV066	-	-	-	;
 SV067	-	-	-	;
-SV068	0	0	0	; ? 0x0404
+SV068	0x0404	0x0404	0x0404	; ? 0x0404 - 3.55ms cycle
 SV069	-	-	-	;
 SV070	0	0	0	; ? 20000
 SV071	-	-	-	;
@@ -87,8 +87,8 @@ SV075	-	-	-	;
 SV076	-	-	-	;
 SV077	-	-	-	;
 SV078	-	-	-	;
-SV079	-	-	0	; ? origin - hi
-SV080	-	-	0	; ? origin - low
+SV079	0	0	0	; abs home offset hi
+SV080	0	0	0	; abs home offset low
 
 ;	0 1 2 3 4	5
 SP001	- - - - -	100	; PGM	100	Motor built-in encoder orient position loop gain	1/10s-1
@@ -134,7 +134,7 @@ SP040	- - - - -	0x1002	; MTYP	0x0000 SJ-P0.2A
 SP041	- - - - -	0x2000	; PTYP	0x0000 no connection
 SP042	- - - - -	-	; CRNG	0
 SP043	- - - - -	-	; TRNG	0
-SP044	- - - - -	1028	; TRANS	0 special NC cycle
+SP044	- - - - -	0x0404	; TRANS	0 special NC cycle - 3.55ms
 SP045	- - - - -	-	; -	-
 SP046	- - - - -	0	; CSN2	0
 SP047	- - - - -	30	; SDTR	30

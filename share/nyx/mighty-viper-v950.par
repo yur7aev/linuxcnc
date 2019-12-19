@@ -24,10 +24,10 @@ SV010	8192	8192	8192	; IDA	cur loop d lead comp	1-20480
 SV011	384	384	384	; IQG	cur loop q gain		1-2560
 SV012	384	384	384	; IDG	cur loop d gin		1-2560
 SV013	500	500	500	; ILMT	current limit		0-500%
-SV014	500	500	500	; ILMTsp	current limit special	0-500%
+SV014	500	500	500	; ILMTsp current limit special	0-500%
 SV015	100	100	100	; FFC	acc rate ff gain	0-999%
 SV016	30	30	0	; LMC1	lost motion comp	-1-200%
-SV017	0x0000	0x0000	0x0000	; SPEC	abs=0x80
+SV017	0x0000	0x0000	0x0000	; SPEC
 SV018	10	10	10	; PIT	ballscrew pitch		1..32767
 SV019	25	25	25	; RNG1	position detector res	8,16,25,100
 SV020	25	25	25	; RNG2	speed detector res	8,16,25,100
@@ -59,8 +59,8 @@ SV045	0	0	0	; TRUB	frictional torque	0-100%
 SV046	-	-	-	; 
 SV047	100	100	100	; EC	induct volage comp gain	0-200%
 SV048	0	0	0	; EMGrt	v axis droop prevention	0-2000ms
-SV049	15	15	15	; PGN1sp				0-200rad/s
-SV050	15	15	15	; PGN2sp				0-9999rad/s
+SV049	15	15	15	; PGN1sp			0-200rad/s
+SV050	15	15	15	; PGN2sp			0-9999rad/s
 SV051	-	-	-	;
 SV052	-	-	-	;
 SV053	100	100	100	; OD3	error excessive (spec)	0-32767mm
@@ -68,17 +68,17 @@ SV054	-	-	-	;
 SV055	0	0	0	; EMGdt
 SV056	0	0	0	; EMGt	dec time const im emg	0-5000ms
 SV057	187	187	187	; SHGC	SHG control gain	0-999rad/s
-SV058	0	0	0	; SHGCsp	SHG control gain (sp)	0-999rad/s
+SV058	0	0	0	; SHGCsp SHG control gain (sp)	0-999rad/s
 SV059	0	0	0	; TCNV	collis det torque est	0-5000%
 SV060	0	0	0	; TLMT	collis det level	0-200%
 SV061	0	0	0	; DA1NO	D/A ch1 data num	0-102
 SV062	-	-	-	; DA2NO	D/A ch1 data num	0-102
-SV063	0	0	0	; DA1MPY	D/A ch1 scale		-32768-32767 (1/256)
+SV063	0	0	0	; DA1MPY D/A ch1 scale		-32768-32767
 SV064	-	-	-	; MA2MPY
 SV065	-	-	-	;
 SV066	-	-	-	;
 SV067	-	-	-	;
-SV068	1028	1028	1028	;
+SV068	0x0404	0x0404	0x0404	; 3.55ms cycle
 SV069	-	-	-	;
 SV070	20000	20000	16000	; rapid speed?
 SV071	-	-	-	;
@@ -136,7 +136,7 @@ SP040	-	-	-	0x0000	; MTYP	0x0000
 SP041	-	-	-	0x0011	; PTYP	0x0000
 SP042	-	-	-	0	; CRNG	0
 SP043	-	-	-	0	; TRNG	0
-SP044	-	-	-	1028	; TRANS	0
+SP044	-	-	-	0x0404	; TRANS	0 3.55ms cycle
 SP045	-	-	-	0	; -	-
 SP046	-	-	-	1	; CSN2	0
 SP047	-	-	-	30	; SDTR	30
@@ -148,7 +148,7 @@ SP052	-	-	-	50	; TLM5	50
 SP053	-	-	-	60	; TLM6	60
 SP054	-	-	-	70	; TLM7	70
 SP055	-	-	-	12	; SETM	12
-SP056	-	-	-	90	; PYVR	50	variable excitation
+SP056	-	-	-	90	; PYVR	50 variable excitation
 SP057	-	-	-	0	; -	-
 SP058	-	-	-	0	; HSPT	6000
 SP059	-	-	-	500	; MKT	150
@@ -227,7 +227,7 @@ SP131	-	-	-	15	; PGC2	15
 SP132	-	-	-	15	; PGC3	15
 SP133	-	-	-	15	; PGC4	15
 SP134	-	-	-	63	; VGCP0	63
-SP135	-	-	-	60	; VGCI40	60
+SP135	-	-	-	60	; VGCI40 60
 SP136	-	-	-	15	; VGCD0	15
 SP137	-	-	-	63	; VGCP1	63
 SP138	-	-	-	60	; VGCI1	60
