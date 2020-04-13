@@ -8,8 +8,8 @@ with python programming to create a GUI screen for running a CNC machine. +
 Qtvcp is completely customizable - you can add different buttons and status LEDs etc. +
 or add python code for even finer grain customization. +
 
-.qtdragon - 3 Axis Sample
-image::images/qtdragon.png["QTDagon Router",align="left"]
+.qtdragon - 3 or 4 Axis Sample
+image::images/silverdragon.png["QTDragon Router",align="left"]
 .qtdefault - 3 Axis Sample
 image::images/qt_cnc.png["QTscreen Mill",align="left"]
 .Qtaxis - Self Adjusting Axis Sample
@@ -20,6 +20,8 @@ image::images/blender.png["QTscreen Blender",align="left"]
 image::images/x1mill.png["QTscreen x1mill",align="left"]
 .cam_align - Camera alignment VCP
 image::images/qtvcp-cam-align.png["QTscreen x1mill",align="left"]
+
+[[sec:qtvcp-overview]](((QtVcp Overview)))
 
 == Overview
 
@@ -672,3 +674,16 @@ but by convention this is where to put it. +
 Save the handler file. +
 Now when you load your screen and press the button it should print the name +
 of the button in the terminal. +
+
+=== More Information
+
+<<cha:qtvcp-widgets,QtVCP Widgets>>
+
+<<cha:qtvcp-libraries,QtVCP Libraries>>
+
+<<cha:qtvcp-code,QtVCP Handler File Code Snippets>>
+
+<<cha:qtvcp-development,QtVCP Development>>
+
+<<cha:qtvcp-custom-widgets,QtVCP Custom Designer Widgets>>
+

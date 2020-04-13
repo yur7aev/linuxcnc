@@ -112,7 +112,7 @@ class HAL:
             pump = True
         if self.a.findsignal("estop-ext"):
             estop = True
-        if self.a.findsignal("spindle-on"):
+        if self.a.findsignal("spindle-enable"):
             spindle_on = True
         if self.a.findsignal("spindle-cw"):
             spindle_cw = True
@@ -1356,8 +1356,14 @@ class HAL:
             else:
                 print >>file, "setp   " + steppinname + ".maxaccel         [%s_%d]STEPGEN_MAXACCEL"% (title, jnum)
                 print >>file, "setp   " + steppinname + ".maxvel           [%s_%d]STEPGEN_MAXVEL"% (title, jnum)
-            for i in stepinvertlist:
-                   print >>file, "setp    "+i+".invert_output true"
+
+            # invert step pins if requested
+            # step does not have alias pin names so we invert it's GPIO pin
+            for i in stepinvertlist[0]:
+                   print >>file, "setp   " + steppinname + ".step.invert_output   true"
+            # step direction has an alias pin
+            for i in stepinvertlist[1]:
+                   print >>file, "setp   " + steppinname + ".direction.invert_output   true"
             if let == "s":
                 print >>file
                 print >>file, "net spindle-enable          =>  " + steppinname + ".enable" 

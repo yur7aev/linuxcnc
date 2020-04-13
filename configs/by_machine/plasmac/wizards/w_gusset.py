@@ -3,7 +3,7 @@
 '''
 w_gusset.py
 
-Copyright (C) 2019  Phillip A Carter
+Copyright (C) 2019, 2020  Phillip A Carter
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -26,6 +26,7 @@ import time
 import math
 import linuxcnc
 import shutil
+import hal
 from subprocess import Popen,PIPE
 
 class gusset:
@@ -49,6 +50,7 @@ class gusset:
             Popen('axis-remote {}'.format(fName), stdout = PIPE, shell = True)
         elif self.gui == 'gmoccapy':
             self.c = linuxcnc.command()
+            self.c.program_open('blank.ngc')
             self.c.program_open(fName)
         else:
             print('Unknown GUI in .ini file')
@@ -230,6 +232,7 @@ class gusset:
             outNgc.close()
             self.load_file(self.fNgc)
             self.add.set_sensitive(True)
+            hal.set_p('plasmac_run.preview-tab', '1')
         else:
             msg = ''
             if width <= 0:

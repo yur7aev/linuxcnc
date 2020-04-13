@@ -21,6 +21,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 import linuxcnc
 
 from qtvcp.widgets.widget_baseclass import _HalWidgetBase
+from qtvcp.widgets.xembed import XEmbeddable
 from qtvcp.lib.message import Message
 from qtvcp.lib.notify import Notify
 from qtvcp.lib.audio_player import Player
@@ -63,12 +64,17 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
         self.close_event = True
         self.play_sounds = True
         self.mchnMsg_play_sound = True
+        self.mchnMsg_speak_errors = True
+        self.mchnMsg_sound_type  = 'ERROR'
         self.usrMsg_play_sound = True
-        self.usrMsg_sound_type = 'READY'
+        self.usrMsg_sound_type = 'RING'
         self.usrMsg_use_FocusOverlay = True
-        self.play_shutdown_sounds = True
+        self.shutdown_play_sound = True
+        self.shutdown_alert_sound_type = 'READY'
+        self.shutdown_exit_sound_type = 'LOGOUT'
+        self.notify_start_greeting = True
         self.notify_start_title = 'Welcome'
-        self.notify_start_detail = ''
+        self.notify_start_detail = 'This option can be changed in the preference file'
         self.notify_start_timeout = 5
         self.shutdown_msg_title = 'Do you want to Shutdown now?'
         self.shutdown_msg_detail = ''
@@ -152,31 +158,32 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
 
         # Read user preferences
         if self.PREFS_:
-            self.catch_errors = self.PREFS_.getpref('catch_errors', True, bool, 'SCREEN_OPTIONS')
-            self.desktop_notify = self.PREFS_.getpref('desktop_notify', True, bool, 'SCREEN_OPTIONS')
-            self.close_event = self.PREFS_.getpref('shutdown_check', True, bool, 'SCREEN_OPTIONS')
-            self.play_sounds = self.PREFS_.getpref('sound_player_on', True, bool, 'SCREEN_OPTIONS')
-            self.mchnMsg_play_sound = self.PREFS_.getpref('mchnMsg_play_sound', True, bool, 'MCH_MSG_OPTIONS')
-            self.mchnMsg_speak_errors = self.PREFS_.getpref('mchnMsg_speak_errors', True, bool, 'MCH_MSG_OPTIONS')
-            self.mchnMsg_sound_type = self.PREFS_.getpref('mchnMsg_sound_type', 'ERROR', str, 'MCH_MSG_OPTIONS')
-            self.usrMsg_play_sound = self.PREFS_.getpref('usermsg_play_sound', True, bool, 'USR_MSG_OPTIONS')
-            self.usrMsg_sound_type = self.PREFS_.getpref('userMsg_sound_type', 'RING', str, 'USR_MSG_OPTIONS')
+            self.catch_errors = self.PREFS_.getpref('catch_errors', self.catch_errors, bool, 'SCREEN_OPTIONS')
+            self.desktop_notify = self.PREFS_.getpref('desktop_notify', self.desktop_notify, bool, 'SCREEN_OPTIONS')
+            self.close_event = self.PREFS_.getpref('shutdown_check', self.close_event, bool, 'SCREEN_OPTIONS')
+            self.play_sounds = self.PREFS_.getpref('sound_player_on', self.play_sounds, bool, 'SCREEN_OPTIONS')
+            self.mchnMsg_play_sound = self.PREFS_.getpref('mchnMsg_play_sound', self.mchnMsg_play_sound, bool, 'MCH_MSG_OPTIONS')
+            self.mchnMsg_speak_errors = self.PREFS_.getpref('mchnMsg_speak_errors', self.mchnMsg_speak_errors, bool, 'MCH_MSG_OPTIONS')
+            self.mchnMsg_sound_type = self.PREFS_.getpref('mchnMsg_sound_type', self.usrMsg_sound_type, str, 'MCH_MSG_OPTIONS')
+            self.usrMsg_play_sound = self.PREFS_.getpref('usermsg_play_sound', self.usrMsg_play_sound, bool, 'USR_MSG_OPTIONS')
+            self.usrMsg_sound_type = self.PREFS_.getpref('userMsg_sound_type', self.usrMsg_sound_type, str, 'USR_MSG_OPTIONS')
             self.usrMsg_use_FocusOverlay = self.PREFS_.getpref('userMsg_use_focusOverlay',
-                                                               True, bool, 'USR_MSG_OPTIONS')
-            self.shutdown_play_sound = self.PREFS_.getpref('shutdown_play_sound', True, bool, 'SHUTDOWN_OPTIONS')
-            self.shutdown_alert_sound_type = self.PREFS_.getpref('shutdown_alert_sound_type', 'ATTENTION',
+                                                               self.usrMsg_use_FocusOverlay, bool, 'USR_MSG_OPTIONS')
+            self.shutdown_play_sound = self.PREFS_.getpref('shutdown_play_sound', self.shutdown_play_sound, bool, 'SHUTDOWN_OPTIONS')
+            self.shutdown_alert_sound_type = self.PREFS_.getpref('shutdown_alert_sound_type', self.shutdown_alert_sound_type,
                                                                  str, 'SHUTDOWN_OPTIONS')
-            self.shutdown_exit_sound_type = self.PREFS_.getpref('shutdown_exit_sound_type', 'LOGOUT',
+            self.shutdown_exit_sound_type = self.PREFS_.getpref('shutdown_exit_sound_type', self.shutdown_exit_sound_type,
                                                                 str, 'SHUTDOWN_OPTIONS')
-            self.shutdown_msg_title = self.PREFS_.getpref('shutdown_msg_title', 'Do you want to Shutdown now?',
+            self.shutdown_msg_title = self.PREFS_.getpref('shutdown_msg_title', self.shutdown_msg_title,
                                                           str, 'SHUTDOWN_OPTIONS')
             self.shutdown_msg_detail = self.PREFS_.getpref('shutdown_msg_detail',
-                                                           'This option can be changed in the preference file',
+                                                            self.shutdown_msg_detail,
                                                            str, 'SHUTDOWN_OPTIONS')
-            self.notify_start_title = self.PREFS_.getpref('notify_start_title', 'Welcome', str, 'NOTIFY_OPTIONS')
-            self.notify_start_detail = self.PREFS_.getpref('notify_start_detail', 'This is a test screen for QtVCP',
+            self.notify_start_greeting = self.PREFS_.getpref('notify_start_greeting', self.notify_start_greeting, bool, 'NOTIFY_OPTIONS')
+            self.notify_start_title = self.PREFS_.getpref('notify_start_title', self.notify_start_title, str, 'NOTIFY_OPTIONS')
+            self.notify_start_detail = self.PREFS_.getpref('notify_start_detail', self.notify_start_detail,
                                                            str, 'NOTIFY_OPTIONS')
-            self.notify_start_timeout = self.PREFS_.getpref('notify_start_timeout', 10, int, 'NOTIFY_OPTIONS')
+            self.notify_start_timeout = self.PREFS_.getpref('notify_start_timeout', self.notify_start_timeout, int, 'NOTIFY_OPTIONS')
 
         # connect to STATUS to catch linuxcnc events
         if self.catch_errors:
@@ -209,10 +216,13 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
         except Exception as e:
             LOG.info('Exception adding status to notify:', exc_info=e)
 
+        # critical messages don't timeout, the greeting does
         if self.desktop_notify:
-            NOTICE.notify(self.notify_start_title, self.notify_start_detail, None,
+            self.notify_critical = NOTICE.new_critical()
+            self.notify_normal = NOTICE.new_normal()
+            if self.notify_start_greeting:
+                NOTICE.notify(self.notify_start_title, self.notify_start_detail, None,
                         self.notify_start_timeout, self. notify_start_timeout)
-            self.desktop_dialog = NOTICE.new_critical(None)
 
         # add any XEmbed tabs
         if self.process_tabs:
@@ -225,13 +235,19 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
 
     # This is called early by qt_makegui.py for access to
     # be able to pass the preference object to ther widgets
-    def _pref_init(self):
+    def _pref_init(self, conf_path):
         if self.use_pref_file:
             if INFO.PREFERENCE_PATH:
                 self.pref_filename = INFO.PREFERENCE_PATH
                 LOG.debug('Switching to Preference File Path from INI: {}'.format(INFO.PREFERENCE_PATH))
+            self.pref_filename = self.pref_filename.replace('CONFIGFOLDER',conf_path)
             return Access(self.pref_filename), self.pref_filename
-        return None
+        return None,None
+
+    # allow screen option to inject data to the main VCP object (basically the window)
+    def _VCPObject_injection(self, vcpObject):
+        if self.desktop_notify:
+            vcpObject._NOTICE = NOTICE # Guve reference
 
     def on_periodic(self, w):
         e = self.error.poll()
@@ -242,13 +258,20 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
     def process_error(self, w, kind, text):
             if kind in (linuxcnc.NML_ERROR, linuxcnc.OPERATOR_ERROR):
                 if self.desktop_notify:
-                    NOTICE.update(self.desktop_dialog, title='ERROR:', message=text)
+                    NOTICE.update(self.notify_critical, title='ERROR:', message=text)
             elif kind in (linuxcnc.NML_TEXT, linuxcnc.OPERATOR_TEXT):
                 if self.desktop_notify:
-                    NOTICE.update(self.desktop_dialog, title='OPERATOR TEXT:', message=text)
+                    NOTICE.update(self.notify_critical, title='OPERATOR TEXT:', message=text)
             elif kind in (linuxcnc.NML_DISPLAY, linuxcnc.OPERATOR_DISPLAY):
                 if self.desktop_notify:
-                    NOTICE.update(self.desktop_dialog, title='OPERATOR DISPLAY:', message=text)
+                    NOTICE.update(self.notify_critical, title='OPERATOR DISPLAY:', message=text)
+            elif kind == 255: # temparary info
+                if self.desktop_notify:
+                    NOTICE.update(self.notify_normal,
+                                    title='Low Priority:',
+                                     message=text,
+                                    status_timeout=0,
+                                    timeout=2)
             if self.play_sounds and self.mchnMsg_play_sound:
                 STATUS.emit('play-sound', '%s' % self.mchnMsg_sound_type)
                 if self.mchnMsg_speak_errors:
@@ -259,7 +282,7 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
     def closeEvent(self, event):
         if self.close_event:
             sound = None
-            if self.play_sounds and self.play_shutdown_sounds:
+            if self.PREFS_ and self.play_sounds and self.shutdown_play_sound:
                 sound = self.shutdown_alert_sound_type
             answer = self.QTVCP_INSTANCE_.closeDialog_.showdialog(self.shutdown_msg_title,
                                                                  None,
@@ -280,9 +303,9 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
                 event.accept()
             # close linuxcnc
             elif answer:
-                if self.play_sounds and self.play_shutdown_sounds:
+                if self.PREFS_ and self.play_sounds and self.shutdown_play_sound:
                     STATUS.emit('play-sound', self.shutdown_exit_sound_type)
-                    event.accept()
+                event.accept()
             # cancel
             elif answer == False:
                 event.ignore()
@@ -315,25 +338,56 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
 
     # XEmbed program into tabs
     def add_xembed_tabs(self):
+
+        if INFO.GLADEVCP:
+            cmd = 'halcmd loadusr -Wn gladevcp gladevcp -c gladevcp -x {XID} %s' %(INFO.GLADEVCP)
+            LOG.debug('AXIS style side panel vcp: {} '.format(cmd))
+            loc = 'allLayout'
+            # TODO this needs work panel doesn't embed
+            #self._embed(cmd,loc,None)
+
         if INFO.TAB_CMDS:
-            from qtvcp.widgets.xembed import XEmbeddable
-            for name, tab, cmd in INFO.ZIPPED_TABS:
-                LOG.debug('Processing Embedded tab:{}, {}, {}'.format(name,tab,cmd))
-                if tab == 'default':
-                    tab = 'rightTab'
-                if not isinstance(self.QTVCP_INSTANCE_[tab], QtWidgets.QTabWidget):
-                    LOG.warning('tab location {} is not a QTabWidget - skipping'.format(tab))
-                    continue
-                try:
-                    temp = XEmbeddable()
-                    temp.embed(cmd)
-                except Exception, e:
-                    LOG.error('Embedded tab loading failed: {}'.format(name))
+            wid = int(self.QTVCP_INSTANCE_.winId())
+            os.environ['QTVCP_FORWARD_EVENTS_TO'] = str(wid)
+
+            for name, loc, cmd in INFO.ZIPPED_TABS:
+                LOG.debug('Processing Embedded tab:{}, {}, {}'.format(name,loc,cmd))
+                if loc == 'default':
+                    loc = 'rightTab'
+                if isinstance(self.QTVCP_INSTANCE_[loc], QtWidgets.QTabWidget):
+                    tw = QtWidgets.QWidget()
+                    self.QTVCP_INSTANCE_[loc].addTab(tw, name)
+                elif isinstance(self.QTVCP_INSTANCE_[loc], QtWidgets.QStackedWidget):
+                    tw = QtWidgets.QWidget()
+                    self.QTVCP_INSTANCE_[loc].addWidget(tw)
                 else:
+                    LOG.warning('tab location {} is not a Tab or stacked Widget - skipping'.format(loc))
+                    continue
+                self._embed(cmd,loc,tw)
+
+    def _embed(self, cmd,loc,twidget):
+            if twidget is None:
+               tw = QtWidgets.QWidget()
+               tw.setMinimumSize(400,200)
+               self.QTVCP_INSTANCE_[loc].addWidget(tw)
+            try:
+                temp = XEmbeddable()
+                temp.embed(cmd)
+            except Exception, e:
+                LOG.error('Embedded tab loading failed: {} {}'.format(cmd,e))
+            else:
+                if twidget is not None:
                     try:
-                        self.QTVCP_INSTANCE_[tab].addTab(temp, name)
+                        if loc == 'rightPanel':
+                            self.QTVCP_INSTANCE_[loc].setMaximumSize(400,30000)
+                            self.QTVCP_INSTANCE_[loc].setMinimumSize(400,0)
+                        layout = QtWidgets.QGridLayout(twidget)
+                        layout.addWidget(temp, 0, 0)
                     except Exception, e:
-                        LOG.error('Embedded tab adding widget into {} failed.'.format(tab))
+                        LOG.error('Embedded tab adding widget into {} failed.'.format(loc))
+                else:
+                    layout = QtWidgets.QGridLayout(tw)
+                    layout.addWidget(temp, 0, 0)
 
     def init_tool_dialog(self):
         from qtvcp.widgets.dialog_widget import ToolDialog

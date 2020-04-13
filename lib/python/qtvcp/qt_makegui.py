@@ -71,9 +71,14 @@ class MyEventFilter(QtCore.QObject):
         except:
             return super(MyEventFilter,self).eventFilter(receiver, event)
 
-class MyWindow(QtWidgets.QMainWindow):
-    def __init__(self, halcomp, path):
-        super(MyWindow, self).__init__()
+
+class _VCPWindow(QtWidgets.QMainWindow):
+    def __init__(self, halcomp=None, path=None):
+        super(_VCPWindow,self).__init__()
+        # only initialize once for all instances
+        if self.__class__._instanceNum >=1:
+            return
+        self.__class__._instanceNum += 1
 
         self.filename = path.XML
         self.halcomp = halcomp
@@ -111,15 +116,21 @@ class MyWindow(QtWidgets.QMainWindow):
         try:
             instance = uic.loadUi(self.filename, self)
         except AttributeError as e:
-            log.critical(e)
-            log.critical('Did a widget signal call a missing function name in the handler file?')
-            message = 'Did a widget signal call a missing function name in the handler file?\nPython Error:\n'+ str(e)
-            rtn = QtWidgets.QMessageBox.critical(None, "QTVCP Error", message)
-            sys.exit(0)
-
-        log.debug('QTVCP top instance: {}'.format(self))
-        for widget in instance.findChildren(QtCore.QObject):
-            log.debug('QTVCP Widget: {}'.format(widget))
+            formatted_lines = traceback.format_exc().splitlines()
+            if 'slotname' in formatted_lines[-2]:
+                log.critical('Missing slot name in handler file {}'.format(e))
+                message = '''A widget in the ui file, was assigned a signal \
+call to a missing function name in the handler file?\n
+There may be more. Some functions might not work.\n
+Python Error:\n {}'''.format(str(e))
+                rtn = QtWidgets.QMessageBox.critical(None, "QTVCP Error", message)
+            else:
+                log.critical(e)
+                sys.exit(0)
+        else:
+            log.debug('QTVCP top instance: {}'.format(self))
+            for widget in instance.findChildren(QtCore.QObject):
+                log.debug('QTVCP Widget: {}'.format(widget))
 
     def apply_styles(self, fname = None):
         if self.PATHS.IS_SCREEN:
@@ -148,6 +159,8 @@ class MyWindow(QtWidgets.QMainWindow):
             qssname = fname
         try:
             qss_file = open(qssname).read()
+            # qss files aren't friendly about changing image paths
+            qss_file = qss_file.replace('url(:/newPrefix/images', 'url({}'.format(self.PATHS.IMAGEDIR))
             self.setStyleSheet(qss_file)
             return
         except:
@@ -235,6 +248,14 @@ class MyWindow(QtWidgets.QMainWindow):
                 handlers[n] = Trampoline(v)
 
         return handlers,mod,object
+
+class VCPWindow(_VCPWindow):
+    _instance = None
+    _instanceNum = 0
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = _VCPWindow.__new__(cls, *args, **kwargs)
+        return cls._instance
 
     def __getitem__(self, item):
         return getattr(self, item)

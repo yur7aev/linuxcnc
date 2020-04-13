@@ -10,7 +10,6 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 
 from qtvcp.widgets.mdi_line import MDILine as MDI_WIDGET
 from qtvcp.widgets.gcode_editor import GcodeEditor as GCODE
-from qtvcp.widgets.richfontselector import RichTextEditorDialog
 from qtvcp.widgets.stylesheeteditor import  StyleSheetEditor as SSE
 from qtvcp.lib.keybindings import Keylookup
 from qtvcp.core import Status, Action, Info
@@ -30,6 +29,7 @@ KEYBIND = Keylookup()
 STATUS = Status()
 ACTION = Action()
 INFO = Info()
+STYLEEDITOR = SSE()
 
 ###################################
 # **** HANDLER CLASS SECTION **** #
@@ -48,8 +48,6 @@ class HandlerClass:
         self.PATHS = paths
         self.current_mode = (None,None)
         self._last_count = 0
-        self.rted = RichTextEditorDialog()
-        self.STYLEEDITOR = SSE(widgets,paths)
 
     ##########################################
     # Special Functions called from QTSCREEN
@@ -138,15 +136,10 @@ class HandlerClass:
                     event.accept()
                     return True
 
-        # ok if we got here then try keybindings
-        try:
-            return KEYBIND.call(self,event,is_pressed,shift,cntrl)
-        except NameError as e:
-            LOG.debug('Exception in KEYBINDING: {}'.format (e))
-        except Exception as e:
-            LOG.debug('Exception in KEYBINDING:', exc_info=e)
-            print 'Error in, or no function for: %s in handler file for-%s'%(KEYBIND.convert(event),key)
-            return False
+        # ok if we got here then try keybindings function calls
+        # KEYBINDING will call functions from handler file as
+        # registered by KEYBIND.add_call(KEY,FUNCTION) above
+        return KEYBIND.manage_function_calls(self,event,is_pressed,key,shift,cntrl)
 
     ########################
     # callbacks from STATUS #
@@ -161,9 +154,10 @@ class HandlerClass:
 
     def updateJogState(self):
         state = self.w.pushbutton_jog.isChecked()
+        selected = None
         if state:
             ACTION.SET_MANUAL_MODE()
-        selected = STATUS.get_selected_axis()
+            selected = STATUS.get_selected_axis()
         for temp in INFO.AVAILABLE_AXES:
             if selected == temp:
                 self['wheel_{}'.format(temp.lower())].set(state)
@@ -180,10 +174,7 @@ class HandlerClass:
             self.setDROFont(font)
 
     def togglePointer(self, data):
-        if data:
-            QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.BlankCursor)
-        else:
-            QtWidgets.QApplication.restoreOverrideCursor()
+        ACTION.HIDE_POINTER(data)
 
     #####################
     # general functions #
@@ -230,6 +221,19 @@ class HandlerClass:
                    self.w.filemanager.down()
                 else:
                     self.w.filemanager.up()
+            elif self.w.mainTab.currentWidget() == self.w.tab_graphics:
+                if self.w.panV.isChecked():
+                    ACTION.ADJUST_GRAPHICS_PAN(0,diff)
+                elif self.w.panH.isChecked():
+                    ACTION.ADJUST_GRAPHICS_PAN(diff,0)
+                elif self.w.rotate.isChecked():
+                    ACTION.ADJUST_GRAPHICS_ROTATE(diff,diff)
+                elif self.w.zoom.isChecked():
+                    if diff <0:
+                        ACTION.SET_GRAPHICS_VIEW('zoom-in')
+                    else:
+                        ACTION.SET_GRAPHICS_VIEW('zoom-OUT')
+
         elif self.w.pushbutton_fo.isChecked():
             scaled = (STATUS.stat.feedrate * 100 + diff)
             if scaled <0 :scaled = 0
@@ -287,12 +291,12 @@ class HandlerClass:
             if STATUS.stat.interp_state == linuxcnc.INTERP_IDLE:
                 self.w.close()
             else:
-                self.cmnd.abort()
+                ACTION.ABORT()
 
     # Function keys
     def on_keycall_F12(self,event,state,shift,cntrl):
         if state:
-            self.STYLEEDITOR.load_dialog()
+            STYLEEDITOR.load_dialog()
 
     # Linear Jogging
     def on_keycall_XPOS(self,event,state,shift,cntrl):

@@ -201,6 +201,10 @@ class App:
         self.widgets.helppic0.set_from_file(axisdiagram)
         axisdiagram = os.path.join(self._p.HELPDIR,"lathe_diagram.png")
         self.widgets.helppic1.set_from_file(axisdiagram)
+        axisdiagram = os.path.join(self._p.HELPDIR,"HomeAxisTravel_V2.png")
+        self.widgets.helppic2.set_from_file(axisdiagram)
+        axisdiagram = os.path.join(self._p.HELPDIR,"HomeAxisTravel_V3.png")
+        self.widgets.helppic3.set_from_file(axisdiagram)
         self.map_7i76 = gtk.gdk.pixbuf_new_from_file(os.path.join(self._p.HELPDIR,"7i76_map.png"))
         self.widgets.map_7i76_image.set_from_pixbuf(self.map_7i76)
         self.map_7i77 = gtk.gdk.pixbuf_new_from_file(os.path.join(self._p.HELPDIR,"7i77_map.png"))
@@ -940,7 +944,7 @@ PNCconf will use internal firmware data"%self._p.FIRMDIR),True)
             hifreq = int(text)/1000000
             modules = root.findall(".//modules")[0]
             if driver == None:
-                meta = self.get_board_meta(currentboard)
+                meta = self.get_board_meta(boardname)
                 driver = meta.get('DRIVER')
             for i,j in enumerate(modules):
                 k = modules[i].find("tagname").text
@@ -3827,7 +3831,9 @@ Clicking 'existing custom program' will aviod this warning. "),False):
         # always uses the value set here - if it is set to a default value
         # if should keep checking that the value is still right.
         # but thats a bigger change then we want now.
-        if not d[axis + "P"] == None:
+        # We check fo None and 'None' because when None is saved 
+        # it's saved as a string
+        if not d[axis + "P"] == None and not d[axis + "P"] == 'None':
             set_value("P")
         elif stepdriven == True:
             w[axis + "P"].set_value(1/(d.servoperiod/1000000000))
@@ -4019,7 +4025,7 @@ Clicking 'existing custom program' will aviod this warning. "),False):
             w[axis+"homesearchvel"].set_text("%d" % (d[axis+"homesearchvel"]*60))
             w[axis+"homelatchvel"].set_text("%d" % (d[axis+"homelatchvel"]*60))
             w[axis+"homefinalvel"].set_text("%d" % (d[axis+"homefinalvel"]*60))
-            w[axis+"homesequence"].set_text("%d" % d[axis+"homesequence"])
+            w[axis+"homesequence"].set_text("%d" % abs(d[axis+"homesequence"]))
             set_active("searchdir")
             set_active("latchdir")
             set_active("usehomeindex")
@@ -4206,7 +4212,7 @@ Clicking 'existing custom program' will aviod this warning. "),False):
             d[axis + "homesearchvel"] = (get_value(w[axis + "homesearchvel"])/60)
             d[axis + "homelatchvel"] = (get_value(w[axis + "homelatchvel"])/60)
             d[axis + "homefinalvel"] = (get_value(w[axis + "homefinalvel"])/60)
-            d[axis+"homesequence"] = (get_value(w[axis+"homesequence"]))
+            d[axis+"homesequence"] = (abs(get_value(w[axis+"homesequence"])))
             get_active("searchdir")
             get_active("latchdir")
             get_active("usehomeindex")
@@ -4638,7 +4644,7 @@ Clicking 'existing custom program' will aviod this warning. "),False):
                 self.widgets[i[0]].set_sensitive(True)
 
     def has_spindle_speed_control(self):
-        for test in ("s-stepgen-step", "s-pwm-pulse", "s-encoder-a", "spindle-on", "spindle-cw", "spindle-ccw", "spindle-brake",
+        for test in ("s-stepgen-step", "s-pwm-pulse", "s-encoder-a", "spindle-enable", "spindle-cw", "spindle-ccw", "spindle-brake",
                     "s-pot-output"):
             has_spindle = self.findsignal(test)
             print test,has_spindle
@@ -4749,21 +4755,27 @@ Clicking 'existing custom program' will aviod this warning. "),False):
            test = self.findsignal(thisaxisstepgen)
            return test
 
+    # find the individual related oins to step gens
+    # so that we can check if they were inverted
     def stepgen_invert_pins(self,pinnumber):
         # sample pinname = mesa0c0pin11
-        signallist = []
+        signallist_a = []
+        signallist_b = []
         pin = int(pinnumber[10:])
         connector = int(pinnumber[6:7])
         boardnum = int(pinnumber[4:5])
         channel = None
         pinlist = self.list_related_pins([_PD.STEPA,_PD.STEPB], boardnum, connector, channel, pin, 0)
         #print pinlist
-        for i in pinlist:
+        for num,i in enumerate(pinlist):
             if self.d[i[0]+"inv"]:
                 gpioname = self.make_pinname(self.findsignal( self.d[i[0]] ),True)
                 #print gpioname
-                signallist.append(gpioname)
-        return signallist
+                if num:
+                    signallist_b.append(gpioname)
+                else:
+                    signallist_a.append(gpioname)
+        return [signallist_a, signallist_b]
 
     def spindle_invert_pins(self,pinnumber):
         # sample pinname = mesa0sserial0_0pin11

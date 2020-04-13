@@ -27,8 +27,7 @@ class _IStat(object):
         if self.__class__._instanceNum >=1:
             return
         self.__class__._instanceNum += 1
-
-        self.LINUXCNC_IS_RUNNING = bool(INIPATH is None)
+        self.LINUXCNC_IS_RUNNING = bool(INIPATH != '/dev/null')
         if not self.LINUXCNC_IS_RUNNING:
             # Reset the log level for this module
             # Linuxcnc isn't running so we expect INI errors
@@ -40,6 +39,8 @@ class _IStat(object):
         self.MACHINE_LOG_HISTORY_PATH = '~/.machine_log_history'
         self.PREFERENCE_PATH = '~/.Preferences'
         self.SUB_PATH = None
+        self.SUB_PATH_LIST = []
+        self.MACRO_PATH_LIST = []
         self.IMAGE_PATH = IMAGEDIR
         self.LIB_PATH = os.path.join(HOME, "share","qtvcp")
 
@@ -74,9 +75,10 @@ class _IStat(object):
         self.SUB_PATH = (self.inifile.find("RS274NGC", "SUBROUTINE_PATH")) or None
         if self.SUB_PATH is not None:
             for mpath in (self.SUB_PATH.split(':')):
+                self.SUB_PATH_LIST.append(mpath)
                 if 'macro' in mpath:
                     path = mpath
-                    break
+                    self.MACRO_PATH_LIST.append(mpath)
             self.MACRO_PATH = mpath or None
         else:
             self.MACRO_PATH = None
@@ -149,18 +151,35 @@ class _IStat(object):
         self.HOME_ALL_FLAG = 1
         # set Home All Flage only if ALL joints specify a HOME_SEQUENCE
         jointcount = len(self.AVAILABLE_JOINTS)
+        self.JOINT_SEQUENCE_LIST = {}
         for j in range(jointcount):
-            if self.inifile.find("JOINT_"+str(j), "HOME_SEQUENCE") is None:
+            seq = self.inifile.find("JOINT_"+str(j), "HOME_SEQUENCE")
+            if seq is None:
+                seq = -1
                 self.HOME_ALL_FLAG = 0
-                break
-
+            self.JOINT_SEQUENCE_LIST[j] = int(seq)
         # joint sequence/type
         self.JOINT_TYPE = [None] * jointcount
         self.JOINT_SEQUENCE = [None] * jointcount
         for j in range(jointcount):
             section = "JOINT_%d" % j
             self.JOINT_TYPE[j] = self.inifile.find(section, "TYPE") or "LINEAR"
-            self.JOINT_SEQUENCE[j]  = self.inifile.find(section, "HOME_SEQUENCE") or ""
+            self.JOINT_SEQUENCE[j]  = int(self.inifile.find(section, "HOME_SEQUENCE") or 0)
+
+        # jog syncronized sequence
+        templist = []
+        for j in self.AVAILABLE_JOINTS:
+            temp = []
+            flag = False
+            for hj, hs in  self.JOINT_SEQUENCE_LIST.items():
+                if abs(int(hs)) == abs(int(self.JOINT_SEQUENCE_LIST.get(j))):
+                    temp.append(hj)
+                    if int(hs) < 0:
+                        flag = True
+            if flag:
+                templist.append(temp)
+        # remove duplicates
+        self.JOINT_SYNCH_LIST = list(set(tuple(sorted(sub)) for sub in templist)) 
 
         # jogging increments
         increments = self.inifile.find("DISPLAY", "INCREMENTS")
@@ -188,6 +207,25 @@ class _IStat(object):
                 self.ANGULAR_INCREMENTS.insert(0, "Continuous")
         else:
             self.ANGULAR_INCREMENTS = ["Continuous","1","45","180","360"]
+        # grid increments
+        grid_increments = self.inifile.find("DISPLAY", "GRIDS")
+        if grid_increments:
+            if "," in grid_increments:
+                self.GRID_INCREMENTS = [i.strip() for i in grid_increments.split(",")]
+            else:
+                self.GRID_INCREMENTS = grid_increments.split()
+            flag = True
+            for i in grid_increments:
+                if i.upper() in ('0', 'OFF'): flag = False
+                break
+            if flag:
+                self.GRID_INCREMENTS.insert(0, '0')
+        else:
+            if self.MACHINE_IS_METRIC:
+                self.GRID_INCREMENTS = ["0",".1 mm","1 mm","10 mm","50 mm"]
+            else:
+                self.GRID_INCREMENTS = ["0", ".5 in", "1 in","2 in","6 in"]
+
         temp = self.inifile.find("TRAJ", "COORDINATES")
         if temp:
             self.TRAJ_COORDINATES = temp.lower().replace(" ","")
@@ -229,6 +267,10 @@ class _IStat(object):
             self.ZIPPED_USRMESS = None
 
         # XEmbed tabs
+        # AXIS panel style:
+        self.GLADEVCP = (self.inifile.find("DISPLAY", "GLADEVCP")) or None
+        
+        # tab style for qtvcp tab style is used everty where
         self.TAB_NAMES = (self.inifile.findall("DISPLAY", "EMBED_TAB_NAME")) or None
         self.TAB_LOCATIONS = (self.inifile.findall("DISPLAY", "EMBED_TAB_LOCATION")) or []
         self.TAB_CMDS   = (self.inifile.findall("DISPLAY", "EMBED_TAB_COMMAND")) or None

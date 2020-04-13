@@ -45,6 +45,7 @@ Time (in CPU clocks) for the motion module motion-controller
 .TP
 \fBmotion.adaptive\-feed\fR IN FLOAT
 When adaptive feed is enabled with M52 P1, the commanded velocity is multiplied by this value. This effect is multiplicative with the NML-level feed override value and motion.feed\-hold.
+Negative values are valid and will run the G\-code path in reverse.
 
 .TP
 \fBmotion.analog\-in\-\fINN\fR IN FLOAT
@@ -178,6 +179,10 @@ Motion mode is teleop (axis coordinate jogging available).
 \fBmotion.tooloffset.L\fR OUT FLOAT
 Current tool offset for each axis where
 (\fBL\fR is the axis letter, one of: \fBx y z a b c u v w\fR)
+
+.TP
+\fBmotion.tp\-reverse\fR OUT BIT
+Trajectory planning is reversed (reverse run)
 
 .SH  AXIS PINS
 (\fBL\fR is the axis letter, one of: \fBx y z a b c u v w\fR)

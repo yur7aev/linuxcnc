@@ -8,6 +8,8 @@ from PyQt5.QtDesigner import QPyDesignerCustomWidgetPlugin, \
 from qtvcp.widgets.action_button import ActionButton
 from qtvcp.widgets.action_button_round import RoundButton
 from qtvcp.widgets.qtvcp_icons import Icon
+from qtvcp.widgets.richtext_selector import RichTextEditorDialog 
+
 ICON = Icon()
 
 Q_TYPEID = {
@@ -90,6 +92,7 @@ class TreeComboBox(QtWidgets.QComboBox):
         super(TreeComboBox, self).__init__(parent)
 
         self.__skip_next_hide = False
+        self._last_pick = None
 
         tree_view = QtWidgets.QTreeView(self)
         tree_view.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -143,34 +146,50 @@ class TreeComboBox(QtWidgets.QComboBox):
         self.setRootModelIndex(newIndex)
         self.setCurrentIndex (row)
 
+    # hacky work around
+    def updateLastPick(self, pick):
+        self._last_pick = pick
+    def getLastPick(self):
+        return self._last_pick
+
 class ActionButtonDialog(QtWidgets.QDialog):
     def __init__(self, widget, parent = None):
         QtWidgets.QDialog.__init__(self, parent)
 
         self.setWindowTitle(self.tr("Set Options"))
-        self.setGeometry(300, 300, 200, 200)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        self.setGeometry(300, 300, 300, 300)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Preferred)
         self.widget = widget
         self.previewWidget = ActionButton()
 
-        tab = QtWidgets.QTabWidget()
+        self.tab = QtWidgets.QTabWidget()
         self.tab1 = QtWidgets.QWidget()
         self.tab2 = QtWidgets.QWidget()
-		
-        tab.addTab(self.tab1,'Actions')
-        tab.addTab(self.tab2,'Indicator Action')
+        self.tab3 = QtWidgets.QWidget()
+
+        self.tab.addTab(self.tab1,'Actions')
+        self.tab.addTab(self.tab2,'LED')
+        self.tab.addTab(self.tab3,'Other')
         self.buildtab1()
         self.buildtab2()
+        self.buildtab3()
 
         vbox = QtWidgets.QVBoxLayout()
-        vbox.addWidget(tab)
+        vbox.addWidget(self.tab)
 
         wid = QtWidgets.QWidget()
         vbox2 = QtWidgets.QVBoxLayout(wid)
-        label = QtWidgets.QLabel('Default Text Template')
         self.defaultTextTemplateEditBox = QtWidgets.QLineEdit()
         self.defaultTextTemplateEditBox.setText(self.widget.text())
-        vbox2.addWidget(label)
+
+        hbox = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel('Default Text Template')
+        hbox.addWidget(label)
+        #dialogButton = QtWidgets.QPushButton('RichText Editor')
+        #dialogButton.clicked.connect(lambda :self.launchDialog(self.defaultTextTemplateEditBox))
+        #hbox.addWidget(dialogButton)
+        vbox2.addLayout(hbox)
+
         vbox2.addWidget(self.defaultTextTemplateEditBox)
         vbox.addWidget(wid)
 
@@ -487,6 +506,9 @@ class ActionButtonDialog(QtWidgets.QDialog):
                 break
         if flag:
             self.combo.select(pnum,cnum)
+            winPropertyName = self.combo.itemData(cnum,role = QtCore.Qt.UserRole + 1)
+            #print 'selected property,related data code:',winPropertyName
+            self.combo.updateLastPick(winPropertyName)
         else:
             self.combo.select(0,0)
 
@@ -494,10 +516,10 @@ class ActionButtonDialog(QtWidgets.QDialog):
         winPropertyName = self.combo.itemData(i,role = QtCore.Qt.UserRole + 1)
         userDataCode = self.combo.itemData(i,role = QtCore.Qt.UserRole + 2)
         #print 'selected property,related data code:',winPropertyName,userDataCode,i
+        self.combo.updateLastPick(winPropertyName)
         if winPropertyName is None:
             #collapsed = self.combo.view().isExpanded(self.combo.view().currentIndex())
             #if collapsed: return True
-            #self.combo.select(0,0)
             return True
         if not userDataCode is None:
             for i in (1,2,4,8,16,32,64,128,256,512,1024):
@@ -508,43 +530,173 @@ class ActionButtonDialog(QtWidgets.QDialog):
                     widg.hide()
         self.adjustSize()
 
+    # Indicator Tab
     def buildtab2(self):
+        statusProperties = [['None',None], ['Is Estopped','is_estopped'],
+                    ['Is On','is_on'], ['All Homed','is_homed'],
+                    ['is joint Homed','is_joint_homed'],
+                    ['Idle','is_idle'], ['Paused','is_paused'],
+                    ['Flood','is_flood'], ['Mist','is_mist'],
+                    ['Block Delete','is_block_delete'],
+                    ['Optional Stop','is_optional_stop'],
+                    ['Manual','is_manual'], ['MDI','is_mdi'],
+                    ['Auto','is_auto'],
+                    ['Spindle Stopped','is_spindle_stopped'],
+                    ['Spindle Fwd','is_spindle_fwd'],
+                    ['Spindle Reverse','is_spindle_rev'],
+                    ['On Limits','is_limits_overridden'] ]
         layout = QtWidgets.QGridLayout()
 
         # Indicator option
-        self.iud1 = QtWidgets.QFrame()
+        self.indicatorO = QtWidgets.QFrame()
         hbox = QtWidgets.QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
-        label = QtWidgets.QLabel('<b>State Indicator Option<\b>')
+        label = QtWidgets.QLabel('<b>Led Indicator Option<\b>')
         self.indicatorCheckBox = QtWidgets.QCheckBox()
         self.indicatorCheckBox.setChecked(self.widget.draw_indicator)
         self.indicatorCheckBox.clicked.connect(self.onSetOptions)
         hbox.addWidget(label)
         hbox.addStretch(1)
         hbox.addWidget(self.indicatorCheckBox)
-        self.iud1.setLayout(hbox)
-        layout.addWidget(self.iud1)
-        #self.iud1.hide()
+        self.indicatorO.setLayout(hbox)
+        layout.addWidget(self.indicatorO)
+        #self.indicatorO.hide()
 
-        # HAL pin option
-        self.iud4 = QtWidgets.QWidget()
+        # HAL pin LED option
+        self.halP = QtWidgets.QWidget()
         hbox = QtWidgets.QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
-        label = QtWidgets.QLabel('Hal Pin Option')
+        label = QtWidgets.QLabel('Hal Pin Controlled LED')
         self.halCheckBox = QtWidgets.QCheckBox()
         self.halCheckBox.setChecked(self.widget._HAL_pin)
+        self.halCheckBox.clicked.connect(self.onSetOptions)
         hbox.addWidget(label)
         hbox.addStretch(1)
         hbox.addWidget(self.halCheckBox)
-        self.iud4.setLayout(hbox)
-        layout.addWidget(self.iud4)
-        self.iud4.hide()
+        self.halP.setLayout(hbox)
+        layout.addWidget(self.halP)
+        self.halP.hide()
 
-        # indicator size
-        self.iud256 = QtWidgets.QWidget()
+        line = QtWidgets.QFrame()
+        line.setFrameShape(QtWidgets.QFrame.HLine)
+        line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        layout.addWidget(line)
+
+        # Linuxcnc Status LED option
+        self.statusO = QtWidgets.QWidget()
         hbox = QtWidgets.QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
-        label = QtWidgets.QLabel('Indicator Size')
+        label = QtWidgets.QLabel('Status Controlled LED')
+        self.statusCheckBox = QtWidgets.QCheckBox()
+        self.statusCheckBox.setChecked(self.widget._ind_status)
+        self.statusCheckBox.clicked.connect(self.onSetOptions)
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        hbox.addWidget(self.statusCheckBox)
+        self.statusO.setLayout(hbox)
+        layout.addWidget(self.statusO)
+        self.statusO.hide()
+
+        # Invert Status LED option
+        self.invertStatus = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        label = QtWidgets.QLabel('Invert Status LED State')
+        self.invertCheckBox = QtWidgets.QCheckBox()
+        self.invertCheckBox.setChecked(self.widget._invert_status)
+        self.invertCheckBox.clicked.connect(self.onSetOptions)
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        hbox.addWidget(self.invertCheckBox)
+        self.invertStatus.setLayout(hbox)
+        layout.addWidget(self.invertStatus)
+        #self.invertStatus.hide()
+
+        # status watch combo box
+        self.watch = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        label = QtWidgets.QLabel('Watch Status:')
+        self.statusCombo = QtWidgets.QComboBox()
+        flag = 0
+        for index, data in enumerate(statusProperties):
+            if data[1] and self.widget['_{}'.format(data[1])]:
+                flag = index
+            self.statusCombo.addItem(data[0])
+            self.statusCombo.setItemData(index, data[1], QtCore.Qt.UserRole + 1)
+        self.statusCombo.setCurrentIndex(flag)
+        self.statusCombo.activated.connect(self.statusSelectionChanged)
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        hbox.addWidget(self.statusCombo)
+        self.watch.setLayout(hbox)
+        layout.addWidget(self.watch)
+        self.watch.hide()
+
+        # joint number selection
+        self.jnum = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        label = QtWidgets.QLabel('Shape Selection')
+        self.jnumCombo = QtWidgets.QComboBox()
+        self.jnumCombo.activated.connect(self.onSetOptions)
+        for i in range(0,10):
+            self.jnumCombo.addItem('Joint {}'.format(i),i)
+        self.jnumCombo.setCurrentIndex(self.widget._joint_number)
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        hbox.addWidget(self.jnumCombo)
+        self.jnum.setLayout(hbox)
+        layout.addWidget(self.jnum)
+        self.jnum.hide()
+
+
+        line = QtWidgets.QFrame()
+        line.setFrameShape(QtWidgets.QFrame.HLine)
+        line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        layout.addWidget(line)
+
+        # Shape selection
+        self.shape = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        label = QtWidgets.QLabel('Shape Selection')
+        self.shapeCombo = QtWidgets.QComboBox()
+        self.shapeCombo.activated.connect(self.onSetOptions)
+        self.shapeCombo.addItem('Triangle',0)
+        self.shapeCombo.addItem('Circle',1)
+        self.shapeCombo.addItem('TopBar',2)
+        self.shapeCombo.addItem('SideBar',3)
+        self.shapeCombo.setCurrentIndex(self.widget._shape)
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        hbox.addWidget(self.shapeCombo)
+        self.shape.setLayout(hbox)
+        layout.addWidget(self.shape)
+        self.shape.hide()
+
+        # Round indicator diameter
+        self.diam = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        label = QtWidgets.QLabel('Round Diamter')
+        self.diamSpinBox = QtWidgets.QDoubleSpinBox()
+        self.diamSpinBox.setRange(2,100)
+        self.diamSpinBox.setDecimals(1)
+        self.diamSpinBox.setSingleStep(1)
+        self.diamSpinBox.setValue(self.widget._diameter)
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        hbox.addWidget(self.diamSpinBox)
+        self.diam.setLayout(hbox)
+        layout.addWidget(self.diam)
+        self.diam.hide()
+
+        # Triangle indicator size
+        self.size = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        label = QtWidgets.QLabel('Triangle Size')
         self.floatSpinBox = QtWidgets.QDoubleSpinBox()
         self.floatSpinBox.setRange(0,2)
         self.floatSpinBox.setDecimals(4)
@@ -553,15 +705,101 @@ class ActionButtonDialog(QtWidgets.QDialog):
         hbox.addWidget(label)
         hbox.addStretch(1)
         hbox.addWidget(self.floatSpinBox)
-        self.iud256.setLayout(hbox)
-        layout.addWidget(self.iud256)
-        self.iud256.hide()
+        self.size.setLayout(hbox)
+        layout.addWidget(self.size)
+        self.size.hide()
 
-        # true state indicator color
-        self.iud512 = QtWidgets.QWidget()
+        # Bar LED corner radius
+        self.radius = QtWidgets.QWidget()
         hbox = QtWidgets.QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
-        button = QtWidgets.QLabel('True State Indicator Color')
+        label = QtWidgets.QLabel('Corner Radius')
+        self.radiusSpinBox = QtWidgets.QDoubleSpinBox()
+        self.radiusSpinBox.setRange(0,20)
+        self.radiusSpinBox.setDecimals(1)
+        self.radiusSpinBox.setSingleStep(1)
+        self.radiusSpinBox.setValue(self.widget._corner_radius)
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        hbox.addWidget(self.radiusSpinBox)
+        self.radius.setLayout(hbox)
+        layout.addWidget(self.radius)
+        self.radius.hide()
+
+        # Bar LED right edge offset
+        self.rightedgeoffset = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        label = QtWidgets.QLabel('Right Edge Offset')
+        self.rightedgeoffsetSpinBox = QtWidgets.QDoubleSpinBox()
+        self.rightedgeoffsetSpinBox.setRange(0,50)
+        self.rightedgeoffsetSpinBox.setDecimals(1)
+        self.rightedgeoffsetSpinBox.setSingleStep(.1)
+        self.rightedgeoffsetSpinBox.setValue(self.widget._right_edge_offset)
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        hbox.addWidget(self.rightedgeoffsetSpinBox)
+        self.rightedgeoffset.setLayout(hbox)
+        layout.addWidget(self.rightedgeoffset)
+        self.rightedgeoffset.hide()
+
+        # Bar LED top edge offset
+        self.topedgeoffset = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        label = QtWidgets.QLabel('Top Edge Offset')
+        self.topedgeoffsetSpinBox = QtWidgets.QDoubleSpinBox()
+        self.topedgeoffsetSpinBox.setRange(0,50)
+        self.topedgeoffsetSpinBox.setDecimals(1)
+        self.topedgeoffsetSpinBox.setSingleStep(.1)
+        self.topedgeoffsetSpinBox.setValue(self.widget._top_edge_offset)
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        hbox.addWidget(self.topedgeoffsetSpinBox)
+        self.topedgeoffset.setLayout(hbox)
+        layout.addWidget(self.topedgeoffset)
+        self.topedgeoffset.hide()
+
+        # Bar LED height fraction
+        self.hfraction = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        label = QtWidgets.QLabel('Height Fraction')
+        self.hfractionSpinBox = QtWidgets.QDoubleSpinBox()
+        self.hfractionSpinBox.setRange(0,1)
+        self.hfractionSpinBox.setDecimals(1)
+        self.hfractionSpinBox.setSingleStep(.1)
+        self.hfractionSpinBox.setValue(self.widget._h_fraction)
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        hbox.addWidget(self.hfractionSpinBox)
+        self.hfraction.setLayout(hbox)
+        layout.addWidget(self.hfraction)
+        self.hfraction.hide()
+
+        # Bar LED width fraction
+        self.wfraction = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        label = QtWidgets.QLabel('Width Fraction')
+        self.wfractionSpinBox = QtWidgets.QDoubleSpinBox()
+        self.wfractionSpinBox.setRange(0,1)
+        self.wfractionSpinBox.setDecimals(1)
+        self.wfractionSpinBox.setSingleStep(.1)
+        self.wfractionSpinBox.setValue(self.widget._w_fraction)
+        hbox.addWidget(label)
+        hbox.addStretch(1)
+        hbox.addWidget(self.wfractionSpinBox)
+        self.wfraction.setLayout(hbox)
+        layout.addWidget(self.wfraction)
+        self.wfraction.hide()
+
+
+        # true state indicator color
+        self.colorTrue = QtWidgets.QWidget()
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setContentsMargins(0,0,0,0)
+        button = QtWidgets.QLabel('True State LED Color')
         self.trueColorButton = QtWidgets.QPushButton()
         self.trueColorButton.setToolTip('Opens color dialog')
         self.trueColorButton.clicked.connect(self.on_trueColorClick)
@@ -569,15 +807,15 @@ class ActionButtonDialog(QtWidgets.QDialog):
         self._onColor = self.widget._on_color.name()
         hbox.addWidget(button)
         hbox.addWidget(self.trueColorButton)
-        self.iud512.setLayout(hbox)
-        layout.addWidget(self.iud512)
-        self.iud512.hide()
+        self.colorTrue.setLayout(hbox)
+        layout.addWidget(self.colorTrue)
+        self.colorTrue.hide()
 
         # False state indicator color
-        self.iud1024 = QtWidgets.QWidget()
+        self.colorFalse = QtWidgets.QWidget()
         hbox = QtWidgets.QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
-        button = QtWidgets.QLabel('Falsee State Indicator Color')
+        button = QtWidgets.QLabel('False State LED Color')
         self.falseColorButton = QtWidgets.QPushButton()
         self.falseColorButton.setToolTip('Opens color dialog')
         self.falseColorButton.clicked.connect(self.on_falseColorClick)
@@ -585,29 +823,45 @@ class ActionButtonDialog(QtWidgets.QDialog):
         self._offColor = self.widget._off_color.name()
         hbox.addWidget(button)
         hbox.addWidget(self.falseColorButton)
-        self.iud1024.setLayout(hbox)
-        layout.addWidget(self.iud1024)
-        self.iud1024.hide()
+        self.colorFalse.setLayout(hbox)
+        layout.addWidget(self.colorFalse)
+        self.colorFalse.hide()
+
+        line = QtWidgets.QFrame()
+        line.setFrameShape(QtWidgets.QFrame.HLine)
+        line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        layout.addWidget(line)
 
 
 
+        self.tab2.setLayout(layout)
+
+    def statusSelectionChanged(self,index):
+        if self.statusCombo.itemData(index, QtCore.Qt.UserRole + 1) == 'is_joint_homed':
+            self.jnum.show()
+        else:
+            self.jnum.hide()
+
+    # Indicator Tab 3
+    def buildtab3(self):
+        layout = QtWidgets.QGridLayout()
         # State Text option
-        self.iud2 = QtWidgets.QWidget()
+        self.textO = QtWidgets.QWidget()
         hbox = QtWidgets.QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
-        label = QtWidgets.QLabel('<b>State Text Option<\b?')
+        label = QtWidgets.QLabel('<b>State Changes Text Option<\b?')
         self.textCheckBox = QtWidgets.QCheckBox()
         self.textCheckBox.setChecked(self.widget._state_text)
         self.textCheckBox.clicked.connect(self.onSetOptions)
         hbox.addWidget(label)
         hbox.addStretch(1)
         hbox.addWidget(self.textCheckBox)
-        self.iud2.setLayout(hbox)
-        layout.addWidget(self.iud2)
-        #self.iud2.hide()
+        self.textO.setLayout(hbox)
+        layout.addWidget(self.textO)
+        #self.textO.hide()
 
         # True text edit box
-        self.iud64 = QtWidgets.QWidget()
+        self.txtTrue = QtWidgets.QWidget()
         vbox = QtWidgets.QVBoxLayout()
         vbox.setContentsMargins(0,0,0,0)
         label = QtWidgets.QLabel('True State Text Line')
@@ -615,12 +869,12 @@ class ActionButtonDialog(QtWidgets.QDialog):
         self.tTextEditBox.setText(self.widget._true_string)
         vbox.addWidget(label)
         vbox.addWidget(self.tTextEditBox)
-        self.iud64.setLayout(vbox)
-        layout.addWidget(self.iud64)
-        self.iud64.hide()
+        self.txtTrue.setLayout(vbox)
+        layout.addWidget(self.txtTrue)
+        self.txtTrue.hide()
 
         # False text edit box
-        self.iud128 = QtWidgets.QWidget()
+        self.txtFalse = QtWidgets.QWidget()
         vbox = QtWidgets.QVBoxLayout()
         vbox.setContentsMargins(0,0,0,0)
         label = QtWidgets.QLabel('False State Text Line')
@@ -628,29 +882,29 @@ class ActionButtonDialog(QtWidgets.QDialog):
         self.fTextEditBox.setText(self.widget._false_string)
         vbox.addWidget(label)
         vbox.addWidget(self.fTextEditBox)
-        self.iud128.setLayout(vbox)
-        layout.addWidget(self.iud128)
-        self.iud128.hide()
+        self.txtFalse.setLayout(vbox)
+        layout.addWidget(self.txtFalse)
+        self.txtFalse.hide()
 
 
 
-        # Python Text option
-        self.iud8 = QtWidgets.QWidget()
+        # Python Command option
+        self.cmdPython = QtWidgets.QWidget()
         hbox = QtWidgets.QHBoxLayout()
         hbox.setContentsMargins(0,0,0,0)
-        label = QtWidgets.QLabel('<b>Python Command Option<\b>')
+        label = QtWidgets.QLabel('<b>State Calls Python Command<\b>')
         self.pythonCheckBox = QtWidgets.QCheckBox()
         self.pythonCheckBox.setChecked(self.widget._python_command)
         self.pythonCheckBox.clicked.connect(self.onSetOptions)
         hbox.addWidget(label)
         hbox.addStretch(1)
         hbox.addWidget(self.pythonCheckBox)
-        self.iud8.setLayout(hbox)
-        layout.addWidget(self.iud8)
-        #self.iud8.hide()
+        self.cmdPython.setLayout(hbox)
+        layout.addWidget(self.cmdPython)
+        #self.cmdPython.hide()
 
         # True command edit box
-        self.iud16 = QtWidgets.QWidget()
+        self.cmdTrue = QtWidgets.QWidget()
         vbox = QtWidgets.QVBoxLayout()
         vbox.setContentsMargins(0,0,0,0)
         label = QtWidgets.QLabel('True State Command Line')
@@ -658,12 +912,12 @@ class ActionButtonDialog(QtWidgets.QDialog):
         self.tCommandEditBox.setText(self.widget.true_python_command)
         vbox.addWidget(label)
         vbox.addWidget(self.tCommandEditBox)
-        self.iud16.setLayout(vbox)
-        layout.addWidget(self.iud16)
-        self.iud16.hide()
+        self.cmdTrue.setLayout(vbox)
+        layout.addWidget(self.cmdTrue)
+        self.cmdTrue.hide()
 
         # False command edit box
-        self.iud32 = QtWidgets.QWidget()
+        self.cmdFalse = QtWidgets.QWidget()
         vbox = QtWidgets.QVBoxLayout()
         vbox.setContentsMargins(0,0,0,0)
         label = QtWidgets.QLabel('False State Command Line')
@@ -671,11 +925,17 @@ class ActionButtonDialog(QtWidgets.QDialog):
         self.fCommandEditBox.setText(self.widget.false_python_command)
         vbox.addWidget(label)
         vbox.addWidget(self.fCommandEditBox)
-        self.iud32.setLayout(vbox)
-        layout.addWidget(self.iud32)
-        self.iud32.hide()
+        self.cmdFalse.setLayout(vbox)
+        layout.addWidget(self.cmdFalse)
+        self.cmdFalse.hide()
+        self.tab3.setLayout(layout)
 
-        self.tab2.setLayout(layout)
+    def launchDialog(self, widget):
+        d = RichTextEditorDialog()
+        style = d.showDialog(pretext = widget.text())
+        if style:
+            self.defaultTextTemplateEditBox.setText(style)
+            widget.setText(style)
 
     def onSetOptions(self):
         if self.textTemplateCheckBox.isChecked():
@@ -683,30 +943,78 @@ class ActionButtonDialog(QtWidgets.QDialog):
         else:
             self.vbox.hide()
 
-        if self.indicatorCheckBox.isChecked():
-            self.iud4.show()
-            self.iud256.show()
-            self.iud512.show()
-            self.iud1024.show()
+        # mutually exclusive options
+        if self.halCheckBox.isChecked() and self.statusCheckBox.isChecked():
+            if self.sender() == self.halCheckBox:
+                self.statusCheckBox.setChecked(False)
+            elif self.sender() == self.statusCheckBox:
+                self.halCheckBox.setChecked(False)
+
+        if self.statusCheckBox.isChecked():
+            self.watch.show()
+            self.invertStatus.show()
         else:
-            self.iud4.hide()
-            self.iud256.hide()
-            self.iud512.hide()
-            self.iud1024.hide()
+            self.watch.hide()
+            self.invertStatus.hide()
+
+        if self.indicatorCheckBox.isChecked():
+            self.halP.show()
+            self.colorTrue.show()
+            self.colorFalse.show()
+            self.statusO.show()
+            self.shape.show()
+            self.rightedgeoffset.show()
+            self.topedgeoffset.show()
+            shape = self.shapeCombo.itemData(self.shapeCombo.currentIndex())
+            if shape == 0:
+                self.size.show()
+                self.diam.hide()
+                self.radius.hide()
+                self.hfraction.hide()
+                self.wfraction.hide()
+            elif shape == 1:
+                self.diam.show()
+                self.size.hide()
+                self.radius.hide()
+                self.hfraction.hide()
+                self.wfraction.hide()
+            elif shape in (1,2):
+                self.size.hide()
+                self.diam.hide()
+                self.radius.show()
+                self.hfraction.show()
+                self.wfraction.show()
+
+            if self.statusCombo.itemData(self.statusCombo.currentIndex(), QtCore.Qt.UserRole + 1) == 'is_joint_homed':
+                self.jnum.show()
+            else:
+                self.jnum.hide()
+        else:
+            self.halP.hide()
+            self.size.hide()
+            self.colorTrue.hide()
+            self.colorFalse.hide()
+            self.statusO.hide()
+            self.diam.hide()
+            self.shape.hide()
+            self.watch.hide()
+            self.invertStatus.hide()
+            self.rightedgeoffset.hide()
+            self.topedgeoffset.hide()
 
         if self.pythonCheckBox.isChecked():
-            self.iud16.show()
-            self.iud32.show()
+            self.cmdTrue.show()
+            self.cmdFalse.show()
         else:
-            self.iud16.hide()
-            self.iud32.hide()
+            self.cmdTrue.hide()
+            self.cmdFalse.hide()
 
         if  self.textCheckBox.isChecked():
-            self.iud64.show()
-            self.iud128.show()
+            self.txtTrue.show()
+            self.txtFalse.show()
         else:
-            self.iud64.hide()
-            self.iud128.hide()
+            self.txtTrue.hide()
+            self.txtFalse.hide()
 
         self.adjustSize()
 
@@ -723,11 +1031,11 @@ class ActionButtonDialog(QtWidgets.QDialog):
             self.falseColorButton.setStyleSheet('QPushButton {background-color: %s ;}'% self._offColor)
 
     def updateWidget(self):
-        i = self.combo.currentIndex()
-        winProperty = self.combo.itemData(i,role = QtCore.Qt.UserRole + 1)
+        # check action-combobox last pick because it sometimes
+        # forgets whats selected. anyways...
+        winProperty = self.combo.getLastPick()
         if winProperty is None:
-            self.combo.select(0,0)
-            return
+            winProperty = 'unused'
         formWindow = QDesignerFormWindowInterface.findFormWindow(self.widget)
         if formWindow:
             # set widget option
@@ -740,18 +1048,42 @@ class ActionButtonDialog(QtWidgets.QDialog):
 
             formWindow.cursor().setProperty('indicator_HAL_pin_option',
               QtCore.QVariant(self.halCheckBox.isChecked()))
-            formWindow.cursor().setProperty('indicator_size',
-              QtCore.QVariant(self.floatSpinBox.value()))
-            formWindow.cursor().setProperty('indicator_size',
-              QtCore.QVariant(self.floatSpinBox.value()))
+            formWindow.cursor().setProperty('indicator_status_option',
+              QtCore.QVariant(self.statusCheckBox.isChecked()))
             formWindow.cursor().setProperty('indicator_size',
               QtCore.QVariant(self.floatSpinBox.value()))
 
+            formWindow.cursor().setProperty('right_edge_offset',
+              QtCore.QVariant(self.rightedgeoffsetSpinBox.value()))
+            formWindow.cursor().setProperty('top_edge_offset',
+              QtCore.QVariant(self.topedgeoffsetSpinBox.value()))
+            formWindow.cursor().setProperty('corner_radius',
+              QtCore.QVariant(self.radiusSpinBox.value()))
+            formWindow.cursor().setProperty('height_fraction',
+              QtCore.QVariant(self.hfractionSpinBox.value()))
+            formWindow.cursor().setProperty('width_fraction',
+              QtCore.QVariant(self.wfractionSpinBox.value()))
+
+
+            formWindow.cursor().setProperty('circle_diameter',
+              QtCore.QVariant(self.diamSpinBox.value()))
+            formWindow.cursor().setProperty('shape_option',
+              QtCore.QVariant(self.shapeCombo.itemData(
+                self.shapeCombo.currentIndex())))
+            formWindow.cursor().setProperty('joint_number_status',
+              QtCore.QVariant(self.jnumCombo.itemData(
+                self.jnumCombo.currentIndex())))
 
             formWindow.cursor().setProperty('on_color',
               QtCore.QVariant(self._onColor))
             formWindow.cursor().setProperty('off_color',
               QtCore.QVariant(self._offColor))
+
+            formWindow.cursor().setProperty('true_state_string',
+              QtCore.QVariant(self.tTextEditBox.text()))
+            formWindow.cursor().setProperty('false_state_string',
+              QtCore.QVariant(self.fTextEditBox.text()))
+
             formWindow.cursor().setProperty('true_python_cmd_string',
               QtCore.QVariant(self.tCommandEditBox.text()))
             formWindow.cursor().setProperty('false_python_cmd_string',
@@ -766,8 +1098,23 @@ class ActionButtonDialog(QtWidgets.QDialog):
             # set widget option
             formWindow.cursor().setProperty(winProperty+'_action',
               QtCore.QVariant(True))
+        # set status data fom combo box
+        # we read all data from combo and set each property to its
+        # current dialog state (ie. selected is true, all others false)
+        for i in range(1,self.statusCombo.count()):
+            data = self.statusCombo.itemData(i,QtCore.Qt.UserRole + 1)
+            propertyText = '{}_status'.format(data)
+            if self.statusCombo.itemData(self.statusCombo.currentIndex(), QtCore.Qt.UserRole + 1) == data:
+                state = True
+            else: state = False
+            formWindow.cursor().setProperty(propertyText,
+            QtCore.QVariant(state))
+        formWindow.cursor().setProperty('invert_the_status',
+          QtCore.QVariant(self.invertCheckBox.isChecked()))
 
-        # set related data
+        #####################
+        # set related data 
+        #####################
         formWindow.cursor().setProperty('joint_number',
           QtCore.QVariant(self.JNumSpinBox.value()))
         formWindow.cursor().setProperty('incr_imperial_number',
@@ -819,23 +1166,17 @@ class ActionButtonMenuEntry(QPyDesignerTaskMenuExtension):
         self.editStateAction = QtWidgets.QAction(
           self.tr("Set Actions"), self)
         self.editStateAction.triggered.connect(self.updateOptions)
-        self.editIndicatorAction = QtWidgets.QAction(
-          self.tr("Set Indicator Actions"), self)
-        self.editIndicatorAction.triggered.connect(self.indicatorOptions)
 
     def preferredEditAction(self):
         return self.editStateAction
 
     def taskActions(self):
-        return [self.editStateAction,self.editIndicatorAction]
+        return [self.editStateAction]
 
     def updateOptions(self):
         dialog = ActionButtonDialog(self.widget)
         dialog.exec_()
 
-    def indicatorOptions(self):
-        dialog = IndicatorButtonDialog(self.widget)
-        dialog.exec_()
 
 class ActionButtonTaskMenuFactory(QExtensionFactory):
     def __init__(self, parent = None):

@@ -163,7 +163,7 @@ class _GStat(gobject.GObject):
         'graphics-line-selected': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_INT,)),
         'graphics-gcode-error': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_STRING,)),
         'graphics-gcode-properties': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        'graphics-view-changed': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_STRING,)),
+        'graphics-view-changed': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)),
         'mdi-history-changed': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, ()),
         'machine-log-changed': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, ()),
         'update-machine-log': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gobject.TYPE_STRING)),
@@ -704,6 +704,7 @@ class _GStat(gobject.GObject):
         self.emit('requested-spindle-speed-changed', spindle_spd_new)
         spindle_spd_new = self.old['actual-spindle-speed']
         self.emit('actual-spindle-speed-changed', spindle_spd_new)
+        self.emit('spindle-control-changed', False, 0)
         self.emit('jograte-changed', self.current_jog_rate)
         self.emit('jograte-angular-changed', self.current_angular_jog_rate)
         self.emit('jogincrement-changed', self.current_jog_distance, self.current_jog_distance_text)
@@ -816,6 +817,12 @@ class _GStat(gobject.GObject):
     def is_all_homed(self):
         return self._is_all_homed
 
+    def is_homing(self):
+        for j in range(0, self.stat.joints):
+            if self.stat.joint[j].get('homing'):
+                return True
+        return False
+
     def machine_is_on(self):
         return self.old['state']  > linuxcnc.STATE_OFF
 
@@ -893,6 +900,10 @@ class _GStat(gobject.GObject):
 
     def is_hard_limits_tripped(self):
         return self.old['hard-limits-tripped']
+
+    def get_current_tool(self):
+        self.stat.poll()
+        return self.stat.tool_in_spindle
 
     def set_tool_touchoff(self,tool,axis,value):
         premode = None
