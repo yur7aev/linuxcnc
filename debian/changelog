@@ -2,7 +2,7 @@ linuxcnc (1:2.8.0nyx10~pre1) dmitry; urgency=low
   * nyx 2.3
   * merged with 2.8 branch
 
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Thu, 28 Nov 2019 03:37:16 +0300
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sun, 19 Mar 2020 03:49:16 +0300
 
 linuxcnc (1:2.8.0~pre1) rosa; urgency=low
   * New external axis offsets
@@ -10,6 +10,9 @@ linuxcnc (1:2.8.0~pre1) rosa; urgency=low
   * New experimental QT based VCP
   * New G52 local coordinate system offset
   * New support for multiple spindles up to 9
+  * G33.1 Rigid Tapping speedup, with optional faster return move
+  * Back tool lathe support in axis and gmoccapy
+  * Seperate joint and axis limits for non trivial kins machines
 
 linuxcnc (1:2.7.15) unstable; urgency=medium
 

@@ -3118,20 +3118,7 @@ int Interp::convert_m(block_pointer block,       //!< pointer to a block of RS27
       }
   }
 
-  // needs more testing.. once? test tool_change_flag!
-  //#ifdef DEBATABLE
   if (FEATURE(RETAIN_G43)) {
-    // I consider this useful, so make it configurable.
-    // Turn it on optionally . -mah
-
-    // I would like this, but it's a big change.  It changes the
-    // operation of legal ngc programs, but it could be argued that
-    // those programs are buggy or likely to be not what the author
-    // intended.
-
-    // It would allow you to turn on G43 after loading the first tool,
-    // and then not worry about it through the program.  When you
-    // finally unload the last tool, G43 mode is canceled.
 
       if ((settings->active_g_codes[9] == G_43) && ONCE(STEP_RETAIN_G43)) {
         if(settings->selected_pocket > 0) {
@@ -3147,49 +3134,64 @@ int Interp::convert_m(block_pointer block,       //!< pointer to a block of RS27
         }
     }
   }
-  //#endif
 
  if (IS_USER_MCODE(block,settings,7) && ONCE_M(7)) {
     return convert_remapped_code(block, settings, STEP_M_7, 'm',
 				   block->m_modes[7]);
  } else if ((block->m_modes[7] == 3)  && ONCE_M(7)) {
      if (block->dollar_flag){
-        CHKS((block->dollar_number >= settings->num_spindles || block->dollar_number < 0),
+        CHKS((block->dollar_number >= settings->num_spindles || block->dollar_number < -1),
             (_("Spindle ($) number out of range in M3 Command\nnum_spindles =%i. $=%d\n")),settings->num_spindles,(int)block->dollar_number);
-        enqueue_START_SPINDLE_CLOCKWISE(block->dollar_number);
-        settings->spindle_turning[(int)block->dollar_number] = CANON_CLOCKWISE;
-     } else {
-         for (int i = 0; i < settings->num_spindles; i++){
-             enqueue_START_SPINDLE_CLOCKWISE(i);
-             settings->spindle_turning[i] = CANON_CLOCKWISE;
-         }
+        if (block->dollar_number == -1){ // all spindles
+            for (int i = 0; i < settings->num_spindles; i++){
+                enqueue_START_SPINDLE_CLOCKWISE(i);
+                settings->spindle_turning[i] = CANON_CLOCKWISE;
+            }
+        } else { // a specific spindle
+            enqueue_START_SPINDLE_CLOCKWISE(block->dollar_number);
+            settings->spindle_turning[(int)block->dollar_number] = CANON_CLOCKWISE;
+        }
+     } else { // the default spindle
+        enqueue_START_SPINDLE_CLOCKWISE(0);
+        settings->spindle_turning[0] = CANON_CLOCKWISE;
      }
  } else if ((block->m_modes[7] == 4) && ONCE_M(7)) {
      if (block->dollar_flag){
-        CHKS((block->dollar_number >= settings->num_spindles || block->dollar_number < 0),
-            (_("Spindle ($) number out of range in M4 Command")));
-        enqueue_START_SPINDLE_COUNTERCLOCKWISE(block->dollar_number);
-        settings->spindle_turning[(int)block->dollar_number] = CANON_COUNTERCLOCKWISE;
-     } else {
-         for (int i = 0; i < settings->num_spindles; i++){
-             enqueue_START_SPINDLE_COUNTERCLOCKWISE(i);
-             settings->spindle_turning[i] = CANON_COUNTERCLOCKWISE;
-         }
+        CHKS((block->dollar_number >= settings->num_spindles || block->dollar_number < -1),
+            (_("Spindle ($) number out of range in M4 Command\nnum_spindles =%i. $=%d\n")),settings->num_spindles,(int)block->dollar_number);
+        if (block->dollar_number == -1){ // all spindles
+            for (int i = 0; i < settings->num_spindles; i++){
+                 enqueue_START_SPINDLE_COUNTERCLOCKWISE(i);
+                 settings->spindle_turning[i] = CANON_COUNTERCLOCKWISE;
+             }
+         } else { // a specific spindle
+            enqueue_START_SPINDLE_COUNTERCLOCKWISE(block->dollar_number);
+            settings->spindle_turning[(int)block->dollar_number] = CANON_COUNTERCLOCKWISE;
+        }
+     } else { // default spindle
+         enqueue_START_SPINDLE_COUNTERCLOCKWISE(0);
+         settings->spindle_turning[0] = CANON_COUNTERCLOCKWISE;
      }
  } else if ((block->m_modes[7] == 5) && ONCE_M(7)){
-     if (block->dollar_flag){
-        CHKS((block->dollar_number >= settings->num_spindles || block->dollar_number < 0),
-           (_("Spindle ($) number out of range in M5 Command")));
-        enqueue_STOP_SPINDLE_TURNING(block->dollar_number);
-     } else {
-        for (int i = 0; i < settings->num_spindles; i++){
-        	settings->spindle_turning[i] = CANON_STOPPED;
-            enqueue_STOP_SPINDLE_TURNING(i);
+    if (block->dollar_flag){
+        CHKS((block->dollar_number >= settings->num_spindles || block->dollar_number < -1),
+            (_("Spindle ($) number out of range in M5 Command\nnum_spindles =%i. $=%d\n")),settings->num_spindles,(int)block->dollar_number);
+        if (block->dollar_number == -1){ // all spindles
+            for (int i = 0; i < settings->num_spindles; i++){
+                settings->spindle_turning[i] = CANON_STOPPED;
+                enqueue_STOP_SPINDLE_TURNING(i);
+            }
+        } else { // a specific spindle
+            settings->spindle_turning[block->dollar_number] = CANON_STOPPED;
+            enqueue_STOP_SPINDLE_TURNING(block->dollar_number);
         }
-	}
+    } else { // the default spindle
+        settings->spindle_turning[0] = CANON_STOPPED;
+        enqueue_STOP_SPINDLE_TURNING(0);
+    }
   } else if ((block->m_modes[7] == 19) && ONCE_M(7)) {
       for (int i = 0; i < settings->num_spindles; i++)
-    	  settings->spindle_turning[i] = CANON_STOPPED;
+          settings->spindle_turning[i] = CANON_STOPPED;
       if (block->dollar_flag){
          CHKS((block->dollar_number >= settings->num_spindles || block->dollar_number < 0),
              (_("Spindle ($) number out of range in M19 Command")));
