@@ -59,6 +59,7 @@
 #include <libintl.h>
 #include <locale.h>
 #include "usrmotintf.h"
+#include <rtapi_string.h>
 
 #if 0
 // Enable this to niftily trap floating point exceptions for debugging
@@ -2070,7 +2071,7 @@ static int emcTaskIssueCommand(NMLmsg * cmd)
 
     case EMC_TOOL_PREPARE_TYPE:
 	tool_prepare_msg = (EMC_TOOL_PREPARE *) cmd;
-	retval = emcToolPrepare(tool_prepare_msg->pocket,tool_prepare_msg->tool);
+	retval = emcToolPrepare(tool_prepare_msg->tool);
 	break;
 
     case EMC_TOOL_START_CHANGE_TYPE:
@@ -2198,7 +2199,7 @@ static int emcTaskIssueCommand(NMLmsg * cmd)
 	if (-1 == retval) {
 	    emcOperatorError(0, _("can't open %s"), open_msg->file);
 	} else {
-	    strcpy(emcStatus->task.file, open_msg->file);
+	    rtapi_strxcpy(emcStatus->task.file, open_msg->file);
 	    retval = 0;
 	}
 	break;
@@ -2227,7 +2228,7 @@ static int emcTaskIssueCommand(NMLmsg * cmd)
 		command = NULL;
 	    } else {
 		// record initial MDI command
-		strcpy(emcStatus->task.command, execute_msg->command);
+		rtapi_strxcpy(emcStatus->task.command, execute_msg->command);
 	    }
 
 	    int level = emcTaskPlanLevel();
@@ -3201,7 +3202,7 @@ static int iniLoad(const char *filename)
 
     if (NULL != (inistring = inifile.Find("NML_FILE", "EMC"))) {
 	// copy to global
-	strcpy(emc_nmlfile, inistring);
+	rtapi_strxcpy(emc_nmlfile, inistring);
     } else {
 	// not found, use default
     }
@@ -3219,13 +3220,13 @@ static int iniLoad(const char *filename)
 
     if (NULL != (inistring = inifile.Find("RS274NGC_STARTUP_CODE", "RS274NGC"))) {
 	// copy to global
-	strcpy(rs274ngc_startup_code, inistring);
+	rtapi_strxcpy(rs274ngc_startup_code, inistring);
     } else {
 	//FIXME-AJ: this is the old (unpreferred) location. just for compatibility purposes
 	//it will be dropped in v2.4
 	if (NULL != (inistring = inifile.Find("RS274NGC_STARTUP_CODE", "EMC"))) {
 	    // copy to global
-	    strcpy(rs274ngc_startup_code, inistring);
+	    rtapi_strxcpy(rs274ngc_startup_code, inistring);
 	} else {
 	// not found, use default
 	}

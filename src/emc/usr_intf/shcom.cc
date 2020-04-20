@@ -38,6 +38,7 @@
 #include "rcs_print.hh"
 #include "timer.hh"             // esleep
 #include "shcom.hh"             // Common NML communications functions
+#include <rtapi_string.h>
 
 LINEAR_UNIT_CONVERSION linearUnitConversion;
 ANGULAR_UNIT_CONVERSION angularUnitConversion;
@@ -271,7 +272,7 @@ int updateError()
 
     default:
 	// if not recognized, set the error string
-	sprintf(error_string, "unrecognized error %" PRId32, type);
+	snprintf(error_string, sizeof(error_string), "unrecognized error %" PRId32, type);
 	return -1;
 	break;
     }
@@ -992,9 +993,9 @@ int sendProgramOpen(char *program)
     EMC_TASK_PLAN_OPEN emc_task_plan_open_msg;
 
     // save this to run again
-    strcpy(lastProgramFile, program);
+    rtapi_strxcpy(lastProgramFile, program);
 
-    strcpy(emc_task_plan_open_msg.file, program);
+    rtapi_strxcpy(emc_task_plan_open_msg.file, program);
     emcCommandSend(emc_task_plan_open_msg);
     if (emcWaitType == EMC_WAIT_RECEIVED) {
 	return emcCommandWaitReceived();
@@ -1096,7 +1097,7 @@ int sendMdiCmd(const char *mdi)
 {
     EMC_TASK_PLAN_EXECUTE emc_task_plan_execute_msg;
 
-    strcpy(emc_task_plan_execute_msg.command, mdi);
+    rtapi_strxcpy(emc_task_plan_execute_msg.command, mdi);
     emcCommandSend(emc_task_plan_execute_msg);
     if (emcWaitType == EMC_WAIT_RECEIVED) {
 	return emcCommandWaitReceived();
@@ -1111,7 +1112,7 @@ int sendLoadToolTable(const char *file)
 {
     EMC_TOOL_LOAD_TOOL_TABLE emc_tool_load_tool_table_msg;
 
-    strcpy(emc_tool_load_tool_table_msg.file, file);
+    rtapi_strxcpy(emc_tool_load_tool_table_msg.file, file);
     emcCommandSend(emc_tool_load_tool_table_msg);
     if (emcWaitType == EMC_WAIT_RECEIVED) {
 	return emcCommandWaitReceived();
@@ -1206,7 +1207,7 @@ int sendJointLoadComp(int joint, const char *file, int type)
 {
     EMC_JOINT_LOAD_COMP emc_joint_load_comp_msg;
 
-    strcpy(emc_joint_load_comp_msg.file, file);
+    rtapi_strxcpy(emc_joint_load_comp_msg.file, file);
     emc_joint_load_comp_msg.type = type;
     emcCommandSend(emc_joint_load_comp_msg);
     if (emcWaitType == EMC_WAIT_RECEIVED) {
@@ -1291,14 +1292,14 @@ int iniLoad(const char *filename)
 
     if (NULL != (inistring = inifile.Find("NML_FILE", "EMC"))) {
 	// copy to global
-	strcpy(emc_nmlfile, inistring);
+	rtapi_strxcpy(emc_nmlfile, inistring);
     } else {
 	// not found, use default
     }
 
     for (t = 0; t < EMCMOT_MAX_JOINTS; t++) {
 	jogPol[t] = 1;		// set to default
-	sprintf(displayString, "JOINT_%d", t);
+	snprintf(displayString, sizeof(displayString), "JOINT_%d", t);
 	if (NULL != (inistring =
 		     inifile.Find("JOGGING_POLARITY", displayString)) &&
 	    1 == sscanf(inistring, "%d", &i) && i == 0) {
