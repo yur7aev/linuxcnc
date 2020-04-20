@@ -129,7 +129,7 @@ int rtapi_app_main(void) {
 
 	do {
 		haldata = hal_malloc(sizeof(struct haldata));
-	
+
 		if (!haldata) {
 			rtapi_print_msg(RTAPI_MSG_ERR, "can't malloc haldata!\n");
 			break;

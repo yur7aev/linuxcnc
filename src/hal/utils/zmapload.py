@@ -43,9 +43,9 @@ class Point(object):
 	l = self.len()
 	if l > 0: return Point(self.x/l, self.y/l, self.z/l)
 	return self
-    def angle(self, v):               
+    def angle(self, v):
         return math.acos(self.dot(v)/self.len()/v.len())
-        
+
 def add_grid(g, new):
     for x in g.keys():
         if abs(x - new) < 2:
@@ -54,7 +54,7 @@ def add_grid(g, new):
             return
     g[new] = [ new, 1 ]
 
-def index(a, first, step):            
+def index(a, first, step):
     return int(round((a - first) / step))
 
 def average_grid(g):
@@ -131,7 +131,7 @@ def make_grid(points):
             z = g[j][i]
             if z > 1111:
                 print "empty grid node, abort!"
-                return False 
+                return False
             struct.pack_into('d', b, 8+32 + j*8*nx + i*8, g[j][i])
 
     struct.pack_into('ii', b, 0,    ny, nx)	# 8
@@ -143,7 +143,7 @@ def reset_grid():
 def view_grid():
     b = get_buffer(1, 1)
     (nx, ny, x0, y0, dx, dy) = struct.unpack('iidddd',b[0:40])
-    if nx > 0 and ny > 0: 
+    if nx > 0 and ny > 0:
         x1 = x0 + (nx-1)*dx
         y1 = y0 + (ny-1)*dy
         print "%dx%d\nX:%.2f..%.2f Y:%.2f..%.2f" % (nx, ny, x0, x1, y0, y1)

@@ -2,7 +2,7 @@
   jogpad.comp
 
   slow start / fast stop jogging
- 
+
   Copyright (C) 2018 Dmitry Yurtaev (dmitry@yurtaev.com)
  */
 
@@ -13,7 +13,7 @@ pin in bit up "Y- button";
 pin in bit down "Y+ button";
 pin in bit left "X+ button";
 pin in bit right "X- button";
-pin in bit shift "alternate functions: Z+,Z-,A+,A-";       
+pin in bit shift "alternate functions: Z+,Z-,A+,A-";
 
 pin out s32 jog-counts-#[4] "joints 0..3, max step 100 counts per period";
 pin out bit jogging "jog enable output";
@@ -45,11 +45,11 @@ FUNCTION(_) {
 				if (p < 222222) p = 222222;
 				acc_duration = 1e9 / p * accel_time;
 			}
-			if (jog_duration < acc_duration) jog_duration++; 
+			if (jog_duration < acc_duration) jog_duration++;
 		} else {
 			jogging = 0;
 			jog_duration = 0;
-		}		
+		}
 
 		if (acc_duration > 0) {
 			int step = jog_duration * 100 / acc_duration;
@@ -65,6 +65,4 @@ FUNCTION(_) {
 	} else {
 		jogging = 0;
 	}
-		
-
 }

@@ -540,7 +540,7 @@ def args(n, m):
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n:]
-	
+
 
 cmd = arg(1, "[info|servo|io|flash|reboot|pll] ...")
 if cmd == 'info':

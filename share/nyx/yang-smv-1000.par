@@ -16,8 +16,8 @@ SV002	1	1	1	; PC2	machine side gear	1-32767
 SV003	33	33	33	; PGN1	position loop gain 1	0-200 rad/s
 SV004	86	86	86	; PGN2	position loop gain 2	0-999 rad/s
 SV005	150	150	150	; VGN1	speed loop gain		1-999
-SV006	-	-	-	; 
-SV007	-	-	-	; 
+SV006	-	-	-	;
+SV007	-	-	-	;
 SV008	1900	1900	1900	; VIA	speed loop lead comp	1-9999
 SV009	1024	1024	1024	; IQA	cur loop q lead comp	1-20480
 SV010	2048	2048	2048	; IDA	cur loop d lead comp	1-20480
@@ -38,8 +38,8 @@ SV024	50	50	50	; INP	in position		0-32767um
 SV025	0x0081	0x0081	0x0081	; MTYP
 SV026	10	10	10	; OD2	error excessive		0-32767mm
 SV027	0x4230	0x4230	0x4230	; SSF1
-SV028	-	-	-	; 
-SV029	-	-	-	; 
+SV028	-	-	-	;
+SV029	-	-	-	;
 SV030	0	0	0	; IVC	J2 volt dead time comp	0-200%
 SV031	0	0	0	; OVS1	J2 overshoot comp 1	-1-100%
 SV032	0	0	0	; TOF	unbalance torque offs	-100-100%
@@ -56,15 +56,15 @@ SV042	0	0	0	; OVS2	J2 overshoot comp 2	-1-100%
 SV043	0	0	0	; OBS1	dist obsrv filter freq	0-1000rad/s
 SV044	0	0	0	; OBS2	obsrv gain		0-1000%
 SV045	0	0	0	; TRUB	frictional torque	0-100%
-SV046	-	-	-	; 
+SV046	-	-	-	;
 SV047	100	100	100	; EC	induct volage comp gain	0-200%
 SV048	0	0	0	; EMGrt	v axis droop prevention	0-2000ms
 SV049	15	15	15	; PGN1sp				0-200rad/s
 SV050	0	0	0	; PGN2sp				0-9999rad/s
-SV051	-	-	-	; 
-SV052	-	-	-	; 
+SV051	-	-	-	;
+SV052	-	-	-	;
 SV053	0	0	0	; OD3	error excessive (spec)	0-32767mm
-SV054	-	-	-	; 
+SV054	-	-	-	;
 SV055	0	0	0	; EMGdt	?
 SV056	0	0	0	; EMGt	dec time const im emg	0-5000ms
 SV057	187	187	187	; SHGC	SHG control gain	0-999rad/s
@@ -75,22 +75,22 @@ SV061	0	0	0	; DA1NO	D/A ch1 data num	0-102
 SV062	0	0	0	; DA2NO	D/A ch1 data num	0-102
 SV063	0	0	0	; DA1MPY	D/A ch1 scale		-32768-32767 (1/256)
 SV064	0	0	0	; MA2MPY
-SV065	-	-	-	; 
-SV066	-	-	-	; 
-SV067	-	-	-	; 
+SV065	-	-	-	;
+SV066	-	-	-	;
+SV067	-	-	-	;
 SV068	1028	1028	1028	; ?
-SV069	-	-	-	; 
+SV069	-	-	-	;
 SV070	20000	20000	20000	; rapid
-SV071	-	-	-	; 
+SV071	-	-	-	;
 SV072	10000	10000	10000	; clamp
-SV073	0	0	0	; 
-SV074	0	0	0	; 
-SV075	0	0	0	; 
-SV076	0	0	0	; 
-SV077	0	0	0	; 
-SV078	0	0	0	; 
-SV079	0	0	0	; 
-SV080	0	0	0	; 
+SV073	0	0	0	;
+SV074	0	0	0	;
+SV075	0	0	0	;
+SV076	0	0	0	;
+SV077	0	0	0	;
+SV078	0	0	0	;
+SV079	0	0	0	;
+SV080	0	0	0	;
 
 ;	0	1	2	3:SP
 SP001	-	-	-	80	; PGM	100

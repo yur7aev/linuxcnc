@@ -94,12 +94,12 @@ SV080	0	0	0	; abs home offset low
 SP001	- - - - -	100	; PGM	100	Motor built-in encoder orient position loop gain	1/10s-1
 SP002	- - - - -	100	; PGE	100	Encoder orient position loop gain	0-360
 SP003	- - - - -	-	; PGC	15
-SP004	- - - - -	16	; OINP	16	Orient in-position width 
-SP005	- - - - -	0	; OSP	0	Orient changeover speed limit value 
+SP004	- - - - -	16	; OINP	16	Orient in-position width
+SP005	- - - - -	0	; OSP	0	Orient changeover speed limit value
 SP006	- - - - -	20	; CSP	20	Deceleration rate during orientation
-SP007	- - - - -	0	; OPST	0	Orientation position shift amount 
+SP007	- - - - -	0	; OPST	0	Orientation position shift amount
 SP008	- - - - -	-	; -	-
-SP009	- - - - -	15	; PGT	15	Synchronous tapping position loop gain 
+SP009	- - - - -	15	; PGT	15	Synchronous tapping position loop gain
 SP010	- - - - -	15	; PGS	15	Spindle synchronization position loop gain
 SP011	- - - - -	-	; -	-
 SP012	- - - - -	-	; -	-
@@ -112,14 +112,14 @@ SP018	- - - - -	50	; ZSP	50	Motor zero speed (rpm)
 SP019	- - - - -	30	; CSN1	30	Speed command accel/decel time constant	(10ms)
 SP020	- - - - -	60	; SDST	600	Speed detection set value
 SP021	- - - - -	10	; TLM1	10	Torque limit 1
-SP022	- - - - -	63	; VGNP1	63	Speed loop P gain during speed control 
-SP023	- - - - -	60	; VGNI1	60	Speed loop I gain  during speed control 
+SP022	- - - - -	63	; VGNP1	63	Speed loop P gain during speed control
+SP023	- - - - -	60	; VGNI1	60	Speed loop I gain  during speed control
 SP024	- - - - -	-	; -	-
-SP025	- - - - -	1	; GRA1	1	Spindle side No. of gear teeth 1 
+SP025	- - - - -	1	; GRA1	1	Spindle side No. of gear teeth 1
 SP026	- - - - -	1	; GRA2	1
 SP027	- - - - -	1	; GRA3	1
 SP028	- - - - -	1	; GRA4	1
-SP029	- - - - -	1	; GRB1	1	Motor shaft side No. of gear teeth 1 
+SP029	- - - - -	1	; GRB1	1	Motor shaft side No. of gear teeth 1
 SP030	- - - - -	1	; GRB2	1
 SP031	- - - - -	1	; GRB3	1
 SP032	- - - - -	1	; GRB4	1
@@ -384,13 +384,13 @@ SP290	- - - - -	1162	; KI1	.. current F/B compensation
 SP291	- - - - -	0	; TI	.. current loop sampling Ts
 SP292	- - - - -	2500	; VPWM	.. PWM triangle resolution
 SP293	- - - - -	0	; IDLM	.. flux F/B clamp (min)
-SP294	- - - - -	-	; 
-SP295	- - - - -	-	; 
-SP296	- - - - -	-	; 
-SP297	- - - - -	-	; 
-SP298	- - - - -	-	; 
-SP299	- - - - -	-	; 
-SP300	- - - - -	-	; 
+SP294	- - - - -	-	;
+SP295	- - - - -	-	;
+SP296	- - - - -	-	;
+SP297	- - - - -	-	;
+SP298	- - - - -	-	;
+SP299	- - - - -	-	;
+SP300	- - - - -	-	;
 SP301	- - - - -	0       ; NPM
 SP302	- - - - -	0       ;
 SP303	- - - - -	0       ;
@@ -399,10 +399,10 @@ SP305	- - - - -	0       ;
 SP306	- - - - -	0       ;
 SP307	- - - - -	0       ;
 SP308	- - - - -	0       ;
-SP309	- - - - -	0	; 
-SP310	- - - - -	0	; 
-SP311	- - - - -	0	; 
-SP312	- - - - -	-	; 
+SP309	- - - - -	0	;
+SP310	- - - - -	0	;
+SP311	- - - - -	0	;
+SP312	- - - - -	-	;
 SP313	- - - - -	0	; ~
 SP314	- - - - -	0	; ~
 SP315	- - - - -	0	; ~

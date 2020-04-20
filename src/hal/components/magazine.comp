@@ -29,29 +29,29 @@ Default = 0 (even)
 .RE""";
 
 description """This component is intended to help operate various types of
-carousel-type toolchangers. 
+carousel-type toolchangers.
 The component can be configured to operate with binary, binary-coded decimal (BCD)
 or gray-coded position feedback, with an individual sensor for each tool position
 or with a sensor at each tool position and a separate index.
 
 Both unidirectional and bidirectional systems are supported and those that reverse
-against a stop when in position. 
+against a stop when in position.
 
 The number of carousel component instances created depends on the number of
 entries in the 'pockets' modparam. For example
 
 .B loadrt carousel pockets=10,10,8
 
-Would create 3 carousel instances with 10, 10 and 8 pockets. The other 
+Would create 3 carousel instances with 10, 10 and 8 pockets. The other
 parameters are optional. If absent then defaults will be used. Any missing
 entry will assume the previous value.
 
-When the enable pin is set to true the component will immediately set the 
+When the enable pin is set to true the component will immediately set the
 "active" pin to true and then (for a bidirectional instance) calculate the
 shortest path to the requested pocket number. The appropriate motor direction
 output pins will then be set. Bit outputs for forward and reverse are provided
-as well as a three-state velocity output for driving a DC motor PWM or a 
-velocity-mode stepgen. 
+as well as a three-state velocity output for driving a DC motor PWM or a
+velocity-mode stepgen.
 
 The component will monitor the carousel position and, when the correct position
 is reached, set the motor-control pins to 0, set "active" to 0 and set "ready"
@@ -70,7 +70,7 @@ changers with pockets on both the rising and falling edges of the position senso
 For tool changers which lock the carousel against a stop the \\fBrev-pulse\\fR pin can
 be set to a non-zero value. The motor-rev pin will then be set for this many seconds
 at the completion of the tool search and at the same time the reverse duty/cycle
-velocity value will be sent to the motor-vel pin. 
+velocity value will be sent to the motor-vel pin.
 """;
 
 pin in  float pocket-number-f """The pocket to move to when the .enable pin goes high. If the value
@@ -84,7 +84,7 @@ pin in  bit    strobe = 1 """Use this pin to indicate that the position feedback
 provided by binary encoders""";
 pin  in bit    parity_ """Some encoders supply a parity bit, if this is connected then the
 parity-error output bit will indicate parity errors""";
-pin in  bit    sense-# [32:personality] """Carousel position feedback pins. In 'index' mode there 
+pin in  bit    sense-# [32:personality] """Carousel position feedback pins. In 'index' mode there
 will be only 2 pins. sense-0 is the index and sense-1 is the pocket sensor.""";
 pin in float rev-pulse """The duration in seconds for which a ratchet changer (Boxford, Emco)
 should pulse the reverse pin to lock the holder""";
@@ -138,7 +138,7 @@ RTAPI_MP_ARRAY_INT(pockets, MAX_CHAN, "The number of pockets in each carousel")
 static char *encoding[MAX_CHAN];
 RTAPI_MP_ARRAY_STRING(encoding, MAX_CHAN, "Position feedback type")
 static int dir[MAX_CHAN] = {-1};
-RTAPI_MP_ARRAY_INT(dir, MAX_CHAN, 
+RTAPI_MP_ARRAY_INT(dir, MAX_CHAN,
                     "set to 2 if the carousel is bidirectional")
 static int num_sense[MAX_CHAN] = {-1};
 RTAPI_MP_ARRAY_INT(num_sense, MAX_CHAN, "The number of sense pins to create")
@@ -194,7 +194,7 @@ FUNCTION(_){
         break;
     case 'S': // individual sensors
         for (i = inst_sense - 1; sense(i) == 0 && i > 0 ; i--) {}
-        if (sense(i)) 
+        if (sense(i))
             p = i + 1;
         break;
     case 'I': // index + position.
@@ -229,7 +229,7 @@ FUNCTION(_){
             old_index = sense(1);
         }
         break;
-    
+
     }
 
     if (strobe) {
@@ -312,7 +312,7 @@ FUNCTION(_){
 	    motor_fwd = 0;
             motor_rev = 1;
             motor_vel = rev_dc;
-            timer = rev_pulse;        
+            timer = rev_pulse;
 	    state = 3;
         } else {
             motor_fwd = 0;
@@ -387,13 +387,13 @@ EXTRA_SETUP(){
     if (dir[extra_arg] > 0)  default_dir = (dir[extra_arg] > 1)? 2:1;
 
     if (parity[extra_arg] != -1) default_parity = parity[extra_arg];
-    
+
     if (default_code == 'I') {
         default_sense = 2;
     } else if (num_sense[extra_arg] > 0 ) {
         default_sense = num_sense[extra_arg];
     }
-    
+ 
     inst_pockets = default_pockets;
     inst_code = default_code;
     inst_dir = default_dir;

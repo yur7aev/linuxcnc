@@ -71,5 +71,4 @@ FUNCTION(_) {
 
 	jog_x_enable = mpg && jog_x_selected;
 	jog_z_enable = mpg && jog_z_selected;
-		
 }

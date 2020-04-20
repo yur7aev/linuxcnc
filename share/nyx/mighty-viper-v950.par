@@ -38,7 +38,7 @@ SV024	50	50	50	; INP	in position		0-32767um
 SV025	0x22b3	0x22b3	0x22b3	; MTYP
 SV026	8	8	8	; OD2	error excessive svoff	0-32767mm
 SV027	0x4220	0x4220	0x4220	; SSF1
-SV028	-	-	-	; 
+SV028	-	-	-	;
 SV029	-	-	-	;
 SV030	-	-	-	; IVC	J2 volt dead time comp	0-200%
 SV031	-	-	-	; OVS1	J2 overshoot comp 1	-1-100%
@@ -56,7 +56,7 @@ SV042	0	0	0	; OVS2	J2 overshoot comp 2	-1-100%
 SV043	0	0	0	; OBS1	dist obsrv filter freq	0-1000rad/s
 SV044	0	0	0	; OBS2	obsrv gain		0-1000%
 SV045	0	0	0	; TRUB	frictional torque	0-100%
-SV046	-	-	-	; 
+SV046	-	-	-	;
 SV047	100	100	100	; EC	induct volage comp gain	0-200%
 SV048	0	0	0	; EMGrt	v axis droop prevention	0-2000ms
 SV049	15	15	15	; PGN1sp			0-200rad/s
