@@ -61,8 +61,8 @@ pin out   signed dbg1;
 pin out   signed dbg2;
 pin out unsigned dbg3;
 
-pin out      bit in-##[17] "CN1 inputs";
-pin out      bit in-##-not[17] "CN1 inputs, inverted";
+pin out      bit in-##[20] "CN1 inputs";
+pin out      bit in-##-not[20] "CN1 inputs, inverted";
 pin  in      bit out-##[8] "CN3 outputs";
 
 pin  io      bit encoder-##.index-enable[2];
@@ -446,7 +446,7 @@ FUNCTION(_)
 	}
 
 	u = yssc2_gpi(y);
-	for (a = 0; a < 17; a++) {
+	for (a = 0; a < 20; a++) {
 		in_not(a) = !(in(a) = u & 1);
 		u >>= 1;
 	}
