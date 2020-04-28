@@ -281,7 +281,8 @@ class HandlerClass:
             if num in self.materialNumList:
                 self.dialog_error('New Material Error','\nMaterial number {} is in use'.format(num))
                 return
-            active = int(self.builder.get_object('material').get_active_text().split(': ', 1)[0].lstrip('0'))
+            active = self.builder.get_object('material').get_active_text().split(': ', 1)[0].lstrip('0')
+            active = int(active) if active else 0
             shutil.copy(self.materialFile,'{}.bkp'.format(self.materialFile))
             outFile = open('{}'.format(self.materialFile), 'a')
             outFile.write('[MATERIAL_NUMBER_{}]  \n'.format(num))
@@ -508,7 +509,6 @@ class HandlerClass:
             self.builder.get_object('y-single-cut').set_digits(0)
             self.builder.get_object('y-single-cut-adj').configure(0,-9999,9999,1,0,0)
         elif self.i.find('TRAJ', 'LINEAR_UNITS').lower() == 'inch':
-            print 'imperial'
             self.builder.get_object('kerf-width').set_digits(4)
             self.builder.get_object('kerf-width-adj').configure(0.02,0,1,0.0001,0,0)
             self.builder.get_object('cut-feed-rate').set_digits(1)
