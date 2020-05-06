@@ -9,7 +9,7 @@ setp nyx.0.servo-05.pos-scale 1
 setp nyx.0.servo-05.velocity-mode 1
 net estop => nyx.0.servo-05.power
 net s-enable spindle.0.on => nyx.0.servo-05.enable
-#net alarm5 spindle.0.amp-failt-in <= nyx.0.servo-05.alarm
+#net alarm5 spindle.0.amp-fault-in <= nyx.0.servo-05.alarm
 
 loadrt limit2 names=spindle-ramp
 loadrt near names=spindle-speed-near
