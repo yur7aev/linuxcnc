@@ -260,7 +260,7 @@ def io_info():
 			elif typ == 2:
 				print "YO16 " + bin(dp.cmd.yo[i], 16),
 			else:
-				print typ, "?",
+				print typ, "?", "%x" % yi,
 			if ok:
 				print "err:",ok
 			else:
@@ -367,15 +367,15 @@ def servo_pr(l):
 		else:
 			sys.exit('bad parameter format <axis>:<param>, %s' % s)
 	if req(0x00030011, first):
-		for a in seq(15):
+		for a in range(0, 16):
 			if first & (1<<a):
 				p = dp.buf.dword[a+0]
 				v = dp.buf.dword[a+16]
-				print "%d:P%d=%d 0x%x" % (a, p, v)
+				print "%d:P%d=%d 0x%x" % (a, p, v, v)
 			if second & (1<<a):
 				p = dp.buf.dword[a+32]
 				v = dp.buf.dword[a+48]
-				print "%d:P%d=%d 0x%x" % (a, p, v)
+				print "%d:P%d=%d 0x%x" % (a, p, v, v)
 
 # param write
 def servo_pw(l):
@@ -528,7 +528,7 @@ def arg(n, m, d=None):
 	n += first_arg
 	if len(sys.argv) <= n:
 		if d != None: return d
-		print "nyxq v2.3.3"
+		print "nyxq v2.3.9"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n]
@@ -536,7 +536,7 @@ def arg(n, m, d=None):
 def args(n, m):
 	n += first_arg
 	if len(sys.argv) <= n:
-		print "nyxq v2.3.3"
+		print "nyxq v2.3.9"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n:]
