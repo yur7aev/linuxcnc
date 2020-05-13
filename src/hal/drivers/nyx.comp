@@ -100,7 +100,8 @@ struct io_pins {
 	hal_bit_t *alarm[16];
 	hal_s32_t *yio_error_cnt[16];
 	hal_bit_t *mon[16][16];		// mirrors either input or outpus pins for monitoring
-	uint32_t yi16, yo16;		// set bit indicates corresponding slave is present
+	hal_s32_t *enc[16];
+	uint32_t yi16, yo16, yenc;		// set bit indicates corresponding slave is present
 };
 
 //#include "../../../hal/drivers/nyx/nyx2.h"
@@ -129,7 +130,7 @@ static int export_io(char *prefix, int inst_num)
 	YSSC2 *y = yssc2_board(inst_num);
 
 	yssc2_receive(y);
-	io->yi16 = io->yo16 = 0;
+	io->yi16 = io->yo16 = io->yenc = 0;
 
 	for (i = 0; i < y->yios; i++) {
 		uint32_t iotype = yssc2_yi(y, i) >> 24;
@@ -172,6 +173,11 @@ static int export_io(char *prefix, int inst_num)
 					if(r != 0) return r;
 				}
 			}
+		} else if (iotype == 3) {	// incremental encoder
+			io->yenc |= 1<<i;
+			r = hal_pin_s32_newf(HAL_OUT, &(io->enc[i]), comp_id,
+					"%s.encoder-%02d.counts", prefix, i);
+			if(r != 0) return r;
 		}
 	}
 
@@ -185,8 +191,10 @@ static int export_io(char *prefix, int inst_num)
 #define yio_pin_mon(a,b) (*(y->io->mon[a][b]))
 #define yio_pin_alarm(a) (*(y->io->alarm[a]))
 #define yio_pin_error_cnt(a) (*(y->io->yio_error_cnt[a]))
+#define yio_pin_enc(a) (*(y->io->enc[a]))
 #define yio_yi16(a) (y->io->yi16 & (1<<a))
 #define yio_yo16(a) (y->io->yo16 & (1<<a))
+#define yio_yenc(a) (y->io->yenc & (1<<a))
 
 }
 
@@ -489,6 +497,14 @@ FUNCTION(_)
 			}
 			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
 			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
+		}
+		if (yio_yenc(a)) {
+			uint16_t n = (int16_t)yssc2_yi(y, a);
+			int32_t o = yio_pin_enc(a);
+			int32_t d = n - (uint16_t)o;
+			if (d > 32767) o += 0x10000;
+			else if(d < -32768) o -= 0x10000;
+			yio_pin_enc(a) += (o & 0xffff0000) + n;	// expand 16bit counter to 32 bits
 		}
 	}
 
