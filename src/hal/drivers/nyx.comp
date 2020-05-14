@@ -502,9 +502,9 @@ FUNCTION(_)
 			uint16_t n = (int16_t)yssc2_yi(y, a);
 			int32_t o = yio_pin_enc(a);
 			int32_t d = n - (uint16_t)o;
-			if (d > 32767) o += 0x10000;
-			else if(d < -32768) o -= 0x10000;
-			yio_pin_enc(a) += (o & 0xffff0000) + n;	// expand 16bit counter to 32 bits
+			if (d > 32767) o -= 0x10000;
+			else if(d < -32768) o += 0x10000;
+			yio_pin_enc(a) = (o & 0xffff0000) + n;	// expand 16bit counter to 32 bits
 		}
 	}
 

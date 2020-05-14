@@ -243,9 +243,9 @@ def io_info():
 	print "ENC1: %d" % dp.rly.enc[1]
 	print "DAC0: %d" % dp.cmd.dac[0]
 	print "DAC1: %d" % dp.cmd.dac[1]
-	print "------- fedcba9876543210"
-	print "GPI:    " + bin(dp.rly.gpi, 12)
-	print "GPO:    " + bin(dp.cmd.gpo, 8)
+	print "------- 3210fedcba9876543210"
+	print "GPI:    " + bin(dp.rly.gpi, 20)
+	print "GPO:        " + bin(dp.cmd.gpo, 8)
 
 	for i in range(0, 16):
 #		print "%x: %08x %08x" % (i, dp.rly.yi[i], dp.cmd.yo[i])
@@ -256,9 +256,11 @@ def io_info():
 		if typ != 0:
 			print "%x:" % i,
 			if typ == 1:
-				print "YI16 " + bin(yi, 16),
+				print "YI16     " + bin(yi, 16),
 			elif typ == 2:
-				print "YO16 " + bin(dp.cmd.yo[i], 16),
+				print "YO16     " + bin(dp.cmd.yo[i], 16),
+			elif typ == 3:
+				print "YENC " + "%d" % (yi & 0xffff),
 			else:
 				print typ, "?", "%x" % yi,
 			if ok:
