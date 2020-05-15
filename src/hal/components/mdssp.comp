@@ -1,0 +1,69 @@
+component mdssp "MDS-A/B/C encoder interface";
+description """
+""";
+
+author "Dmitry Yurtaev dmitry@yurtaev.com";
+license "GPL";
+
+param r signed cpr = 23040000;
+pin in  signed spindle-counts-in;
+pin in  bit    spindle-oriented-in;
+pin out float revs;
+pin io  bit index-request;
+
+variable int64_t counter;
+variable int64_t offset;
+variable int was_oriented;
+variable int waiting_index;
+variable int64_t prev_index;
+variable int64_t next_index;
+
+function _;
+;;
+
+// expand position counter to 64 bits
+int64_t d = (int64_t)(uint32_t)spindle_counts_in - (uint32_t)counter;
+if (d > 0x7fffffffLL) counter -= 0x100000000LL;
+else if (d < -0x7fffffffLL) counter += 0x100000000LL;
+counter = (counter & 0xffffffff00000000ll) | (uint32_t)spindle_counts_in;
+
+if (spindle_oriented_in) {
+	was_oriented = 1;
+} else if (was_oriented) {
+	// after orientation 32-bit spindle postion feeback is reset
+	// so we also reset position offset and counter high-dword
+	if (spindle_counts_in > 0) {
+		was_oriented = 0;
+		offset = 0;
+		counter = spindle_counts_in;
+	}
+}
+
+if (index_request) {
+	if (waiting_index) {
+		if (counter >= next_index) {
+			offset = next_index;
+			waiting_index = 0;
+			index_request = 0;
+		} else if (counter <= prev_index) {
+			offset = prev_index;
+			waiting_index = 0;
+			index_request = 0;
+		}
+	} else {
+		// prev_index = (counter / cpr) * cpr;
+		prev_index = counter;
+		do_div(prev_index, cpr);
+		prev_index *= cpr;
+
+		// next_index = (counter / cpr + 1) * cpr;
+		next_index = counter;
+		do_div(next_index, cpr);
+		next_index++;
+		next_index *= cpr;
+
+		waiting_index = 1;
+	}
+}
+
+revs = (counter - offset) / (double)cpr;

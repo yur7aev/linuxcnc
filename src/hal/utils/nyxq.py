@@ -287,7 +287,13 @@ def servo_info():
 				if s & 0x04000: print "wrn",
 				if s & 0x08000: print "abs",
 				if s & 0x10000: print "abslost",
-				# print "[%x]"%(s)
+
+				if s & 0x000040: print "zpass",
+				if s & 0x400000: print "ori",
+				if s & 0x800000: print "orc",
+				if s & 0x1000000: print "fwd",
+				if s & 0x2000000: print "rev",
+				# print "[%x]"%(s),
 				print
 
 def servo_cmd():
