@@ -334,8 +334,11 @@ def param2no(s):
 		return (g << 8) + int(m.group(2))
 	m = re.match('(P|SV|SP)(\d+)$', s)		# J2/J2S/MDS
 	if m: return int(m.group(2))
-	m = re.match('PN([0-9A-F]+)$', s)		# SGDS/SGDV
-	if m: return int(m.group(1), 16)
+	m = re.match('PN([0-9A-F]+)(L?)$', s)		# SGDS/SGDV
+	if m:
+		no = int(m.group(1), 16)
+		if m.group(2): no = no | 0x10000
+		return no
 	print "invalid parameter number"
 	exit(1)
 
@@ -414,6 +417,23 @@ def servo_pw(l):
 		else:
 			sys.exit('bad parameter format <axis>:<param>=<value>, %s' % s)
 	if req(0x00030012, first):
+		pass
+# mechatrolink abs encoder init
+def servo_abs(l):
+	first = 0
+	for s in l:
+		r = re.match('([0-9,-]+)', s)
+		if r:
+			ax = axrange(r.group(1))
+			for a in ax:
+				if a >= 0 and a < 16:
+					m = 1<<a
+					first |= m
+				else:
+					sys.exit('bad axis %d' % a)
+		else:
+			sys.exit('bad axis format, %s' % s)
+	if req(0x00030019, first):
 		pass
 
 def pll(y, p, i, s):
@@ -565,6 +585,9 @@ elif cmd == 'servo':
 	elif subcmd == 'pw':
 		p = args(3, "servo pw <axis>:<param>=<value> ...")
 		servo_pw(p)
+	elif subcmd == 'abs':
+		p = args(3, "servo abs <axis> ...")
+		servo_abs(p)
 	else:
 		print "error: nyxq servo ?"
 elif cmd == 'reboot':

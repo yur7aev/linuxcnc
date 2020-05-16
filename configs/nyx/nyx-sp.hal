@@ -4,7 +4,7 @@
 # 2019, http://www.yurtaev.com
 #
 
-setp nyx.0.servo-05.vel-scale [NYX]VEL_SCALE
+setp nyx.0.servo-05.vel-scale [NYX]SP_VEL_SCALE
 setp nyx.0.servo-05.pos-scale 1
 setp nyx.0.servo-05.velocity-mode 1
 net estop => nyx.0.servo-05.power
