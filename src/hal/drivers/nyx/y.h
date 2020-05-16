@@ -113,8 +113,8 @@ void yssc2_power(YSSC2 *y, int a, int e)  { if (e) y->dpram->cmd.servo_cmd[a].fl
 void yssc2_enable(YSSC2 *y, int a, int e) { if (e) y->dpram->cmd.servo_cmd[a].flags |= YC_ENABLE; else y->dpram->cmd.servo_cmd[a].flags &= ~YC_ENABLE; }
 void yssc2_reset_alarm(YSSC2 *y, int a, int e) { if (e) y->dpram->cmd.servo_cmd[a].flags |= YC_RST_ALARM; else y->dpram->cmd.servo_cmd[a].flags &= ~YC_RST_ALARM; }
 void yssc2_limit_torque(YSSC2 *y, int a, int e) { if (e) y->dpram->cmd.servo_cmd[a].flags |= YC_LIM_TORQUE; else y->dpram->cmd.servo_cmd[a].flags &= ~YC_LIM_TORQUE; }
-void yssc2_forward_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 500) t = 500; y->dpram->cmd.servo_cmd[a].fwd_trq = t; }
-void yssc2_reverse_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 500) t = 500; y->dpram->cmd.servo_cmd[a].rev_trq = t; }
+void yssc2_forward_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 0x4000) t = 0x4000; y->dpram->cmd.servo_cmd[a].fwd_trq = t; }
+void yssc2_reverse_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 0x4000) t = 0x4000; y->dpram->cmd.servo_cmd[a].rev_trq = t; }
 unsigned int yssc2_flags(YSSC2 *y, int a) { return y->dpram->fb.servo_fb[a].state; }
 
 void yssc2_fwd(YSSC2 *y, int a, int e) { if (e) y->dpram->cmd.servo_cmd[a].flags |= YC_FWD; else y->dpram->cmd.servo_cmd[a].flags &= ~YC_FWD; }

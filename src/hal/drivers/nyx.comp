@@ -2,7 +2,8 @@ component nyx "YSSC2P/YSSC3P/YMDS2P Mitsubishi servo PCI interface card driver";
 
 param rw  signed servo-##.origin[16 : personality] = 0;		// 32bit servo command-feedback offset to prevent integer overflow
 param rw   float servo-##.pos-scale[16 : personality] = 5.0;	// travel units per revolution (5mm)
-param rw   float servo-##.vel-scale[16 : personality] = 10.0;	// rpm (1.0 rpm resolution)
+param rw   float servo-##.vel-scale[16 : personality] = 10.0;	// rpm (1 rpm resolution)
+param rw   float servo-##.trq-scale[16 : personality] = 1.0;	// 1% resolution
 
 pin out   signed servo-##.dbg[16 : personality];
 pin out unsigned servo-##.debug[16 : personality];
@@ -27,8 +28,8 @@ pin  in      bit servo-##.power[16 : personality]	"turn on power relay";
 pin  in      bit servo-##.enable[16 : personality]	"turn on servo";
 pin  in      bit servo-##.reset-alarm[16 : personality];
 
-pin  in    float servo-##.forward-torque[16 : personality];
-pin  in    float servo-##.reverse-torque[16 : personality];
+pin  in    float servo-##.forward-torque[16 : personality] = 300.0;
+pin  in    float servo-##.reverse-torque[16 : personality] = 300.0;
 pin  in      bit servo-##.limit-torque[16 : personality];
 pin out      bit servo-##.torque-clamped[16 : personality];
 
@@ -403,8 +404,8 @@ FUNCTION(_)
 			}
 			yssc2_reset_alarm(y, a, servo_reset_alarm(a));
 			yssc2_limit_torque(y, a, servo_limit_torque(a));
-			yssc2_forward_torque(y, a, servo_forward_torque(a));
-			yssc2_reverse_torque(y, a, servo_reverse_torque(a));
+			yssc2_forward_torque(y, a, servo_forward_torque(a) * servo_trq_scale(a));
+			yssc2_reverse_torque(y, a, servo_reverse_torque(a)) * servo_trq_scale(a));
 			yssc2_fwd(y, a, servo_spindle_fwd(a));
 			yssc2_rev(y, a, servo_spindle_rev(a));
 			yssc2_orient(y, a, servo_spindle_orient(a));
