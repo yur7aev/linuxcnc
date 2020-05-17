@@ -405,7 +405,7 @@ FUNCTION(_)
 			yssc2_reset_alarm(y, a, servo_reset_alarm(a));
 			yssc2_limit_torque(y, a, servo_limit_torque(a));
 			yssc2_forward_torque(y, a, servo_forward_torque(a) * servo_trq_scale(a));
-			yssc2_reverse_torque(y, a, servo_reverse_torque(a)) * servo_trq_scale(a));
+			yssc2_reverse_torque(y, a, servo_reverse_torque(a) * servo_trq_scale(a));
 			yssc2_fwd(y, a, servo_spindle_fwd(a));
 			yssc2_rev(y, a, servo_spindle_rev(a));
 			yssc2_orient(y, a, servo_spindle_orient(a));
