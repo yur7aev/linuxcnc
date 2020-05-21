@@ -104,7 +104,7 @@ int yssc2_start(int no, int maxdrives)
 
 	for (i = 0; i <= no; i++) {
 		if(param_file[i] == NULL) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no params", no);
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no param file specified", no);
 			return -1;
 		}
 	}
@@ -133,7 +133,7 @@ int params_init(servo_params *params)
 	for (a = 0; a < NYX_AXES; a++) {
 		params[a].pa = malloc(sizeof(struct servo_param));
 		if (params[a].pa == NULL) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: can't allocate params buffer");
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_init can't allocate params buffer");
 			return -1;
 		}
 		params[a].size = 1;
@@ -292,7 +292,7 @@ void params_parse_line(servo_params *params, char *str, int ln)
 		}
 
 		if (params_parse_no(p, &par) < 0) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: bad param '%s' at line %d", p, ln);
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_parse_line bad param '%s' at line %d", p, ln);
 			return;
 		}
 
@@ -327,7 +327,7 @@ int params_load(servo_params *params, const char *filename)
 		char *buf, *s, *l;
 
 		if (fstat(f, &st) < 0) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:can't stat %s", filename);
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_load can't stat %s", filename);
 			return -1;
 		}
 
@@ -347,15 +347,15 @@ int params_load(servo_params *params, const char *filename)
 
 			free(buf);
 		} else {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:malloc of %d failed", (int)st.st_size+1);
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_load malloc of %d failed", (int)st.st_size+1);
 		}
 
 		close(f);
 	} else {
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params can't open %s", filename);
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_load can't open %s", filename);
 	}
 
-	rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params %d", (int)params->count);
+	rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_load %d", (int)params->count);
 
 	return 0;
 }

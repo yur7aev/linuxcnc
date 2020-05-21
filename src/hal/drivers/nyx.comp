@@ -122,6 +122,9 @@ RTAPI_MP_INT(maxdrives, "max number of drives");
 static int mon;
 RTAPI_MP_INT(mon, "duplicate YIO pins for monitoring connection");
 
+static int debug;
+RTAPI_MP_INT(debug, "enable debugging messages");
+
 static int export_io(char *prefix, int inst_num)
 {
 	int i, j;

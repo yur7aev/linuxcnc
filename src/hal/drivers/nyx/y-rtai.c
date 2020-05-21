@@ -206,7 +206,7 @@ int yssc2_start(int no, int maxdrives)
 	params_init(y->par);
 
 	if(param_file[no] == NULL) {
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no params", no);
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no param file specified", no);
 		return -1;
 	}
 
@@ -234,7 +234,7 @@ int params_init(servo_params *params)
 	for (a = 0; a < NYX_AXES; a++) {
 		params[a].pa = kmalloc(sizeof(struct servo_param), GFP_KERNEL);
 		if (params[a].pa == NULL) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: can't allocate params buffer");
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_init can't allocate params buffer");
 			return -1;
 		}
 		params[a].size = 1;
@@ -284,7 +284,7 @@ int params_add(servo_params *params, uint16_t no, uint16_t size, uint32_t val)
 	if (params->count >= params->size) {
 		p = krealloc(params->pa, params->size * 2 * sizeof(servo_param), GFP_KERNEL);
 		if (p == NULL) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: param realloc failed");
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_add realloc failed");
 			return -1;
 		}
 		params->pa = p;
@@ -310,7 +310,7 @@ int strtol(char *s, char **endptr, int base)
 {
 	long l;
 	if (kstrtol(s, base, &l)) {
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: bad number '%s'", s);
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params bad number '%s'", s);
 		return 0xffff;	// error
 	}
 	return l;
@@ -391,7 +391,7 @@ void params_parse_line(servo_params *params, char *str, int ln)
 		}
 
 		if (params_parse_no(p, &par) < 0) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: bad param '%s' at line %d", p, ln);
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_parse_line bad param '%s' at line %d", p, ln);
 			return;
 		}
 
@@ -451,19 +451,19 @@ int params_load(servo_params *params, const char *filename)
 
 				kfree(buf);
 			} else {
-				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:malloc of %d failed", (int)size+1);
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_load malloc of %d failed", (int)size+1);
 			}
 
 			set_fs(fs);	        // Restore segment descriptor
 		} else {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: can't read par file %s : no read, llsee f_ops", filename);
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_load can't read par file %s : no read, llseek f_ops", filename);
 		}
 		filp_close(f, NULL);
 	} else {
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params can't open %s", filename);
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_load can't open %s", filename);
 	}
 
-	rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params %d", params->count);
+	if(debug) rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_load %d", params->count);
 
 	return 0;
 }
