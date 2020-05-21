@@ -173,9 +173,6 @@ static struct rtapi_pci_driver yssc2_pci_driver = {
 	.remove = yssc2_pci_remove,
 };
 
-int load_params(struct servo_params *p, const char *name, int axes);
-void free_params(struct servo_params *p, int axes);
-
 int yssc2_init()
 {
 	int rc;
@@ -187,6 +184,10 @@ int yssc2_init()
 	return rc;
 }
 
+int params_init(servo_params *params);
+int params_load (servo_params *p, const char *name);
+void params_free(servo_params *p);
+
 void yssc2_cleanup()
 {
 	int i;
@@ -194,153 +195,319 @@ void yssc2_cleanup()
 
 	for (i = 0; i < num_boards; i++) {
 		YSSC2 *y = &yssc2_brd[i];
-		free_params(y->par, 16);
+		params_free(y->par);
 	}
 }
 
 int yssc2_start(int no, int maxdrives)
 {
-	int i;
 	YSSC2 *y = &yssc2_brd[no];
 
-	memset(y->par, 0, sizeof(*(y->par)));
+	params_init(y->par);
 
-	for (i = 0; i <= no; i++) {
-		if(param_file[i] == NULL) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no params", no);
-			return -1;
-		}
+	if(param_file[no] == NULL) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no params", no);
+		return -1;
 	}
 
 	if (y->axes > maxdrives) y->axes = maxdrives;
-	load_params(y->par, param_file[no], y->axes);
+	params_load(y->par, param_file[no]);
 
 	return 0;
+}
+
+//
+// params
+//
+
+int params_init(servo_params *params)
+{
+	int a;
+
+	for (a = 0; a < NYX_AXES; a++) {
+		params[a].pa = NULL;
+		params[a].size = 0;
+		params[a].count = 0;
+		params[a].load_axis = 0;
+	}
+
+	for (a = 0; a < NYX_AXES; a++) {
+		params[a].pa = kmalloc(sizeof(struct servo_param), GFP_KERNEL);
+		if (params[a].pa == NULL) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: can't allocate params buffer");
+			return -1;
+		}
+		params[a].size = 1;
+		params[a].count = 0;
+	}
+	return 0;
+}
+
+void params_free(servo_params *params)
+{
+	int a;
+
+	for (a = 0; a < NYX_AXES; a++) {
+		if (params[a].pa) {
+			kfree(params[a].pa);
+			params[a].pa = NULL;
+		}
+		params[a].size = 0;
+		params[a].count = 0;
+	}
+}
+
+servo_param *params_bfind(uint16_t key, servo_param *base, size_t num)
+{
+	servo_param *pivot = 0;
+
+	while (num > 0) {
+		pivot = base + (num >> 1);
+
+		if (key == pivot->no)
+			return pivot;
+
+		if (key > pivot->no) {
+			base = pivot + 1;
+			num--;
+		}
+		num >>= 1;
+	}
+
+	return pivot;
+}
+
+int params_add(servo_params *params, uint16_t no, uint16_t size, uint32_t val)
+{
+	servo_param *p = params->pa;
+
+	if (params->count >= params->size) {
+		p = krealloc(params->pa, params->size * 2 * sizeof(servo_param), GFP_KERNEL);
+		if (p == NULL) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: param realloc failed");
+			return -1;
+		}
+		params->pa = p;
+		params->size <<= 1;
+	}
+	if (params->count > 0) {
+		p = params_bfind(no, params->pa, params->count);
+		if (p->no == no) {
+			return -1;
+		}
+		if (p->no < no) ++p;
+		memmove(p+1, p, (params->count - (p - params->pa)) * sizeof(servo_param));
+	}
+	p->no = no;
+	p->size = size;
+	p->val = val;
+	++params->count;
+
+	return p - params->pa;
+}
+
+int strtol(char *s, char **endptr, int base)
+{
+	long l;
+	if (kstrtol(s, base, &l)) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: bad number '%s'", s);
+		return 0xffff;	// error
+	}
+	return l;
+}
+
+int params_parse_no(char *s, servo_param *p)
+{
+	int l;
+
+	l = strlen(s);
+
+	if (l < 3) return -1;
+
+	p->size = 2;	// 16-bit param by default
+	if (s[0] == 'P' && s[1] == 'n' && s[2] >= '0' && s[2] <= '9') {
+		if (s[l-1] == 'L') {
+			s[l-1] = 0;
+			p->size = 4;
+		}
+		p->no = strtol(s+3, NULL, 16) | ((s[2] - '0') << 8);
+
+	} else if (s[0] == 'P' && s[1] >= '0' && s[1] <= '9') {
+		p->no = strtol(s+1, NULL, 10);
+
+	} else if (s[0] == 'S' && s[1] == 'V') {
+		p->no = strtol(s+2, NULL, 10);
+
+	} else if (s[0] == 'S' && s[1] == 'P') {
+		p->no = strtol(s+2, NULL, 10) | (1 << 10);
+
+	} else if (s[0] == 'P' && s[2] >= '0' && s[2] <= '9') {
+		uint16_t grp = 0;
+		switch(s[1]) {
+		case 'A':
+		case 'B':
+		case 'C':
+		case 'D':
+		case 'E':
+		case 'F':
+		case 'G':
+		case 'H': grp = s[1] - 'A'; break;
+		case 'J': grp = 8; break;
+		case 'O': grp = 9; break;
+		case 'S': grp = 10; break;
+		case 'L': grp = 11; break;
+		case 'T': grp = 12; break;
+		case 'M': grp = 13; break;
+		case 'N': grp = 14; break;
+		default:  return -1;
+		}
+		p->no = strtol(s+2, NULL, 10) | (grp << 10);
+	} else
+		return -1;
+
+	return p->no == 0xffff ? -1 : 0;
+}
+
+
+void params_parse_line(servo_params *params, char *str, int ln)
+{
+	servo_param par;
+	char *s = str, *t, *p;
+	int a;
+
+	while (*s == ' ' || *s == '\t') s++;
+	if ((t = strchr(s, ';'))) *t = 0;
+	p = strsep(&s, " \t\r\n");	// chop leading whitespaces
+	if (*p) {
+		if (!strcmp(p, "AXIS")) {	// set base axis number
+			while (s) {
+				t = strsep(&s, " \t\r\n");
+				if (*t) {
+					params->load_axis = strtol(t, NULL, 0);
+					break;
+				}
+			}
+			return;
+		}
+
+		if (params_parse_no(p, &par) < 0) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: bad param '%s' at line %d", p, ln);
+			return;
+		}
+
+		for (a = params->load_axis; par.no && s && a < NYX_AXES;) {
+			t = strsep(&s, " \t\r\n");
+			if (*t)	{
+				if (t[0] != '-' || t[1] != 0)  {
+					char *d;
+					if ((d = strchr(t, '.'))) {	// remove decimal point
+						do {
+							*d = d[1];
+						} while (*d++);
+					}
+					params_add(params + a, par.no, par.size, strtol(t, NULL, 0));
+				}
+				a++;
+			}
+		}
+	}
 }
 
 #include <linux/fs.h>      // Needed by filp
 #include <asm/uaccess.h>   // Needed by segment descriptors
 
-int load_params(struct servo_params *p, const char *name, int axes)
+int params_load(servo_params *params, const char *filename)
 {
 	struct file *f;
 
-	f = filp_open(name, O_RDONLY, 0);
+	f = filp_open(filename, O_RDONLY, 0);
 	if (!IS_ERR(f)) {
-		int a, i, l;
-		ssize_t s;
-		mm_segment_t fs;
+		if (f->f_op && f->f_op->read && f->f_op->llseek) {
+			mm_segment_t fs;
+			loff_t size, n;
+			char *buf, *s, *l;
 
-		fs = get_fs();		// Get current segment descriptor
-		set_fs(get_ds());	// Set segment descriptor associated to kernel space
+			fs = get_fs();		// Get current segment descriptor
+			set_fs(get_ds());	// Set segment descriptor associated to kernel space
 
-		for (a = 0; a < axes; a++, p++) {
-			memset(p, 0, sizeof(*p));
+			size = f->f_op->llseek(f, 0, SEEK_END);
+///			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:par file size %d", (int)size);
+			f->f_op->llseek(f, 0, SEEK_SET);
 
-			s = f->f_op->read(f, (char *)&p->magic, 6, &f->f_pos);	// read the header
-			if (s != 6) {
-				if (s) rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params short read 1, axis=%d", a);
-				goto skip;
-			} else if (p->magic != ' RAP') {
-				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params no magic");
-				goto skip;
-			} else if (p->ng < 1) {
-				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params ng < 1");
-				goto skip;
-			} else if (p->ng > 16) {
-				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params ng > 16");
-				goto skip;
-			}
+			buf = kmalloc(size + 1, GFP_KERNEL);
+			if (buf) {
+				int ln = 1;
+				n = f->f_op->read(f, buf, size, &f->f_pos);	// gulp the file
+///        			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:par file read %d", (int)n);
+				buf[size] = 0;
 
-			s = f->f_op->read(f, (char *)&p->np, 2*p->ng, &f->f_pos);	// read number of params in each of ng group
-			if (s != 2*p->ng) {
-				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params short read 2");
-				goto skip;
-			}
-
-			for (i = l = 0; i < p->ng; i++) {		// calc space needed for params+masks
-				if (p->np[i] > 1024) {
-					rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params too many params");
-					goto skip;
+				s = buf;
+				while (s) {
+					l = strsep(&s, "\n");
+					if (l && *l)
+						params_parse_line(params, l, ln);
+					ln++;
 				}
-				l += (p->np[i] + 15) / 16 + p->np[i];	// mask data + param data
+
+				kfree(buf);
+			} else {
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:malloc of %d failed", (int)size+1);
 			}
 
-			l *= 2;					// shorts
-
-			p->buf = kmalloc(l, GFP_KERNEL);
-			if (!p->buf) {
-				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params kalloc");
-				goto skip;
-			}
-
-			s = f->f_op->read(f, (char *)p->buf, l, &f->f_pos);		// read param data
-			if (s != l) {
-				rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params short read 3");
-				goto skip;
-			}
-
-			for (i = l = 0; i < p->ng; i++) {		// fill pointer arrays
-				p->mask[i] = &p->buf[l];
-				l += (p->np[i] + 15) / 16;
-				p->par[i] = &p->buf[l];
-				l += p->np[i];
-			}
-
-			continue;
-skip:			memset(p, 0, sizeof(*p));
+			set_fs(fs);	        // Restore segment descriptor
+		} else {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: can't read par file %s : no read, llsee f_ops", filename);
 		}
-
-		set_fs(fs);	        // Restore segment descriptor
 		filp_close(f, NULL);
 	} else {
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params can't open %s", name);
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:load_params can't open %s", filename);
 	}
+
+	rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params %d", params->count);
+
 	return 0;
 }
 
-void free_params(struct servo_params *p, int axes) {
-	int a;
-
-	for (a = 0; a < axes; a++, p++) {
-		if (p) {
-			if (p->buf) kfree(p->buf);
-			memset(p, 0, sizeof(*p));
-		}
-	}
-}
-
-int get_params(struct servo_params *p, int group, int first, int count, uint16_t *dm, uint16_t *dp)
+void params_get_span(servo_params *params, uint16_t first, int count, uint16_t *dm, uint16_t *dp)
 {
+	servo_param *p;
+	uint32_t mask = 0;
 	int i;
 
-	memset(dp, 0, count*2);
-	if (dm) memset(dm, 0, 2*(count/16+1));
-
-	if (group > 15) {
-		// rtapi_print_msg(RTAPI_MSG_ERR, "nyx:get_params P%d.%d..%d group > 15", group, first, first+count-1);
-		return 0;
-	}
-
-	if (first + count > p->np[group])
-		count = p->np[group] - first;
-
+	p = params_bfind(first, params->pa, params->count);
 	for (i = 0; i < count; i++) {
-		dp[i] = p->par[group][first + i];	// endianness...
-	}
-
-	if (dm && count > 0) {
-		int n;
-		uint16_t m;
-		for (i = 0; i <= (count - 1)/16; i++) {
-			m = ((p->mask[group][i+first/16+1] << 16) | p->mask[group][i+first/16]) >> (first % 16);
-			n = count - i*16;
-			if (n < 16) m &= (1<<n)-1;
-			*dm++ = m;
+		if (p && p - params->pa < params->count && p->no == first + i) {
+			mask |= 1<<i;
+			dp[i] = p->val;
+			p++;
+		} else {
+			dp[i] = 0;
 		}
 	}
+	*dm = mask;
+}
 
-	return count;
+void params_get_next(servo_params *params, uint16_t *no, uint16_t *size, uint32_t *val)
+{
+	servo_param *p;
+
+	p = params_bfind(*no, params->pa, params->count);
+	if (p && p->no >= *no) {
+		*no = p->no;
+		*size = p->size;
+		*val = p->val;
+	} else if (p && p - params->pa < params->count - 1) {	// the last item
+		p++;
+		*no = p->no;
+		*size = p->size;
+		*val = p->val;
+	} else {	// the last item
+		*no = 0xffff;
+		*size = 0;
+		*val = 0;
+	}
+
+
 }
 
 #include <stddef.h>
@@ -398,10 +565,21 @@ void yssc2_process(YSSC2 *y)
 				nyx_param_req *pq = (nyx_param_req*)fb;
 				nyx_param_req *pr = (nyx_param_req*)cmd;
 				pr->flags = Y_TYPE_PARAM;
-				get_params(&y->par[a], pq->first >> 10, pq->first & 0x3ff, 10, &pr->mask, pr->param);
+				params_get_span(&y->par[a], pq->first, 10, &pr->mask, pr->param);
 				pr->first = pq->first;
-				pr->count = 10;
+				pr->count = 10;	// max number if fb struct
 				//rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d param req %x\n", a, pq->first);
+				}
+				break;
+			case Y_TYPE_PARAM1: {
+				nyx_param1_req *pq = (nyx_param1_req*)fb;
+				nyx_param1_req *pr = (nyx_param1_req*)cmd;
+
+				pr->flags = Y_TYPE_PARAM1;
+				pr->no = pr->first = pq->first;
+				params_get_next(&y->par[a], &pr->no, &pr->size, &pr->val);
+//				if (pr->no > 0 && pr->no != 0xffff)
+//				rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d param req %x -> %x (%x:%x)\n", a, pr->first, pr->no, pr->size, pr->val);
 				}
 				break;
 			}

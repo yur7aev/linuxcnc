@@ -105,11 +105,10 @@ struct io_pins {
 	uint32_t yi16, yo16, yenc;		// set bit indicates corresponding slave is present
 };
 
-//#include "../../../hal/drivers/nyx/nyx2.h"
-//#include "../../../hal/drivers/nyx/y.h"
 #include "nyx2.h"
 #include "../../../hal/drivers/nyx/y.h"
-//#include "y.h"
+//#include "nyx/nyx2.h"
+//#include "nyx/y.h"
 
 char *param_file[] = {0,};
 RTAPI_MP_ARRAY_STRING(param_file, YSSC2_MAX_BOARDS, "Servo parameter file names");
@@ -514,8 +513,8 @@ FUNCTION(_)
 
 #ifdef __KERNEL__
 #include "../../../hal/drivers/nyx/y-rtai.c"
-//#include "y-rtai.c"
+//#include "nyx/y-rtai.c"
 #else
 #include "../../../hal/drivers/nyx/y-uspace.c"
-//#include "y-uspace.c"
+//#include "nyx/y-uspace.c"
 #endif

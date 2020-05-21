@@ -23,23 +23,19 @@ struct freq_data {
 	int sum;
 };
 
-// params for single axis
-struct servo_params {
-	uint32_t magic;
-	uint16_t ng;		// number of groups - 16 max
-	uint16_t np[16];	// number of params in a group
-	uint16_t *mask[16];	// pointer to mask for params 0..15
-	uint16_t *par[16];	// pointer to first param
-	uint16_t *buf;
-};
+typedef struct servo_param {
+	uint16_t no;
+	uint16_t size;		// number of bytes: 2 or 4
+	uint32_t val;
+} servo_param;
 
-// yaskawa params, sent to drives one-by-one
-struct servo_params2 {
-	uint32_t magic;
-	uint16_t np;		// number of parameters
-	uint32_t *pno;		// parameter number array,
-	uint32_t *pval;		// values array
-};
+// params for single axis
+typedef struct servo_params {
+	servo_param *pa;	// an array of params for a single axis, sorted by no
+	size_t count;		// number of items in the array
+	size_t size;		// size of allocated array
+	long load_axis;
+} servo_params;
 
 typedef struct yssc2 {
 	nyx_dpram *dpram;	// local copy
@@ -67,7 +63,7 @@ typedef struct yssc2 {
 	struct freq_data freq;
 	int was_ready;
 
-	struct servo_params par[NYX_AXES];
+	servo_params par[NYX_AXES];
 } YSSC2;
 
 uint32_t yssc2_magic(YSSC2 *y)		{ return y->dpram->magic; }

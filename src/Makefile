@@ -583,8 +583,8 @@ install-dirs:
 		$(DESTDIR)$(datadir)/linuxcnc/stepconf \
 		$(DESTDIR)$(datadir)/linuxcnc/pncconf \
 		$(DESTDIR)$(datadir)/linuxcnc/pncconf/pncconf-help \
-		$(DESTDIR)$(datadir)/linuxcnc/hallib \
-		$(DESTDIR)$(datadir)/nyx
+		$(DESTDIR)$(datadir)/linuxcnc/hallib
+#		$(DESTDIR)$(datadir)/nyx
 
 install-kernel-indep: install-dirs
 	$(FILE) ../docs/man/man1/*.1 $(DESTDIR)$(mandir)/man1
@@ -656,7 +656,7 @@ install-kernel-indep: install-dirs
 	$(FILE) ../lib/python/gladevcp/widget*.png  $(DESTDIR)$(datadir)/glade3/pixmaps/
 
 	$(FILE) ../share/gtksourceview-2.0/language-specs/*.lang  $(DESTDIR)$(datadir)/gtksourceview-2.0/language-specs/
-	$(FILE) ../share/nyx/* $(DESTDIR)$(prefix)/share/nyx
+#	$(FILE) ../share/nyx/* $(DESTDIR)$(prefix)/share/nyx
 
 install-kernel-indep: install-python
 install-python: install-dirs

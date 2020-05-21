@@ -1,11 +1,11 @@
 /*
  *  N Y X 2
  *
- *  YSSC2P/YMDS2 servo interface adapter board firmware
+ *  YxxxxP servo interface adapter board firmware
  *
  *  DPRAM definition
  *
- *  (c) 2016-2019, dmitry@yurtaev.com
+ *  (c) 2016-2020, http://yurtaev.com
  */
 
 #define RELEASE
@@ -20,7 +20,7 @@
 #define NYX_H
 
 #define NYX_VER_MAJ 2
-#define NYX_VER_MIN 3
+#define NYX_VER_MIN 4
 #define NYX_VER_REV 0
 
 #ifndef NYX_AXES
@@ -62,7 +62,7 @@
 #define Y_TYPE_ORIGIN	0x20000000	// absolute encoder position and resolution
 #define Y_TYPE_FB	0x30000000	// normal servo feedback
 #define Y_TYPE_PLL	0x40000000	// PLL timing debug
-#define Y_TYPE_RNDPAR	0x50000000	// number of params transfered per frame mechatrolink2:1
+#define Y_TYPE_PARAM1	0x50000000	// mechatrolink - 1 param at a time
 
 // per-axis nyx_servo_fb.state
 
@@ -71,7 +71,7 @@
 #define YF_DI2		0x00000004
 #define YF_DI3		0x00000008
 #define YF_ONLINE	0x00000010	/* drive configured/detected */
-//#define YF_		0x00000020
+#define YF_DBG		0x00000020
 					/// servo reply-derived flags below:
 #define YF_Z_PASSED	0x00000040
 #define YF_READY	0x00000080	/* power relay on */
@@ -152,11 +152,18 @@ typedef struct nyx_param_req {
 
 // ask the nyx driver for up to 6 defined params
 
-typedef struct nyx_rnd_param_req {
-	uint32_t flags;			// Y_TYPE_RNDPAR
-	uint16_t pno[7];
-	uint16_t pval[7];
-} _P nyx_rnd_param_req;	// 8 dwords
+typedef struct nyx_param1_req {
+	uint32_t flags;			// Y_TYPE_PARAM1
+#ifdef __BIG_ENDIAN__
+	uint16_t no, first;
+	uint16_t count, size;
+#else
+	uint16_t first, no;
+	uint16_t size, count;
+#endif
+	uint32_t val;
+	uint32_t _unused[4];
+} _P nyx_param1_req;	// 8 dwords
 
 //
 //
@@ -230,10 +237,13 @@ typedef struct nyx_servo_fb {
 #define FUNC_SAVE	0x0016
 #define FUNC_PMASK_GET	0x0017
 #define FUNC_PMASK_SET	0x0018
+#define FUNC_ABS_INIT	0x0019
+#define FUNC_WRNV_PARAM	0x001a
 
 #define FUNC_READ	0x0021
 #define FUNC_ERASE	0x0022
 #define FUNC_WRITE	0x0023
+
 
 #define ERR_BAD_CODE	1	/* invalid request code */
 #define ERR_BAD_FUNC	2	/* invalid function */
@@ -259,15 +269,15 @@ struct nyx_req {
 	};
 } _P;
 
-struct nyx_req_param {			// unused
+struct nyx_req_param {
 	volatile uint32_t code;
-	uint32_t axis;			// mask
-	uint32_t first;
-	union {
-		uint32_t count;
-		uint32_t second;
-	};
-	uint16_t param[240];
+	volatile uint32_t axes;			// mask
+	volatile uint32_t rc;
+	volatile uint32_t rc2;
+	volatile uint32_t pno[16];
+	volatile uint32_t pval[16];
+	volatile uint32_t pno2[16];
+	volatile uint32_t pval2[16];
 } _P;
 
 struct nyx_req_flash {
@@ -294,6 +304,12 @@ servo:	16 ax * 32 bytes = 512 bytes
 yio:	16 ax * 4 bytes = 64 bytes
 
 */
+
+#define MAX_ENC 2
+#define YIO_ENC 0
+#define MAX_DAC 2
+#define MAX_YIO 16
+
 typedef struct nyx_dp_fb {
 	// realtime controller status
 	uint32_t seq;		// YS_ goes here
@@ -304,7 +320,7 @@ typedef struct nyx_dp_fb {
 	uint32_t enc[2];
 	uint32_t yi[16];	// YIO inputs
 	// 22 dwords
-	nyx_servo_fb servo_fb[MAX_AXES];	// *18 = 144 dw
+	nyx_servo_fb servo_fb[MAX_AXES];	// 8dw*18 = 144 dw
 	// 26 dwords free
 } _P nyx_dp_fb;	// 192 dwords max
 
@@ -335,7 +351,7 @@ typedef struct nyx_dpram {
 			union {
 				struct nyx_req req;
 				struct nyx_req_flash flash;
-				struct nyx_req_param param;
+				struct nyx_req_param req_param;
 			};
 		};
 		uint8_t reqpage[512];

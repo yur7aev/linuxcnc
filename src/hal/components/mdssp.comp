@@ -51,17 +51,19 @@ if (index_request) {
 			index_request = 0;
 		}
 	} else {
-		// prev_index = (counter / cpr) * cpr;
+#ifdef __KERNEL__
 		prev_index = counter;
 		do_div(prev_index, cpr);
 		prev_index *= cpr;
 
-		// next_index = (counter / cpr + 1) * cpr;
 		next_index = counter;
 		do_div(next_index, cpr);
 		next_index++;
 		next_index *= cpr;
-
+#else
+		prev_index = (counter / cpr) * cpr;
+		next_index = (counter / cpr + 1) * cpr;
+#endif
 		waiting_index = 1;
 	}
 }
