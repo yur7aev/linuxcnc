@@ -142,8 +142,3 @@ TARGETS += ../bin/stlvis
 	$(ECHO) Copying shell script $(notdir $@)
 	cp $< $@ && chmod +x $@
 TARGETS += ../bin/zmapview
-
-../bin/nyxp: ../bin/%: hal/utils/%.pl
-	$(ECHO) Copying perl script $(notdir $@)
-	cp $< $@ && chmod +x $@
-TARGETS += ../bin/nyxp

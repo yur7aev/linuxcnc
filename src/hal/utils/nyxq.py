@@ -267,7 +267,7 @@ def io_info():
 				print "err:",ok
 			else:
 				print
-	print "------- fedcba9876543210"
+	print "------- 3210fedcba9876543210"
 
 def servo_info():
 	if req(0x00030001):

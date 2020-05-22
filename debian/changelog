@@ -1,8 +1,11 @@
 linuxcnc (1:2.8.0nyx10~pre1) dmitry; urgency=low
-  * nyx 2.3
+  * nyx 2.4
+  * removed nyxp, moved .par parser to the nyx module
+  * mechatrolink params
+  * mdssp comp
   * merged with 2.8 branch
 
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sun, 19 Mar 2020 03:49:16 +0300
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sun, 22 May 2020 06:01:16 +0300
 
 linuxcnc (1:2.8.0~pre1) rosa; urgency=low
   * New external axis offsets
