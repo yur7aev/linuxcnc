@@ -38,9 +38,6 @@ void freq_init(YSSC2 *y)
 	y->freq.sum = 0;
 }
 
-int load_params(struct servo_params *p, const char *name, int axes);
-void free_params(struct servo_params *p, int axes);
-
 int yssc2_init()
 {
 	YSSC2 *y = &yssc2_brd[0];
@@ -82,35 +79,35 @@ int yssc2_init()
 	return 0;
 }
 
+int params_init(servo_params *params);
+int params_load (servo_params *p, const char *name);
+void params_free(servo_params *p);
+
 void yssc2_cleanup()
 {
 	int i;
 
 	for (i = 0; i < num_boards; i++) {
 		YSSC2 *y = &yssc2_brd[i];
-		free_params(y->par, 16);
+		params_free(y->par);
 		close(y->fd);
 		free(y->dpram);
 	}
-
 }
 
 int yssc2_start(int no, int maxdrives)
 {
-	int i;
 	YSSC2 *y = &yssc2_brd[no];
 
-	memset(y->par, 0, sizeof(*(y->par)));
+	params_init(y->par);
 
-	for (i = 0; i <= no; i++) {
-		if(param_file[i] == NULL) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no param file specified", no);
-			return -1;
-		}
+	if(param_file[no] == NULL) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no param file specified", no);
+		return -1;
 	}
 
 	if (y->axes > maxdrives) y->axes = maxdrives;
-	load_params(y->par, param_file[no], y->axes);
+	params_load(y->par, param_file[no]);
 
 	return 0;
 }
@@ -204,18 +201,6 @@ int params_add(servo_params *params, uint16_t no, uint16_t size, uint32_t val)
 
 	return p - params->pa;
 }
-
-/*
-int strtol(char *s, char **endptr, int base)
-{
-	long l;
-	if (kstrtol(s, base, &l)) {
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: bad number '%s'", s);
-		return 0xffff;	// error
-	}
-	return l;
-}
-*/
 
 int params_parse_no(char *s, servo_param *p)
 {
@@ -314,9 +299,6 @@ void params_parse_line(servo_params *params, char *str, int ln)
 	}
 }
 
-//#include <linux/fs.h>      // Needed by filp
-//#include <asm/uaccess.h>   // Needed by segment descriptors
-
 int params_load(servo_params *params, const char *filename)
 {
 	int f;
@@ -355,7 +337,7 @@ int params_load(servo_params *params, const char *filename)
 		rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_load can't open %s", filename);
 	}
 
-	rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_load %d", (int)params->count);
+	if(debug) rtapi_print_msg(RTAPI_MSG_ERR, "nyx:params_load %d", params->count);
 
 	return 0;
 }
