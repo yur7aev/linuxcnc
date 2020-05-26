@@ -1,10 +1,10 @@
 ;
 ; Mitsubishi MDS-DJ/EJ-V default parameters
 ;
-; 0: X  MDS-EJ-V1-10 / HG-KR13 
-; 1: Y  MDS-DJ-V1-10 / HF-KP23 
-; 2: Z  MDS-DJ-V1-10 / HF-KP23 
-; 3: A  MDS-DJ-V1-10 / HF-KP23 
+; 0: X  MDS-EJ-V1-10 / HG-KR13
+; 1: Y  MDS-DJ-V1-10 / HF-KP23
+; 2: Z  MDS-DJ-V1-10 / HF-KP23
+; 3: A  MDS-DJ-V1-10 / HF-KP23
 ;
 ; 2019, http://yurtaev.com
 ;
@@ -71,7 +71,7 @@ SV058	0	0	0	0	; SHGCsp SHG control gain in sp sync	rad/s	0-1200
 SV059	0	0	0	0	; TCNV	Collision detect trq est gain	%/kg	0-5000
 SV060	0	0	0	0	; TLMT	Collision detect level		%	0-999
 SV061	0	0	0	0	; DA1NO	D/A out ch1 data No.			-1-127
-SV062	0	0	0	0	; DA2NO	D/A out ch2 data No.			-1-127 
+SV062	0	0	0	0	; DA2NO	D/A out ch2 data No.			-1-127
 SV063	0	0	0	0	; DA1MPY D/A output ch1 output scale		-32768 to 32767
 SV064	0	0	0	0	; DA2MPY D/A output ch2 output scale		-32768 to 32767
 SV065	0	0	0	0	; TLC	Machine end compensation gain	 0.1%	-30000-30000
