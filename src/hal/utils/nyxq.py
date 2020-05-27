@@ -165,7 +165,7 @@ try:
 	for dir in glob("/sys/bus/pci/devices/*"):
 		vendor = int(open(dir + "/vendor", "r").read(), 16)
 		device = int(open(dir + "/device", "r").read(), 16)
-                if (vendor in vendor_ids) and (device in device_ids):
+		if (vendor in vendor_ids) and (device in device_ids):
 			boards.append(dir)
 			if i >= instance and not 'mem' in globals():
 				with open(dir + "/resource0", "r+b" ) as f:
@@ -389,7 +389,7 @@ def servo_pr(l):
 				print "%d:P%d=%d 0x%x" % (a, p, v, v)
 
 # param write
-def servo_pw(l):
+def servo_pw(nv, l):
 	first = 0
 	second = 0
 	for s in l:
@@ -416,8 +416,11 @@ def servo_pw(l):
 					sys.exit('bad axis %d' % a)
 		else:
 			sys.exit('bad parameter format <axis>:<param>=<value>, %s' % s)
-	if req(0x00030012, first):
-		pass
+	if nv:
+		req(0x0003001a, first)
+	else:
+		req(0x00030012, first)
+
 # mechatrolink abs encoder init
 def servo_abs(l):
 	first = 0
@@ -556,7 +559,7 @@ def arg(n, m, d=None):
 	n += first_arg
 	if len(sys.argv) <= n:
 		if d != None: return d
-		print "nyxq v2.3.9"
+		print "nyxq v2.4.0"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n]
@@ -564,7 +567,7 @@ def arg(n, m, d=None):
 def args(n, m):
 	n += first_arg
 	if len(sys.argv) <= n:
-		print "nyxq v2.3.9"
+		print "nyxq v2.4.0"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n:]
@@ -574,7 +577,7 @@ cmd = arg(1, "[info|servo|io|flash|reboot|pll] ...")
 if cmd == 'info':
 	info()
 elif cmd == 'servo':
-	subcmd = arg(2, "servo [info||mon|fw|cmd|pr|pw] ...")
+	subcmd = arg(2, "servo [info||mon|fw|cmd|pr|pw|nvpw] ...")
 	if   subcmd == 'info':		servo_info()
 	elif subcmd == 'mon':		servo_mon()
 	elif subcmd == 'fw':		servo_fw()
@@ -584,7 +587,10 @@ elif cmd == 'servo':
 		servo_pr(p)
 	elif subcmd == 'pw':
 		p = args(3, "servo pw <axis>:<param>=<value> ...")
-		servo_pw(p)
+		servo_pw(False, p)
+	elif subcmd == 'nvpw':
+		p = args(3, "servo nvpw <axis>:<param>=<value> ...")
+		servo_pw(True, p)
 	elif subcmd == 'abs':
 		p = args(3, "servo abs <axis> ...")
 		servo_abs(p)
