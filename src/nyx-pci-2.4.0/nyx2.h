@@ -1,11 +1,9 @@
 /*
  *  N Y X 2
  *
- *  YxxxxP servo interface adapter board firmware
+ *  YSSC2P/YMDS2 servo interface adapter board firmware
  *
- *  DPRAM definition
- *
- *  (c) 2016-2020, http://yurtaev.com
+ *  (c) 2016-2018, dmitry@yurtaev.com
  */
 
 #define RELEASE
@@ -16,11 +14,13 @@
 
 #define _P __attribute__((__packed__))
 
+// DPRAM description
+
 #ifndef NYX_H
 #define NYX_H
 
 #define NYX_VER_MAJ 2
-#define NYX_VER_MIN 4
+#define NYX_VER_MIN 2
 #define NYX_VER_REV 0
 
 #ifndef NYX_AXES
@@ -51,18 +51,17 @@
 #define YC_PARAM_ACK	0x00020000	// param change notofy acknowledge
 #define YC_RD_PARAM	0x00040000	// ??
 #define YC_VEL_CTL	0x00080000
-#define YC_VFF		0x00100000      // ----Y M-II velocity feed-forward
+//#define YC_		0x00100000
 //#define YC_		0x00200000
 #define YC_ORIENT	0x00400000	// MDS spindle
 //#define YC_		0x00800000
 
 #define Y_TYPE		0xf0000000
 #define Y_TYPE_NONE	0x00000000
-#define Y_TYPE_PARAM	0x10000000	// number of params transfered per frame sscnet2:10, sscnet1:33, mds:20, sscnet3:16, mds3:16,
+#define Y_TYPE_PARAM	0x10000000	// number of params transfered per frame sscnet2:10, sscnet1:33, mds:20, sscnet3:16
 #define Y_TYPE_ORIGIN	0x20000000	// absolute encoder position and resolution
 #define Y_TYPE_FB	0x30000000	// normal servo feedback
 #define Y_TYPE_PLL	0x40000000	// PLL timing debug
-#define Y_TYPE_PARAM1	0x50000000	// mechatrolink - 1 param at a time
 
 // per-axis nyx_servo_fb.state
 
@@ -71,9 +70,9 @@
 #define YF_DI2		0x00000004
 #define YF_DI3		0x00000008
 #define YF_ONLINE	0x00000010	/* drive configured/detected */
-#define YF_DBG		0x00000020
+//#define YF_		0x00000020
+//#define YF_		0x00000040
 					/// servo reply-derived flags below:
-#define YF_Z_PASSED	0x00000040
 #define YF_READY	0x00000080	/* power relay on */
 #define YF_ENABLED	0x00000100	/* servo is on */
 #define YF_IN_POSITION	0x00000200
@@ -139,7 +138,7 @@ typedef struct nyx_servo_cmd {
 //
 
 typedef struct nyx_param_req {
-	uint32_t flags;			// Y_TYPE_PARAM
+	uint32_t flags;			// 1 YC_something
 #ifdef __BIG_ENDIAN__
 	uint16_t group, first;
 	uint16_t count, mask;
@@ -149,21 +148,6 @@ typedef struct nyx_param_req {
 #endif
 	uint16_t param[10];
 } _P nyx_param_req;	// 8 dwords
-
-// ask the nyx driver for up to 6 defined params
-
-typedef struct nyx_param1_req {
-	uint32_t flags;			// Y_TYPE_PARAM1
-#ifdef __BIG_ENDIAN__
-	uint16_t no, first;
-	uint16_t count, size;
-#else
-	uint16_t first, no;
-	uint16_t size, count;
-#endif
-	uint32_t val;
-	uint32_t _unused[4];
-} _P nyx_param1_req;	// 8 dwords
 
 //
 //
@@ -183,7 +167,7 @@ typedef struct nyx_servo_fb {
 	uint16_t pval, pno;
 #endif
 	union {
-		struct {		// Y_TYPE_ORIGIN
+		struct {		// Y_TYPE_FB
 			uint32_t fbres;	// 6
 			uint32_t cyc0;	// 7
 			uint32_t abs0;	// 8
@@ -191,7 +175,7 @@ typedef struct nyx_servo_fb {
 		uint8_t monb[12];	// 6 7 8
 		uint16_t monw[6];
 		uint32_t monl[3];
-		struct {		// Y_TYPE_FB
+		struct {		// Y_TYPE_ORIGIN
 			int32_t droop;	// 6
 			int32_t smth2;	// 7
 			int32_t rxtime;	// 8 !!!DEBUG!!!
@@ -205,7 +189,7 @@ typedef struct nyx_servo_fb {
 #define REQ_INFO	0x00010000
 #define REQ_PARAM	0x00020000
 #define REQ_SERVO	0x00030000
-#define REQ_EXCFG	0x00040000
+#define REQ_EXP		0x00040000
 #define REQ_FLASH	0x00050000
 #define REQ_REBOOT	0x00060000
 #define REQ_SNOOP	0x00070000
@@ -226,90 +210,43 @@ typedef struct nyx_servo_fb {
 #define SERVO_SSCNET	1
 #define SERVO_SSCNET2	2
 #define SERVO_SSCNET3	3
-#define SERVO_MTL2	4
-#define SERVO_SSCNET3H	5
+#define SERVO_MLINK2	4
 #define SERVO_MDS	11
-#define SERVO_MDS3	13
-#define SERVO_MDS3H	15
 
-#define FUNC_RD_PARAM	0x0011
-#define FUNC_WR_PARAM	0x0012
+#define FUNC_SV_GET	0x0011
+#define FUNC_SV_SET	0x0012
+#define FUNC_SP_GET	0x0013
+#define FUNC_SP_SET	0x0014
 #define FUNC_LOAD	0x0015
 #define FUNC_SAVE	0x0016
 #define FUNC_PMASK_GET	0x0017
 #define FUNC_PMASK_SET	0x0018
-#define FUNC_ABS_INIT	0x0019
-#define FUNC_WRNV_PARAM	0x001a
 
 #define FUNC_READ	0x0021
 #define FUNC_ERASE	0x0022
 #define FUNC_WRITE	0x0023
-#define FUNC_SET	0x0024
-
-// CN2 expansion connector config
-
-#define EX_NONE		0x0000
-#define EX_DAC		0x0001	// 0=SCK 1=nCS     3=SDI
-#define EX_ENC0		0x0002	//             2:A       4:B 5:Z
-#define EX_YIO		0x0004	//                               6:RX 7=TE 8=TX   (ex1/ex2it)
-
-#define EX_DBG		0x0010	// 9:RX 10=TX
-#define EX_ENC1		0x0020	//                        13:A1 14:B1 15:Z1
-#define EX_1A		0x0040	//            11=1
-#define EX_STEP1A	0x0080	//            11=0  12=EN 13=D0 14=S0 15=D1 16=S1
-
-#define EX_ENC23	0x0100	// 9:A2 10:B2 11:A3 12:B3
-#define EX_ENC45	0x0200	//                        13:A4 14:B4 15:A5 16:B5
-
-#define EX_2ENC0	0x1000	// 0:A  1=0   2=0  3:B   4:Z	                  (ex2+it)
-
-#define EX_2YIO		0x0000	//                              14=TX 15:RX 16=TE (ex2 header)
-#define EX_2OBA2	0x0000	//                                6:MD 7=MRE 8=MR (with yio_enc)
-#define EX_2OBA4	0x0000	//                           5:MD      7=MRE 8=MR
-#define EX_2UVW		0x0000	//                           5:U  6:V  7=0   8=0  9=W
-#define EX_2SSC		0x0000	//      1=1  2=TX 3:ALM  4:RX          7=1   8=EMG
-#define EX_2A		0x0000	//      leds...
-
-#define EX1_A		(EX_DAC | EX_ENC0  | EX_YIO | EX_1A | EX_ENC1)	// 67
-#define EX1_B		(EX_DAC | EX_ENC0  | EX_YIO |         EX_ENC1)	// 27
-#define EX2_A		(         EX_2ENC0 | EX_YIO | EX_2A)		// 1002
-#define EX1_A_PNP	(EX_YIO | EXSTEP1A)				// 84
-
-//
-
-#define ERR_BAD_CODE	1	/* invalid request code */
-#define ERR_BAD_FUNC	2	/* invalid function */
-#define ERR_BAD_AXIS	3	/* axis no out of range */
-#define ERR_BAD_ARG	4	/*  */
-#define ERR_NO_AXIS	5	/* axis disconnected */
-#define ERR_FAILED	6	/* amplifier error */
-#define ERR_UNAVAIL	7	/* unavailable (yet) */
-#define ERR_TIMEOUT	8	/* param read timeout */
 
 struct nyx_req {
-	volatile uint32_t code;		// 10
-	uint32_t arg1;			// 14
-	uint32_t arg2;			// 18
+	volatile uint32_t code;
+	uint32_t arg1;
+	uint32_t arg2;
 	union {
-		uint32_t arg3;		// 1c
+		uint32_t arg3;
 		uint32_t len;
 	};
 	union {
-		uint8_t byte[4*120];	// 20
+		uint8_t byte[4*120];
 		uint16_t word[2*120];
 		uint32_t dword[1*120];
 	};
 } _P;
 
-struct nyx_req_param {
+struct nyx_req_param {			// unused
 	volatile uint32_t code;
-	volatile uint32_t axes;			// mask
-	volatile uint32_t rc;
-	volatile uint32_t rc2;
-	volatile uint32_t pno[16];
-	volatile uint32_t pval[16];
-	volatile uint32_t pno2[16];
-	volatile uint32_t pval2[16];
+	uint32_t axis;
+	uint32_t first;
+	uint32_t count;
+	uint16_t param[240];
 } _P;
 
 struct nyx_req_flash {
@@ -336,12 +273,6 @@ servo:	16 ax * 32 bytes = 512 bytes
 yio:	16 ax * 4 bytes = 64 bytes
 
 */
-
-#define MAX_ENC 2
-#define YIO_ENC 4
-#define MAX_DAC 2
-#define MAX_YIO 16
-
 typedef struct nyx_dp_fb {
 	// realtime controller status
 	uint32_t seq;		// YS_ goes here
@@ -352,7 +283,7 @@ typedef struct nyx_dp_fb {
 	uint32_t enc[2];
 	uint32_t yi[16];	// YIO inputs
 	// 22 dwords
-	nyx_servo_fb servo_fb[MAX_AXES];	// 8dw*18 = 144 dw
+	nyx_servo_fb servo_fb[MAX_AXES];	// *18 = 144 dw
 	// 26 dwords free
 } _P nyx_dp_fb;	// 192 dwords max
 
@@ -366,6 +297,22 @@ typedef struct nyx_dp_cmd {
 	nyx_servo_cmd servo_cmd[MAX_AXES];
 } _P nyx_dp_cmd;
 
+//
+
+typedef struct nyx_dp_debug {
+	uint32_t magic;
+	uint32_t t_recv_start;
+	uint32_t t_recv_end;
+	uint32_t t_sync_start;
+	uint32_t t_sync_end;
+	uint32_t t_proc_start;
+	uint32_t t_proc_end;
+	uint32_t t_send_start;
+	uint32_t t_send_end;
+	uint32_t dpll_shift;
+	uint32_t cmd_seq_miss;	// number of out-of-seq cmd's
+} _P nyx_dp_debug;
+
 // controller status
 #define STATUS_REALTIME		0x01
 #define STATUS_READY		0x02
@@ -376,14 +323,14 @@ typedef struct nyx_dp_cmd {
 typedef struct nyx_dpram {
 	union {
 		struct {
-			uint32_t magic;			// 55c20201
-			uint32_t config;		// +4 YIO_AXES:8 NYX_AXES:8
-			volatile uint32_t status;	// +8 STATUS_xxx
-			uint32_t reserved;		// +c
+			uint32_t magic;		// 55c20201
+			uint32_t config;	// YIO_AXES:8 NYX_AXES:8
+			volatile uint32_t status;	// STATUS_xxx
+			uint32_t reserved;
 			union {
 				struct nyx_req req;
 				struct nyx_req_flash flash;
-				struct nyx_req_param req_param;
+				struct nyx_req_param param;
 			};
 		};
 		uint8_t reqpage[512];
@@ -416,4 +363,4 @@ typedef struct nyx_iomem {
 	struct nyx_dpram dpram;
 } _P nyx_iomem;
 
-#endif // NYX_H
+#endif

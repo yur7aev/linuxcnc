@@ -2,7 +2,7 @@
 #
 # nyxq - Yxxx2P control utility
 #
-# 2018-2019, dmitry@yurtaev.com
+# 2018-2020, dmitry@yurtaev.com
 #
 
 from glob import glob
@@ -194,6 +194,9 @@ except:
 	exit(1)
 
 # ------------------------------
+class ReqError(Exception):
+	def __init__(self, msg):
+		self.msg = msg
 
 def req(code, a1=0, a2=0, a3=0):
 	dp.code = 0
@@ -205,32 +208,30 @@ def req(code, a1=0, a2=0, a3=0):
 	while (dp.status & 2) != 0: time.sleep(0.01)
 	while (dp.status & 0x0c) == 0: time.sleep(0.01)
 	s = dp.status
-	dp.code = 0
 	if s & 0x8:
 		errtxt = [ "NO_ERROR", "BAD_CODE", "BAD_FUNC", "BAD_AXIS", "BAD_ARG", "NO_AXIS", "FAILED", "UNAVAIL", "TIMEOUT" ];
 
-		print "req error", "%d (%04x %04x)" % (dp.arg1, dp.arg2, dp.arg3),
+		msg = "%d (%04x %04x)" % (dp.arg1, dp.arg2, dp.arg3)
 		if dp.arg1 < len(errtxt):
-			print errtxt[dp.arg1]
-		else:
-			print
-		return False
+			msg += " " + errtxt[dp.arg1]
+		raise ReqError(msg)
+	dp.code = 0
 	return True
 
 def cstr(arr):
 	return cast(arr, c_char_p).value.split(b'\0',1)[0]
 
 def info():
-	if req(0x00010000):
-		print cstr(dp.buf.byte)
+	req(0x00010000)
+	print cstr(dp.buf.byte)
 	if dp.status & 1: print "realtime"
 
 def dna():
-	if req(0x00080000):
-		print cstr(dp.buf.byte)
+	req(0x00080000)
+	print cstr(dp.buf.byte)
 
 def bin(a, l):
-	s = ' ' * (16 - l)
+	s = ' ' * (32 - l)
 	for i in reversed(range(l)):
 		if a & (1<<i):
 			s += "1"
@@ -243,9 +244,9 @@ def io_info():
 	print "ENC1: %d" % dp.rly.enc[1]
 	print "DAC0: %d" % dp.cmd.dac[0]
 	print "DAC1: %d" % dp.cmd.dac[1]
-	print "------- 3210fedcba9876543210"
-	print "GPI:    " + bin(dp.rly.gpi, 20)
-	print "GPO:        " + bin(dp.cmd.gpo, 8)
+	print "------- fedcba9876543210fedcba9876543210"
+	print "GPI:    " + bin(dp.rly.gpi, 29)
+	print "GPO:    " + bin(dp.cmd.gpo, 8)
 
 	for i in range(0, 16):
 #		print "%x: %08x %08x" % (i, dp.rly.yi[i], dp.cmd.yo[i])
@@ -256,9 +257,9 @@ def io_info():
 		if typ != 0:
 			print "%x:" % i,
 			if typ == 1:
-				print "YI16     " + bin(yi, 16),
+				print "YI16    " + bin(yi, 16),
 			elif typ == 2:
-				print "YO16     " + bin(dp.cmd.yo[i], 16),
+				print "YO16    " + bin(dp.cmd.yo[i], 16),
 			elif typ == 3:
 				print "YENC " + "%d" % (yi & 0xffff),
 			else:
@@ -267,34 +268,34 @@ def io_info():
 				print "err:",ok
 			else:
 				print
-	print "------- 3210fedcba9876543210"
+	print "------- fedcba9876543210fedcba9876543210"
 
 def servo_info():
-	if req(0x00030001):
-		print cstr(dp.buf.byte)
-		# dump(dp.buf.byte)
-		for a in range(8):
-			s = dp.rly.fb[a].state
-			if s & 0x10:	# YC_ONLINE
-				print "%d: [%02x] pos=%11d vel=%.1f trq=%.1f" % (a, dp.rly.fb[a].alarm, dp.rly.fb[a].pos, dp.rly.fb[a].vel/10, dp.rly.fb[a].trq/10),
-				if s & 0x00080: print "rdy",
-				if s & 0x00100: print "svon",
-				if s & 0x00200: print "inp",
-				if s & 0x00400: print "atsp",
-				if s & 0x00800: print "zsp",
-				if s & 0x01000: print "Ilim",
-				if s & 0x02000: print "alm",
-				if s & 0x04000: print "wrn",
-				if s & 0x08000: print "abs",
-				if s & 0x10000: print "abslost",
+	req(0x00030001)
+	print cstr(dp.buf.byte)
+	# dump(dp.buf.byte)
+	for a in range(8):
+		s = dp.rly.fb[a].state
+		if s & 0x10:	# YC_ONLINE
+			print "%d: [%02x] pos=%11d vel=%.1f trq=%.1f" % (a, dp.rly.fb[a].alarm, dp.rly.fb[a].pos, dp.rly.fb[a].vel/10, dp.rly.fb[a].trq/10),
+			if s & 0x00080: print "rdy",
+			if s & 0x00100: print "svon",
+			if s & 0x00200: print "inp",
+			if s & 0x00400: print "atsp",
+			if s & 0x00800: print "zsp",
+			if s & 0x01000: print "Ilim",
+			if s & 0x02000: print "alm",
+			if s & 0x04000: print "wrn",
+			if s & 0x08000: print "abs",
+			if s & 0x10000: print "abslost",
 
-				if s & 0x000040: print "zpass",
-				if s & 0x400000: print "ori",
-				if s & 0x800000: print "orc",
-				if s & 0x1000000: print "fwd",
-				if s & 0x2000000: print "rev",
-				# print "[%x]"%(s),
-				print
+			if s & 0x000040: print "zpass",
+			if s & 0x400000: print "ori",
+			if s & 0x800000: print "orc",
+			if s & 0x1000000: print "fwd",
+			if s & 0x2000000: print "rev",
+			# print "[%x]"%(s),
+			print
 
 def servo_cmd():
 	for a in range(8):
@@ -309,9 +310,12 @@ def servo_cmd():
 		print
 
 def servo_fw():
-		for a in range(8):
-			if req(0x00030007, a):
-				print "%d:" % a, cstr(dp.buf.byte)
+	for a in range(8):
+		try:
+			req(0x00030007, a)
+			print "%d:" % a, cstr(dp.buf.byte)
+		except:
+			pass
 
 def servo_mon():
 	print "seq=%d %x res=%x" % (dp.rly.seq, dp.cmd.seq, dp.reserved)
@@ -377,16 +381,16 @@ def servo_pr(l):
 					sys.exit('bad axis %d' % a)
 		else:
 			sys.exit('bad parameter format <axis>:<param>, %s' % s)
-	if req(0x00030011, first):
-		for a in range(0, 16):
-			if first & (1<<a):
-				p = dp.buf.dword[a+0]
-				v = dp.buf.dword[a+16]
-				print "%d:P%d=%d 0x%x" % (a, p, v, v)
-			if second & (1<<a):
-				p = dp.buf.dword[a+32]
-				v = dp.buf.dword[a+48]
-				print "%d:P%d=%d 0x%x" % (a, p, v, v)
+	req(0x00030011, first)
+	for a in range(0, 16):
+		if first & (1<<a):
+			p = dp.buf.dword[a+0]
+			v = dp.buf.dword[a+16]
+			print "%d:P%d=%d 0x%x" % (a, p, v, v)
+		if second & (1<<a):
+			p = dp.buf.dword[a+32]
+			v = dp.buf.dword[a+48]
+			print "%d:P%d=%d 0x%x" % (a, p, v, v)
 
 # param write
 def servo_pw(nv, l):
@@ -436,14 +440,13 @@ def servo_abs(l):
 					sys.exit('bad axis %d' % a)
 		else:
 			sys.exit('bad axis format, %s' % s)
-	if req(0x00030019, first):
-		pass
+	req(0x00030019, first)
 
 def pll(y, p, i, s):
 	dp.buf.dword[0] = int(y)
 	dp.buf.dword[1] = int(p)
 	dp.buf.dword[2] = int(i)
-	dp.buf.dword[4] = int(s)
+	dp.buf.dword[3] = int(s)
 	req(0x00090000, 0, 0, 4)
 
 # ------------------------------
@@ -553,12 +556,23 @@ def flash_program(f, a=0x80000, verify_only=0):
 	else:
 		print "success"
 
+def cfg(config):
+	if config == 'save':
+		req(0x00040023)    # write
+	elif config == None:
+		req(0x00040021) # read
+		print "excfg: %x" % dp.buf.dword[1]
+                print "pll: %d %d %d %d" % (dp.buf.dword[2], dp.buf.dword[3], dp.buf.dword[4], dp.buf.dword[5])
+        else:
+		req(0x00040024, int(config, 16))    # set
+
 # ==============================
 
-def arg(n, m, d=None):
+def arg(n, m=None, d=None):
 	n += first_arg
 	if len(sys.argv) <= n:
 		if d != None: return d
+		if m == None: return None
 		print "nyxq v2.4.0"
 		print "usage: nyxq " + m
 		exit(1)
@@ -574,61 +588,67 @@ def args(n, m):
 
 
 cmd = arg(1, "[info|servo|io|flash|reboot|pll] ...")
-if cmd == 'info':
-	info()
-elif cmd == 'servo':
-	subcmd = arg(2, "servo [info||mon|fw|cmd|pr|pw|nvpw] ...")
-	if   subcmd == 'info':		servo_info()
-	elif subcmd == 'mon':		servo_mon()
-	elif subcmd == 'fw':		servo_fw()
-	elif subcmd == 'cmd':		servo_cmd()
-	elif subcmd == 'pr':
-		p = args(3, "servo pr <axis>:<param> ...")
-		servo_pr(p)
-	elif subcmd == 'pw':
-		p = args(3, "servo pw <axis>:<param>=<value> ...")
-		servo_pw(False, p)
-	elif subcmd == 'nvpw':
-		p = args(3, "servo nvpw <axis>:<param>=<value> ...")
-		servo_pw(True, p)
-	elif subcmd == 'abs':
-		p = args(3, "servo abs <axis> ...")
-		servo_abs(p)
+try:
+	if cmd == 'info':
+		info()
+	elif cmd == 'servo':
+		subcmd = arg(2, "servo [info||mon|fw|cmd|pr|pw|pwnv] ...")
+		if   subcmd == 'info':		servo_info()
+		elif subcmd == 'mon':		servo_mon()
+		elif subcmd == 'fw':		servo_fw()
+		elif subcmd == 'cmd':		servo_cmd()
+		elif subcmd == 'pr':
+			p = args(3, "servo pr <axis>:<param> ...")
+			servo_pr(p)
+		elif subcmd == 'pw':
+			p = args(3, "servo pw <axis>:<param>=<value> ...")
+			servo_pw(False, p)
+		elif subcmd == 'pwnv':
+			p = args(3, "servo pwnv <axis>:<param>=<value> ...")
+			servo_pw(True, p)
+		elif subcmd == 'abs':
+			p = args(3, "servo abs <axis> ...")
+			servo_abs(p)
+		else:
+			print "error: nyxq servo ?"
+	elif cmd == 'reboot':
+		reboot()
+	elif cmd == 'pll':
+		msg = "pll insync P I step"
+		y = arg(2, msg)
+		p = arg(3, msg)
+		i = arg(4, msg)
+		s = arg(5, msg)
+		pll(y, p, i, s)
+	elif cmd == 'io':
+		io_info()
+	elif cmd == 'cfg':
+		cfg(arg(2))
+	elif cmd == 'dna':
+		dna()
+	elif cmd == 'flash':
+		subcmd = arg(2, "flash [dump|erase|program|bootloader] ...")
+		if subcmd == 'dump':
+			a = int(arg(3, "flash dump [<addr>]"), 16)
+			flash_read(a)
+		elif subcmd == 'erase':
+			a = int(arg(3, "flash erase <addr>"), 16)
+			flash_erase(a)
+		elif subcmd == 'program':
+			f = arg(3, "flash program <file.bit>")
+			flash_program(f, 0x80000)
+		elif subcmd == 'programsafe':
+			f = arg(3, "flash programsafe <file.bit>")
+			flash_program(f, 0x10000)
+		elif subcmd == 'verify':
+			f = arg(3, "flash verify <file.bit> <addr>")
+			a = int(arg(4, "flash verify <file.bit> <addr>"), 16)
+			flash_program(f, a, 1)
+		elif subcmd == 'bootloader':
+			flash_bootloader()
+		else:
+			print "error: nyxq flash ?"
 	else:
-		print "error: nyxq servo ?"
-elif cmd == 'reboot':
-	reboot()
-elif cmd == 'pll':
-	y = arg(2, "pll insync P I step")
-	p = arg(3, "pll insync P I step")
-	i = arg(4, "pll insync P I step")
-	s = arg(5, "pll insync P I step")
-	pll(y, p, i, s)
-elif cmd == 'io':
-	io_info()
-elif cmd == 'dna':
-	dna()
-elif cmd == 'flash':
-	subcmd = arg(2, "flash [dump|erase|program|bootloader] ...")
-	if subcmd == 'dump':
-		a = int(arg(3, "flash dump [<addr>]"), 16)
-		flash_read(a)
-	elif subcmd == 'erase':
-		a = int(arg(3, "flash erase <addr>"), 16)
-		flash_erase(a)
-	elif subcmd == 'program':
-		f = arg(3, "flash program <file.bit>")
-		flash_program(f, 0x80000)
-	elif subcmd == 'programsafe':
-		f = arg(3, "flash programsafe <file.bit>")
-		flash_program(f, 0x10000)
-	elif subcmd == 'verify':
-		f = arg(3, "flash verify <file.bit> <addr>")
-		a = int(arg(4, "flash verify <file.bit> <addr>"), 16)
-		flash_program(f, a, 1)
-	elif subcmd == 'bootloader':
-		flash_bootloader()
-	else:
-		print "error: nyxq flash ?"
-else:
-	print "error: nyx ?"
+		print "error: nyx ?"
+except ReqError as err:
+	print "Error:", err.msg
