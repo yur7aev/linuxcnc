@@ -666,9 +666,18 @@ FUNCTION(_)
 // sero parameter file stuff
 //
 
+#include <rtapi_slab.h>
+
 #ifdef __KERNEL__
+
+#include <linux/fs.h>      // Needed by filp
+#include <linux/delay.h>      // Needed by filp
+#include <asm/uaccess.h>   // Needed by segment descriptors
+#include <rtapi_pci.h>
+
 #define malloc(a) kmalloc(a, GFP_KERNEL)
 #define free(a) kfree(a)
+#define realloc(p, a) krealloc(p, a, GFP_KERNEL)
 
 int strtol(char *s, char **endptr, int base)
 {
@@ -679,7 +688,9 @@ int strtol(char *s, char **endptr, int base)
 	}
 	return l;
 }
+
 #else 
+
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -871,8 +882,6 @@ void params_parse_line(servo_params *params, char *str, int ln)
 
 #ifdef __KERNEL__
 
-#include <linux/fs.h>      // Needed by filp
-#include <asm/uaccess.h>   // Needed by segment descriptors
 
 int params_load(servo_params *params, const char *filename)
 {
@@ -1046,6 +1055,7 @@ void freq_init(YSSC2 *y)
 
 #ifdef __KERNEL__
 
+
 static struct rtapi_pci_device_id yssc2_pci_tbl[] = {
 	{
 		.vendor = YSSC3_VENDOR_ID,
@@ -1212,6 +1222,7 @@ void yssc2_cleanup()
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stddef.h>
 
 #include <rtapi_slab.h>
 #include <rtapi_io.h>
@@ -1292,7 +1303,6 @@ int yssc2_start(int no, int maxdrives)
 	return 0;
 }
 
-#include <stddef.h>
 
 void yssc2_process(YSSC2 *y)
 {
