@@ -71,6 +71,7 @@ DOC_SRCS_EN := \
 	drivers/pmx485.txt \
 	drivers/servo-to-go.txt \
 	drivers/shuttle.txt \
+	drivers/nyx.txt \
 	examples/gcode.txt \
 	examples/gs2-example.txt \
 	examples/mpg.txt \

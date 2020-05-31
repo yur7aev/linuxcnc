@@ -102,6 +102,7 @@ Articulations:: (Joints)
    que le joint est sur sa limite logicielle négative
  - halui.joint.<n>.select (bit, in) - select joint (0..8) - interne à halui
  - halui.joint.<n>.unhome (bit, in) - unhomes this joint
+ - halui.joint.<n>.set-homed (bit, in) - set homed flag for this joint
  - halui.joint.selected (u32, out) - selected joint (0..8) - interne à halui
  - halui.joint.selected.has-fault (bit, out) - pin de status 
    indiquant que le joint <n> est en défaut

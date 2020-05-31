@@ -1,0 +1,37 @@
+#
+# NYX v2.3 LinuxCNC 2.8 config, using servo in velocity mode
+#
+# 2019, http://www.yurtaev.com
+#
+
+setp nyx.0.servo-05.vel-scale [NYX]SP_VEL_SCALE
+setp nyx.0.servo-05.pos-scale 1
+setp nyx.0.servo-05.velocity-mode 1
+net estop => nyx.0.servo-05.power
+net s-enable spindle.0.on => nyx.0.servo-05.enable
+#net alarm5 spindle.0.amp-fault-in <= nyx.0.servo-05.alarm
+
+loadrt limit2 names=spindle-ramp
+loadrt near names=spindle-speed-near
+
+addf spindle-ramp servo-thread
+setp spindle-ramp.maxv 3000	# accel in units per second)
+addf spindle-speed-near servo-thread
+
+net s-vel-cmd spindle.0.speed-out => spindle-ramp.in
+net s-vel-ramped spindle-ramp.out => nyx.0.servo-05.vel-cmd
+net s-vel-fb spindle.0.speed-in <= nyx.0.servo-05.vel-fb
+
+setp spindle-speed-near.scale 1.01
+setp spindle-speed-near.difference 8
+net s-vel-cmd => spindle-speed-near.in1
+net s-vel-fb  => spindle-speed-near.in2
+net spindle-at-speed spindle-speed-near.out => spindle.0.at-speed
+
+setp nyx.0.encoder-00.cpr 10000
+net s-index-enable nyx.0.encoder-00.index-enable <=> spindle.0.index-enable
+net s-pos nyx.0.encoder-00.pos => spindle.0.revs
+
+# enable spindle reverse
+net s-fwd spindle.0.forward
+net s-rev spindle.0.reverse

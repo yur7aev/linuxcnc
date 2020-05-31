@@ -173,6 +173,7 @@ extern "C" {
 	EMCMOT_JOINT_DISABLE_AMPLIFIER, /* disable amp outputs */
 	EMCMOT_JOINT_HOME,              /* home a joint or all joints */
 	EMCMOT_JOINT_UNHOME,            /* unhome a joint or all joints*/
+	EMCMOT_JOINT_SET_HOMED,         /* just set homed flag immediately */
 	EMCMOT_SET_JOINT_POSITION_LIMITS, /* set the joint position +/- limits */
 	EMCMOT_SET_JOINT_BACKLASH,      /* set the joint backlash */
 	EMCMOT_SET_JOINT_MIN_FERROR,    /* minimum following error, input units */
@@ -535,6 +536,7 @@ Suggestion: Split this in to an Error and a Status flag register..
 	double min_pos_limit;	/* lower soft limit on joint pos */
 	double min_ferror;	/* zero speed following error limit */
 	double max_ferror;	/* max speed following error limit */
+	double motor_offset;	/* motor pos - joint pos diff */
     } emcmot_joint_status_t;
 
 

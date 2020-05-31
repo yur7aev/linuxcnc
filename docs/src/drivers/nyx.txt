@@ -1,0 +1,19 @@
+[[cha:nyx-driver]]
+
+= NYX Driver
+
+YxxxxP servo interface card driver.
+
+== Installing
+
+----
+loadrt nyx servo-thread
+----
+
+== Pins
+
+* '(bit, out) nyx.<boardnum>.ready' -- the card is in sync with LinuxCNC servo thread. Other pins are inactive until true.
+
+== Functions
+
+* '(funct) nyx.<boardnum>' -- Process all

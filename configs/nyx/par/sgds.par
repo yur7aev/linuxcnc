@@ -1,0 +1,188 @@
+;
+; Yaskawa SGDS-xxxx012A
+;
+; * - param active at power-up
+; ! - param change at DEN/ZSPD
+;
+; 2020, http://yurtaev.com
+;
+
+;	0	1	2	3	4	5
+;Pn000	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	;	*Function Selection Basic Switch 0
+;Pn001	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	;	*Function Selection Application Switch 1
+;Pn002	0x0113	0x0113	0x0113	0x0113	0x0113	0x0113	;	*Function Selection Application Switch 2
+;Pn004	0x0110	0x0110	0x0110	0x0110	0x0110	0x0110	;	*Function Selection Application Switch 4
+Pn006	0x0002	0x0002	0x0002	0x0002	0x0002	0x0002	;	Function Selection Application Switch 6
+Pn007	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	;	Function Selection Application Switch 7
+;Pn008	0x4000	0x4000	0x4000	0x4000	0x4000	0x4000	;	*Function Selection Application Switch 8
+
+Pn100	40.0	40.0	40.0	40.0	40.0	40.0	; Hz	Speed Loop Gain
+Pn101	20.00	20.00	20.00	20.00	20.00	20.00	; ms	Speed Loop Integral Time Constant
+Pn102	40.0	40.0	40.0	40.0	40.0	40.0	; /s	Position Loop Gain
+Pn103	0	0	0	0	0	0	; %	Moment of Inertia Ratio
+Pn104	40.0	40.0	40.0	40.0	40.0	40.0	; Hz	2nd Speed Loop Gain
+Pn105	20.00	20.00	20.00	20.00	20.00	20.00	; ms	2nd Speed Loop Integral Time Constant
+Pn106	40.0	40.0	40.0	40.0	40.0	40.0	; /s	2nd Position Loop Gain
+Pn107	0	0	0	0	0	0	; RPM	Bias
+Pn108	7	7	7	7	7	7	; u	Bias Addition Width
+Pn109	0	0	0	0	0	0	; %	Feed Forward Gain
+Pn10A	0.00	0.00	0.00	0.00	0.00	0.00	; ms	Feed Forward Filter Time Constant
+Pn10B	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	*Gain Related Application Switch
+Pn10C	200	200	200	200	200	200	; %	Mode Switch (torque reference)
+Pn10D	0	0	0	0	0	0	; RPM	Mode Switch (speed reference)
+Pn10E	0	0	0	0	0	0	; RPM/s	Mode Switch (acceleration)
+Pn10F	0	0	0	0	0	0	; u	Mode Switch (error pulse)
+Pn110	0x0012	0x0012	0x0012	0x0012	0x0012	0x0012	; 	*Normal Autotuning Switches
+Pn111	100	100	100	100	100	100	; %	Speed Feedback Compensation Gain
+Pn119	50.0	50.0	50.0	50.0	50.0	50.0	; /s	Reference Filter Gain
+Pn11A	100.0	100.0	100.0	100.0	100.0	100.0	; %	Reference Filter Gain Compensation
+Pn11E	100.0	100.0	100.0	100.0	100.0	100.0	; %	Reference Filter Bias (Forward)
+Pn11F	0.0	0.0	0.0	0.0	0.0	0.0	; ms	Position Integral Time Constant
+Pn12B	40.0	40.0	40.0	40.0	40.0	40.0	; Hz	3rd Speed Loop Gain
+Pn12C	20.00	20.00	20.00	20.00	20.00	20.00	; ms	3rd Speed Loop Integral Time Constant
+Pn12D	40.0	40.0	40.0	40.0	40.0	40.0	; /s	3rd Position Loop Gain
+Pn12E	40.0	40.0	40.0	40.0	40.0	40.0	; Hz	4th Speed Loop Gain
+Pn12F	20.00	20.00	20.00	20.00	20.00	20.00	; ms	4th Speed Loop Integral Time Constant
+Pn130	40.0	40.0	40.0	40.0	40.0	40.0	; /s	4th Position Loop Gain
+Pn131	0	0	0	0	0	0	; ms	Gain Switching Time 1
+Pn132	0	0	0	0	0	0	; ms	Gain Switching Time 2
+Pn135	0	0	0	0	0	0	; ms	Gain Switching Waiting Time 1
+Pn136	0	0	0	0	0	0	; ms	Gain Switching Waiting Time 2
+Pn139	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	*Automatic Gain Changeover Related Switch 1
+Pn144	100.0	100.0	100.0	100.0	100.0	100.0	; %	Reference Filter Bias (Reverse)
+Pn150	0x0210	0x0210	0x0210	0x0210	0x0210	0x0210	; 	*Predictive Control Selection Switch
+Pn151	100	100	100	100	100	100	; %	Predictive Control Acceleration/Deceleration Gain
+Pn152	100	100	100	100	100	100	; %	Predictive Control Weighting Ratio
+Pn1A0	60	60	60	60	60	60	; %	Servo Rigidity
+Pn1A1	60	60	60	60	60	60	; %	Servo Rigidity ;2
+Pn1A2	0.72	0.72	0.72	0.72	0.72	0.72	; ms	Speed Feedback Filter Time Constant
+Pn1A3	0.72	0.72	0.72	0.72	0.72	0.72	; ms	Speed Feedback Filter Time Constant ;2
+Pn1A4	0.36	0.36	0.36	0.36	0.36	0.36	; ms	Torque Reference Filter Time Constant
+Pn1A7	0x1121	0x1121	0x1121	0x1121	0x1121	0x1121	; 	*Utility Control Switch
+Pn1A9	37	37	37	37	37	37	; Hz	Utility Integral Gain
+Pn1AA	60	60	60	60	60	60	; Hz	Position Proportional Gain
+Pn1AB	0	0	0	0	0	0	; Hz	Speed Integral Gain
+Pn1AC	120	120	120	120	120	120	; Hz	Speed Proportional Gain
+
+Pn200	0x0100	0x0100	0x0100	0x0100	0x0100	0x0100	; 	*Position Control Reference Form Selection Switch
+Pn205	65535	65535	65535	65535	65535	65535	; Rev	*Multi-turn Limit Setting
+Pn207	0x0010	0x0010	0x0010	0x0010	0x0010	0x0010	; 	*Position Reference Function Switch
+Pn209	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn20AL	32768	32768	32768	32768	32768	32768	; /Rev	*(L) Number of External Scale Pitch
+Pn20EL	4	4	4	4	4	4	; 	*(L) Electronic Gear Ratio (Numerator)
+Pn210L	1	1	1	1	1	1	; 	*(L) Electronic Gear Ratio (Denominator)
+Pn212L	2048	2048	2048	2048	2048	2048	; P/Rev	*(L) PG Dividing Pulse (pulse input)
+Pn214	0	0	0	0	0	0	; 	Backlash Compensation Amount
+Pn215	0.00	0.00	0.00	0.00	0.00	0.00	; ms	Backlash Compensation Time Constant
+Pn216	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn217	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn280	0	0	0	0	0	0	; ?m	*Linear Scale Pitch
+Pn281	20	20	20	20	20	20	; P/	*(4 multiple pitches) Encoder Output Resolution
+
+Pn300	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn301	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn302	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn303	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn304	500	500	500	500	500	500	; RPM	JOG Speed
+Pn305	0	0	0	0	0	0	; ms	Soft Start Acceleration Time
+Pn306	0	0	0	0	0	0	; ms	Soft Start Deceleration Time
+Pn307	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn308	0.00	0.00	0.00	0.00	0.00	0.00	; ms	Speed Feedback Filter Time Constant
+Pn310	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	Vibration Detection Switch
+Pn311	100	100	100	100	100	100	; %	Vibration Detection Sensibility
+Pn312	50	50	50	50	50	50	; RPM	Vibration Detection Level
+
+Pn400	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn401	1.00	1.00	1.00	1.00	1.00	1.00	; ms	Torque Reference Filter Time Constant
+Pn402	800	800	800	800	800	800	; %	Forward Torque Limit
+Pn403	800	800	800	800	800	800	; %	Reverse Torque Limit
+Pn404	100	100	100	100	100	100	; %	Forward External Torque Limit
+Pn405	100	100	100	100	100	100	; %	Reverse External Torque Limit
+Pn406	800	800	800	800	800	800	; %	Emergency Stop Torque
+Pn407	10000	10000	10000	10000	10000	10000	; RPM	Speed Limit during Torque Control
+Pn408	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	*Torque Related Function Switch
+Pn409	2000	2000	2000	2000	2000	2000	; Hz	1st Step Notch Filter Frequency
+Pn40A	0.70	0.70	0.70	0.70	0.70	0.70	; 	1st Step Notch Filter Q Value
+Pn40C	2000	2000	2000	2000	2000	2000	; Hz	2nd Step Notch Filter Frequency
+Pn40D	0.70	0.70	0.70	0.70	0.70	0.70	; 	2nd Step Notch Filter Q Value
+Pn40F	2000	2000	2000	2000	2000	2000	; Hz	2nd Step 2nd Torque Reference Filter Frequency
+Pn410	0.70	0.70	0.70	0.70	0.70	0.70	; 	2nd Step 2nd Torque Reference Filter Q Value
+Pn411	0	0	0	0	0	0	; ?s	3rd Step Torque Reference Filter Time Constant
+Pn412	1.00	1.00	1.00	1.00	1.00	1.00	; ms	1st Step 2nd Torque Reference Filter Time Constant
+Pn413	1.00	1.00	1.00	1.00	1.00	1.00	; ms	1st Step 3rd Torque Reference Filter Time Constant
+Pn414	1.00	1.00	1.00	1.00	1.00	1.00	; ms	1st Step 4th Torque Reference Filter Time Constant
+Pn420	100	100	100	100	100	100	; %	Damping for Vibration Suppression on Stopping
+Pn421	1000	1000	1000	1000	1000	1000	; ms	Vibration Suppression Starting Time
+Pn422	0.00	0.00	0.00	0.00	0.00	0.00	; %	Gravity Compensation Torque
+Pn456	15	15	15	15	15	15	; %	Sweep Torque Reference Amplitude
+
+Pn501	10	10	10	10	10	10	; RPM	Zero Clamp Level
+Pn502	20	20	20	20	20	20	; RPM	Zero Speed Level
+Pn503	10	10	10	10	10	10	; RPM	Speed Coincidence Signal Output Width
+Pn506	0	0	0	0	0	0	; ms	Brake Reference
+Pn507	100	100	100	100	100	100	; RPM	Brake Reference Output Speed Level
+Pn508	500	500	500	500	500	500	; ms	Waiting Time for Brake Signal When Motor Running
+Pn509	20	20	20	20	20	20	; ms	Instantaneous Power Cut Hold Time
+Pn50A	0x8881	0x8881	0x8881	0x8881	0x8881	0x8881	; 	*Input Signal Selection 1 (=1881)
+Pn50B	0x8888	0x8888	0x8888	0x8888	0x8888	0x8888	; 	*Input Signal Selection 2 (=8881)
+Pn50C	0x8888	0x8888	0x8888	0x8888	0x8888	0x8888	; 	*Input Signal Selection 3
+Pn50D	0x8888	0x8888	0x8888	0x8888	0x8888	0x8888	; 	*Input Signal Selection 4
+Pn50E	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	*Output Signal Selection 1
+Pn50F	0x0100	0x0100	0x0100	0x0100	0x0100	0x0100	; 	*Output Signal Selection 2
+Pn510	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	*Output Signal Selection 3
+Pn511	0x6543	0x6543	0x6543	0x6543	0x6543	0x6543	; 	*Input Signal Selection 5
+Pn512	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	*Output Signal Reversal Setting
+Pn513	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn515	0x8888	0x8888	0x8888	0x8888	0x8888	0x8888	; 	*Input Signal Selection 5
+Pn51BL	1000	1000	1000	1000	1000	1000	; u	(L) Excessive Error Level between Motor and Load Position
+Pn51E	100	100	100	100	100	100	; %	Excessive Position Error Warning Level
+Pn520L	262144	262144	262144	262144	262144	262144	; u	(L) Excessive Position Error Alarm Level
+Pn522L	7	7	7	7	7	7	; u	(L) Positioning Completion Width
+Pn524L	7	7	7	7	7	7	; u	(L) NEAR Signal Width
+Pn526L	262144	262144	262144	262144	262144	262144	; u	(L) Excessive Position Error Alarm Level at Servo ON
+Pn528	100	100	100	100	100	100	; %	Excessive Position Error Warning Detection Level at Servo ON
+Pn529	10000	10000	10000	10000	10000	10000	; RPM	Speed Limit Level at Servo ON
+Pn52A	20	20	20	20	20	20	; %	Multiple Value per Fully Closed Encoder Rotation
+Pn52F	0xFFF	0xFFF	0xFFF	0xFFF	0xFFF	0xFFF	; 	Monitor Display at Power ON
+Pn530	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	Program JOG Operation Related Switch
+Pn531	32768	32768	32768	32768	32768	32768	; u	Program JOG Movement Distance
+Pn533	500	500	500	500	500	500	; RPM	Program JOG Movement Speed
+Pn534	100	100	100	100	100	100	; ms	Program JOG Acceleration/Deceleration Time
+Pn535	100	100	100	100	100	100	; ms	Program JOG Waiting Time
+Pn536	1	1	1	1	1	1	; time	Number of Times of Program JOG Movement
+Pn540	200.0	200.0	200.0	200.0	200.0	200.0	; Hz	Gain Limit
+Pn550	0.0	0.0	0.0	0.0	0.0	0.0	; V	Analog Monitor 1 Offset Voltage
+Pn551	0.0	0.0	0.0	0.0	0.0	0.0	; V	Analog Monitor 2 Offset Voltage
+
+Pn600	0	0	0	0	0	0	; W	Regenerative Resistor Capacity
+
+Pn800	0x0400	0x0400	0x0400	0x0400	0x0400	0x0400	; 	Communication Control
+Pn801	0x0003	0x0003	0x0003	0x0003	0x0003	0x0003	; 	Function Selection Application 6 (Software LS)
+Pn803	10	10	10	10	10	10	; u	Origin Range
+Pn804L	 819191808  819191808  819191808  819191808  819191808  819191808 ; u	(L) Forward Software Limit
+Pn806L	-819191808 -819191808 -819191808 -819191808 -819191808 -819191808 ; u	(L) Reverse Software Limit
+Pn808L	0	0	0	0	0	0	; u	(L) Absolute Encoder Origin Offset
+Pn80A	100	100	100	100	100	100	; ^5/s2	!1st Step Linear Acceleration Constant
+Pn80B	100	100	100	100	100	100	; ^5/s2	!2nd Step Linear Acceleration Constant
+Pn80C	0	0	0	0	0	0	; 100/s	!Acceleration Constant Switching Speed
+Pn80D	100	100	100	100	100	100	; ^5/s2	!1st Step Linear Deceleration Constant
+Pn80E	100	100	100	100	100	100	; ^5/s2	!2nd Step Linear Deceleration Constant
+Pn80F	0	0	0	0	0	0	; 100/s	!Deceleration Constant Switching Speed
+Pn810	0	0	0	0	0	0	; /s	!Exponential Function Accel/Decel Bias
+Pn811	0	0	0	0	0	0	; 0.1ms	!Exponential Function Accel/Decel Time Constant
+Pn812	0	0	0	0	0	0	; 0.1ms	!Moving Average Time
+Pn814L	100	100	100	100	100	100	; u	!(L) Final Travel Distance for External Positioning (EX_POSING)
+Pn816	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	!Homing Mode Setting
+Pn817	50	50	50	50	50	50	; 100/s	!Homing Approach Speed 1
+Pn818	5	5	5	5	5	5	; 100/s	!Homing Approach Speed 2
+Pn819	100	100	100	100	100	100	; u	!Final Travel Distance for homing
+Pn81A	0	0	0	0	0	0	; u	!Final Travel Distance for homing
+Pn81B	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn81C	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn81D	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn81E	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	Input Signal Monitor Selection
+Pn81F	-	-	-	-	-	-	; 	Reserved (Do not change)
+Pn820L	0	0	0	0	0	0	; u	(L) Latching Area Upper Limit
+Pn822L	0	0	0	0	0	0	; u	(L) Latching Area Lower Limit
+Pn824	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	Option Monitor 1 Selection
+Pn825	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; 	Option Monitor 2 Selection

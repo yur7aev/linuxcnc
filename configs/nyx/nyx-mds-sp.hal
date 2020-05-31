@@ -1,0 +1,24 @@
+#
+# NYX v2.3 LinuxCNC 2.8 config, MDS-x-SP spindle drive
+#
+# 2019-2020, http://www.yurtaev.com
+#
+
+setp nyx.0.servo-05.vel-scale [NYX]SP_VEL_SCALE
+setp nyx.0.servo-05.pos-scale 1
+net estop => nyx.0.servo-05.power
+#net s-enable spindle.0.on => nyx.0.servo-05.enable
+#net alarm5 spindle.0.amp-fault-in <= nyx.0.servo-05.alarm
+
+net s-fwd      spindle.0.forward       => nyx.0.servo-05.spindle-fwd
+net s-rev      spindle.0.reverse       => nyx.0.servo-05.spindle-rev
+net s-vel-cmd  spindle.0.speed-out-abs => nyx.0.servo-05.vel-cmd
+net s-vel-fb   spindle.0.speed-in      <= nyx.0.servo-05.vel-fb
+net s-at-speed spindle.0.at-speed      <= nyx.0.servo-05.at-speed
+
+loadrt mdssp
+addf mdssp.0 servo-thread
+net s-counts   nyx.0.servo-05.counts => mdssp.0.spindle-counts-in
+net s-oriented nyx.0.servo-05.spindle-oriented => mdssp.0.spindle-oriented-in
+net s-index    spindle.0.index-enable  => mdssp.0.index-request
+net s-revs     spindle.0.revs          <= mdssp.0.revs

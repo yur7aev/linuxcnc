@@ -1,0 +1,78 @@
+#
+# NYX v1.3 YSSC2P LinuxCNC 2.8 sample PyVCP config
+#
+# 2019, http://www.yurtaev.com
+#
+
+net trq0 => pyvcp.trq0
+net trq1 => pyvcp.trq1
+net trq2 => pyvcp.trq2
+net trq3 => pyvcp.trq3
+net trq4 => pyvcp.trq4
+net trq5 => pyvcp.trq5
+
+net sscii.ready nyx.0.ready => pyvcp.led-ready
+
+net offline0 sscii.0.servo.0.offline => pyvcp.led-offline0
+net offline1 sscii.0.servo.1.offline => pyvcp.led-offline1
+net offline2 sscii.0.servo.2.offline => pyvcp.led-offline2
+net offline3 sscii.0.servo.3.offline => pyvcp.led-offline3
+net offline4 sscii.0.servo.4.offline => pyvcp.led-offline4
+net offline5 sscii.0.servo.5.offline => pyvcp.led-offline5
+
+net ready0 sscii.0.servo.0.ready => pyvcp.led-ready0
+net ready1 sscii.0.servo.1.ready => pyvcp.led-ready1
+net ready2 sscii.0.servo.2.ready => pyvcp.led-ready2
+net ready3 sscii.0.servo.3.ready => pyvcp.led-ready3
+net ready4 sscii.0.servo.4.ready => pyvcp.led-ready4
+net ready5 sscii.0.servo.5.ready => pyvcp.led-ready5
+
+net offline0 => pyvcp.led-ready0.disable
+net offline1 => pyvcp.led-ready1.disable
+net offline2 => pyvcp.led-ready2.disable
+net offline3 => pyvcp.led-ready3.disable
+net offline4 => pyvcp.led-ready4.disable
+net offline5 => pyvcp.led-ready5.disable
+
+net alarm0 pyvcp.led-alarm0
+net alarm1 pyvcp.led-alarm1
+net alarm2 pyvcp.led-alarm2
+net alarm3 pyvcp.led-alarm3
+net alarm4 pyvcp.led-alarm4
+net alarm5 pyvcp.led-alarm5
+
+net offline0 => pyvcp.led-alarm0.disable
+net offline1 => pyvcp.led-alarm1.disable
+net offline2 => pyvcp.led-alarm2.disable
+net offline3 => pyvcp.led-alarm3.disable
+net offline4 => pyvcp.led-alarm4.disable
+net offline5 => pyvcp.led-alarm5.disable
+
+net warning0 pyvcp.led-warning0
+net warning1 pyvcp.led-warning1
+net warning2 pyvcp.led-warning2
+net warning3 pyvcp.led-warning3
+net warning4 pyvcp.led-warning4
+net warning5 pyvcp.led-warning5
+
+net enabled0 sscii.0.servo.0.enabled => pyvcp.led-enabled0
+net enabled1 sscii.0.servo.1.enabled => pyvcp.led-enabled1
+net enabled2 sscii.0.servo.2.enabled => pyvcp.led-enabled2
+net enabled3 sscii.0.servo.3.enabled => pyvcp.led-enabled3
+net enabled4 sscii.0.servo.4.enabled => pyvcp.led-enabled4
+net enabled5 sscii.0.servo.5.enabled => pyvcp.led-enabled5
+
+net reset-alarm <= pyvcp.reset-alarm
+net reset-alarm => sscii.0.servo.0.reset-alarm
+net reset-alarm => sscii.0.servo.1.reset-alarm
+net reset-alarm => sscii.0.servo.2.reset-alarm
+net reset-alarm => sscii.0.servo.3.reset-alarm
+net reset-alarm => sscii.0.servo.4.reset-alarm
+net reset-alarm => sscii.0.servo.5.reset-alarm
+
+net code0 sscii.0.servo.0.alarm-code => pyvcp.code0
+net code1 sscii.0.servo.1.alarm-code => pyvcp.code1
+net code2 sscii.0.servo.2.alarm-code => pyvcp.code2
+net code3 sscii.0.servo.3.alarm-code => pyvcp.code3
+net code4 sscii.0.servo.4.alarm-code => pyvcp.code4
+net code5 sscii.0.servo.5.alarm-code => pyvcp.code5
