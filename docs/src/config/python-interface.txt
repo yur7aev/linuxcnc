@@ -787,6 +787,9 @@ c.spindle.(linuxcnc.SPINDLE_OFF, 0)
 `unhome(int)`::
     unhome a given joint.
 
+`set-homed(int)`::
+    set homed flage for a given joint.
+
 `wait_complete([float])`::
     wait for completion of the last command sent. If timeout in
     seconds not specified, default is 5 seconds. Return -1 if

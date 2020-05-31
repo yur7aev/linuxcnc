@@ -1,0 +1,96 @@
+<!--
+    NYX v2.3 LinuxCNC 2.8 sample PyVCP config, 6 axes
+
+    2019, http://www.yurtaev.com
+-->
+
+<pyvcp>
+<label>
+    <text>"Torque 0..5 (%)"</text>
+</label>
+<bar> <halpin>"trq0"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>24</canvas_height> </bar>
+<bar> <halpin>"trq1"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>24</canvas_height> </bar>
+<bar> <halpin>"trq2"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>24</canvas_height> </bar>
+<bar> <halpin>"trq3"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>24</canvas_height> </bar>
+<bar> <halpin>"trq4"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>24</canvas_height> </bar>
+<bar> <halpin>"trq5"</halpin> <min_>-150</min_> <max_>150</max_> <bar_height>22</bar_height> <canvas_height>36</canvas_height> </bar>
+
+<label>
+    <text>"Speed 5 (rpm)"</text>
+</label>
+<bar> <halpin>"s-vel"</halpin> <min_>-5000</min_> <max_>5000</max_> <bar_height>19</bar_height> <canvas_height>36</canvas_height> </bar>
+
+<labelframe text="Controller">
+<hbox>
+    <hbox>
+	<led> <halpin>"led-ready"</halpin> </led>
+	<number>
+	    <halpin>"phase"</halpin>
+	    <format>"+4.2f"</format>
+	</number>
+    </hbox>
+</hbox>
+</labelframe>
+
+<labelframe text="Amp online">
+    <hbox>
+	<led> <halpin>"led-offline0"</halpin> <on_color>"gray80"</on_color><off_color>"green"</off_color> </led>
+	<led> <halpin>"led-offline1"</halpin> <on_color>"gray80"</on_color><off_color>"green"</off_color> </led>
+	<led> <halpin>"led-offline2"</halpin> <on_color>"gray80"</on_color><off_color>"green"</off_color> </led>
+	<led> <halpin>"led-offline3"</halpin> <on_color>"gray80"</on_color><off_color>"green"</off_color> </led>
+	<led> <halpin>"led-offline4"</halpin> <on_color>"gray80"</on_color><off_color>"green"</off_color> </led>
+	<led> <halpin>"led-offline5"</halpin> <on_color>"gray80"</on_color><off_color>"green"</off_color> </led>
+    </hbox>
+</labelframe>
+
+<labelframe text="Amp ready">
+    <hbox>
+	<led> <halpin>"led-ready0"</halpin> <off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-ready1"</halpin> <off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-ready2"</halpin> <off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-ready3"</halpin> <off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-ready4"</halpin> <off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-ready5"</halpin> <off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+    </hbox>
+</labelframe>
+
+<labelframe text="Amp alarm/warning">
+    <hbox>
+	<led> <halpin>"led-alarm0"</halpin> <on_color>"red"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-alarm1"</halpin> <on_color>"red"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-alarm2"</halpin> <on_color>"red"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-alarm3"</halpin> <on_color>"red"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-alarm4"</halpin> <on_color>"red"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-alarm5"</halpin> <on_color>"red"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+    </hbox>
+    <hbox>
+	<led> <halpin>"led-warning0"</halpin> <on_color>"yellow"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-warning1"</halpin> <on_color>"yellow"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-warning2"</halpin> <on_color>"yellow"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-warning3"</halpin> <on_color>"yellow"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-warning4"</halpin> <on_color>"yellow"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+	<led> <halpin>"led-warning5"</halpin> <on_color>"yellow"</on_color><off_color>"gray80"</off_color> <disable_pin>True</disable_pin> </led>
+    </hbox>
+    <hbox>
+	<u32> <halpin>"code0"</halpin> <format>"02x"</format> </u32>
+	<u32> <halpin>"code1"</halpin> <format>"02x"</format> </u32>
+	<u32> <halpin>"code2"</halpin> <format>"02x"</format> </u32>
+	<u32> <halpin>"code3"</halpin> <format>"02x"</format> </u32>
+	<u32> <halpin>"code4"</halpin> <format>"02x"</format> </u32>
+	<u32> <halpin>"code5"</halpin> <format>"02x"</format> </u32>
+    </hbox>
+    <button> <halpin>"reset-alarm"</halpin> <text>"Alarm reset"</text> </button>
+</labelframe>
+
+<labelframe text="Amp enabled">
+    <hbox>
+	<led> <halpin>"led-enabled0"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
+	<led> <halpin>"led-enabled1"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
+	<led> <halpin>"led-enabled2"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
+	<led> <halpin>"led-enabled3"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
+	<led> <halpin>"led-enabled4"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
+	<led> <halpin>"led-enabled5"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
+    </hbox>
+</labelframe>
+
+</pyvcp>

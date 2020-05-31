@@ -84,6 +84,9 @@ int emcFormat(NMLTYPE type, void *buffer, CMS * cms)
     case EMC_JOINT_HOME_TYPE:
 	((EMC_JOINT_HOME *) buffer)->update(cms);
 	break;
+    case EMC_JOINT_SET_HOMED_TYPE:
+	((EMC_JOINT_SET_HOMED *) buffer)->update(cms);
+	break;
     case EMC_JOINT_UNHOME_TYPE:
 	((EMC_JOINT_UNHOME *) buffer)->update(cms);
 	break;
@@ -505,6 +508,8 @@ const char *emc_symbol_lookup(uint32_t type)
 	return "EMC_JOINT_HALT";
     case EMC_JOINT_HOME_TYPE:
 	return "EMC_JOINT_HOME";
+    case EMC_JOINT_SET_HOMED_TYPE:
+	return "EMC_JOINT_SET_HOMED";
     case EMC_JOINT_UNHOME_TYPE:
 	return "EMC_JOINT_UNHOME";
     case EMC_JOG_CONT_TYPE:
@@ -2399,6 +2404,13 @@ void EMC_TRAJ_STAT::update(CMS * cms)
 *	on Sat Oct 11 13:45:17 UTC 2003
 */
 void EMC_JOINT_HOME::update(CMS * cms)
+{
+
+    EMC_JOINT_CMD_MSG::update(cms);
+
+}
+
+void EMC_JOINT_SET_HOMED::update(CMS * cms)
 {
 
     EMC_JOINT_CMD_MSG::update(cms);

@@ -436,6 +436,7 @@ int main(int argc, char* argv[]) {
                 break;
 
             case EMCMOT_JOINT_HOME:
+            case EMCMOT_JOINT_SET_HOMED:
                 log_print("JOINT_HOME joint=%d\n", c->joint);
                 if (c->joint < 0) {
                     for (int j = 0; j < num_joints; j ++) {

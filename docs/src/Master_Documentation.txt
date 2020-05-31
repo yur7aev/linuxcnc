@@ -209,6 +209,8 @@ include::drivers/shuttle.txt[]
 
 include::drivers/gm.txt[]
 
+include::drivers/nyx.txt[]
+
 include::drivers/vfs11.txt[]
 
 :leveloffset: 1

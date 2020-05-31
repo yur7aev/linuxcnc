@@ -122,6 +122,7 @@ be true.
    joint <n> is at the negative software limit
 * 'halui.joint.<n>.select' (bit, in) - select joint (0..8) - internal halui
 * 'halui.joint.<n>.unhome' (bit, in) - unhomes this joint
+* 'halui.joint.<n>.set-homed' (bit, in) - set homed flag for this joint
 * 'halui.joint.selected' (u32, out) - selected joint (0..8) - internal halui
 * 'halui.joint.selected.has-fault' (bit, out) - status pin telling that 
    the joint <n> has a fault

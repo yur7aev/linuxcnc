@@ -1,3 +1,9 @@
+linuxcnc (1:2.9.0nyx10~pre0) stretch; urgency=medium
+
+  * applied nyx patch
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sun, 31 May 2020 22:56:12 +0300
+
 linuxcnc (1:2.9.0~pre0) stretch; urgency=medium
 
   * Master branch open for new features.

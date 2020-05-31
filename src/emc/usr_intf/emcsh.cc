@@ -162,6 +162,9 @@
   emc_home 0 | 1 | 2 | ...
   Homes the indicated joint.
 
+  emc_set_homed 0 | 1 | 2 | ...
+  Set homed flag for the indicated joint.
+
   emc_unhome 0 | 1 | 2 | ...
   Unhomes the indicated joint.
 
@@ -1762,6 +1765,26 @@ static int emc_home(ClientData clientdata,
     }
 
     setresult(interp,"emc_home: need joint as integer, 0..");
+    return TCL_ERROR;
+}
+
+static int emc_set_homed(ClientData clientdata,
+		    Tcl_Interp * interp, int objc, Tcl_Obj * CONST objv[])
+{
+    int joint;
+
+    CHECKEMC
+    if (objc != 2) {
+	setresult(interp,"emc_set_homed: need joint");
+	return TCL_ERROR;
+    }
+
+    if (TCL_OK == Tcl_GetIntFromObj(0, objv[1], &joint)) {
+	sendSetHomed(joint);
+	return TCL_OK;
+    }
+
+    setresult(interp,"emc_set_homed: need joint as integer, 0..");
     return TCL_ERROR;
 }
 
@@ -3676,6 +3699,9 @@ int Linuxcnc_Init(Tcl_Interp * interp)
 			 (Tcl_CmdDeleteProc *) NULL);
 
     Tcl_CreateObjCommand(interp, "emc_home", emc_home, (ClientData) NULL,
+			 (Tcl_CmdDeleteProc *) NULL);
+
+    Tcl_CreateObjCommand(interp, "emc_set_homed", emc_set_homed, (ClientData) NULL,
 			 (Tcl_CmdDeleteProc *) NULL);
 
     Tcl_CreateObjCommand(interp, "emc_unhome", emc_unhome, (ClientData) NULL,
