@@ -249,8 +249,6 @@ class IconFileSelection(gtk.HBox):
 
     def _get_icon(self, name):
         theme = gtk.icon_theme_get_default()
-        # return theme.load_icon(name, self.icon_size, 0) # breaks program load
-
         if name == "folder":
             name = gtk.STOCK_DIRECTORY
         else:

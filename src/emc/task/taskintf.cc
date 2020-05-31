@@ -327,6 +327,8 @@ int emcJointSetHomingParams(int joint, double home, double offset, double home_f
                   emcmotCommand.flags |= HOME_NO_REHOME;
                   emcmotCommand.flags |= HOME_NO_FINAL_MOVE;
                   break;
+          case 8: emcmotCommand.flags |= HOME_SAVE_MOTOR_OFFS;
+                  break;
           default: fprintf(stderr,
                    "Unknown option for absolute_encoder <%d>",absolute_encoder);
                   break;
@@ -1684,8 +1686,12 @@ int emcPositionSave() {
     FILE *f = fopen(posfile, "w");
     if(!f) return -1;
     for(int i=0; i<EMCMOT_MAX_JOINTS; i++) {
-	// int r = fprintf(f, "%.17f\n", emcmotStatus.joint_status[i].pos_fb);
-	int r = fprintf(f, "%.17f\n", -emcmotStatus.joint_status[i].motor_offset);
+	int r;
+	if (emcmotStatus.joint_status[i].motor_offset == 0.0) {
+		r = fprintf(f, "%.17f\n", emcmotStatus.joint_status[i].pos_fb);
+	} else {
+		r = fprintf(f, "%.17f\n", -emcmotStatus.joint_status[i].motor_offset);
+	}
 	if(r < 0) { fclose(f); return -1; }
     }
     fclose(f);

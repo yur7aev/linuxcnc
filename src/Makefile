@@ -117,7 +117,7 @@ SUBDIRS := \
     rtapi/examples/timer rtapi/examples/semaphore rtapi/examples/shmem \
     rtapi/examples/extint rtapi/examples/fifo rtapi/examples rtapi \
     \
-    hal/components hal/drivers hal/drivers/mesa-hostmot2 hal/drivers/nyx \
+    hal/components hal/drivers hal/drivers/mesa-hostmot2 \
     hal/user_comps/devices hal/user_comps/mb2hal \
     hal/user_comps hal/user_comps/vismach hal/user_comps/vfs11_vfd hal/classicladder hal/utils hal \
     hal/user_comps/vfdb_vfd hal/user_comps/wj200_vfd \
@@ -584,7 +584,6 @@ install-dirs:
 		$(DESTDIR)$(datadir)/linuxcnc/pncconf \
 		$(DESTDIR)$(datadir)/linuxcnc/pncconf/pncconf-help \
 		$(DESTDIR)$(datadir)/linuxcnc/hallib
-#		$(DESTDIR)$(datadir)/nyx
 
 install-kernel-indep: install-dirs
 	$(FILE) ../docs/man/man1/*.1 $(DESTDIR)$(mandir)/man1
@@ -656,7 +655,6 @@ install-kernel-indep: install-dirs
 	$(FILE) ../lib/python/gladevcp/widget*.png  $(DESTDIR)$(datadir)/glade3/pixmaps/
 
 	$(FILE) ../share/gtksourceview-2.0/language-specs/*.lang  $(DESTDIR)$(datadir)/gtksourceview-2.0/language-specs/
-#	$(FILE) ../share/nyx/* $(DESTDIR)$(prefix)/share/nyx
 
 install-kernel-indep: install-python
 install-python: install-dirs

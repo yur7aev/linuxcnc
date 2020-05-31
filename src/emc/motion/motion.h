@@ -482,6 +482,7 @@ Suggestion: Split this in to an Error and a Status flag register..
 #define HOME_ABSOLUTE_ENCODER  16
 #define HOME_NO_REHOME         32
 #define HOME_NO_FINAL_MOVE     64
+#define HOME_SAVE_MOTOR_OFFS  256
 
 /* flags for enabling spindle scaling, feed scaling,
    adaptive feed, and feed hold */
