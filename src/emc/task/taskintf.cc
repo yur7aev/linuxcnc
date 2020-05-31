@@ -327,8 +327,6 @@ int emcJointSetHomingParams(int joint, double home, double offset, double home_f
                   emcmotCommand.flags |= HOME_NO_REHOME;
                   emcmotCommand.flags |= HOME_NO_FINAL_MOVE;
                   break;
-          case 8: emcmotCommand.flags |= HOME_SAVE_MOTOR_OFFS;
-                  break;
           default: fprintf(stderr,
                    "Unknown option for absolute_encoder <%d>",absolute_encoder);
                   break;
@@ -1675,10 +1673,8 @@ int emcPositionSave() {
     try {
         posfile = ini.Find("POSITION_FILE", "TRAJ");
     } catch (IniFile::Exception e) {
-        ini.Close();
         return -1;
     }
-    ini.Close();
 
     if(!posfile || !posfile[0]) return 0;
     // like the var file, make sure the posfile is recreated according to umask
@@ -1686,13 +1682,19 @@ int emcPositionSave() {
     FILE *f = fopen(posfile, "w");
     if(!f) return -1;
     for(int i=0; i<EMCMOT_MAX_JOINTS; i++) {
-	int r;
-	if (emcmotStatus.joint_status[i].motor_offset == 0.0) {
-		r = fprintf(f, "%.17f\n", emcmotStatus.joint_status[i].pos_fb);
-	} else {
-		r = fprintf(f, "%.17f\n", -emcmotStatus.joint_status[i].motor_offset);
-	}
-	if(r < 0) { fclose(f); return -1; }
+	int r = 0;
+	char jointString[16];
+	int absolute = 0;
+
+	snprintf(jointString, sizeof(jointString), "JOINT_%d", i);
+	try {
+	    ini.Find(&absolute, "ABSOLUTE_ENCODER", jointString);
+	} catch (IniFile::Exception e) {
+        }
+
+	r = fprintf(f, "%.17f\n", absolute ?
+		-emcmotStatus.joint_status[i].motor_offset :
+		emcmotStatus.joint_status[i].pos_fb);
     }
     fclose(f);
     return 0;
