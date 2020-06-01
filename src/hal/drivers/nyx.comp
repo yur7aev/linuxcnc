@@ -9,8 +9,6 @@ param rw   float servo-##.pos-scale[16 : personality] = 5.0;	// travel units per
 param rw   float servo-##.vel-scale[16 : personality] = 10.0;	// rpm (1 rpm resolution)
 param rw   float servo-##.trq-scale[16 : personality] = 1.0;	// 1% resolution
 
-pin out   signed servo-##.dbg[16 : personality];
-pin out unsigned servo-##.debug[16 : personality];
 pin out      bit servo-##.online[16 : personality] "drive detected";
 pin out      bit servo-##.offline[16 : personality] "no drive detected";
 pin out      bit servo-##.ready[16 : personality]   "READY ON";
@@ -58,13 +56,17 @@ pin out      bit servo-##.di1[16 : personality] "MR-J3-B DI1 input";
 pin out      bit servo-##.di2[16 : personality] "MR-J3-B DI2 input";
 pin out      bit servo-##.di3[16 : personality] "MR-J3-B DI3 input";
 
+pin out   signed servo-##.dbg[16 : personality];
+//pin out unsigned servo-##.debug[16 : personality];
+
 pin out      bit ready "controller in sync with NC";
 pin out    float phase "sync deviation, should be <40us";
 pin out   signed error-cnt "number of controller comm errors";
-pin out   signed dbg0;
-pin out   signed dbg1;
-pin out   signed dbg2;
-pin out unsigned dbg3;
+
+//pin out   signed dbg0;
+//pin out   signed dbg1;
+//pin out   signed dbg2;
+//pin out unsigned dbg3;
 
 pin out      bit in-##[29] "CN1 inputs";
 pin out      bit in-##-not[29] "CN1 inputs, inverted";
@@ -92,7 +94,7 @@ variable int enc_counts[2];
 variable int enc_changed[2];
 
 function _;
-variable unsigned inum;
+variable unsigned inum;		// card number
 
 license "GPL";
 
@@ -174,7 +176,7 @@ int yssc2_fb_seq(YSSC2 *y)		{ return y->dpram->fb.seq; }
 double yssc2_irq_time_us(YSSC2 *y)	{ return y->dpram->fb.irq_time / 45.0; }
 ///double yssc2_debug(YSSC2 *y, int n)	{ return 0; } ///y->dpram->dbg[n]; }
 double   yssc2_state(YSSC2 *y, int n)	{ return FB(n).state; }
-unsigned yssc2_debug(YSSC2 *y, int n)	{ return FB(n).smth2; }
+///unsigned yssc2_debug(YSSC2 *y, int n)	{ return FB(n).smth2; }
 double yssc2_rx_time(YSSC2 *y, int n)	{ return FB(n).rxtime; }
 
 int yssc2_has_fb(YSSC2 *y)		{ return (y->dpram->fb.seq & YS_FB) && 1; }
@@ -496,13 +498,16 @@ FUNCTION(_)
 
 	yssc2_process(y);	// state machine, request servo data: absolute origin, encoder res, etc
 
+	/*
 	dbg0 = yssc2_yi(y, 13);
 	dbg1 = yssc2_yi(y, 14);
 	dbg2 = yssc2_yi(y, 15);
 	dbg3 = yssc2_fb_seq(y);
+	*/
+
 	// process received data
 	for (a = 0; a < yssc2_axes(y); a++) {
-		servo_debug(a) = yssc2_debug(y, a);
+		// servo_debug(a) = yssc2_debug(y, a);
 		if (ready && yssc2_online(y, a)) {
 			if (yssc2_feedback_res(y, a) == 0) continue;
 			if (yssc2_has_fb(y)) {
@@ -1113,7 +1118,6 @@ static int yssc2_pci_probe(struct rtapi_pci_dev *dev, const struct rtapi_pci_dev
 			r = -ENODEV;
 			goto fail1;
 		}
-
 
 		rtapi_print_msg(RTAPI_MSG_INFO, "nyx: YxxxnP v%d.%d #%d at %s, mapped to %p..%p, y=%p\n", rev_maj, rev_min,
 			num_boards, rtapi_pci_name(dev), y->iomem, y->iomem - y->iolen, y);
