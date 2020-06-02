@@ -20,8 +20,10 @@
 #define CLASS_NAME "servo"
 
 #define YSSC_VENDOR_ID 0x1067
+#define YMTL_VENDOR_ID 0x1313
 #define YSSC2P_DEVICE_ID 0x55c2
 #define YSSC3P_DEVICE_ID 0x55c3
+#define YMTL2P_DEVICE_ID 0x0712
 #define YSSC_MAX_BOARDS 8
 
 
@@ -175,7 +177,7 @@ static int nyx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	pci_read_config_word(pdev, PCI_VENDOR_ID, &vendor);
 	pci_read_config_word(pdev, PCI_DEVICE_ID, &device);
 
-	printk(KERN_INFO "nyx: v2.3.0 vid=%x pid=%x\n", vendor, device);
+	printk(KERN_INFO "nyx: v2.4.0 vid=%x pid=%x\n", vendor, device);
 
 	bar = pci_select_bars(pdev, IORESOURCE_MEM);
 	err = pci_enable_device_mem(pdev);
@@ -475,7 +477,7 @@ static int nyx_mmap(struct file *filp, struct vm_area_struct *vma)
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Dmitry Yurtaev <dmitry@yurtaev.com");
 MODULE_DESCRIPTION("NYX servo interface card");
-MODULE_VERSION("2.3.0");
+MODULE_VERSION("2.4.0");
 MODULE_SUPPORTED_DEVICE("nyx");
 
 module_init(nyx_init);
