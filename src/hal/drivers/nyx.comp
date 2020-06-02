@@ -2,7 +2,7 @@
  *
  */
 
-component nyx "YSSC2P/YSSC3P/YMDS2P Mitsubishi servo PCI interface card driver";
+component nyx "YxxxxP servo interface card driver";
 
 param rw  signed servo-##.origin[16 : personality] = 0;		// 32bit servo command-feedback offset to prevent integer overflow
 param rw   float servo-##.pos-scale[16 : personality] = 5.0;	// travel units per revolution (5mm)

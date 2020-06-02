@@ -30,6 +30,7 @@
 static struct pci_device_id nyx_pci_ids[] = {
 	{ PCI_DEVICE(YSSC_VENDOR_ID, YSSC2P_DEVICE_ID) },
 	{ PCI_DEVICE(YSSC_VENDOR_ID, YSSC3P_DEVICE_ID) },
+	{ PCI_DEVICE(YMTL_VENDOR_ID, YMTL2P_DEVICE_ID) },
 	{0,}
 };
 
