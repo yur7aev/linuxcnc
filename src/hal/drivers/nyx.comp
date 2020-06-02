@@ -674,16 +674,13 @@ FUNCTION(_)
 #include <rtapi_slab.h>
 
 #ifdef __KERNEL__
-
-#include <linux/fs.h>      // Needed by filp
-#include <linux/delay.h>      // Needed by filp
-#include <asm/uaccess.h>   // Needed by segment descriptors
+#include <linux/fs.h>		// Needed by filp
+#include <linux/delay.h>	// Needed by filp
+#include <asm/uaccess.h>	// Needed by segment descriptors
 #include <rtapi_pci.h>
-
 #define malloc(a) kmalloc(a, GFP_KERNEL)
 #define free(a) kfree(a)
 #define realloc(p, a) krealloc(p, a, GFP_KERNEL)
-
 int strtol(char *s, char **endptr, int base)
 {
 	long l;
@@ -693,9 +690,7 @@ int strtol(char *s, char **endptr, int base)
 	}
 	return l;
 }
-
 #else 
-
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <unistd.h>
