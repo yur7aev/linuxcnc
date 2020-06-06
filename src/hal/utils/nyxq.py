@@ -562,11 +562,11 @@ def config(cfg):
 	elif cfg == 'save':
 		req(0x00040016)    # save
 	elif cfg == None:
-		req(0x00040025) # get
+		req(0x00040021) # read
 		print "excfg: %x" % dp.buf.dword[1]
                 print "pll: %d %d %d %d" % (dp.buf.dword[2], dp.buf.dword[3], dp.buf.dword[4], dp.buf.dword[5])
         else:
-		req(0x00040024, int(cfg, 16))    # set
+		req(0x00040023, int(cfg, 16))    # write
 
 # ==============================
 
