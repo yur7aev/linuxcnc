@@ -50,7 +50,7 @@ class bolt_circle:
             Popen('axis-remote {}'.format(fName), stdout = PIPE, shell = True)
         elif self.gui == 'gmoccapy':
             self.c = linuxcnc.command()
-            self.c.program_open('blank.ngc')
+            self.c.program_open('./plasmac/blank.ngc')
             self.c.program_open(fName)
         else:
             print('Unknown GUI in .ini file')
@@ -117,6 +117,14 @@ class bolt_circle:
             holes = int(self.hEntry.get_text())
         else:
             holes = 0
+        if self.cAEntry.get_text():
+            cAngle = float(self.cAEntry.get_text())
+        else:
+            cAngle = 360.0
+        if cAngle == 360:
+            hAngle = math.radians(cAngle / holes)
+        else:
+            hAngle = math.radians(cAngle / (holes - 1))
         if cRadius > 0 and hRadius > 0 and holes > 0:
             ijDiff = 0
             if self.offset.get_active():
@@ -144,7 +152,6 @@ class bolt_circle:
                 leadIn = hRadius
             if leadInOffset > hRadius:
                 leadInOffset = hRadius
-            hAngle = math.radians(360 / float(holes))
             if self.xSEntry.get_text():
                 if self.centre.get_active():
                     xC = float(self.xSEntry.get_text())
@@ -334,8 +341,8 @@ class bolt_circle:
         t.attach(self.ySEntry, 1, 2, 4, 5)
         self.centre = gtk.RadioButton(None, 'Centre')
         t.attach(self.centre, 1, 2, 5, 6)
-        bLeft = gtk.RadioButton(self.centre, 'Bottom Left')
-        t.attach(bLeft, 0, 1, 5, 6)
+        self.bLeft = gtk.RadioButton(self.centre, 'Bottom Left')
+        t.attach(self.bLeft, 0, 1, 5, 6)
         dLabel = gtk.Label('Diameter')
         dLabel.set_alignment(0.95, 0.5)
         dLabel.set_width_chars(10)
@@ -366,6 +373,14 @@ class bolt_circle:
         self.aEntry.set_width_chars(10)
         self.aEntry.set_text('0')
         t.attach(self.aEntry, 1, 2, 9, 10)
+        cALabel = gtk.Label('Circle Angle')
+        cALabel.set_alignment(0.95, 0.5)
+        cALabel.set_width_chars(10)
+        t.attach(cALabel, 2, 3, 9, 10)
+        self.cAEntry = gtk.Entry()
+        self.cAEntry.set_width_chars(10)
+        self.cAEntry.set_text('360')
+        t.attach(self.cAEntry, 3, 4, 9, 10)
         preview = gtk.Button('Preview')
         preview.connect('pressed', self.send_preview)
         t.attach(preview, 0, 1, 11, 12)
@@ -377,7 +392,7 @@ class bolt_circle:
         end.connect('pressed', self.end_this_shape)
         t.attach(end, 4, 5, 11, 12)
         pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(
-                filename='./wizards/images/bolt-circle.png', 
+                filename='./plasmac/wizards/images/bolt-circle.png', 
                 width=240, 
                 height=240)
         image = gtk.Image()
@@ -392,6 +407,11 @@ class bolt_circle:
                     self.preamble = line.strip().split('=')[1]
                 elif line.startswith('postamble'):
                     self.postamble = line.strip().split('=')[1]
+                elif line.startswith('origin'):
+                    if line.strip().split('=')[1] == 'True':
+                        self.centre.set_active(1)
+                    else:
+                        self.bLeft.set_active(1)
                 elif line.startswith('lead-in'):
                     self.liEntry.set_text(line.strip().split('=')[1])
                 elif line.startswith('lead-out'):

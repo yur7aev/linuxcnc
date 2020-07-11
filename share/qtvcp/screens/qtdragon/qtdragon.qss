@@ -49,6 +49,11 @@ QLabel {
     color: black;
 }
 
+QLabel#lbl_cycle_start, #lbl_home_all{
+    font: 10pt "Lato Heavy";
+    color:  white;
+}
+
 QLabel#label_axis_x,  QLabel#label_axis_y,  QLabel#label_axis_z,  QLabel#label_axis_a {
     background: qlineargradient(spread:reflect, x1:0.5, y1:0, x2:0.5, y2:0.66, stop:0 rgba(240, 240, 240, 255), stop:0.6 rgba(20, 20, 20, 255));
     border: 2px solid black;
@@ -111,6 +116,19 @@ QProgressBar::chunk {
 
 .QFrame {
     background: url(:/newPrefix/images/qtdragon/images/brushed_metal.png)
+}
+
+QFrame#frame_cycle_start, QFrame#frame_home_all {
+ background: qlineargradient(spread:reflect, x1:0.5, y1:0, x2:0.5, y2:0.66, stop:0 rgba(240, 240, 240, 255), stop:0.6 rgba(20, 20, 20, 255));
+    border: 2px solid black;
+    border-radius: 4px;
+    font: 10pt "Lato Heavy";
+    color: #FFFFD0;
+}
+
+
+QFrame#frame_cycle_start:hover, QFrame#frame_home_all:hover {
+    border: 2px solid #3DAEE9;
 }
 
 QTabWidget::pane > QWidget {

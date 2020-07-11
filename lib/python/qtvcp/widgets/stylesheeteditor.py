@@ -119,7 +119,7 @@ class StyleSheetEditor(QDialog):
             fileNames= [f for f in os.listdir(localqss) if f.endswith('.qss')]
             for i in(fileNames):
                 item = QtGui.QStandardItem(i)
-                item.setData(localqss, role = QtCore.Qt.UserRole + 1)
+                item.setData(os.path.join(localqss, i), role = QtCore.Qt.UserRole + 1)
                 model.appendRow(item)
         except Exception as e:
             print e
@@ -138,10 +138,10 @@ class StyleSheetEditor(QDialog):
     def on_applyButton_clicked(self):
         if self.tabWidget.currentIndex() == 0:
             self.parent.setStyleSheet(self.styleTextView.toPlainText())
-        if WIDGETS.PREFS_:
-            index = self.styleSheetCombo.currentIndex()
-            path = self.styleSheetCombo.itemData(index,role = QtCore.Qt.UserRole + 1)
-            WIDGETS.PREFS_.putpref('style_QSS_Path', path , str, 'BOOK_KEEPING')
+            if WIDGETS.PREFS_:
+                index = self.styleSheetCombo.currentIndex()
+                path = self.styleSheetCombo.itemData(index,role = QtCore.Qt.UserRole + 1)
+                WIDGETS.PREFS_.putpref('style_QSS_Path', path , str, 'BOOK_KEEPING')
         else:
             self.parent.setStyleSheet(self.styleTextEdit.toPlainText())
 

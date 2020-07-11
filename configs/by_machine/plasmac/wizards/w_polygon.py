@@ -50,7 +50,7 @@ class polygon:
             Popen('axis-remote {}'.format(fName), stdout = PIPE, shell = True)
         elif self.gui == 'gmoccapy':
             self.c = linuxcnc.command()
-            self.c.program_open('blank.ngc')
+            self.c.program_open('./plasmac/blank.ngc')
             self.c.program_open(fName)
         else:
             print('Unknown GUI in .ini file')
@@ -300,8 +300,8 @@ class polygon:
         t.attach(self.ySEntry, 1, 2, 4, 5)
         self.centre = gtk.RadioButton(None, 'Centre')
         t.attach(self.centre, 1, 2, 5, 6)
-        bLeft = gtk.RadioButton(self.centre, 'Bottom Left')
-        t.attach(bLeft, 0, 1, 5, 6)
+        self.bLeft = gtk.RadioButton(self.centre, 'Bottom Left')
+        t.attach(self.bLeft, 0, 1, 5, 6)
         sLabel = gtk.Label('Sides')
         sLabel.set_alignment(0.95, 0.5)
         sLabel.set_width_chars(10)
@@ -342,7 +342,7 @@ class polygon:
         end.connect('pressed', self.end_this_shape)
         t.attach(end, 4, 5, 11, 12)
         pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(
-                filename='./wizards/images/polygon.png', 
+                filename='./plasmac/wizards/images/polygon.png', 
                 width=240, 
                 height=240)
         image = gtk.Image()
@@ -357,6 +357,11 @@ class polygon:
                     self.preamble = line.strip().split('=')[1]
                 elif line.startswith('postamble'):
                     self.postamble = line.strip().split('=')[1]
+                elif line.startswith('origin'):
+                    if line.strip().split('=')[1] == 'True':
+                        self.centre.set_active(1)
+                    else:
+                        self.bLeft.set_active(1)
                 elif line.startswith('lead-in'):
                     self.liEntry.set_text(line.strip().split('=')[1])
                 elif line.startswith('lead-out'):
