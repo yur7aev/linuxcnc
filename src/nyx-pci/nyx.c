@@ -14,7 +14,7 @@
 #include <linux/uaccess.h>
 #include <linux/delay.h>
 
-#include "nyx2.h"
+#include <nyx2.h>
 
 #define DEVICE_NAME "nyx"
 #define CLASS_NAME "servo"

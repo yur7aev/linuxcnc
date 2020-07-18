@@ -96,7 +96,7 @@ variable unsigned inum;
 
 license "GPL";
 
-include "nyx2.h";
+include <nyx2.h>;
 
 ;;
 
