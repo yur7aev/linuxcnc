@@ -1,4 +1,11 @@
+linuxcnc (1:2.8.0nyx11~pre1) dmitry; urgency=low
+
+  * merged upstream 2.8
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sat, 11 Jul 2020 14:22:01 +0300
+
 linuxcnc (1:2.8.0nyx10~pre1) dmitry; urgency=low
+
   * nyx 2.4
   * removed nyxp, moved .par parser to the nyx module
   * mechatrolink params
