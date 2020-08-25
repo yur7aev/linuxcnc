@@ -14,7 +14,8 @@ net plasmac:cutting-start           spindle.0.on                =>  plasmac.cutt
 net plasmac:feed-override           halui.feed-override.value   =>  plasmac.feed-override
 net plasmac:feed-reduction          motion.analog-out-03        =>  plasmac.feed-reduction
 net plasmac:float-switch-out        debounce.0.0.out            =>  plasmac.float-switch
-net plasmac:offset-current          axis.z.eoffset              =>  plasmac.offset-current
+net plasmac:ignore-arc-ok-0         motion.digital-out-01       =>  plasmac.ignore-arc-ok-0
+net plasmac:motion-type             motion.motion-type          =>  plasmac.motion-type
 net plasmac:ohmic-probe-out         debounce.0.2.out            =>  plasmac.ohmic-probe
 net plasmac:program-is-idle         halui.program.is-idle       =>  plasmac.program-is-idle
 net plasmac:program-is-paused       halui.program.is-paused     =>  plasmac.program-is-paused
@@ -23,11 +24,14 @@ net plasmac:requested-velocity      motion.requested-vel        =>  plasmac.requ
 net plasmac:thc-disable             motion.digital-out-02       =>  plasmac.thc-disable
 net plasmac:torch-off               motion.digital-out-03       =>  plasmac.torch-off
 net plasmac:units-per-mm            halui.machine.units-per-mm  =>  plasmac.units-per-mm
+net plasmac:x-offset-current        axis.x.eoffset              =>  plasmac.x-offset-current
+net plasmac:y-offset-current        axis.y.eoffset              =>  plasmac.y-offset-current
+net plasmac:z-offset-current        axis.z.eoffset              =>  plasmac.z-offset-current
 
 # outputs
 net plasmac:adaptive-feed           plasmac.adaptive-feed       =>  motion.adaptive-feed
+net plasmac:cutting-stop            halui.spindle.0.stop        =>  plasmac.cutting-stop
 net plasmac:feed-hold               plasmac.feed-hold           =>  motion.feed-hold
-net plasmac:offset-enable           plasmac.offset-enable       =>  axis.x.eoffset-enable axis.y.eoffset-enable axis.z.eoffset-enable
 net plasmac:offset-scale            plasmac.offset-scale        =>  axis.x.eoffset-scale axis.y.eoffset-scale axis.z.eoffset-scale
 net plasmac:program-pause           plasmac.program-pause       =>  halui.program.pause
 net plasmac:program-resume          plasmac.program-resume      =>  halui.program.resume
@@ -36,7 +40,9 @@ net plasmac:program-stop            plasmac.program-stop        =>  halui.progra
 net plasmac:torch-on                plasmac.torch-on
 net plasmac:x-offset-counts         plasmac.x-offset-counts     =>  axis.x.eoffset-counts
 net plasmac:y-offset-counts         plasmac.y-offset-counts     =>  axis.y.eoffset-counts
+net plasmac:xy-offset-enable        plasmac.xy-offset-enable    =>  axis.x.eoffset-enable axis.y.eoffset-enable
 net plasmac:z-offset-counts         plasmac.z-offset-counts     =>  axis.z.eoffset-counts
+net plasmac:z-offset-enable         plasmac.z-offset-enable     =>  axis.z.eoffset-enable
 
 # multiple spindles
 if [info exists ::TRAJ(SPINDLES)] {

@@ -700,22 +700,33 @@ def user_button_pressed(button,commands):
     if w(fbuttons + '.button' + button,'cget','-state') == 'disabled' or \
        not commands: return
     from subprocess import Popen,PIPE
-    if 'change-consumables' in commands.lower():
+    if 'change-consumables' in commands.lower() and not hal.get_value('plasmac.breakaway'):
+        consumable_change_setup(ccParm)
         if hal.get_value('axis.x.eoffset-counts') or hal.get_value('axis.y.eoffset-counts'):
             hal.set_p('plasmac.consumable-change', '0')
             hal.set_p('plasmac.x-offset', '0')
             hal.set_p('plasmac.y-offset', '0')
         else:
             global ccF, ccX, ccY
-            hal.set_p('plasmac.xy-feed-rate', str(int(ccF)))
-            if ccX or ccX == 0:
-                hal.set_p('plasmac.x-offset', '{:.0f}'.format((ccX - s.position[0]) / hal.get_value('plasmac.offset-scale')))
+            if ccF == 'None' or ccF < 1:
+                print('invalid consumable change feed rate')
+                return
             else:
-                hal.set_p('plasmac.x-offset', '0')
-            if ccY or ccY == 0:
-                hal.set_p('plasmac.y-offset', '{:.0f}'.format((ccY - s.position[1]) / hal.get_value('plasmac.offset-scale')))
-            else:
-                hal.set_p('plasmac.y-offset', '0')
+                hal.set_p('plasmac.xy-feed-rate', str(float(ccF)))
+            if ccX == 'None':
+                ccX = s.position[0]
+            if ccX < round(float(inifile.find('AXIS_X', 'MIN_LIMIT')), 6) + (10 * hal.get_value('halui.machine.units-per-mm')):
+                ccX = round(float(inifile.find('AXIS_X', 'MIN_LIMIT')), 6) + (10 * hal.get_value('halui.machine.units-per-mm'))
+            elif ccX > round(float(inifile.find('AXIS_X', 'MAX_LIMIT')), 6) - (10 * hal.get_value('halui.machine.units-per-mm')):
+                ccX = round(float(inifile.find('AXIS_X', 'MAX_LIMIT')), 6) - (10 * hal.get_value('halui.machine.units-per-mm'))
+            if ccY == 'None':
+                ccY = s.position[1]
+            if ccY < round(float(inifile.find('AXIS_Y', 'MIN_LIMIT')), 6) + (10 * hal.get_value('halui.machine.units-per-mm')):
+                ccY = round(float(inifile.find('AXIS_Y', 'MIN_LIMIT')), 6) + (10 * hal.get_value('halui.machine.units-per-mm'))
+            elif ccY > round(float(inifile.find('AXIS_Y', 'MAX_LIMIT')), 6) - (10 * hal.get_value('halui.machine.units-per-mm')):
+                ccY = round(float(inifile.find('AXIS_Y', 'MAX_LIMIT')), 6) - (10 * hal.get_value('halui.machine.units-per-mm'))
+            hal.set_p('plasmac.x-offset', '{:.0f}'.format((ccX - s.position[0]) / hal.get_value('plasmac.offset-scale')))
+            hal.set_p('plasmac.y-offset', '{:.0f}'.format((ccY - s.position[1]) / hal.get_value('plasmac.offset-scale')))
             hal.set_p('plasmac.consumable-change', '1')
     elif 'ohmic-test' in commands.lower():
         hal.set_p('plasmac.ohmic-test','1')
@@ -841,7 +852,9 @@ def user_live_update():
     # set buttons state
     for n in range(1,6):
         if 'change-consumables' in iniButtonCode[n]:
-            if hal.get_value('halui.program.is-paused'):
+            if hal.get_value('halui.program.is-paused') and \
+               hal.get_value('plasmac.stop-type-out') > 1 and not \
+               hal.get_value('plasmac.cut-recovering'):
                 w(fbuttons + '.button' + str(n),'configure','-state','normal')
             else:
                 w(fbuttons + '.button' + str(n),'configure','-state','disabled')
@@ -859,7 +872,9 @@ def user_live_update():
         w(ftorch + '.torch-button','configure','-state','normal')
     else:
         w(ftorch + '.torch-button','configure','-state','disabled')
-    if hal.get_value('halui.program.is-paused')  or hal.get_value('plasmac.paused-motion-speed'):
+    if (hal.get_value('halui.program.is-paused') or \
+       hal.get_value('plasmac.paused-motion-speed')) and \
+       not hal.get_value('plasmac.cut-recovery'):
         if orientation == 'portrait':
             w(fpausedmotion + '.reverse','configure','-state','normal')
             w(fpausedmotion + '.forward','configure','-state','normal')
@@ -956,7 +971,7 @@ def configure_widgets():
 
 def consumable_change_setup(ccParm):
     global ccF, ccX, ccY
-    ccX = ccY = ccF = ''
+    ccX = ccY = ccF = 'None'
     X = Y = F = ''
     ccAxis = [X, Y, F]
     ccName = ['x', 'y', 'f']
@@ -982,20 +997,6 @@ def consumable_change_setup(ccParm):
                 ccY = float(ccAxis[loop])
             elif ccName[loop] == 'f' and ccAxis[loop]:
                 ccF = float(ccAxis[loop])
-    if ccX and \
-       (ccX < round(float(inifile.find('AXIS_X', 'MIN_LIMIT')), 6) or \
-       ccX > round(float(inifile.find('AXIS_X', 'MAX_LIMIT')), 6)):
-        print('x out of bounds for consumable change\n')
-        raise SystemExit()
-    if ccY and \
-       (ccY < round(float(inifile.find('AXIS_Y', 'MIN_LIMIT')), 6) or \
-       ccY > round(float(inifile.find('AXIS_Y', 'MAX_LIMIT')), 6)):
-        print('y out of bounds for consumable change\n')
-        raise SystemExit()
-    if not ccF:
-        print('invalid consumable change feed rate\n')
-        raise SystemExit()
-
 
 ################################################################################
 # setup
@@ -1014,11 +1015,6 @@ w(foverride + '.height-override','configure','-text','%0.1fV' % (torch_height))
 for button in range(1,6):
     if 'change-consumables' in inifile.find('PLASMAC', 'BUTTON_' + str(button) + '_CODE'):
         ccParm = inifile.find('PLASMAC','BUTTON_' + str(button) + '_CODE').replace('change-consumables','').replace(' ','').lower() or None
-        if ccParm:
-            consumable_change_setup(ccParm)
-        else:
-            print('consumable change parameters required\n')
-        break
 wScales = [\
     ftorch + '.torch-pulse-time',\
     fpausedmotion + '.paused-motion-speed',\
