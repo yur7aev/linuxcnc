@@ -61,7 +61,7 @@ import hal
 try:
     LINUXCNCVERSION = os.environ['LINUXCNCVERSION']
 except:
-    LINUXCNCVERSION = 'UNAVAILABLE'
+    LINUXCNCVERSION = 'Master (2.9)'
 
 def get_value(w):
     try:
@@ -340,8 +340,10 @@ class App:
             itr = self.widgets.discovery_interface_combobox.get_active_iter()
             d = self.widgets.discovery_interface_combobox.get_model().get_value(itr, 1)
             a = self.widgets.discovery_address_entry.get_text()
-        print('discovery:',n,d,a)
-        return n,d,a
+            r =  self.widgets.discovery_read_option.get_active()
+            print ('discovery:',n,d,a,r)
+            return n,d,a,r
+        return None,None,None,None
 
     def discovery_interface_combobox_changed(self,w):
         itr = w.get_active_iter()
@@ -486,10 +488,6 @@ class App:
         self.widgets.help_window.set_title(_("Help Pages") )
         self.widgets.helpnotebook.set_current_page(0)
         self.widgets.help_window.show_all()
-        if self.debugstate:
-            self.widgets.input_tab.set_visible(True)
-        else:
-            self.widgets.input_tab.set_visible(False)
         self.widgets.help_window.present()
 
     def print_page(self,print_dialog, context, n, imagename):
@@ -1210,18 +1208,28 @@ PNCconf will use internal firmware data"%self._p.FIRMDIR),True)
             return temp
 
     def discover_mesacards(self):
-        name, interface, address = self.get_discovery_meta()
+        name, interface, address, readoption = self.get_discovery_meta()
         if name is None: return None
 
         if not name:
             name = '5i25'
 
-        if self.debugstate:
+        if self.debugstate or readoption:
             print('try to discover board by reading help text input:',name)
             buf = self.widgets.textinput.get_buffer()
             info = buf.get_text(buf.get_start_iter(),
                         buf.get_end_iter(),
                         True)
+
+            # This is a HACK to pass info about the interface forward
+            # otherwise thw driver info is blank in the discovered firmware
+            if interface == '--addr':
+                inter = 'ETH'
+            elif interface == '--epp':
+                inter = 'EPP'
+            else:
+                inter = 'PCI'
+            info = info + "\n {}".format(inter)
         else:
             info = self.call_mesaflash(name,interface,address)
         print('INFO:',info,'<-')
@@ -1330,13 +1338,18 @@ PNCconf will use internal firmware data"%self._p.FIRMDIR),True)
             i = i.lstrip()
             temp2 = i.split(" ")
             #print i,temp2
-            if 'ETH' in i:
-                DRIVER = 'hm2_eth'
-            if 'PCI' in i:
-                DRIVER = 'hm2_pci'
             if 'BOARDNAME' in i:
                 BOARDNAME = temp2[2].strip('MESA').lower()
                 add_text(ELEMENT,'BOARDNAME',BOARDNAME)
+            if 'ETH' in i:
+                DRIVER = 'hm2_eth'
+            elif 'PCI' in i:
+                DRIVER = 'hm2_pci'
+            elif 'EPP' in i:
+                if '7i43' in BOARDNAME.lower():
+                    DRIVER = 'hm2_7i43'
+                else:
+                    DRIVER = 'hm2_7i90'
             if 'DEVICE AT' in i:
                 if ssflag:
                     n1 = add_element(ELEMENT,'SSERIALDEVICES')

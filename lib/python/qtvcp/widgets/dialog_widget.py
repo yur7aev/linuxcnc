@@ -28,7 +28,6 @@ from PyQt5 import uic
 from qtvcp.widgets.widget_baseclass import _HalWidgetBase, hal
 from qtvcp.widgets.origin_offsetview import OriginOffsetView as OFFVIEW_WIDGET
 from qtvcp.widgets.tool_offsetview import ToolOffsetView as TOOLVIEW_WIDGET
-from qtvcp.widgets.camview_widget import CamView
 from qtvcp.widgets.macro_widget import MacroTab
 from qtvcp.widgets.versa_probe import VersaProbe
 from qtvcp.widgets.entry_widget import TouchInputWidget
@@ -875,6 +874,7 @@ class ToolOffsetDialog(QDialog, GeometryMixin):
 class CamViewDialog(QDialog, GeometryMixin):
     def __init__(self, parent=None):
         super(CamViewDialog, self).__init__(parent)
+        from qtvcp.widgets.camview_widget import CamView
         self._color = QColor(0, 0, 0, 150)
         self._state = False
         self._request_name = 'CAMVIEW'
@@ -1094,8 +1094,7 @@ class VersaProbeDialog(QDialog, GeometryMixin):
         l.addWidget(buttonBox)
 
     def _hal_init(self):
-        self._o.hal_init(self.HAL_GCOMP_, self.HAL_NAME_, self.QT_OBJECT_,
-                     self.QTVCP_INSTANCE_, self.PATHS_, self.PREFS_)
+        self._o.hal_init()
         self.set_default_geometry()
         STATUS.connect('dialog-request', self._external_request)
 
