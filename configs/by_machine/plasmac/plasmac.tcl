@@ -28,6 +28,12 @@ net plasmac:x-offset-current        axis.x.eoffset              =>  plasmac.x-of
 net plasmac:y-offset-current        axis.y.eoffset              =>  plasmac.y-offset-current
 net plasmac:z-offset-current        axis.z.eoffset              =>  plasmac.z-offset-current
 
+# use existing machine-is-on signal from pncconf if it exists
+if {[hal list sig machine-is-on] != {}} {
+    net machine-is-on                                           =>  plasmac.machine-is-on
+} else {
+    net machine-is-on               halui.machine.is-on         =>  plasmac.machine-is-on
+}
 # outputs
 net plasmac:adaptive-feed           plasmac.adaptive-feed       =>  motion.adaptive-feed
 net plasmac:cutting-stop            halui.spindle.0.stop        =>  plasmac.cutting-stop
