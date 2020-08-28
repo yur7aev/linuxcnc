@@ -52,9 +52,12 @@ pin  in      bit servo-##.spindle-orient[16 : personality];
 pin  out     bit servo-##.spindle-orienting[16 : personality];
 pin  out     bit servo-##.spindle-oriented[16 : personality];
 
-pin out      bit servo-##.di1[16 : personality] "MR-J3-B DI1 input";
-pin out      bit servo-##.di2[16 : personality] "MR-J3-B DI2 input";
-pin out      bit servo-##.di3[16 : personality] "MR-J3-B DI3 input";
+pin out      bit servo-##.in-00[16 : personality];
+pin out      bit servo-##.in-01[16 : personality];
+pin out      bit servo-##.in-02[16 : personality];
+pin out      bit servo-##.in-00-not[16 : personality];
+pin out      bit servo-##.in-01-not[16 : personality];
+pin out      bit servo-##.in-02-not[16 : personality];
 
 pin out   signed servo-##.dbg[16 : personality];
 //pin out unsigned servo-##.debug[16 : personality];
@@ -80,7 +83,8 @@ param rw   float encoder-##.min-speed-estimate[2] = 1;
 pin out   signed encoder-##.counts[2];
 
 pin  in    float dac-##.value[2];
-param rw   float dac-##.scale[2] = 1;
+param rw   float dac-##.scale[2] = 1.0;
+param rw   float dac-##.bias[2] = 0.0;
 
 //
 
@@ -537,9 +541,9 @@ FUNCTION(_)
 					servo_abs_lost(a) = yssc2_abs_lost(y, a);
 					servo_abs_ok(a) = yssc2_absolute(y, a) && !yssc2_abs_lost(y, a);
 
-					servo_di1(a) = yssc2_di(y, a, 0);	// J3 DI# pins
-					servo_di2(a) = yssc2_di(y, a, 1);
-					servo_di3(a) = yssc2_di(y, a, 2);
+					servo_in_00_not(a) = !(servo_in_00(a) = yssc2_di(y, a, 0));	// J3 DI# pins
+					servo_in_01_not(a) = !(servo_in_01(a) = yssc2_di(y, a, 1));
+					servo_in_02_not(a) = !(servo_in_02(a) = yssc2_di(y, a, 2));
 				} else {
 					servo_dbg(a) = 0;
 					++servo_error_cnt(a);
@@ -623,7 +627,7 @@ FUNCTION(_)
 
         for (a = 0; a < 2; a++) {
 		double s = dac_scale(a) != 0 ? dac_scale(a) : 1;
-                double f = dac_value(a) / s;
+                double f = dac_value(a) / s + dac_bias(a);
                 if (f < 0) f = 0;
                 if (f > 1) f = 1;
                 yssc2_dac(y, a, f * 65535);
