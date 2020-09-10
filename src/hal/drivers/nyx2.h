@@ -21,7 +21,7 @@
 
 #define NYX_VER_MAJ 2
 #define NYX_VER_MIN 4
-#define NYX_VER_REV 0
+#define NYX_VER_REV 3
 
 #ifndef NYX_AXES
 #define NYX_AXES 10
@@ -52,7 +52,7 @@
 #define YC_RD_PARAM	0x00040000	// ??
 #define YC_VEL_CTL	0x00080000
 #define YC_VFF		0x00100000      // ----Y M-II velocity feed-forward
-//#define YC_		0x00200000
+#define YC_RST_Z	0x00200000	// z passed flag reset
 #define YC_ORIENT	0x00400000	// MDS spindle
 //#define YC_		0x00800000
 
@@ -222,12 +222,14 @@ typedef struct nyx_servo_fb {
 #define FUNC_STOP	0x0005
 #define FUNC_RUN	0x0006	/* init servos, go to position control */
 #define FUNC_FW		0x0007
+#define FUNC_ALARM	0x0008
 
 #define SERVO_SSCNET	1
 #define SERVO_SSCNET2	2
 #define SERVO_SSCNET3	3
 #define SERVO_MTL2	4
 #define SERVO_SSCNET3H	5
+#define SERVO_MTL1	6
 #define SERVO_MDS	11
 #define SERVO_MDS3	13
 #define SERVO_MDS3H	15
@@ -244,7 +246,6 @@ typedef struct nyx_servo_fb {
 #define FUNC_READ	0x0021
 #define FUNC_ERASE	0x0022
 #define FUNC_WRITE	0x0023
-#define FUNC_SET	0x0024
 
 // CN2 expansion connector config
 
@@ -256,7 +257,7 @@ typedef struct nyx_servo_fb {
 #define EX_DBG		0x0010	// 9:RX 10=TX
 #define EX_ENC1		0x0020	//                        13:A1 14:B1 15:Z1
 #define EX_1A		0x0040	//            11=1
-#define EX_STEP1A	0x0080	//            11=0  12=EN 13=D0 14=S0 15=D1 16=S1
+#define EX_1ASTEP	0x0080	//            11=0  12=EN 13=D0 14=S0 15=D1 16=S1
 
 #define EX_ENC23	0x0100	// 9:A2 10:B2 11:A3 12:B3
 #define EX_ENC45	0x0200	//                        13:A4 14:B4 15:A5 16:B5
@@ -352,7 +353,7 @@ typedef struct nyx_dp_fb {
 	uint32_t enc[2];
 	uint32_t yi[16];	// YIO inputs
 	// 22 dwords
-	nyx_servo_fb servo_fb[MAX_AXES];	// 8dw*18 = 144 dw
+	nyx_servo_fb servo_fb[MAX_AXES];	// 8*18 = 144 dw
 	// 26 dwords free
 } _P nyx_dp_fb;	// 192 dwords max
 
@@ -376,7 +377,7 @@ typedef struct nyx_dp_cmd {
 typedef struct nyx_dpram {
 	union {
 		struct {
-			uint32_t magic;			// 55c20201
+			uint32_t magic;			// 55c20204
 			uint32_t config;		// +4 YIO_AXES:8 NYX_AXES:8
 			volatile uint32_t status;	// +8 STATUS_xxx
 			uint32_t reserved;		// +c
@@ -389,7 +390,7 @@ typedef struct nyx_dpram {
 		uint8_t reqpage[512];
 	};
 	union {				// host <- board
-		uint8_t fbpage[768];
+		uint8_t fbpage[768];	// 192 dwords
 		nyx_dp_fb fb;
 		nyx_snoop snoop;
 	};

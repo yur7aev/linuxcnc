@@ -1,20 +1,17 @@
-linuxcnc (1:2.8.0nyx12~pre3) dmitry; urgency=low
+linuxcnc (1:2.8.0nyx13) buster; urgency=low
 
-  * merged upstream 2.8
-
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sat, 11 Jul 2020 14:22:01 +0300
-
-linuxcnc (1:2.8.0nyx10~pre1) dmitry; urgency=low
-
+  * merged upstream 2.8.0
+  * z-index homing for ssc3, mtl
+  * new servo params
   * nyx 2.4
   * removed nyxp, moved .par parser to the nyx module
   * mechatrolink params
   * mdssp comp
   * merged with 2.8 branch
 
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sun, 22 May 2020 06:01:16 +0300
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Wed, 9 Sep 2020 09:19:22 +0300
 
-linuxcnc (1:2.8.0~pre3) buster; urgency=low
+linuxcnc (1:2.8.0) buster; urgency=low
 
   * Finally merge "Joints Axes". Joints and cartesian axes are no longer
     treated as the same thing, making control of robots and non-trivial
@@ -131,7 +128,6 @@ linuxcnc (1:2.8.0~pre3) buster; urgency=low
   * uspace: add uspace+rtai realtime
   * add a sample config for the scorbot-er-3 robot arm
   * docs: document AXIS's foam mode
-  * configs: foam: this has no locking indexer
 
  -- andypugh <andy@bodgesoc.org>  Sun, 16 Aug 2020 19:47:54 +0100
 
