@@ -889,14 +889,14 @@ int params_parse_no(char *s, servo_param *p)
 	} else if (s[0] == 'P' && s[2] >= '0' && s[2] <= '9') {
 		uint16_t grp = 0;
 		switch(s[1]) {
-		case 'A':
-		case 'B':
-		case 'C':
-		case 'D':
-		case 'E':
-		case 'F':
-		case 'G':
-		case 'H': grp = s[1] - 'A'; break;
+		case 'A': // 0
+		case 'B': // 1
+		case 'C': // 2
+		case 'D': // 3
+		case 'E': // 4
+		case 'F': // 5
+		case 'G': // 6
+		case 'H': grp = s[1] - 'A'; break; // 7
 		case 'J': grp = 8; break;
 		case 'O': grp = 9; break;
 		case 'S': grp = 10; break;
