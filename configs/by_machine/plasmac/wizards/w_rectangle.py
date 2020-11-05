@@ -363,7 +363,7 @@ class rectangle_wiz:
                     ylEnd = ylCentre + (leadOutOffset * math.sin(angle + dir[2]))
                     outTmp.write('{} x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(dir[0], xlEnd, ylEnd , xlCentre - xS, ylCentre - yS))
                 outTmp.write('g40\n')
-                outTmp.write('m5\n')
+                outTmp.write('m5 $0\n')
                 outTmp.close()
                 outTmp = open(self.parent.fTmp, 'r')
                 for line in outTmp:
@@ -537,6 +537,10 @@ class rectangle_wiz:
         undo = gtk.Button('Undo')
         undo.connect('pressed', self.parent.undo_shape, self.add)
         self.parent.entries.attach(undo, 4, 5, 12, 13)
+        self.lDesc = gtk.Label('Creating Rectangle')
+        self.lDesc.set_alignment(0.5, 0.5)
+        self.lDesc.set_width_chars(8)
+        self.parent.entries.attach(self.lDesc, 1, 4, 13, 14)
         pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(
                 filename='./wizards/images/rectangle.png', 
                 width=240, 

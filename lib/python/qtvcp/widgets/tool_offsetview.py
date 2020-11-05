@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 #
 # Qtvcp widget
 # Copyright (c) 2017 Chris Morley
@@ -21,7 +21,7 @@ import operator
 
 from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant
 from PyQt5.QtWidgets import (QTableView, QAbstractItemView, QCheckBox,
-QItemEditorFactory,QDoubleSpinBox,QStyledItemDelegate)
+QItemEditorFactory,QDoubleSpinBox,QSpinBox,QStyledItemDelegate)
 from qtvcp.widgets.widget_baseclass import _HalWidgetBase
 from qtvcp.core import Status, Action, Info, Tool
 from qtvcp import logger
@@ -53,8 +53,14 @@ class ItemEditorFactory(QItemEditorFactory):
         if userType == QVariant.Double:
             doubleSpinBox = QDoubleSpinBox(parent)
             doubleSpinBox.setDecimals(4)
-            doubleSpinBox.setMaximum(1000)
+            doubleSpinBox.setMaximum(99999)
+            doubleSpinBox.setMinimum(-99999)
             return doubleSpinBox
+        elif userType == QVariant.Int:
+            spinBox = QSpinBox(parent)
+            spinBox.setMaximum(20000)
+            spinBox.setMinimum(1)
+            return spinBox
         else:
             return super(ItemEditorFactory,self).createEditor(userType, parent)
 
@@ -86,7 +92,7 @@ class ToolOffsetView(QTableView, _HalWidgetBase):
         STATUS.connect('diameter-mode', lambda w, data: self.diameterMode(data))
         STATUS.connect('tool-in-spindle-changed', lambda w, data: self.currentTool(data))
         conversion = {5:"Y", 6:'Y', 7:"Z", 8:'Z', 9:"A", 10:"B", 11:"C", 12:"U", 13:"V", 14:"W"}
-        for num, let in conversion.iteritems():
+        for num, let in conversion.items():
             if let in (INFO.AVAILABLE_AXES):
                 continue
             self.hideColumn(num)
@@ -160,7 +166,7 @@ class ToolOffsetView(QTableView, _HalWidgetBase):
         row = new.row()
         col = new.column()
         data = self.tablemodel.data(new)
-        print 'Entered data:', data, row,col
+        print('Entered data:', data, row,col)
         # now update linuxcnc to the change
         try:
             if STATUS.is_status_valid():

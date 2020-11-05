@@ -137,7 +137,7 @@ class polygon_wiz:
                 ylEnd = ylCentre + (leadOutOffset * math.sin(angle + dir[1]))
                 outTmp.write('g3 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xlEnd, ylEnd , xlCentre - xCentre, ylCentre - yCentre))
             outTmp.write('g40\n')
-            outTmp.write('m5\n')
+            outTmp.write('m5 $0\n')
             outTmp.close()
             outTmp = open(self.parent.fTmp, 'r')
             for line in outTmp:
@@ -286,6 +286,10 @@ class polygon_wiz:
         undo = gtk.Button('Undo')
         undo.connect('pressed', self.parent.undo_shape, self.add)
         self.parent.entries.attach(undo, 4, 5, 12, 13)
+        self.lDesc = gtk.Label('Creating Polygon')
+        self.lDesc.set_alignment(0.5, 0.5)
+        self.lDesc.set_width_chars(8)
+        self.parent.entries.attach(self.lDesc, 1, 4, 13, 14)
         pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(
                 filename='./wizards/images/polygon.png', 
                 width=240, 

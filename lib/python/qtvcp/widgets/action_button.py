@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Qtvcp action widget
 #
 # Copyright (c) 2017  Chris Morley <chrisinnanaimo@hotmail.com>
@@ -366,6 +366,17 @@ class ActionButton(Indicated_PushButton, _HalWidgetBase):
         else:
             self.pressed.connect(self.action)
 
+    def safecheck(self, state):
+        self._block_signal = True
+        self.setChecked(state)
+        # update indicator if halpin or status doesn't
+        if self._HAL_pin is False and self._ind_status is False:
+            self.indicator_update(state)
+        # if using state labels option update the labels
+        if self._state_text:
+            self.setText(None)
+        self._block_signal = False
+
     ###################################
     # Here we do the actions
     ###################################
@@ -390,7 +401,12 @@ class ActionButton(Indicated_PushButton, _HalWidgetBase):
                 else:
                     ACTION.SET_MACHINE_UNHOMED(self.joint)
             else:
-                if STATUS.is_all_homed():
+                if self.joint == -1:
+                    if STATUS.is_all_homed():
+                        ACTION.SET_MACHINE_UNHOMED(-1)
+                    else:
+                        ACTION.SET_MACHINE_HOMING(-1)
+                elif STATUS.is_joint_homed(self.joint):
                     ACTION.SET_MACHINE_UNHOMED(self.joint)
                 else:
                     ACTION.SET_MACHINE_HOMING(self.joint)
@@ -493,7 +509,7 @@ class ActionButton(Indicated_PushButton, _HalWidgetBase):
                 try:
                     ACTION.SET_GRAPHICS_VIEW(self.view_type)
                 except Exception as e:
-                    print e
+                    print(e)
                     pass
         elif True in (self.spindle_fwd, self.spindle_rev):
             if self.spindle_fwd:
@@ -589,8 +605,12 @@ class ActionButton(Indicated_PushButton, _HalWidgetBase):
         elif self.machine_log_dialog:
             STATUS.emit('dialog-request',{'NAME':'MACHINELOG', 'ID':'_%s_'% self.objectName()})
         # defult error case
-        elif not self._python_command:
-            LOG.error('No action recognised')
+        else:
+            if state is not None:
+                self.safecheck(state)
+            if not self._python_command:
+                LOG.error('No action recognised')
+
 
         # This is check after because action buttons can do an action plus
         # a python command, or just either one.

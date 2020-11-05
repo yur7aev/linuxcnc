@@ -56,15 +56,15 @@ mwidth = int(fullsize[0])
 mheight = int(fullsize[1])
 if wsize and 'x' in wsize.lower():
     width, height = wsize.lower().replace(' ','').split('x')
-    wxpos = (mwidth-int(width))/2
-    wypos = (mheight-int(height))/2
+    wxpos = int((mwidth-int(width))/2)
+    wypos = int((mheight-int(height))/2)
 elif wsize == '1':
     pad_width = 0
     pad_height = 0
     width = mwidth-pad_width
     height = mwidth-pad_height
-    wxpos = pad_width/2
-    wypos = pad_height/2
+    wxpos = int(pad_width/2)
+    wypos = int(pad_height/2)
 else:
     fsizes = ['9','10','11','12','13','14','15']
     if orientation == 'portrait':
@@ -85,8 +85,8 @@ else:
             heights = [636, 664, 702, 768, 792, 828, 878]
     width = widths[fsizes.index(fsize)]
     height = heights[fsizes.index(fsize)]
-    wxpos = (mwidth-width)/2
-    wypos = (mheight-height)/2
+    wxpos = int((mwidth-width)/2)
+    wypos = int((mheight-height)/2)
 if width: # fixme - remove when portrait sizes fixed
     w('wm','geometry','.','{0}x{1}-{2}-{3}'.format(str(width),str(height),str(wxpos),str(wypos)))
     print('\nAxis window is {0} x {1}\n'.format(width,height))
@@ -284,7 +284,7 @@ else:
 w('DynamicHelp::add',fjogf + '.zerohome.zero','-text','Touch off selected axis\nto workpiece [Home]')
 
 # new torch frame
-w('labelframe',ftorch,'-text','Torch:','-relief','flat')
+w('labelframe',ftorch,'-text','Torch Pulse:','-relief','flat')
 w('Button',ftorch + '.torch-button','-text','PULSE','-takefocus','0','-width','3')
 w('bind',ftorch + '.torch-button','<Button-1>','torch_pulse 1')
 w('bind',ftorch + '.torch-button','<ButtonRelease-1>','torch_pulse 0')
@@ -328,23 +328,31 @@ w('DynamicHelp::add',foverride + '.reset','-text','Set height override to 0')
 w('DynamicHelp::add',foverride + '.height-override','-text','Voltage value of height override')
 
 # new paused motion frame
-w('labelframe',fpausedmotion,'-text','Paused Motion Speed: %','-relief','flat')
+w('labelframe',fpausedmotion,'-text','Paused Motion Speed:','-relief','flat')
 w('Button',fpausedmotion + '.reverse','-text','Rev','-takefocus','0','-width','3')
 w('bind',fpausedmotion + '.reverse','<Button-1>','paused_motion -1')
 w('bind',fpausedmotion + '.reverse','<ButtonRelease-1>','paused_motion 0')
-w('scale',fpausedmotion + '.paused-motion-speed','-takefocus','0','-orient','horizontal')
+w('frame',fpausedmotion + '.display','-relief','flat')
+w('frame',fpausedmotion + '.display.top','-relief','flat')
+w('label',fpausedmotion + '.display.top.value','-textvariable','pmSpeed','-width','3','-anchor','e')
+w('label',fpausedmotion + '.display.top.sign','-text','%','-anchor','e')
+w('scale',fpausedmotion + '.display.paused-motion-speed','-takefocus','0','-orient','horizontal','-variable','pmSpeed','-showvalue','0')
 w('Button',fpausedmotion + '.forward','-text','Fwd','-takefocus','0','-width','3')
 w('bind',fpausedmotion + '.forward','<Button-1>','paused_motion 1')
 w('bind',fpausedmotion + '.forward','<ButtonRelease-1>','paused_motion 0')
 # populate the paused motion frame
 w('pack',fpausedmotion + '.reverse','-side','left','-fill','y')
-w('pack',fpausedmotion + '.paused-motion-speed','-side','left','-fill','x','-expand','1')
+w('pack',fpausedmotion + '.display.top.value','-side','left','-fill','y')
+w('pack',fpausedmotion + '.display.top.sign','-side','left','-fill','y')
+w('pack',fpausedmotion + '.display.top','-side','top','-fill','y')
+w('pack',fpausedmotion + '.display.paused-motion-speed','-side','top','-fill','y')
+w('pack',fpausedmotion + '.display','-side','left','-fill','x','-expand','1')
 w('pack',fpausedmotion + '.forward','-side','right','-fill','y')
 if orientation == 'portrait':
     w(fpausedmotion,'configure','-relief','raised','-bd','1')
 w('DynamicHelp::add',fpausedmotion + '.reverse','-text','Move while paused\nin reverse direction')
 w('DynamicHelp::add',fpausedmotion + '.forward','-text','Move while paused\nin foward direction')
-w('DynamicHelp::add',fpausedmotion + '.paused-motion-speed','-text','Paused motion speed (% of feed rate)')
+w('DynamicHelp::add',fpausedmotion + '.display.paused-motion-speed','-text','Paused motion speed (% of feed rate)')
 
 # hide bottom pane until modified
 w('pack','forget','.pane.bottom.t.text')
@@ -394,10 +402,10 @@ w('pack',fmonitor + '.updown.labdn','-side','left','-fill','none','-expand','0')
 w('pack',fmonitor + '.updown.led-down','-side','left','-fill','none','-expand','0')
 w('canvas',fmonitor + '.led-corner-locked','-width',cwidth,'-height',cheight)
 w(fmonitor + '.led-corner-locked','create','oval',ledx,ledy,ledwidth,ledheight,'-fill','red','-disabledfill','grey')
-w('label',fmonitor + '.lCLlab','-text','THC Velocity Lock','-anchor','w','-width','15')
+w('label',fmonitor + '.lCLlab','-text','VAD Lock','-anchor','w','-width','15')
 w('canvas',fmonitor + '.led-kerf-locked','-width',cwidth,'-height',cheight)
 w(fmonitor + '.led-kerf-locked','create','oval',ledx,ledy,ledwidth,ledheight,'-fill','red','-disabledfill','grey')
-w('label',fmonitor + '.lKLlab','-text','THC Void Lock','-anchor','w','-width','15')
+w('label',fmonitor + '.lKLlab','-text','Void Sense Lock','-anchor','w','-width','15')
 if inifile.find('PLASMAC', 'MODE') != '2':
     w('grid',fmonitor + '.arc-voltage',    '-row','0','-column', '0','-columnspan','4','-rowspan','2','-sticky','se')
     w('grid',fmonitor + '.aVlab',          '-row','1','-column', '4','-columnspan','4','-sticky','w')
@@ -584,8 +592,7 @@ if orientation == 'portrait':
         root_window.tk.eval(ftop + ".jogspeed.l1 configure -text in/min")
         root_window.tk.eval(ftop + ".maxvel.l1 configure -text in/min")
     root_window.tk.eval(ftop + ".ajogspeed.l1 configure -text deg/min")
-    w('update_jog_slider_vel','999999')
-    w('update_maxvel_slider_vel','999999')
+    w('update_maxvel_slider_vel', max_linear_speed)
     max_feed_override = float(inifile.find("DISPLAY", "MAX_FEED_OVERRIDE") or 1.0)
     max_feed_override = int(max_feed_override * 100 + 0.5)
     widgets.feedoverride.configure(to=max_feed_override)
@@ -629,7 +636,7 @@ def torch_pulse(value):
     hal.set_p('plasmac.torch-pulse-start',value)
 
 def paused_motion(direction):
-    speed = float(w(fpausedmotion + '.paused-motion-speed','get')) * 0.01
+    speed = float(w(fpausedmotion + '.display.paused-motion-speed','get')) * 0.01
     hal.set_p('plasmac.paused-motion-speed','%f' % (speed * int(direction)))
 
 def height_lower():
@@ -735,7 +742,7 @@ def user_button_pressed(button,commands):
     elif 'probe-test' in commands.lower():
         global probePressed, probeTimer, probeButton
         global probeStart, probeText, probeColor
-        if not probeTimer:
+        if not probeTimer and not hal.get_value('plasmac.z-offset-counts'):
             probePressed = True
             probeButton = button
             if commands.lower().replace('probe-test','').strip():
@@ -758,6 +765,17 @@ def user_button_pressed(button,commands):
             hal.set_p('plasmac_run.cut-type','0')
             w(fbuttons + '.button' + button,'configure','-bg',bgc,'-activebackground',abgc,'-text','Pierce\n & Cut')
         Popen('axis-remote -r', stdout = PIPE, shell = True)
+    elif 'toggle-halpin' in commands.lower() and hal.get_value('halui.program.is-idle'):
+        global button_bg
+        if button_bg == 'none':
+            button_bg = w(fbuttons + '.button' + button,'cget','-bg')
+        halpin = commands.lower().split('toggle-halpin')[1].strip()
+        pinstate = hal.get_value(halpin)
+        hal.set_p(halpin, str(not pinstate))
+        if pinstate:
+            w(fbuttons + '.button' + button,'configure','-bg',button_bg,'-activebackground','green')
+        else:
+            w(fbuttons + '.button' + button,'configure','-bg','green','-activebackground',button_bg)
     else:
         for command in commands.split('\\'):
             if command.strip()[0] == '%':
@@ -924,6 +942,16 @@ def user_live_update():
             hal.set_p('plasmac_run.preview-tab', '0')
     except:
         pass
+    # allows user to set a HAL pin to initiate the sequence of reloading the program, clearing the live plot, and rezooming the axis
+    if hal.get_value('axisui.refresh') == 1:
+        hal.set_p('axisui.refresh', '2')
+        commands.reload_file()
+    elif hal.get_value('axisui.refresh') == 2:
+        hal.set_p('axisui.refresh', '3')
+        commands.clear_live_plot()
+    elif hal.get_value('axisui.refresh') == 3:
+        hal.set_p('axisui.refresh', '0')
+        commands.set_view_z()
 
 def user_hal_pins():
     # create new hal pins
@@ -939,6 +967,7 @@ def user_hal_pins():
     comp.newpin('led-down', hal.HAL_BIT, hal.HAL_IN)
     comp.newpin('led-corner-locked', hal.HAL_BIT, hal.HAL_IN)
     comp.newpin('led-kerf-locked', hal.HAL_BIT, hal.HAL_IN)
+    comp.newpin('refresh', hal.HAL_S32, hal.HAL_IN)
     comp.ready()
     # create new signals and connect pins
     hal_data = [[0,'plasmac:arc-voltage-out','plasmac.arc-voltage-out','axisui.arc-voltage'],\
@@ -967,7 +996,7 @@ def user_hal_pins():
 
 def configure_widgets():
     w(ftorch + '.torch-pulse-time','configure','-from','0','-to','3','-resolution','0.1')
-    w(fpausedmotion + '.paused-motion-speed','configure','-from','1','-to','100','-resolution','1')
+    w(fpausedmotion + '.display.paused-motion-speed','configure','-from','1','-to','100','-resolution','1')
 
 def consumable_change_setup(ccParm):
     global ccF, ccX, ccY
@@ -1008,6 +1037,7 @@ torchPulse = 0
 torch_height = 0
 cutType = 0
 pm_cycles = 0
+button_bg = 'none'
 hal.set_p('plasmac.torch-enable','0')
 hal.set_p('plasmac.height-override','%f' % (torch_height))
 w(fbuttons + '.torch-enable','configure','-bg','red','-activebackground','#AA0000','-text','Torch\nDisabled')
@@ -1017,7 +1047,7 @@ for button in range(1,6):
         ccParm = inifile.find('PLASMAC','BUTTON_' + str(button) + '_CODE').replace('change-consumables','').replace(' ','').lower() or None
 wScales = [\
     ftorch + '.torch-pulse-time',\
-    fpausedmotion + '.paused-motion-speed',\
+    fpausedmotion + '.display.paused-motion-speed',\
     ]
 wScalesHal = [\
     ftorch + '.torch-pulse-time',\
@@ -1036,7 +1066,7 @@ wLeds = [\
     fmonitor + '.led-kerf-locked',\
     ]
 configure_widgets()
-w(fpausedmotion + '.paused-motion-speed','set',inifile.find('PLASMAC','PAUSED_MOTION_SPEED') or '50')
+w(fpausedmotion + '.display.paused-motion-speed','set',inifile.find('PLASMAC','PAUSED_MOTION_SPEED') or '50')
 w(ftorch + '.torch-pulse-time','set',inifile.find('PLASMAC','TORCH_PULSE_TIME') or '1')
 hal.set_p('plasmac.torch-pulse-time',inifile.find('PLASMAC','TORCH_PULSE_TIME') or '1')
 

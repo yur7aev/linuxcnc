@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 #
 # Qtvcp Widgets
 # Copyright (c) 2017  Chris Morley <chrisinnanaimo@hotmail.com>
@@ -20,7 +20,7 @@ import os
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 from qtvcp.widgets.widget_baseclass import _HalWidgetBase
-from qtvcp.widgets.entry_widget import TouchInputWidget
+from qtvcp.widgets.entry_widget import TouchInterface
 from qtvcp.core import Status, Action, Info
 from qtvcp import logger
 
@@ -41,7 +41,7 @@ if not INFO.LINUXCNC_IS_RUNNING:
 try:
     from PyQt5 import QtSvg
 except:
-    LOG.critical("Qtvcp error with macro_widget - is package python-pyqt5.qtsvg installed?")
+    LOG.critical("Qtvcp error with macro_widget - is package python3-pyqt5.qtsvg installed?")
 
 ###############################################################
 # helper widget for SVG display on Button
@@ -196,8 +196,10 @@ class MacroTab(QtWidgets.QWidget, _HalWidgetBase):
                 # of these arrays
                 for i, tName in enumerate(tabName):
                     # make a widget that is added to the stack
-                    w = TouchInputWidget()
-                    w.touch_interface.callDialog = self.getNumbers
+                    w = TouchInterface(self)
+                    w.keyboard_enable = True
+                    # redirect Touchinterface call to our function
+                    w.callDialog = self.getNumbers
                     hbox = QtWidgets.QHBoxLayout(w)
                     #hbox.addStretch(1)
                     vbox = QtWidgets.QVBoxLayout()
@@ -226,7 +228,7 @@ class MacroTab(QtWidgets.QWidget, _HalWidgetBase):
                         self['sw%d' % i] = CustomSVG(svgpath,  int(img_info[1]))
                     else:
                         try:
-                            print self[tName][1][1]
+                            #print(self[tName][1][1])
                             imgpath = os.path.join(path, self[tName][1][1])
                         except:
                             imgpath = os.path.join(path, img_info[0])
@@ -465,7 +467,7 @@ class MacroTab(QtWidgets.QWidget, _HalWidgetBase):
             readLine = file.readLine()
             try:
                 # Python v2.
-                readLine = unicode(readLine, encoding='utf8')
+                readLine = str(readLine, encoding='utf8')
             except NameError:
                 # Python v3.
                 readLine = str(readLine, encoding='utf8')

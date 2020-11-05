@@ -138,7 +138,7 @@ class bolt_circle_wiz:
                     Torch = False
                     outTmp.write('m62 p3 (disable torch)\n')
                     self.over_cut(xS, yS, hRadius - ijDiff, hRadius - ijDiff, outTmp)
-                outTmp.write('m5\n')
+                outTmp.write('m5 $0\n')
                 if sHole:
                     outTmp.write('M68 E3 Q0 (reset feed rate to 100%)\n')
                 if not torch:
@@ -323,6 +323,10 @@ class bolt_circle_wiz:
         undo = gtk.Button('Undo')
         undo.connect('pressed', self.parent.undo_shape, self.add)
         self.parent.entries.attach(undo, 4, 5, 12, 13)
+        self.lDesc = gtk.Label('Creating Bolt Circle')
+        self.lDesc.set_alignment(0.5, 0.5)
+        self.lDesc.set_width_chars(8)
+        self.parent.entries.attach(self.lDesc, 1, 4, 13, 14)
         pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(
                 filename='./wizards/images/bolt-circle.png', 
                 width=240, 

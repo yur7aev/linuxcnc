@@ -42,6 +42,14 @@ Descargue el CD Live/Install desde esta dirección:
 
 http://www.linuxcnc.org/iso/linuxcnc-2.8.0-buster.iso
 
+Para la Raspberry Pi, una imagen completa de la tarjeta SD está disponible aquí:
+
+https://www.linuxcnc.org/iso/linuxcnc-2.8.0-pi4.zip
+
+Esto se puede instalar usando el Pi normal
+https://www.raspberrypi.org/documentation/installation/installing-images/README.md[proceso de instalación]
+incluso con la aplicación Raspberry Pi Imager.
+
 
 === Descargar usando zsync
 
@@ -62,7 +70,13 @@ sudo apt-get install zsync
 ----
 zsync http://www.linuxcnc.org/iso/linuxcnc-2.8.0-buster.iso.zsync
 ----
-
++
+o
++
+----
+zsync http://www.linuxcnc.org/iso/linuxcnc-2.8.0-pi4.zip.zsync
+----
++
 .zsync en Windows
 
 Hay una versión Windows de zsync. Funciona como una aplicación de consola. Puede ser
@@ -88,8 +102,8 @@ sha256sum linuxcnc-2.8.0-buster.iso
 . Luego, compare con la suma de comprobación segun su caso
 +
 -----
-md5sum: bdd85ad00f05d7c67e5037a72bae4934
-sha256sum: 079ba1fae48861b0814187b8048d6f2f299f943427d8c4806b65519f3a560d48
+md5sum: 41b71c4956c0c89033a99a590ebaefec
+sha256sum: a542092aa9f399d3ad50bbb2f0f4dd63ad9332c23d8387f6061bdd186d1df3b0
 -----
 
 ==== Verificar md5sum en Windows o Mac
