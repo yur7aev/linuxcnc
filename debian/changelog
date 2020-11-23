@@ -1,5 +1,7 @@
-linuxcnc (1:2.8.0nyx14) buster; urgency=low
+linuxcnc (1:2.8.0nyx15) buster; urgency=low
 
+  * encoder zero speed fix
+  * J3/J4 digital outputs support
   * SSCNET III/H and MR-J4 support
   * merged upstream 2.8.0
   * z-index homing for ssc3, mtl
@@ -10,7 +12,7 @@ linuxcnc (1:2.8.0nyx14) buster; urgency=low
   * mdssp comp
   * merged with 2.8 branch
 
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Wed, 9 Sep 2020 09:19:22 +0300
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Mon, 23 Nov 2020 16:59:22 +0300
 
 linuxcnc (1:2.8.0) buster; urgency=low
 

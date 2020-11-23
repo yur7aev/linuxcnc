@@ -30,7 +30,7 @@ pin out      bit servo-##.z-passed[16 : personality];
 
 pin out   signed servo-##.counts[16 : personality];
 pin out   signed servo-##.counts-cmd[16 : personality];
-pin out   signed servo-##.z-offs[16 : personality];
+pin out   signed servo-##.z-offs[16 : personality] "set during z-index pass";
 
 pin  in      bit servo-##.power[16 : personality]	"turn on power relay";
 pin  in      bit servo-##.enable[16 : personality]	"turn on servo";
@@ -64,6 +64,9 @@ pin out      bit servo-##.in-02[16 : personality];
 pin out      bit servo-##.in-00-not[16 : personality];
 pin out      bit servo-##.in-01-not[16 : personality];
 pin out      bit servo-##.in-02-not[16 : personality];
+pin in       bit servo-##.out-00[16 : personality];
+pin in       bit servo-##.out-01[16 : personality];
+pin in       bit servo-##.out-02[16 : personality];
 
 pin out   signed servo-##.dbg[16 : personality];
 //pin out unsigned servo-##.debug[16 : personality];
@@ -71,9 +74,9 @@ pin out   signed servo-##.dbg[16 : personality];
 pin  io      bit servo-##.index-enable[16 : personality];
 pin  in      bit servo-##.undroop[16 : personality];
 
-pin out      bit ready "controller in sync with NC";
-pin out    float phase "sync deviation, should be <40us";
-pin out   signed error-cnt "number of controller comm errors";
+pin out      bit ready "card is in sync with NC";
+pin out    float phase "sync pulse deviation, periods";
+pin out   signed error-cnt "missed comm cycles when not in sync";
 
 //pin out   signed dbg0;
 //pin out   signed dbg1;
@@ -86,9 +89,9 @@ pin  in      bit out-##[8] "CN3 outputs";
 
 pin  io      bit encoder-##.index-enable[2];
 pin out    float encoder-##.pos[2];
-param rw   float encoder-##.cpr[2] = -10000;
+param rw   float encoder-##.cpr[2] = 10000;
 pin out    float encoder-##.velocity[2];
-param rw   float encoder-##.min-speed-estimate[2] = 1;
+param rw   float encoder-##.min-speed-estimate[2] = 1.0;
 pin out   signed encoder-##.counts[2];
 
 pin  in    float dac-##.value[2];
@@ -244,6 +247,7 @@ void yssc2_orient(YSSC2 *y, int a, int e)       { if (e) CMD(a).flags |= YC_ORIE
 void yssc2_forward_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 0x4000) t = 0x4000; CMD(a).fwd_trq = t; }
 void yssc2_reverse_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 0x4000) t = 0x4000; CMD(a).rev_trq = t; }
 void yssc2_reset_z(YSSC2 *y, int a, int e)      { if (e) CMD(a).flags |= YC_RST_Z;      else CMD(a).flags &= ~YC_RST_Z; }
+void yssc2_do(YSSC2 *y, int a, int n, int e)    { if (e) CMD(a).flags |= (YC_DO1<<n);   else CMD(a).flags &= ~(YC_DO1<<n); }
 
 uint32_t yssc2_gpi(YSSC2 *y)                { return y->dpram->fb.gpi; }
 int      yssc2_enc(YSSC2 *y, int a)         { return (y->dpram->fb.enc[a]); }
@@ -531,7 +535,7 @@ FUNCTION(_)
 
 	// process received data
 	for (a = 0; a < yssc2_axes(y); a++) {
-		// servo_debug(a) = yssc2_debug(y, a);
+		//servo_debug(a) = yssc2_debug(y, a);
 		if (ready && yssc2_online(y, a)) {
 			if (yssc2_feedback_res(y, a) == 0) continue;
 
@@ -603,7 +607,7 @@ FUNCTION(_)
 
 					int32_t fb = (servo_counts(a) = yssc2_pos_fb(y, a)) - servo_origin(a);
 
-///					servo_dbg(a) = yssc2_rx_time(y, a);
+					servo_dbg(a) = yssc2_rx_time(y, a);
 					servo_online(a) = 1;
 					servo_offline(a) = 0;
 					servo_ready(a) = yssc2_ready(y, a);
@@ -632,6 +636,10 @@ FUNCTION(_)
 					servo_in_00_not(a) = !(servo_in_00(a) = yssc2_di(y, a, 0));     // J3 DI# pins
 					servo_in_01_not(a) = !(servo_in_01(a) = yssc2_di(y, a, 1));
 					servo_in_02_not(a) = !(servo_in_02(a) = yssc2_di(y, a, 2));
+
+					yssc2_do(y, a, 0, servo_out_00(a));     // J3 DO# pins
+					yssc2_do(y, a, 1, servo_out_01(a));
+					yssc2_do(y, a, 2, servo_out_02(a));
 
 					servo_z_passed(a) = yssc2_z_passed(y, a);
 					servo_z_offs(a) = yssc2_z_offs(y, a);
@@ -674,16 +682,20 @@ FUNCTION(_)
 					double v = d * 60 / fperiod / encoder_cpr(a) / (enc_changed[a] + 1); // rpm
 					if (v < 0) v = -v;
 					if (v < encoder_min_speed_estimate(a)) v = 0;
-						encoder_velocity(a) = v;
+					encoder_velocity(a) = v;
 				}
 				enc_changed[a] = 0;
 				enc_counts[a] = c;
 			} else {
-				enc_changed[a]++;
+				if (enc_changed[a] > 60 / fperiod / encoder_cpr(a) / encoder_min_speed_estimate(a) - 1)
+					encoder_velocity(a) = 0;
+				if (enc_changed[a] < 2000000000)
+					enc_changed[a]++;
 			}
 		} else {
 			enc_counts[a] = c;      // initialization
 			enc_changed[a] = 0;
+			encoder_velocity(a) = 0;
 		}
 	}
 

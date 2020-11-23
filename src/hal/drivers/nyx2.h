@@ -21,7 +21,7 @@
 
 #define NYX_VER_MAJ 2
 #define NYX_VER_MIN 4
-#define NYX_VER_REV 3
+#define NYX_VER_REV 6
 
 #ifndef NYX_AXES
 #define NYX_AXES 10
@@ -32,9 +32,9 @@
 // per-axis nyx_servo_cmd.flags
 
 #define YC_VALID	0x00000001
-//#define YC_		0x00000002
-//#define YC_		0x00000004
-//#define YC_		0x00000008
+#define YC_DO1		0x00000002
+#define YC_DO2		0x00000004
+#define YC_DO3		0x00000008
 //#define YC_		0x00000010
 //#define YC_		0x00000020
 #define YC_POWER	0x00000040
