@@ -1,16 +1,18 @@
 /*
+ * YxxxxP servo interface card driver, http://yurtaev.com
  *
+ * License: GPL Version 2
+ *
+ * (c) 2016-2020 dmitry@yurtaev.com
  */
 
-component nyx "YSSC2P/YSSC3P/YMDS2P Mitsubishi servo PCI interface card driver";
+component nyx "YxxxxP servo interface card driver";
 
 param rw  signed servo-##.origin[16 : personality] = 0;		// 32bit servo command-feedback offset to prevent integer overflow
 param rw   float servo-##.pos-scale[16 : personality] = 5.0;	// travel units per revolution (5mm)
 param rw   float servo-##.vel-scale[16 : personality] = 10.0;	// rpm (1 rpm resolution)
 param rw   float servo-##.trq-scale[16 : personality] = 1.0;	// 1% resolution
 
-pin out   signed servo-##.dbg[16 : personality];
-pin out unsigned servo-##.debug[16 : personality];
 pin out      bit servo-##.online[16 : personality] "drive detected";
 pin out      bit servo-##.offline[16 : personality] "no drive detected";
 pin out      bit servo-##.ready[16 : personality]   "READY ON";
@@ -24,9 +26,11 @@ pin out      bit servo-##.at-speed[16 : personality];
 pin out      bit servo-##.absolute[16 : personality];
 pin out      bit servo-##.abs-lost[16 : personality];
 pin out      bit servo-##.abs-ok[16 : personality];
+pin out      bit servo-##.z-passed[16 : personality];
 
 pin out   signed servo-##.counts[16 : personality];
 pin out   signed servo-##.counts-cmd[16 : personality];
+pin out   signed servo-##.z-offs[16 : personality] "set during z-index pass";
 
 pin  in      bit servo-##.power[16 : personality]	"turn on power relay";
 pin  in      bit servo-##.enable[16 : personality]	"turn on servo";
@@ -54,17 +58,30 @@ pin  in      bit servo-##.spindle-orient[16 : personality];
 pin  out     bit servo-##.spindle-orienting[16 : personality];
 pin  out     bit servo-##.spindle-oriented[16 : personality];
 
-pin out      bit servo-##.di1[16 : personality] "MR-J3-B DI1 input";
-pin out      bit servo-##.di2[16 : personality] "MR-J3-B DI2 input";
-pin out      bit servo-##.di3[16 : personality] "MR-J3-B DI3 input";
+pin out      bit servo-##.in-00[16 : personality];
+pin out      bit servo-##.in-01[16 : personality];
+pin out      bit servo-##.in-02[16 : personality];
+pin out      bit servo-##.in-00-not[16 : personality];
+pin out      bit servo-##.in-01-not[16 : personality];
+pin out      bit servo-##.in-02-not[16 : personality];
+pin in       bit servo-##.out-00[16 : personality];
+pin in       bit servo-##.out-01[16 : personality];
+pin in       bit servo-##.out-02[16 : personality];
 
-pin out      bit ready "controller in sync with NC";
-pin out    float phase "sync deviation, should be <40us";
-pin out   signed error-cnt "number of controller comm errors";
-pin out   signed dbg0;
-pin out   signed dbg1;
-pin out   signed dbg2;
-pin out unsigned dbg3;
+pin out   signed servo-##.dbg[16 : personality];
+//pin out unsigned servo-##.debug[16 : personality];
+
+pin  io      bit servo-##.index-enable[16 : personality];
+pin  in      bit servo-##.undroop[16 : personality];
+
+pin out      bit ready "card is in sync with NC";
+pin out    float phase "sync pulse deviation, periods";
+pin out   signed error-cnt "missed comm cycles when not in sync";
+
+//pin out   signed dbg0;
+//pin out   signed dbg1;
+//pin out   signed dbg2;
+//pin out unsigned dbg3;
 
 pin out      bit in-##[29] "CN1 inputs";
 pin out      bit in-##-not[29] "CN1 inputs, inverted";
@@ -72,13 +89,14 @@ pin  in      bit out-##[8] "CN3 outputs";
 
 pin  io      bit encoder-##.index-enable[2];
 pin out    float encoder-##.pos[2];
-param rw   float encoder-##.cpr[2] = -10000;
+param rw   float encoder-##.cpr[2] = 10000;
 pin out    float encoder-##.velocity[2];
-param rw   float encoder-##.min-speed-estimate[2] = 1;
+param rw   float encoder-##.min-speed-estimate[2] = 1.0;
 pin out   signed encoder-##.counts[2];
 
 pin  in    float dac-##.value[2];
-param rw   float dac-##.scale[2] = 1;
+param rw   float dac-##.scale[2] = 1.0;
+param rw   float dac-##.bias[2] = 0.0;
 
 //
 
@@ -92,11 +110,11 @@ variable int enc_counts[2];
 variable int enc_changed[2];
 
 function _;
-variable unsigned inum;
+variable unsigned inum;		// card number
 
 license "GPL";
 
-include <nyx2.h>;
+include "nyx2.h";
 
 ;;
 
@@ -112,7 +130,16 @@ typedef struct yssc2_amp {	// data collected during initialization
 	uint32_t cyc0;		// 1-rev motor position, in fb_res units
 	uint32_t abs0;		// absolute rev counter
 	uint32_t type;
+	int index_req_pos;	// z-index homing
+	int zsm;			// z-index state machine
+	uint32_t prev_status;
 } YSSC2_amp;
+
+#define ZSM_IDLE		0
+#define ZSM_INDEX_REQ	1
+#define ZSM_WAIT_Z	2
+#define ZSM_WAIT_OFFS	3
+#define ZSM_SET_OFFS	40
 
 struct freq_data {
 	int b[16];
@@ -174,8 +201,8 @@ int yssc2_fb_seq(YSSC2 *y)		{ return y->dpram->fb.seq; }
 double yssc2_irq_time_us(YSSC2 *y)	{ return y->dpram->fb.irq_time / 45.0; }
 ///double yssc2_debug(YSSC2 *y, int n)	{ return 0; } ///y->dpram->dbg[n]; }
 double   yssc2_state(YSSC2 *y, int n)	{ return FB(n).state; }
-unsigned yssc2_debug(YSSC2 *y, int n)	{ return FB(n).smth2; }
 double yssc2_rx_time(YSSC2 *y, int n)	{ return FB(n).rxtime; }
+int yssc2_z_offs(YSSC2 *y, int n)       { return FB(n).smth2; }
 
 int yssc2_has_fb(YSSC2 *y)		{ return (y->dpram->fb.seq & YS_FB) && 1; }
 int yssc2_valid(YSSC2 *y, int a)	{ return (y->dpram->fb.valid & (1<<a)) && (FB(a).state & YF_VALID); }
@@ -198,6 +225,7 @@ int yssc2_oriented(YSSC2 *y, int a)	{ return (FB(a).state & YF_ORIENTED) && 1; }
 int yssc2_orienting(YSSC2 *y, int a)	{ return (FB(a).state & YF_ORIENTING) && 1; }
 int yssc2_di(YSSC2 *y, int a, int n)	{ return (FB(a).state & (YF_DI1 << n)) && 1; }
 int yssc2_torque_clamped(YSSC2 *y, int a) { return (FB(a).state & YF_TORQUE_LIM) && 1; }
+int yssc2_z_passed(YSSC2 *y, int a)	{ return (FB(a).state & YF_Z_PASSED) && 1; }
 
 int yssc2_droop(YSSC2 *y, int a)	{ return FB(a).droop; }
 int yssc2_pos_fb(YSSC2 *y, int a)	{ return FB(a).pos; }
@@ -218,6 +246,8 @@ void yssc2_rev(YSSC2 *y, int a, int e)          { if (e) CMD(a).flags |= YC_REV;
 void yssc2_orient(YSSC2 *y, int a, int e)       { if (e) CMD(a).flags |= YC_ORIENT;     else CMD(a).flags &= ~YC_ORIENT; }
 void yssc2_forward_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 0x4000) t = 0x4000; CMD(a).fwd_trq = t; }
 void yssc2_reverse_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 0x4000) t = 0x4000; CMD(a).rev_trq = t; }
+void yssc2_reset_z(YSSC2 *y, int a, int e)      { if (e) CMD(a).flags |= YC_RST_Z;      else CMD(a).flags &= ~YC_RST_Z; }
+void yssc2_do(YSSC2 *y, int a, int n, int e)    { if (e) CMD(a).flags |= (YC_DO1<<n);   else CMD(a).flags &= ~(YC_DO1<<n); }
 
 uint32_t yssc2_gpi(YSSC2 *y)                { return y->dpram->fb.gpi; }
 int      yssc2_enc(YSSC2 *y, int a)         { return (y->dpram->fb.enc[a]); }
@@ -361,7 +391,7 @@ static int export_io(char *prefix, int inst_num)
 #define yio_yo16(a) (y->io->yo16 & (1<<a))
 #define yio_yenc(a) (y->io->yenc & (1<<a))
 
-//
+// 
 //
 //
 
@@ -496,50 +526,18 @@ FUNCTION(_)
 
 	yssc2_process(y);	// state machine, request servo data: absolute origin, encoder res, etc
 
+	/*
 	dbg0 = yssc2_yi(y, 13);
 	dbg1 = yssc2_yi(y, 14);
 	dbg2 = yssc2_yi(y, 15);
 	dbg3 = yssc2_fb_seq(y);
+	*/
+
 	// process received data
 	for (a = 0; a < yssc2_axes(y); a++) {
-		servo_debug(a) = yssc2_debug(y, a);
+		//servo_debug(a) = yssc2_debug(y, a);
 		if (ready && yssc2_online(y, a)) {
 			if (yssc2_feedback_res(y, a) == 0) continue;
-			if (yssc2_has_fb(y)) {
-				if (yssc2_valid(y, a)) {
-					int32_t fb = (servo_counts(a) = yssc2_pos_fb(y, a)) - servo_origin(a);
-
-					servo_dbg(a) = yssc2_rx_time(y, a);
-					servo_online(a) = 1;
-					servo_offline(a) = 0;
-					servo_ready(a) = yssc2_ready(y, a);
-					servo_enabled(a) = yssc2_enabled(y, a);
-					servo_warning(a) = yssc2_warning(y, a);
-					servo_alarm(a) = yssc2_alarm(y, a);
-					servo_alarm_code(a) = yssc2_alarm_code(y, a);
-					servo_zero_speed(a) = yssc2_zero_speed(y, a);
-					servo_in_position(a) = yssc2_in_position(y, a);
-					servo_at_speed(a) = yssc2_at_speed(y, a);
-					servo_spindle_oriented(a) = yssc2_oriented(y, a);
-					servo_spindle_orienting(a) = yssc2_orienting(y, a);
-
-					servo_pos_fb(a) = fb * servo_pos_scale(a) / yssc2_feedback_res(y, a);
-					servo_vel_fb(a) = yssc2_vel_fb(y, a) / servo_vel_scale(a);
-					servo_trq_fb(a) = yssc2_trq_fb(y, a) / 10.0;
-					servo_droop(a) = yssc2_droop(y, a);
-					servo_torque_clamped(a) = yssc2_torque_clamped(y, a);
-					servo_absolute(a) = yssc2_absolute(y, a);
-					servo_abs_lost(a) = yssc2_abs_lost(y, a);
-					servo_abs_ok(a) = yssc2_absolute(y, a) && !yssc2_abs_lost(y, a);
-
-					servo_di1(a) = yssc2_di(y, a, 0);	// J3 DI# pins
-					servo_di2(a) = yssc2_di(y, a, 1);
-					servo_di3(a) = yssc2_di(y, a, 2);
-				} else {
-					servo_dbg(a) = 0;
-					++servo_error_cnt(a);
-				}
-			}
 
 			// input pins
 			yssc2_power(y, a, servo_power(a));
@@ -559,6 +557,99 @@ FUNCTION(_)
 			yssc2_fwd(y, a, servo_spindle_fwd(a));
 			yssc2_rev(y, a, servo_spindle_rev(a));
 			yssc2_orient(y, a, servo_spindle_orient(a));
+
+			if (yssc2_has_fb(y)) {
+				if (yssc2_valid(y, a)) {
+					{
+						int state = y->amp[a].zsm;
+						switch (state) {
+						case ZSM_IDLE:
+							if (servo_index_enable(a)) {
+								yssc2_reset_z(y, a, 1);
+								y->amp[a].index_req_pos = servo_counts_cmd(a);
+								state = ZSM_INDEX_REQ;
+							} else {
+		idle:						yssc2_reset_z(y, a, 0);
+								state = ZSM_IDLE;
+							}
+							break;
+						case ZSM_INDEX_REQ:
+							if (servo_index_enable(a)) {
+								if (!yssc2_z_passed(y, a)) {
+									yssc2_reset_z(y, a, 0);
+									state = ZSM_WAIT_Z;
+								} else  {
+									yssc2_reset_z(y, a, 1);
+								}
+							} else
+								goto idle;
+							break;
+						case ZSM_WAIT_Z:
+							if (servo_index_enable(a)) {
+								if (yssc2_z_passed(y, a)) {
+									state = ZSM_WAIT_OFFS;
+								}
+							} else
+								goto idle;
+							break;
+						case ZSM_SET_OFFS:
+							if (servo_index_enable(a)) {
+								servo_origin(a) = y->amp[a].index_req_pos + yssc2_z_offs(y, a);
+								servo_index_enable(a) = 0;
+							} else
+								goto idle;
+							break;
+						default: state++; break;
+						}
+						y->amp[a].zsm = state;
+						servo_dbg(a) = state;
+					}
+
+					int32_t fb = (servo_counts(a) = yssc2_pos_fb(y, a)) - servo_origin(a);
+
+					servo_dbg(a) = yssc2_rx_time(y, a);
+					servo_online(a) = 1;
+					servo_offline(a) = 0;
+					servo_ready(a) = yssc2_ready(y, a);
+					servo_enabled(a) = yssc2_enabled(y, a);
+					servo_warning(a) = yssc2_warning(y, a);
+					servo_alarm(a) = yssc2_alarm(y, a);
+					servo_alarm_code(a) = yssc2_alarm_code(y, a);
+					servo_zero_speed(a) = yssc2_zero_speed(y, a);
+					servo_in_position(a) = yssc2_in_position(y, a);
+					servo_at_speed(a) = yssc2_at_speed(y, a);
+					servo_spindle_oriented(a) = yssc2_oriented(y, a);
+					servo_spindle_orienting(a) = yssc2_orienting(y, a);
+
+//					if (!yssc2_zero_speed(y, a) && servo_undroop(a)) fb += yssc2_droop(y, a);
+					if (servo_undroop(a)) fb += yssc2_droop(y, a);
+
+					servo_pos_fb(a) = (fb) * servo_pos_scale(a) / yssc2_feedback_res(y, a);
+					servo_vel_fb(a) = yssc2_vel_fb(y, a) / servo_vel_scale(a);
+					servo_trq_fb(a) = yssc2_trq_fb(y, a) / 10.0;
+					servo_droop(a) = yssc2_droop(y, a);
+					servo_torque_clamped(a) = yssc2_torque_clamped(y, a);
+					servo_absolute(a) = yssc2_absolute(y, a);
+					servo_abs_lost(a) = yssc2_abs_lost(y, a);
+					servo_abs_ok(a) = yssc2_absolute(y, a) && !yssc2_abs_lost(y, a);
+
+					servo_in_00_not(a) = !(servo_in_00(a) = yssc2_di(y, a, 0));     // J3 DI# pins
+					servo_in_01_not(a) = !(servo_in_01(a) = yssc2_di(y, a, 1));
+					servo_in_02_not(a) = !(servo_in_02(a) = yssc2_di(y, a, 2));
+
+					yssc2_do(y, a, 0, servo_out_00(a));     // J3 DO# pins
+					yssc2_do(y, a, 1, servo_out_01(a));
+					yssc2_do(y, a, 2, servo_out_02(a));
+
+					servo_z_passed(a) = yssc2_z_passed(y, a);
+					servo_z_offs(a) = yssc2_z_offs(y, a);
+
+				} else {
+					servo_dbg(a) = 0;
+					++servo_error_cnt(a);
+				}
+			}
+
 		} else {
 			servo_online(a) = 0;
 			servo_offline(a) = 1;
@@ -591,16 +682,20 @@ FUNCTION(_)
 					double v = d * 60 / fperiod / encoder_cpr(a) / (enc_changed[a] + 1); // rpm
 					if (v < 0) v = -v;
 					if (v < encoder_min_speed_estimate(a)) v = 0;
-						encoder_velocity(a) = v;
+					encoder_velocity(a) = v;
 				}
 				enc_changed[a] = 0;
 				enc_counts[a] = c;
 			} else {
-				enc_changed[a]++;
+				if (enc_changed[a] > 60 / fperiod / encoder_cpr(a) / encoder_min_speed_estimate(a) - 1)
+					encoder_velocity(a) = 0;
+				if (enc_changed[a] < 2000000000)
+					enc_changed[a]++;
 			}
 		} else {
 			enc_counts[a] = c;      // initialization
 			enc_changed[a] = 0;
+			encoder_velocity(a) = 0;
 		}
 	}
 
@@ -618,7 +713,7 @@ FUNCTION(_)
 
         for (a = 0; a < 2; a++) {
 		double s = dac_scale(a) != 0 ? dac_scale(a) : 1;
-                double f = dac_value(a) / s;
+                double f = dac_value(a) / s + dac_bias(a);
                 if (f < 0) f = 0;
                 if (f > 1) f = 1;
                 yssc2_dac(y, a, f * 65535);
@@ -669,16 +764,13 @@ FUNCTION(_)
 #include <rtapi_slab.h>
 
 #ifdef __KERNEL__
-
-#include <linux/fs.h>      // Needed by filp
-#include <linux/delay.h>      // Needed by filp
-#include <asm/uaccess.h>   // Needed by segment descriptors
+#include <linux/fs.h>		// Needed by filp
+#include <linux/delay.h>	// Needed by filp
+#include <asm/uaccess.h>	// Needed by segment descriptors
 #include <rtapi_pci.h>
-
 #define malloc(a) kmalloc(a, GFP_KERNEL)
 #define free(a) kfree(a)
 #define realloc(p, a) krealloc(p, a, GFP_KERNEL)
-
 int strtol(char *s, char **endptr, int base)
 {
 	long l;
@@ -688,9 +780,7 @@ int strtol(char *s, char **endptr, int base)
 	}
 	return l;
 }
-
-#else
-
+#else 
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -811,14 +901,14 @@ int params_parse_no(char *s, servo_param *p)
 	} else if (s[0] == 'P' && s[2] >= '0' && s[2] <= '9') {
 		uint16_t grp = 0;
 		switch(s[1]) {
-		case 'A':
-		case 'B':
-		case 'C':
-		case 'D':
-		case 'E':
-		case 'F':
-		case 'G':
-		case 'H': grp = s[1] - 'A'; break;
+		case 'A': // 0
+		case 'B': // 1
+		case 'C': // 2
+		case 'D': // 3
+		case 'E': // 4
+		case 'F': // 5
+		case 'G': // 6
+		case 'H': grp = s[1] - 'A'; break; // 7
 		case 'J': grp = 8; break;
 		case 'O': grp = 9; break;
 		case 'S': grp = 10; break;
@@ -1113,7 +1203,6 @@ static int yssc2_pci_probe(struct rtapi_pci_dev *dev, const struct rtapi_pci_dev
 			r = -ENODEV;
 			goto fail1;
 		}
-
 
 		rtapi_print_msg(RTAPI_MSG_INFO, "nyx: YxxxnP v%d.%d #%d at %s, mapped to %p..%p, y=%p\n", rev_maj, rev_min,
 			num_boards, rtapi_pci_name(dev), y->iomem, y->iomem - y->iolen, y);
