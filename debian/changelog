@@ -1,5 +1,6 @@
 linuxcnc (1:2.8.0nyx15) buster; urgency=low
 
+  * multiboard support in uspace
   * encoder zero speed fix
   * J3/J4 digital outputs support
   * SSCNET III/H and MR-J4 support
