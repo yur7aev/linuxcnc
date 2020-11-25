@@ -22,7 +22,7 @@ ACTION = Action()
 INFO = Info()
 LOG = logger.getLogger(__name__)
 
-# Set the log level for this module
+# Force the log level for this module
 # LOG.setLevel(logger.INFO) # One of DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 class FileManager(QWidget, _HalWidgetBase):
@@ -38,6 +38,11 @@ class FileManager(QWidget, _HalWidgetBase):
         self.currentPath = None
         self.initUI()
 
+    # add shown text and hidden filter data from the INI
+    def fillCombobox(self, data):
+        for i in data:
+            self.cb.addItem(i[0],i[1])
+
     def initUI(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
@@ -46,7 +51,6 @@ class FileManager(QWidget, _HalWidgetBase):
         self.model.setRootPath(QDir.currentPath())
         self.model.setFilter(QDir.AllDirs | QDir.NoDot | QDir.Files)
         self.model.setNameFilterDisables(False)
-        self.model.setNameFilters(["*.ngc",'*.py'])
 
         self.list = QListView()
         self.list.setModel(self.model)
@@ -59,8 +63,8 @@ class FileManager(QWidget, _HalWidgetBase):
         self.list.setAlternatingRowColors(True)
 
         self.cb = QComboBox()
-        self.cb.currentTextChanged.connect(self.filterChanged)
-        self.cb.addItems(sorted({'*.ngc','*.py','*'}))
+        self.cb.currentIndexChanged.connect(self.filterChanged)
+        self.fillCombobox(INFO.PROGRAM_FILTERS_EXTENSIONS)
         #self.cb.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
 
         self.button = QPushButton()
@@ -91,13 +95,14 @@ class FileManager(QWidget, _HalWidgetBase):
     # so far this is not needed
     def currentChanged(self,c,p):
         dir_path = self.model.filePath(c)
-        print('-> ',dir_path)
 
     def updateDirectoryView(self, path):
         self.list.setRootIndex(self.model.setRootPath(path))
 
-    def filterChanged(self, text):
-        self.model.setNameFilters([text])
+    # retrieve selected filter (it's held as QT.userData)
+    def filterChanged(self, index):
+        userdata =  self.cb.itemData(index)
+        self.model.setNameFilters(userdata)
 
     def clicked(self, index):
         # the signal passes the index of the clicked item
@@ -173,16 +178,23 @@ class FileManager(QWidget, _HalWidgetBase):
         if fname:
             self.load(fname)
 
-    # this can be class patched to do somethibg else
+    # this can be class patched to do something else
     def load(self, fname=None):
         if fname is None:
             self._getPathActivated()
             return
+        self.recordBookKeeping()
+        ACTION.OPEN_PROGRAM(fname)
+        STATUS.emit('update-machine-log', 'Loaded: ' + fname, 'TIME')
+
+    # this can be class patched to do something else
+    def recordBookKeeping(self):
+        fname = self.currentPath
+        if fname is None: 
+            return
         if self.PREFS_:
             self.PREFS_.putpref('last_loaded_directory', self.model.rootPath(), str, 'BOOK_KEEPING')
             self.PREFS_.putpref('RecentPath_0', fname, str, 'BOOK_KEEPING')
-        ACTION.OPEN_PROGRAM(fname)
-        STATUS.emit('update-machine-log', 'Loaded: ' + fname, 'TIME')
 
     # moves the selection up
     # used with MPG scrolling

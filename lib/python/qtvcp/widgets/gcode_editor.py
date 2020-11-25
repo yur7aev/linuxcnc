@@ -31,10 +31,10 @@ import sys
 import os
 
 from PyQt5.QtCore import pyqtProperty, pyqtSignal, QSize, QObject
-from PyQt5.QtGui import QFont, QFontMetrics, QColor, QIcon
+from PyQt5.QtGui import QFont, QFontMetrics, QColor, QIcon, QPalette
 from PyQt5.QtWidgets import QMainWindow, QWidget, QPushButton, QAction,\
          QVBoxLayout,QToolBar,QGroupBox,QLineEdit, QHBoxLayout,QMessageBox, \
-            QFileDialog, QFrame, QLabel
+            QFileDialog, QFrame, QLabel, QStyleOption
 
 from qtvcp.widgets.widget_baseclass import _HalWidgetBase
 from qtvcp.core import Status, Info, Action
@@ -49,7 +49,7 @@ INFO = Info()
 ACTION = Action()
 LOG = logger.getLogger(__name__)
 
-# Set the log level for this module
+# Force the log level for this module
 # LOG.setLevel(logger.INFO) # One of DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 # load this after Logging set up so we get a nice dialog.
@@ -74,12 +74,6 @@ class GcodeLexer(QsciLexerCustom):
             }
         for key, value in self._styles.items():
             setattr(self, value, key)
-        font = QFont()
-        font.setFamily('Courier')
-        font.setFixedPitch(True)
-        font.setPointSize(12)
-        font.setBold(True)
-        self.setFont(font, 2)
 
     # Paper sets the background color of each style of text
     def setPaperBackground(self, color, style=None):
@@ -187,11 +181,15 @@ class GcodeLexer(QsciLexerCustom):
         except Exception as e:
             print(e)
 
+
 ##########################################################
 # Base editor class
 ##########################################################
 class EditorBase(QsciScintilla):
     ARROW_MARKER_NUM = 8
+    _styleMarginsForegroundColor = QColor("#000000")
+    _styleMarginsBackgroundColor = QColor("#000000")
+    _styleBackgroundColor = QColor("#000000")
 
     def __init__(self, parent=None):
         super(EditorBase, self).__init__(parent)
@@ -203,7 +201,6 @@ class EditorBase(QsciScintilla):
         self.font.setFixedPitch(True)
         self.font.setPointSize(12)
         self.setFont(self.font)
-        self.setMarginsFont(self.font)
 
         # Margin 0 is used for line numbers
         self.setMarginsFont(self.font)
@@ -242,15 +239,37 @@ class EditorBase(QsciScintilla):
 
         # default gray background
         self.set_background_color('#C0C0C0')
+        self._stylebackgroundColor = '#C0C0C0'
 
         # not too small
         self.setMinimumSize(200, 100)
         self.filepath = None
 
+    def setMarginsForegroundColor(self, color):
+        super(EditorBase, self).setMarginsForegroundColor(color)
+        self._styleMarginsForegroundColor = color
+
+    def marginsForegroundColor(self):
+        return self._styleMarginsForegroundColor
+
+    def setMarginsBackgroundColor(self, color):
+        super(EditorBase, self).setMarginsBackgroundColor(color)
+        self._styleMarginsBackgroundColor = color
+
+    def marginsBackgroundColor(self):
+        return self._styleMarginsBackgroundColor
+
     def set_margin_width(self, width):
         fontmetrics = QFontMetrics(self.font)
         self.setMarginsFont(self.font)
         self.setMarginWidth(0, fontmetrics.width("0"*width) + 6)
+
+    def setBackgroundColor(self, color):
+        self._styleBackgroundColor = color
+        self.set_background_color(color)
+
+    def backgroundColor(self):
+        return self._styleBackgroundColor
 
     # must set lexer paper background color _and_ editor background color it seems
     def set_background_color(self, color):
@@ -268,13 +287,11 @@ class EditorBase(QsciScintilla):
         self.lexer = QsciLexerPython()
         self.lexer.setDefaultFont(self.font)
         self.setLexer(self.lexer)
-        self.SendScintilla(QsciScintilla.SCI_STYLESETFONT, 1, 'Courier')
+        #self.SendScintilla(QsciScintilla.SCI_STYLESETFONT, 1, 'Courier')
 
     def set_gcode_lexer(self):
         self.lexer = GcodeLexer(self)
-        self.lexer.setDefaultFont(self.font)
         self.setLexer(self.lexer)
-        self.set_background_color('#C0C0C0')
 
     def new_text(self):
         self.setText('')
@@ -305,6 +322,92 @@ class EditorBase(QsciScintilla):
     def search_Next(self):
         self.SendScintilla(QsciScintilla.SCI_SEARCHANCHOR)
         self.findNext()
+
+    # this allows setting these properties in a stylesheet
+    def getColor0(self):
+        return self.lexer.color(0)
+    def setColor0(self, value):
+        self.lexer.setColor(value,0)
+    styleColor0 = pyqtProperty(QColor, getColor0, setColor0)
+
+    def getColor1(self):
+        return self.lexer.color(1)
+    def setColor1(self, value):
+        self.lexer.setColor(value,1)
+    styleColor1 = pyqtProperty(QColor, getColor1, setColor1)
+
+    def getColor2(self):
+        return self.lexer.color(2)
+    def setColor2(self, value):
+        self.lexer.setColor(value,2)
+    styleColor2 = pyqtProperty(QColor, getColor2, setColor2)
+
+    def getColor3(self):
+        return self.lexer.color(3)
+    def setColor3(self, value):
+        self.lexer.setColor(value,3)
+    styleColor3 = pyqtProperty(QColor, getColor3, setColor3)
+
+    def getColor4(self):
+        return self.lexer.color(4)
+    def setColor4(self, value):
+        self.lexer.setColor(value,4)
+    styleColor4 = pyqtProperty(QColor, getColor4, setColor4)
+
+    def getColorMarginText(self):
+        return self.marginsForegroundColor()
+    def setColorMarginText(self, value):
+        self.setMarginsForegroundColor(value)
+    styleColorMarginText = pyqtProperty(QColor, getColorMarginText, setColorMarginText)
+
+    def getColorMarginBackground(self):
+        return self.marginsBackgroundColor()
+    def setColorMarginBackground(self, value):
+        self.setMarginsBackgroundColor(value)
+    styleColorMarginBackground = pyqtProperty(QColor, getColorMarginBackground, setColorMarginBackground)
+
+    def getColorBackground(self):
+        return self.backgroundColor()
+    def setColorBackground(self, value):
+        self.setBackgroundColor(value)
+    styleColorBackground = pyqtProperty(QColor, getColorBackground, setColorBackground)
+
+    def getFont0(self):
+        return self.lexer.font(0)
+    def setFont0(self, value):
+        self.lexer.setFont(value,0)
+    styleFont0 = pyqtProperty(QFont, getFont0, setFont0)
+
+    def getFont1(self):
+        return self.lexer.font(1)
+    def setFont1(self, value):
+        self.lexer.setFont(value,1)
+    styleFont1 = pyqtProperty(QFont, getFont1, setFont1)
+
+    def getFont2(self):
+        return self.lexer.font(2)
+    def setFont2(self, value):
+        self.lexer.setFont(value,2)
+    styleFont2 = pyqtProperty(QFont, getFont2, setFont2)
+
+    def getFont3(self):
+        return self.lexer.font(3)
+    def setFont3(self, value):
+        self.lexer.setFont(value,3)
+    styleFont3 = pyqtProperty(QFont, getFont3, setFont3)
+
+    def getFont4(self):
+        return self.lexer.font(4)
+    def setFont4(self, value):
+        self.lexer.setFont(value,4)
+    styleFont4 = pyqtProperty(QFont, getFont4, setFont4)
+
+    def getFontMargin(self):
+        return self.font
+    def setFontMargin(self, value):
+        self.setMarginsFont(value)
+    styleFontMargin = pyqtProperty(QFont, getFontMargin, setFontMargin)
+
 
 ##########################################################
 # Gcode display widget (intended read-only)
@@ -674,7 +777,8 @@ class GcodeEditor(QWidget, _HalWidgetBase):
             result = self.killCheck()
             if result:
                 self.editor.new_text()
-
+        else:
+            self.editor.new_text()
     def openCall(self):
         self.open()
     def open(self):
@@ -783,6 +887,17 @@ class GcodeEditor(QWidget, _HalWidgetBase):
     def set_margin_width(self,width):
         self.editor.set_margin_width(width)
 
+    def set_font(self, font):
+        self.editor.font = font
+        for i in range(0,4):
+            self.editor.lexer.setFont(font,i)
+
+    def set_background_color(self, color):
+        self.editor.set_background_color(color)
+
+    def isReadOnly(self):
+        return self.editor.isReadOnly()
+
     # designer recognized getter/setters
     # auto_show_mdi status
     # These adjust the self.editor instance
@@ -810,7 +925,7 @@ if __name__ == "__main__":
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
 
-    app = QtWidgets.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     w = GcodeEditor()
     w.editMode()
     w.show()

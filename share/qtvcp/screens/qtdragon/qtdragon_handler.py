@@ -7,6 +7,7 @@ from qtvcp.widgets.tool_offsetview import ToolOffsetView as TOOL_TABLE
 from qtvcp.widgets.origin_offsetview import OriginOffsetView as OFFSET_VIEW
 from qtvcp.widgets.stylesheeteditor import StyleSheetEditor as SSE
 from qtvcp.widgets.file_manager import FileManager as FM
+from qtvcp.lib.writer import writer
 from qtvcp.lib.keybindings import Keylookup
 from qtvcp.lib.gcodes import GCodes
 from qtvcp.core import Status, Action, Info, Path
@@ -20,6 +21,7 @@ INFO = Info()
 ACTION = Action()
 PATH = Path()
 STYLEEDITOR = SSE()
+WRITER = writer.Main()
 
 # constants for tab pages
 TAB_MAIN = 0
@@ -53,7 +55,6 @@ class HandlerClass:
         self.home_all = False
         self.min_spindle_rpm = INFO.MIN_SPINDLE_SPEED
         self.max_spindle_rpm = INFO.MAX_SPINDLE_SPEED
-        self.max_linear_velocity = INFO.MAX_LINEAR_VELOCITY * 60
         self.system_list = ["G54","G55","G56","G57","G58","G59","G59.1","G59.2","G59.3"]
         self.tab_index_code = (0, 1, 2, 3, 0, 0, 2, 0, 0, 0)
         self.slow_jog_factor = 10
@@ -87,6 +88,7 @@ class HandlerClass:
         STATUS.connect('not-all-homed', self.not_all_homed)
         STATUS.connect('periodic', lambda w: self.update_runtimer())
         STATUS.connect('command-stopped', lambda w: self.stop_timer())
+        STATUS.connect('progress', lambda w,p,t: self.updateProgress(p,t))
 
         self.html = """<html>
 <head>
@@ -137,9 +139,9 @@ class HandlerClass:
             if self.w.web_view:
                 self.toolBar = QtWidgets.QToolBar(self.w)
                 self.w.layout_setup.addWidget(self.toolBar)
+
                 self.backBtn = QtWidgets.QPushButton(self.w)
                 self.backBtn.setEnabled(True)
-
                 self.backBtn.setIcon(QtGui.QIcon(':/qt-project.org/styles/commonstyle/images/left-32.png'))
                 self.backBtn.clicked.connect(self.back)
                 self.toolBar.addWidget(self.backBtn)
@@ -147,9 +149,14 @@ class HandlerClass:
                 self.forBtn = QtWidgets.QPushButton(self.w)
                 self.forBtn.setEnabled(True)
                 self.forBtn.setIcon(QtGui.QIcon(':/qt-project.org/styles/commonstyle/images/right-32.png'))
-
                 self.forBtn.clicked.connect(self.forward)
                 self.toolBar.addWidget(self.forBtn)
+
+                self.writeBtn = QtWidgets.QPushButton('SetUp\n Writer',self.w)
+                self.writeBtn.setEnabled(True)
+                self.writeBtn.clicked.connect(self.writer)
+                self.toolBar.addWidget(self.writeBtn)
+
                 self.w.layout_setup.addWidget(self.w.web_view)
                 if os.path.exists(self.default_setup):
                     self.w.web_view.load(QtCore.QUrl.fromLocalFile(self.default_setup))
@@ -241,23 +248,17 @@ class HandlerClass:
 
     def init_widgets(self):
         self.w.main_tab_widget.setCurrentIndex(TAB_MAIN)
-        self.w.slider_jog_linear.setMaximum(self.max_linear_velocity)
         self.w.slider_jog_linear.setValue(INFO.DEFAULT_LINEAR_JOG_VEL)
-        self.w.slider_jog_angular.setMaximum(INFO.MAX_ANGULAR_JOG_VEL)
         self.w.slider_jog_angular.setValue(INFO.DEFAULT_ANGULAR_JOG_VEL)
-        self.w.slider_maxv_ovr.setMaximum(self.max_linear_velocity)
-        self.w.slider_maxv_ovr.setValue(self.max_linear_velocity)
-        self.w.slider_feed_ovr.setMaximum(INFO.MAX_FEED_OVERRIDE)
+        self.w.slider_maxv_ovr.setValue(INFO.MAX_LINEAR_JOG_VEL)
         self.w.slider_feed_ovr.setValue(100)
-        self.w.slider_rapid_ovr.setMaximum(100)
         self.w.slider_rapid_ovr.setValue(100)
         self.w.slider_spindle_ovr.setMinimum(INFO.MIN_SPINDLE_OVERRIDE)
-        self.w.slider_spindle_ovr.setMaximum(INFO.MAX_SPINDLE_OVERRIDE)
         self.w.slider_spindle_ovr.setValue(100)
         self.w.chk_override_limits.setChecked(False)
         self.w.chk_override_limits.setEnabled(False)
         self.w.lbl_maxv_percent.setText("100 %")
-        self.w.lbl_max_rapid.setText(str(self.max_linear_velocity))
+        self.w.lbl_max_rapid.setText(str(INFO.MAX_LINEAR_JOG_VEL))
         self.w.lbl_home_x.setText(INFO.get_error_safe_setting('JOINT_0', 'HOME',"50"))
         self.w.lbl_home_y.setText(INFO.get_error_safe_setting('JOINT_1', 'HOME',"50"))
         self.w.cmb_gcode_history.addItem("No File Loaded")
@@ -267,6 +268,19 @@ class HandlerClass:
         self.w.gcode_editor.hide()
         self.w.filemanager.list.setAlternatingRowColors(False)
         self.w.filemanager_usb.list.setAlternatingRowColors(False)
+        if INFO.MACHINE_IS_METRIC:
+            self.w.lbl_tool_sensor_B2W.setText('INCH')
+            self.w.lbl_tool_sensor_B2S.setText('INCH')
+            self.w.lbl_touchheight_units.setText('INCH')
+            self.w.lbl_max_probe_units.setText('INCH')
+            self.w.lbl_search_vel_units.setText('INCH/<sup> MIN</sup>')
+            self.w.lbl_probe_vel_units.setText('INCH/<sup> MIN</sup>')
+            self.w.lbl_z_ext_offset.setText('INCH')
+            self.w.lbl_tool_sensor_loc.setText('INCH')
+            self.w.lbl_laser_offset.setText('INCH')
+            self.w.lbl_camera_offset.setText('INCH')
+            self.w.lbl_tool_diam.setText('INCH')
+            self.w.lbl_touchheight_units.setText('INCH')
         #set up gcode list
         self.gcodes.setup_list()
 
@@ -310,6 +324,7 @@ class HandlerClass:
             # then check if it's one we want the keypress events to go to
             flag = False
             receiver2 = receiver
+
             while receiver2 is not None and not flag:
                 if isinstance(receiver2, QtWidgets.QDialog):
                     flag = True
@@ -329,13 +344,16 @@ class HandlerClass:
                 if isinstance(receiver2, OFFSET_VIEW):
                     flag = True
                     break
+                if isinstance(receiver2, writer.Main):
+                    flag = True
+                    break
                 receiver2 = receiver2.parent()
 
             if flag:
                 if isinstance(receiver2, GCODE):
-                    # if in manual do our keybindings - otherwise
+                    # if in manual or in readonly mode do our keybindings - otherwise
                     # send events to gcode widget
-                    if STATUS.is_man_mode() == False:
+                    if STATUS.is_man_mode() == False or not receiver2.isReadOnly():
                         if is_pressed:
                             receiver.keyPressEvent(event)
                             event.accept()
@@ -350,21 +368,10 @@ class HandlerClass:
 
         if event.isAutoRepeat():return True
 
-        # ok if we got here then try keybindings
-        try:
-            KEYBIND.call(self,event,is_pressed,shift,cntrl)
-            event.accept()
-            return True
-        except NameError as e:
-            if is_pressed:
-                LOG.debug('Exception in KEYBINDING: {}'.format (e))
-                self.add_status('Exception in KEYBINDING: {}'.format (e))
-        except Exception as e:
-            if is_pressed:
-                LOG.debug('Exception in KEYBINDING:', exc_info=e)
-                print ('Error in, or no function for: %s in handler file for-%s'%(KEYBIND.convert(event),key))
-        event.accept()
-        return True
+        # ok if we got here then try keybindings function calls
+        # KEYBINDING will call functions from handler file as
+        # registered by KEYBIND.add_call(KEY,FUNCTION) above
+        return KEYBIND.manage_function_calls(self,event,is_pressed,key,shift,cntrl)
 
     #########################
     # CALLBACKS FROM STATUS #
@@ -410,11 +417,11 @@ class HandlerClass:
 
     def metric_mode_changed(self, mode):
         if mode is False:
-            self.w.lbl_jog_linear.setText('JOG RATE\nIN/MIN')
-            maxvel = float(self.max_linear_velocity) / 25.4
+            self.w.lbl_jog_linear.setText('INCH/<sup> MIN</sup>')
+            maxvel = float(INFO.MAX_LINEAR_JOG_VEL) / 25.4
         else:
-            self.w.lbl_jog_linear.setText('JOG RATE\nMM/MIN')
-            maxvel = float(self.max_linear_velocity)
+            self.w.lbl_jog_linear.setText('MM/<sup> MIN</sup>')
+            maxvel = float(INFO.MAX_LINEAR_JOG_VEL)
         self.w.lbl_max_rapid.setText("{:4.0f}".format(maxvel))
 
     def file_loaded(self, obj, filename):
@@ -425,6 +432,14 @@ class HandlerClass:
             self.w.lbl_runtime.setText("00:00:00")
         else:
             self.add_status("Filename not valid")
+
+    def updateProgress(self, p,text):
+        if p <0:
+            self.w.progressBar.setValue(0)
+            self.w.progressBar.setFormat('PROGRESS')
+        else:
+            self.w.progressBar.setValue(p)
+            self.w.progressBar.setFormat('{}: {}%'.format(text, p))
 
     def percent_loaded_changed(self, fraction):
         if fraction <0:
@@ -601,21 +616,21 @@ class HandlerClass:
             self.w[slider].setPageStep(100)
 
     def slider_maxv_changed(self, value):
-        maxpc = (float(value) / self.max_linear_velocity) * 100
+        maxpc = (float(value) / INFO.MAX_LINEAR_JOG_VEL) * 100
         self.w.lbl_maxv_percent.setText("{:3.0f} %".format(maxpc))
 
     def slider_rapid_changed(self, value):
         if STATUS.is_metric_mode():
-            rapid = (float(value) / 100) * self.max_linear_velocity
+            rapid = (float(value) / 100) * INFO.MAX_LINEAR_JOG_VEL
         else:
-            rapid = (float(value) / 100) * (self.max_linear_velocity / 25.4)
+            rapid = (float(value) / 100) * (INFO.MAX_LINEAR_JOG_VEL / 25.4)
         self.w.lbl_max_rapid.setText("{:4.0f}".format(rapid))
 
     def btn_maxv_100_clicked(self):
-        self.w.slider_maxv_ovr.setValue(self.max_linear_velocity)
+        self.w.slider_maxv_ovr.setValue(INFO.MAX_LINEAR_JOG_VEL)
 
     def btn_maxv_50_clicked(self):
-        self.w.slider_maxv_ovr.setValue(self.max_linear_velocity / 2)
+        self.w.slider_maxv_ovr.setValue(INFO.MAX_LINEAR_JOG_VEL / 2)
 
     # file tab
     def btn_gcode_edit_clicked(self, state):
@@ -744,10 +759,10 @@ class HandlerClass:
     # settings tab
     def chk_override_limits_checked(self, state):
         if state:
-            print("Override limits set")
+            self.add_status("Override limits set")
             ACTION.SET_LIMITS_OVERRIDE()
         else:
-            print("Override limits not set")
+            self.add_status("Override limits not set")
 
     def chk_run_from_line_checked(self, state):
         self.w.gcodegraphics.set_inhibit_selection(not state)
@@ -772,15 +787,28 @@ class HandlerClass:
     #####################
     def load_code(self, fname):
         if fname is None: return
-        if fname.endswith(".ngc") or fname.endswith(".py"):
+        filename, file_extension = os.path.splitext(fname)
+        if not fname.endswith(".html"):
+            if not (INFO.program_extension_valid(fname)):
+                self.add_status("Unknown or invalid filename extension {}".format(file_extension))
+                return
             self.w.cmb_gcode_history.addItem(fname)
             self.w.cmb_gcode_history.setCurrentIndex(self.w.cmb_gcode_history.count() - 1)
             ACTION.OPEN_PROGRAM(fname)
             self.add_status("Loaded program file : {}".format(fname))
             self.w.main_tab_widget.setCurrentIndex(TAB_MAIN)
-        elif fname.endswith(".html"):
+            self.w.filemanager.recordBookKeeping()
+            # adjust ending to check for related setup files
+            fname = filename+'.html'
+            if os.path.exists(fname):
+                self.w.web_view.load(QtCore.QUrl.fromLocalFile(fname))
+                self.add_status("Loaded HTML file : {}".format(fname))
+            else:
+                self.w.web_view.setHtml(self.html)
+            return
+        else:
             try:
-                self.web_page.mainFrame().load(QtCore.QUrl.fromLocalFile(fname))
+                self.w.web_view.load(QtCore.QUrl.fromLocalFile(fname))
                 self.add_status("Loaded HTML file : {}".format(fname))
                 self.w.main_tab_widget.setCurrentIndex(TAB_SETUP)
                 self.w.stackedWidget.setCurrentIndex(0)
@@ -788,8 +816,7 @@ class HandlerClass:
                 self.w.jogging_frame.hide()
             except Exception as e:
                 print("Error loading HTML file : {}".format(e))
-        else:
-            self.add_status("Unknown or invalid filename")
+
 
     def disable_spindle_pause(self):
         self.h['eoffset_count'] = 0
@@ -891,9 +918,7 @@ class HandlerClass:
 
     def update_rpm(self, speed):
         if self.max_spindle_rpm < int(speed) < self.min_spindle_rpm:
-            print("Spindle out of range")
             if STATUS.is_spindle_on():
-                print("Spindle is on")
                 self.w.lbl_spindle_set.setProperty('in_range', False)
                 self.w.lbl_spindle_set.style().unpolish(self.w.lbl_spindle_set)
                 self.w.lbl_spindle_set.style().polish(self.w.lbl_spindle_set)
@@ -927,6 +952,10 @@ class HandlerClass:
     def forward(self):
         self.w.web_view.load(QtCore.QUrl.fromLocalFile(self.docs))
         #self.w.web_view.page().triggerAction(QWebEnginePage.Forward)
+
+    def writer(self):
+        WRITER.show()
+
     #####################
     # KEY BINDING CALLS #
     #####################
