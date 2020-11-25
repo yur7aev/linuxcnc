@@ -1,0 +1,9 @@
+;
+; Yaskawa SGDM-xxxN
+;
+; * - param active at power-up
+; ! - param change at DEN/ZSPD
+;
+; 2020, http://yurtaev.com
+;
+

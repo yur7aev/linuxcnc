@@ -1,0 +1,16 @@
+YxxxxP sample configuration
+
+Mitsubishi
+nyx-ssc1  - YSSC1P  MR-J/J2/J2S-B SSCNET
+nyx-ssc2  - YSSC2P  MR-J2S-B SSCNET-II
+nyx-ssc3  - YSSC3P  MR-J3/J4(W)-B SSCNET-III
+nyx-ssc3h - YSSCH3P MR-J4(W)-B SSCNET-III/H
+nyx-mds   - YMDS2P  MDS-A/B/C-V/SVJ/SP
+nyx-mds3  - YMDS3P  MDS-D/DJ/E-V (experimental)
+sscii     - YSSC2P  f/w v1.3 MR-J2S-B (legacy)
+
+Yaskawa
+nyx-mtl1  - YMTL1P  SGD/SGDB/SGDM M-I
+nyx-mtl2  - YMTL2P  SGDS/SGDV/SGD7 M-II
+
+http://yurtaev.com

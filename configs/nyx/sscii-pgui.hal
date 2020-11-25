@@ -76,3 +76,4 @@ net code2 sscii.0.servo.2.alarm-code => pyvcp.code2
 net code3 sscii.0.servo.3.alarm-code => pyvcp.code3
 net code4 sscii.0.servo.4.alarm-code => pyvcp.code4
 net code5 sscii.0.servo.5.alarm-code => pyvcp.code5
+
