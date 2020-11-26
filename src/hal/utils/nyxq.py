@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# nyxq - Yxxx2P control utility
+# nyxq - YxxxxP control utility
 #
 # 2018-2020, dmitry@yurtaev.com
 #
@@ -556,15 +556,17 @@ def flash_program(f, a=0x80000, verify_only=0):
 	else:
 		print "success"
 
-def cfg(config):
-	if config == 'save':
-		req(0x00040023)    # write
-	elif config == None:
+def config(cfg):
+	if cfg == 'load':
+		req(0x00040015)    # load
+	elif cfg == 'save':
+		req(0x00040016)    # save
+	elif cfg == None:
 		req(0x00040021) # read
 		print "excfg: %x" % dp.buf.dword[1]
                 print "pll: %d %d %d %d" % (dp.buf.dword[2], dp.buf.dword[3], dp.buf.dword[4], dp.buf.dword[5])
         else:
-		req(0x00040024, int(config, 16))    # set
+		req(0x00040023, int(cfg, 16))    # write
 
 # ==============================
 
@@ -587,7 +589,7 @@ def args(n, m):
 	return sys.argv[n:]
 
 
-cmd = arg(1, "[info|servo|io|flash|reboot|pll] ...")
+cmd = arg(1, "[info|servo|io|flash|reboot|config|pll] ...")
 try:
 	if cmd == 'info':
 		info()
@@ -614,7 +616,7 @@ try:
 	elif cmd == 'reboot':
 		reboot()
 	elif cmd == 'pll':
-		msg = "pll insync P I step"
+		msg = "pll <insync> <kp> <ki> <step>"
 		y = arg(2, msg)
 		p = arg(3, msg)
 		i = arg(4, msg)
@@ -622,8 +624,8 @@ try:
 		pll(y, p, i, s)
 	elif cmd == 'io':
 		io_info()
-	elif cmd == 'cfg':
-		cfg(arg(2))
+	elif cmd == 'config':
+		config(arg(2))
 	elif cmd == 'dna':
 		dna()
 	elif cmd == 'flash':

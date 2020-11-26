@@ -669,6 +669,7 @@ FUNCTION(_)
 		}
 	}
 
+#define MAXI 2000000000
 
 	for (a = 0; a < 2; a++) {
 		int c;
@@ -676,31 +677,34 @@ FUNCTION(_)
 		if (yssc2_index_falling(y, a)) encoder_index_enable(a) = 0;
 		yssc2_index_req(y, a, encoder_index_enable(a));	// rising
 
-		encoder_counts(a) = c = yssc2_enc(y, a);
-		encoder_pos(a) = c / encoder_cpr(a);
+		int cpr = encoder_cpr(a);
+		double min_spd = encoder_min_speed_estimate(a);
 
+		if (cpr < 1) cpr = 1;
+		if (min_spd < 0.001) min_spd = 0.001;
+
+		c = yssc2_enc(y, a);
 		if (enc_changed[a] >= 0) {
-			if (c != enc_counts[a]) {
-				int d = c - enc_counts[a];
-				if (d > -10000000 && d < 1000000) {      // just ignore integer overflow
-					double v = d * 60 / fperiod / encoder_cpr(a) / (enc_changed[a] + 1); // rpm
-					if (v < 0) v = -v;
-					if (v < encoder_min_speed_estimate(a)) v = 0;
+			if (c != encoder_counts(a)) {
+				int d = c - encoder_counts(a);
+				if (d > -MAXI && d < MAXI) {      // just ignore integer overflow
+					double v = d * 60 / fperiod / cpr / (enc_changed[a] + 1); // rpm
+					if (fabs(v) < min_spd) v = 0.0;
 					encoder_velocity(a) = v;
 				}
 				enc_changed[a] = 0;
-				enc_counts[a] = c;
 			} else {
-				if (enc_changed[a] > 60 / fperiod / encoder_cpr(a) / encoder_min_speed_estimate(a) - 1)
+				if (enc_changed[a] > 60 / fperiod / cpr / min_spd - 1)
 					encoder_velocity(a) = 0;
-				if (enc_changed[a] < 2000000000)
+				if (enc_changed[a] < MAXI)
 					enc_changed[a]++;
 			}
 		} else {
-			enc_counts[a] = c;      // initialization
 			enc_changed[a] = 0;
 			encoder_velocity(a) = 0;
 		}
+		encoder_counts(a) = c;
+		encoder_pos(a) = c / encoder_cpr(a);
 	}
 
 	u = yssc2_gpi(y);

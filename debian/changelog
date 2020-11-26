@@ -1,7 +1,7 @@
 linuxcnc (1:2.9.0nyx15~pre0) stretch; urgency=medium
 
   * multiple board support in userspace
-  * encoder zero speed fix
+  * encoder zero speed fix, signed velocity
   * J3 DOs
   * pulled in the master changes
   * applied nyx patch
