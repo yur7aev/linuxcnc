@@ -473,6 +473,8 @@ int freq(YSSC2 *y, int event)
 	return y->freq.sum;
 }
 
+#include <rtapi_math.h>
+
 FUNCTION(_)
 {
 	int a, insync;

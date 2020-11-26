@@ -1,5 +1,6 @@
 linuxcnc (1:2.8.0nyx15) buster; urgency=low
 
+  * encoder velocity is now signed
   * multiboard support in uspace
   * encoder zero speed fix
   * J3/J4 digital outputs support
@@ -13,7 +14,7 @@ linuxcnc (1:2.8.0nyx15) buster; urgency=low
   * mdssp comp
   * merged with 2.8 branch
 
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Mon, 23 Nov 2020 16:59:22 +0300
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Mon, 26 Nov 2020 06:28:22 +0300
 
 linuxcnc (1:2.8.0) buster; urgency=low
 
