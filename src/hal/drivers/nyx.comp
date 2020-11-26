@@ -682,7 +682,7 @@ FUNCTION(_)
 		int cpr = encoder_cpr(a);
 		double min_spd = encoder_min_speed_estimate(a);
 
-		if (cpr < 1) cpr = 1;
+		if (cpr == 0) cpr = 1;
 		if (min_spd < 0.001) min_spd = 0.001;
 
 		c = yssc2_enc(y, a);
@@ -696,17 +696,17 @@ FUNCTION(_)
 				}
 				enc_changed[a] = 0;
 			} else {
-				if (enc_changed[a] > 60 / fperiod / cpr / min_spd - 1)
-					encoder_velocity(a) = 0;
+				if (enc_changed[a] > fabs(60 / fperiod / cpr / min_spd) - 1)
+					encoder_velocity(a) = 0.0;
 				if (enc_changed[a] < MAXI)
 					enc_changed[a]++;
 			}
 		} else {
 			enc_changed[a] = 0;
-			encoder_velocity(a) = 0;
+			encoder_velocity(a) = 0.0;
 		}
 		encoder_counts(a) = c;
-		encoder_pos(a) = c / encoder_cpr(a);
+		encoder_pos(a) = c / (double)cpr;
 	}
 
 	u = yssc2_gpi(y);
