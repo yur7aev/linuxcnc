@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 '''
 plasmac_gcode.py
@@ -27,6 +27,7 @@ import math
 import gtk
 import shutil
 import time
+import hal
 from subprocess import Popen, PIPE
 
 ini = linuxcnc.ini(os.environ['INI_FILE_NAME'])
@@ -65,6 +66,7 @@ customLen = False
 torchEnable = True
 pierceOnly = False
 scribing = False
+spotting = False
 offsetG41 = False
 feedWarning = False
 
@@ -298,11 +300,10 @@ def do_material_change():
         wng += '\nAdd a new material\n'
         wng += 'or edit GCode file to suit.'
         dialog_error(gtk.MESSAGE_ERROR, 'ERROR', wng)
+        print(line)
         quit()
+    Popen('halcmd setp plasmac_run.material-change-number {}'.format(material[0]), stdout = PIPE, shell = True)
     print(line)
-    # if not firstMaterial:
-    #     firstMaterial = True
-    #     Popen('halcmd setp plasmac_run.first-material {}'.format(material[0]), stdout = PIPE, shell = True)
 
 # check if matarial edit required
 def check_material_edit():
@@ -575,7 +576,7 @@ with open(inCode, 'r') as fRead:
         if (line.lower().startswith('g') or \
            line.lower().startswith('m')) and \
            len(line) > 2:
-            while line[1] == '0':
+            while line[1] == '0' and len(line) > 2:
                 if line[2].isdigit():
                     line = line[:1] + line[2:]
                 else:
@@ -612,6 +613,16 @@ with open(inCode, 'r') as fRead:
                 continue
         # if pierce only mode
         if pierceOnly:
+            # Don't pierce spotting operations
+            if line.startswith('m3$2'):
+                spotting = True
+                print('(Ignoring spotting operation as pierce-only is active)')
+                continue
+            # Ignore spotting blocks when pierceOnly
+            if spotting:
+                if line.startswith('m5$2'):
+                    spotting = False
+                continue
             if line.startswith('g0'):
                 rapidLine = line
                 continue
@@ -720,7 +731,7 @@ with open(inCode, 'r') as fRead:
             print('({})'.format(line))
             continue
         # if z axis and other axes in line, comment out the Z axis
-        if 'z' in line and line.split('z')[1][0] in '0123456789.- ':
+        if 'z' in line and not '(z' in line and line.split('z')[1][0] in '0123456789.- ':
             if holeEnable:
                 lastX, lastY = set_last_position(lastX, lastY)
             result = comment_out_z_commands()

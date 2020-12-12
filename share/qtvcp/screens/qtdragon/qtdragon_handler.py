@@ -57,7 +57,6 @@ class HandlerClass:
         self.time_tenths = 0
         self.timerOn = False
         self.home_all = False
-        self.max_linear_velocity = INFO.MAX_LINEAR_VELOCITY * 60
         self.system_list = ["G54","G55","G56","G57","G58","G59","G59.1","G59.2","G59.3"]
         self.slow_jog_factor = 10
         self.reload_tool = 0
@@ -206,12 +205,9 @@ class HandlerClass:
 
     def init_widgets(self):
         self.w.main_tab_widget.setCurrentIndex(0)
-        self.w.slider_jog_linear.setMaximum(self.max_linear_velocity)
         self.w.slider_jog_linear.setValue(INFO.DEFAULT_LINEAR_JOG_VEL)
         self.w.slider_jog_angular.setMaximum(INFO.MAX_ANGULAR_JOG_VEL)
         self.w.slider_jog_angular.setValue(INFO.DEFAULT_ANGULAR_JOG_VEL)
-        self.w.slider_maxv_ovr.setMaximum(self.max_linear_velocity)
-        self.w.slider_maxv_ovr.setValue(self.max_linear_velocity)
         self.w.slider_feed_ovr.setMaximum(INFO.MAX_FEED_OVERRIDE)
         self.w.slider_feed_ovr.setValue(100)
         self.w.slider_rapid_ovr.setMaximum(100)
@@ -222,7 +218,7 @@ class HandlerClass:
         self.w.chk_override_limits.setChecked(False)
         self.w.chk_override_limits.setEnabled(False)
         self.w.lbl_maxv_percent.setText("100 %")
-        self.w.lbl_max_rapid.setText(str(self.max_linear_velocity))
+        self.w.lbl_max_rapid.setText(str(INFO.MAX_TRAJ_VELOCITY))
         self.w.lbl_home_x.setText(INFO.get_error_safe_setting('JOINT_0', 'HOME',"50"))
         self.w.lbl_home_y.setText(INFO.get_error_safe_setting('JOINT_1', 'HOME',"50"))
         self.w.cmb_gcode_history.addItem("No File Loaded")
@@ -246,6 +242,12 @@ class HandlerClass:
         else:
             self.w.btn_keyboard.hide()
         TOOLBAR.configure_statusbar(self.w.statusbar,'message_recall')
+
+        if not INFO.MACHINE_IS_METRIC:
+            self.w.lbl_jog_linear.setText('JOG RATE\nINCH/MIN')
+            self.w.lbl_tool_sensor_B2W.setText('INCH')
+            self.w.lbl_tool_sensor_B2S.setText('INCH')
+            self.w.lbl_touchheight_units.setText('INCH')
 
     def processed_focus_event__(self, receiver, event):
         if not self.w.chk_use_virtual.isChecked() or STATUS.is_auto_mode(): return
@@ -557,18 +559,18 @@ class HandlerClass:
             self.w[slider].setPageStep(100)
 
     def slider_maxv_changed(self, value):
-        maxpc = (float(value) / self.max_linear_velocity) * 100
+        maxpc = (float(value) / INFO.MAX_TRAJ_VELOCITY) * 100
         self.w.lbl_maxv_percent.setText("{:3.0f} %".format(maxpc))
 
     def slider_rapid_changed(self, value):
-        rapid = (float(value) / 100) * self.max_linear_velocity
+        rapid = (float(value) / 100) * INFO.MAX_TRAJ_VELOCITY
         self.w.lbl_max_rapid.setText("{:4.0f}".format(rapid))
 
     def btn_maxv_100_clicked(self):
-        self.w.slider_maxv_ovr.setValue(self.max_linear_velocity)
+        self.w.slider_maxv_ovr.setValue(INFO.MAX_TRAJ_VELOCITY)
 
     def btn_maxv_50_clicked(self):
-        self.w.slider_maxv_ovr.setValue(self.max_linear_velocity / 2)
+        self.w.slider_maxv_ovr.setValue(INFO.MAX_TRAJ_VELOCITY / 2)
 
     # file tab
     def btn_gcode_edit_clicked(self, state):
@@ -672,7 +674,7 @@ class HandlerClass:
 
     def btn_dimensions_clicked(self, state):
         self.w.gcodegraphics.show_extents_option = state
-        self.w.gcodegraphics.clear_live_plotter()
+        self.w.gcodegraphics.updateGL()
         
     def chk_override_limits_checked(self, state):
         if state:
@@ -701,7 +703,11 @@ class HandlerClass:
     #####################
     def load_code(self, fname):
         if fname is None: return
-        if fname.endswith(".ngc") or fname.endswith(".py"):
+        filename, file_extension = os.path.splitext(fname)
+        if not fname.endswith(".html"):
+            if not (INFO.program_extension_valid(fname)):
+                self.add_status("Unknown or invalid filename extension {}".format(file_extension))
+                return
             self.w.cmb_gcode_history.addItem(fname)
             self.w.cmb_gcode_history.setCurrentIndex(self.w.cmb_gcode_history.count() - 1)
             ACTION.OPEN_PROGRAM(fname)

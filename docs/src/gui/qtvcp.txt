@@ -20,6 +20,8 @@ image::images/blender.png["QTscreen Blender",align="left"]
 image::images/x1mill.png["QTscreen x1mill",align="left"]
 .cam_align - Camera alignment VCP
 image::images/qtvcp-cam-align.png["QTscreen x1mill",align="left"]
+.test panel - Test Panel VCP
+image::images/test_panel.png["Test Panel",align="left"]
 
 [[sec:qtvcp-overview]](((QtVcp Overview)))
 
@@ -626,6 +628,8 @@ standard widgets to control linuxcnc. +
 In the Designer editor you would create user function slots and connect +
 them to widgets using signals. +
 In the handler file you would create the slot's functions defined in Designer. +
+
+[[cha:designer-slots]]
 
 === Using Designer to add slots
 When you have loaded your screen into designer add a plain PushButton to the screen. +

@@ -14,8 +14,8 @@ param rw   float servo-##.vel-scale[16 : personality] = 10.0;	// rpm (1 rpm reso
 param rw   float servo-##.trq-scale[16 : personality] = 1.0;	// 1% resolution
 
 pin out      bit servo-##.online[16 : personality] "drive detected";
-pin out      bit servo-##.offline[16 : personality] "no drive detected";
-pin out      bit servo-##.ready[16 : personality]   "READY ON";
+pin out      bit servo-##.offline[16 : personality] = 1 "no drive detected";
+pin out      bit servo-##.ready[16 : personality] "READY ON";
 pin out      bit servo-##.enabled[16 : personality] "SERVO ON";
 pin out      bit servo-##.alarm[16 : personality];
 pin out      bit servo-##.warning[16 : personality];
@@ -77,11 +77,12 @@ pin  in      bit servo-##.undroop[16 : personality];
 pin out      bit ready "card is in sync with NC";
 pin out    float phase "sync pulse deviation, periods";
 pin out   signed error-cnt "missed comm cycles when not in sync";
+//pin  in      bit enable = 1;
 
-//pin out   signed dbg0;
-//pin out   signed dbg1;
-//pin out   signed dbg2;
-//pin out unsigned dbg3;
+pin out   signed dbg0;
+pin out   signed dbg1;
+pin out   signed dbg2;
+pin out unsigned dbg3;
 
 pin out      bit in-##[29] "CN1 inputs";
 pin out      bit in-##-not[29] "CN1 inputs, inverted";
@@ -108,9 +109,10 @@ option count_function yes;
 variable int glitch_len;
 variable int enc_counts[2];
 variable int enc_changed[2];
+variable unsigned v_seq;
+variable unsigned v_boardno;		// card number
 
 function _;
-variable unsigned inum;		// card number
 
 license "GPL";
 
@@ -313,6 +315,9 @@ RTAPI_MP_INT(mon, "duplicate YIO pins for monitoring connection");
 static int debug;
 RTAPI_MP_INT(debug, "enable debugging messages");
 
+static int cycle[YSSC2_MAX_BOARDS] = {0,};
+RTAPI_MP_ARRAY_INT(cycle, YSSC2_MAX_BOARDS, "comm cycle freqency: 0=servo-period, 1=1/2, 2=1/4, ...");
+
 //
 //
 //
@@ -392,7 +397,7 @@ static int export_io(char *prefix, int inst_num)
 #define yio_yo16(a) (y->io->yo16 & (1<<a))
 #define yio_yenc(a) (y->io->yenc & (1<<a))
 
-// 
+//
 //
 //
 
@@ -438,8 +443,8 @@ void rtapi_app_exit(void) {
 EXTRA_SETUP()
 {
 
-	if (yssc2_board(inum = extra_arg) == NULL) {
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: no board #%d\n", inum);
+	if (yssc2_board(v_boardno = extra_arg) == NULL) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: no board #%d\n", v_boardno);
 		return -EINVAL;
 	}
 
@@ -479,10 +484,19 @@ FUNCTION(_)
 {
 	int a, insync;
 	uint32_t u;
-	YSSC2 *y = yssc2_board(inum);
+	YSSC2 *y = yssc2_board(v_boardno);
 	uint32_t status = 0;
 
 	if (y == NULL) return;
+/*
+	if (!enable) {
+		phase = 0;
+		insync = 0;
+		ready = 0;
+		return;
+	}
+*/
+	if (v_seq++ & ((1<<cycle[v_boardno]) - 1)) return;
 
 	yssc2_receive(y);	// should be the very first routine
 
@@ -494,6 +508,11 @@ FUNCTION(_)
 		phase = 0;
 		insync = 0;
 	}
+
+	dbg0 = yssc2_yi(y, 13);
+	dbg1 = yssc2_yi(y, 14);
+	dbg2 = yssc2_yi(y, 15);
+	dbg3 = yssc2_fb_seq(y);
 
 #define MAX_GLITCH 5
 #define MAX_ERRORS 5
@@ -531,13 +550,6 @@ FUNCTION(_)
 	}
 
 	yssc2_process(y);	// state machine, request servo data: absolute origin, encoder res, etc
-
-	/*
-	dbg0 = yssc2_yi(y, 13);
-	dbg1 = yssc2_yi(y, 14);
-	dbg2 = yssc2_yi(y, 15);
-	dbg3 = yssc2_fb_seq(y);
-	*/
 
 	// process received data
 	for (a = 0; a < yssc2_axes(y); a++) {
@@ -790,11 +802,12 @@ int strtol(char *s, char **endptr, int base)
 	}
 	return l;
 }
-#else 
+#else
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 #endif
 
 int params_init(servo_params *params)
@@ -1346,7 +1359,18 @@ int yssc2_init()
 		if (ioctl(y->fd, 1, nodma))
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d:init dma ioctl failed - old driver?", num_boards);
 
-		y->dpram = calloc(sizeof(nyx_dpram), 1);
+//		y->dpram = mmap(NULL, sizeof(nyx_dpram), PROT_READ | PROT_WRITE, MAP_SHARED, y->fd, 0);
+//		if (y->dpram == (void *)-1) {
+			y->dpram = calloc(sizeof(nyx_dpram), 1);
+
+			if (y->dpram == NULL) {
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: malloc failed");
+				close(y->fd);
+				return -1;
+			}
+//		}
+
+		lseek(y->fd, offsetof(struct nyx_dpram, magic), SEEK_SET);
 		read(y->fd, y->dpram, 16);	// includes "magic" and "config" field
 
 		y->axes = y->dpram->config & 0xff;

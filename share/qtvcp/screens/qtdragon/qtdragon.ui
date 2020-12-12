@@ -132,6 +132,9 @@
       <property name="originOffsetDialog_option" stdset="0">
        <bool>true</bool>
       </property>
+      <property name="calculatorDialog_option" stdset="0">
+       <bool>true</bool>
+      </property>
       <property name="machineLogDialog_option" stdset="0">
        <bool>true</bool>
       </property>
@@ -482,7 +485,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="label_47">
+                    <widget class="QLabel" name="lbl_tool_sensor_B2W">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                        <horstretch>0</horstretch>
@@ -590,7 +593,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="label_36">
+                    <widget class="QLabel" name="lbl_tool_sensor_B2S">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                        <horstretch>0</horstretch>
@@ -2469,7 +2472,7 @@ RESET</string>
                     <enum>QFrame::Raised</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>8</number>
+                    <number>0</number>
                    </property>
                    <widget class="QWidget" name="main_tab_widgetPage1">
                     <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -8647,6 +8650,9 @@ SPINDLE</string>
                         <property name="halpin_option" stdset="0">
                          <bool>false</bool>
                         </property>
+                        <property name="dialog_code_string" stdset="0">
+                         <string>CALCULATOR</string>
+                        </property>
                        </widget>
                       </item>
                       <item row="3" column="4">
@@ -8681,6 +8687,9 @@ SPINDLE</string>
                         <property name="halpin_option" stdset="0">
                          <bool>false</bool>
                         </property>
+                        <property name="dialog_code_string" stdset="0">
+                         <string>CALCULATOR</string>
+                        </property>
                        </widget>
                       </item>
                       <item row="1" column="4">
@@ -8711,6 +8720,9 @@ SPINDLE</string>
                         </property>
                         <property name="halpin_option" stdset="0">
                          <bool>false</bool>
+                        </property>
+                        <property name="dialog_code_string" stdset="0">
+                         <string>CALCULATOR</string>
                         </property>
                        </widget>
                       </item>
@@ -9618,6 +9630,9 @@ DROLabel[homed=false] {
                         </property>
                         <property name="halpin_option" stdset="0">
                          <bool>false</bool>
+                        </property>
+                        <property name="dialog_code_string" stdset="0">
+                         <string>CALCULATOR</string>
                         </property>
                        </widget>
                       </item>
@@ -13468,7 +13483,7 @@ ALL</string>
                   <number>2</number>
                  </property>
                  <property name="text">
-                  <string>04:16:46 PM</string>
+                  <string>09:39:56 PM</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignCenter</set>
@@ -14104,8 +14119,8 @@ ALL</string>
    <slot>chk_use_virtual_changed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>678</x>
-     <y>478</y>
+     <x>528</x>
+     <y>86</y>
     </hint>
     <hint type="destinationlabel">
      <x>500</x>
@@ -14120,8 +14135,8 @@ ALL</string>
    <slot>chk_alpha_mode_clicked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>678</x>
-     <y>296</y>
+     <x>528</x>
+     <y>86</y>
     </hint>
     <hint type="destinationlabel">
      <x>514</x>
@@ -14136,8 +14151,8 @@ ALL</string>
    <slot>chk_inhibit_display_selection_clicked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>678</x>
-     <y>322</y>
+     <x>528</x>
+     <y>86</y>
     </hint>
     <hint type="destinationlabel">
      <x>558</x>
@@ -14152,8 +14167,8 @@ ALL</string>
    <slot>percent_loaded_changed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>396</x>
-     <y>-235</y>
+     <x>887</x>
+     <y>57</y>
     </hint>
     <hint type="destinationlabel">
      <x>877</x>
@@ -14184,8 +14199,8 @@ ALL</string>
    <slot>btn_clear_status_clicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1092</x>
-     <y>139</y>
+     <x>508</x>
+     <y>106</y>
     </hint>
     <hint type="destinationlabel">
      <x>1762</x>
@@ -14200,12 +14215,44 @@ ALL</string>
    <slot>btn_save_status_clicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1102</x>
-     <y>202</y>
+     <x>508</x>
+     <y>106</y>
     </hint>
     <hint type="destinationlabel">
      <x>1677</x>
      <y>227</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_dimensions</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>btn_dimensions_clicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>458</x>
+     <y>324</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>929</x>
+     <y>-4</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>slider_rapid_ovr</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>slider_rapid_changed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>986</x>
+     <y>668</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1019</x>
+     <y>866</y>
     </hint>
    </hints>
   </connection>

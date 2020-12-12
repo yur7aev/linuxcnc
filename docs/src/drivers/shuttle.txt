@@ -21,7 +21,7 @@ wheel with detents, and a 15-position spring-loaded outer wheel that
 returns to center when released.
 
 [WARNING]
-=====
+
 The Shuttle devices have an internal 8-bit counter for the current
 jog-wheel position. The shuttle driver can not know this value until the
 Shuttles device sends its first event. When the first event comes into
@@ -35,8 +35,6 @@ Any user interaction with the Shuttle device will generate an event,
 informing the driver of the jog-wheel position. So if you (for example)
 push one of the buttons at startup, the jog-wheel will work fine and
 notice the first click.
-=====
-
 
 == Setup
 

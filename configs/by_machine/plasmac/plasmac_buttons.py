@@ -87,7 +87,7 @@ class HandlerClass:
         elif commands.lower() == 'ohmic-test':
             hal.set_p('plasmac.ohmic-test','1')
         elif 'probe-test' in commands.lower():
-            if not self.probeTimer:
+            if not self.probeTimer and not hal.get_value('plasmac.z-offset-counts'):
                 self.probePressed = True
                 self.probeButton = button
                 if commands.lower().replace('probe-test','').strip():
@@ -124,7 +124,14 @@ class HandlerClass:
                 outBuf.close()
             self.c.program_open(self.outFile)
             hal.set_p('plasmac_run.cut-type','0')
-
+        elif 'toggle-halpin' in commands.lower() and hal.get_value('halui.program.is-idle'):
+            halpin = commands.lower().split('toggle-halpin')[1].strip()
+            pinstate = hal.get_value(halpin)
+            hal.set_p(halpin, str(not pinstate))
+            if pinstate:
+                button.set_style(self.buttonPlain)
+            else:
+                button.set_style(self.buttonGreen)
         else:
             for command in commands.split('\\'):
                 if command.strip()[0] == '%':
@@ -191,6 +198,9 @@ class HandlerClass:
         self.buttonRed = self.builder.get_object('button1').get_style().copy()
         self.buttonRed.bg[gtk.STATE_NORMAL] = gtk.gdk.color_parse('red')
         self.buttonRed.bg[gtk.STATE_PRELIGHT] = gtk.gdk.color_parse('red')
+        self.buttonGreen = self.builder.get_object('button1').get_style().copy()
+        self.buttonGreen.bg[gtk.STATE_NORMAL] = gtk.gdk.color_parse('green')
+        self.buttonGreen.bg[gtk.STATE_PRELIGHT] = gtk.gdk.color_parse('green')
 
     def periodic(self):
         self.s.poll()
