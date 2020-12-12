@@ -75,12 +75,12 @@ SV063	0	0	0	; DA1MPY D/A ch1 scale		-32768+32767 (1/256)
 SV064	-	-	-	; MA2MPY
 SV065	-	-	-	;
 SV066	-	-	-	;
-SV067	-	-	-	;
-SV068	0x0404	0x0404	0x0404	; ? 0x0404 - 3.55ms cycle
-SV069	-	-	-	;
-SV070	0	0	0	; ? 20000
-SV071	-	-	-	;
-SV072	0	0	0	; ? 10000
+SV067	2	2	2	; cmd unit: 0=0.5um 1=1um, 2=0.5um, 20=0.05um...
+SV068	0x0404	0x0404	0x0404	; 0x0404 - 3.55ms cycle
+SV069	0	0	0	; rapid hi
+SV070	0	0	0	; rapid lo 20000
+SV071	0	0	0	; clamp hi
+SV072	0	0	0	; clamp lo 10000
 SV073	-	-	-	;
 SV074	-	-	-	;
 SV075	-	-	-	;
