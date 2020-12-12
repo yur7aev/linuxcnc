@@ -7,7 +7,7 @@
 ; 2020, http://yurtaev.com
 ;
 
-;	0	
+;	0
 ;Pn000	0x0000	;	*Function Selection Basic Switch 0
 ;Pn001	0x0000	;	*Function Selection Application Switch 1
 ;Pn002	0x0113	;	*Function Selection Application Switch 2

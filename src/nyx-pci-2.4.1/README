@@ -1,0 +1,13 @@
+installation:
+
+	cp -R nyx-pci-2.4.1 dir to /usr/src/
+	dkms add nyx-pci/2.4.1
+	dkms install nyx-pci/2.4.1
+
+make deb package:
+
+	dkms mkdeb nyx-pci/2.4.1
+
+uninstall:
+
+	dkms remove nyx-pci/2.4.1 --all
