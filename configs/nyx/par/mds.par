@@ -78,9 +78,9 @@ SV066	-	-	-	;
 SV067	2	2	2	; cmd unit: 0=0.5um 1=1um, 2=0.5um, 20=0.05um...
 SV068	0x0404	0x0404	0x0404	; 0x0404 - 3.55ms cycle
 SV069	0	0	0	; rapid hi
-SV070	0	0	0	; rapid lo 20000
+SV070	20000	20000	20000	; rapid lo 20000
 SV071	0	0	0	; clamp hi
-SV072	0	0	0	; clamp lo 10000
+SV072	10000	10000	10000	; clamp lo 10000
 SV073	-	-	-	;
 SV074	-	-	-	;
 SV075	-	-	-	;
