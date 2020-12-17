@@ -57,8 +57,8 @@ struct nyx_priv {
 	size_t dpram_size;
 	dma_addr_t dpram_bus_addr;	// bus address of that memory to tell the DMA engine
 	int minor;
-	int irq;
-	wait_queue_head_t wq;
+///	int irq;
+///	wait_queue_head_t wq;
 };
 
 struct nyx_fpriv {
@@ -168,6 +168,7 @@ static void __exit nyx_exit(void)
 
 /////////////////////////////////////////////////////////////////////////////
 
+/*
 static irqreturn_t nyx_irq_handler(int irq, void *dev_id)
 {
 
@@ -183,6 +184,7 @@ static irqreturn_t nyx_irq_handler(int irq, void *dev_id)
 //	printk(KERN_INFO "%s.%d: irq miss\n", DEVICE_NAME, y->minor);
 	return IRQ_NONE;
 }
+*/
 
 void release_device(struct pci_dev *pdev)
 {
@@ -190,7 +192,7 @@ void release_device(struct pci_dev *pdev)
 
 	y = pci_get_drvdata(pdev);
 	if (y) {
-		if (y->irq) free_irq(y->irq, y);
+		/// if (y->irq) free_irq(y->irq, y);
 		if (y->dpram) dma_free_coherent(&pdev->dev, y->dpram_size, y->dpram, y->dpram_bus_addr);
 		if (y->iomem) iounmap(y->iomem);
 		kfree(y);
@@ -247,11 +249,13 @@ static int nyx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	nyx_priv[minor] = y;
 	y->minor = minor;
 
+	/*
 	if (!request_irq(pdev->irq, nyx_irq_handler, IRQF_SHARED, "nyx", y)) {
 		y->irq = pdev->irq;
 		init_waitqueue_head(&y->wq);
 	} else
 		printk(KERN_INFO "%s.%d: can't hook to irq %d\n", DEVICE_NAME, minor, pdev->irq);
+	*/
 
 	y->iomem = ioremap(mmio_start, mmio_len);
 	if (!y->iomem) {
@@ -275,7 +279,7 @@ static int nyx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		return -EIO;
 	} else {
 		size_t offs = offsetof(struct nyx_dpram, fb);	// should be 512
-		printk(KERN_INFO "%s.%d: DMA mem vm:%p bus:%llx offs:%zu\n", DEVICE_NAME, minor, y->dpram, y->dpram_bus_addr, offs);
+		//printk(KERN_INFO "%s.%d: DMA mem vm:%p bus:%llx offs:%zu\n", DEVICE_NAME, minor, y->dpram, y->dpram_bus_addr, offs);
 	}
 
 	//memset(y->dpram, 'X', y->dpram_size);
@@ -345,6 +349,7 @@ static int dpram_read(struct nyx_priv *y, size_t offs, size_t size)  {
 		ndelay(500);
 		j = y->iomem->jtag;
 	} while ((j & 0x40) && retries++ < RETRIES);
+
 	//if (wait_event_interruptible_timeout(y->wq, !((j = y->iomem->jtag) & 0x40), 1) <= 0)
 	//if (wait_event_timeout(y->wq, !((j = y->iomem->jtag) & 0x40), 1) <= 0)
 	//	printk(KERN_ERR "nyx: DMA read event timeout\n");
