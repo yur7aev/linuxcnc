@@ -302,23 +302,24 @@ struct io_pins {
 	uint32_t yi16, yo16, yenc;	// set bit indicates corresponding slave is present
 };
 
-char *param_file[YSSC2_MAX_BOARDS] = {0,};
-RTAPI_MP_ARRAY_STRING(param_file, YSSC2_MAX_BOARDS, "Servo parameter file names");
-
 static int nodma;
 RTAPI_MP_INT(nodma, "disable PCI DMA: read (1), write (2), both (3)");
 
-static int maxdrives;
-RTAPI_MP_INT(maxdrives, "max number of drives");
+char *param_file[YSSC2_MAX_BOARDS] = {0,};
+RTAPI_MP_ARRAY_STRING(param_file, YSSC2_MAX_BOARDS, "Servo parameter file names");
 
-static int mon;
-RTAPI_MP_INT(mon, "duplicate YIO pins for monitoring connection");
-
-static int debug;
-RTAPI_MP_INT(debug, "enable debugging messages");
+static int maxdrives[YSSC2_MAX_BOARDS] = {0,};
+RTAPI_MP_ARRAY_INT(maxdrives, YSSC2_MAX_BOARDS, "Max number of drives");
 
 static int cycle[YSSC2_MAX_BOARDS] = {0,};
-RTAPI_MP_ARRAY_INT(cycle, YSSC2_MAX_BOARDS, "comm cycle freqency: 0=servo-period, 1=1/2, 2=1/4, ...");
+RTAPI_MP_ARRAY_INT(cycle, YSSC2_MAX_BOARDS, "Comm cycle freqency: 0=servo-period, 1=1/2, 2=1/4, ...");
+
+static int mon;
+RTAPI_MP_INT(mon, "Duplicate YIO pins for monitoring connection");
+
+static int debug;
+RTAPI_MP_INT(debug, "Enable debugging messages");
+
 
 //
 //
@@ -406,10 +407,6 @@ static int export_io(char *prefix, int inst_num)
 int rtapi_app_main(void) {
 	int i, count, r;
 
-	if (maxdrives < 1) maxdrives = 1;
-	if (maxdrives > 18) maxdrives = 18;
-	if (maxdrives > NYX_AXES) maxdrives = NYX_AXES;
-
 	comp_id = hal_init("nyx");
 	yssc2_init();
 	count = get_count();
@@ -420,7 +417,10 @@ int rtapi_app_main(void) {
 		static char prefix[HAL_NAME_LEN + 1];
 		rtapi_snprintf(prefix, sizeof(prefix), "nyx.%d", i);
 
-		yssc2_start(i, maxdrives);
+		if (maxdrives[i] < 1) maxdrives[i] = NYX_AXES;
+		if (maxdrives[i] > NYX_AXES) maxdrives[i] = NYX_AXES;
+
+		yssc2_start(i, maxdrives[i]);
 
 		r |= export(prefix, i, yssc2_axes(y));
 		r |= export_io(prefix, i);
@@ -491,7 +491,7 @@ FUNCTION(_)
 
 FUNCTION(rd)
 {
-	if (v_seq++ & ((1<<cycle[v_boardno]) - 1)) return;	// skip
+	if (v_seq & ((1<<cycle[v_boardno]) - 1)) return;	// skip
 	YSSC2 *y = yssc2_board(v_boardno);
 	if (y == NULL) return;
 /*
@@ -1396,14 +1396,22 @@ int yssc2_init()
 			y->dpram = calloc(sizeof(nyx_dpram), 1);
 
 			if (y->dpram == NULL) {
-				rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: malloc failed");
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: malloc failed", num_boards);
 				close(y->fd);
 				return -1;
 			}
 //		}
 
 		lseek(y->fd, offsetof(struct nyx_dpram, magic), SEEK_SET);
-		read(y->fd, y->dpram, 16);	// includes "magic" and "config" field
+		if (16 != read(y->fd, y->dpram, 16)) {	// includes "magic" and "config" field
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: init: read err!", num_boards);
+			return -1;
+		}
+
+		if ((0xffffff00 & yssc2_magic(y)) != (0x55c20000 | (NYX_VER_MAJ<<8))) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: init: no magic!", num_boards);
+			return -1;
+		}
 
 		y->axes = y->dpram->config & 0xff;
 		y->yios = (y->dpram->config >> 8) & 0xff;
@@ -1593,8 +1601,10 @@ void yssc2_receive(YSSC2 *y)
 
 	lseek(y->fd, offsetof(struct nyx_dpram, fb), SEEK_SET);
 	rc = read(y->fd, &y->dpram->fb, offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * y->axes);
-	if (rc <= 0)
+	if (rc <= 0) {
 		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: read err %d", y->no, rc);
+		y->dpram->magic = 0;	// mark
+	}
 
 	y->dpram->cmd.seq =
 		(y->dpram->cmd.seq & ~YS_SEQ) |

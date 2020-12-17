@@ -56,6 +56,7 @@ struct nyx_priv {
 	nyx_dpram *dpram;		// local copy in coherent memory
 	size_t dpram_size;
 	dma_addr_t dpram_bus_addr;	// bus address of that memory to tell the DMA engine
+	int minor;
 	int irq;
 	wait_queue_head_t wq;
 };
@@ -108,6 +109,8 @@ static int __init nyx_init(void)
 {
 	int n;
 
+	printk(KERN_INFO "%s: " VER " loading...\n", DEVICE_NAME);
+
 	nyx_cards = 0;
 	n = pci_register_driver(&nyx_pci_driver);
 	if (n) {
@@ -116,7 +119,7 @@ static int __init nyx_init(void)
 
 	major = register_chrdev(0, DEVICE_NAME, &fops);
 	if (major < 0) {
-		printk(KERN_ALERT "nyx: can't get major number\n");
+		printk(KERN_ALERT "%s: can't get major number\n", DEVICE_NAME);
 		goto fail1;
 	}
 
@@ -124,7 +127,7 @@ static int __init nyx_init(void)
 	* or use a "virtual" device class. For this example, we choose the latter */
 	nyx_class = class_create(THIS_MODULE, CLASS_NAME);
 	if (IS_ERR(nyx_class)) {
-		printk(KERN_ALERT "nyx: failed to register device class '%s'\n", CLASS_NAME);
+		printk(KERN_ALERT "%s: failed to register device class '%s'\n", DEVICE_NAME, CLASS_NAME);
 		goto fail2;
 	}
 	nyx_class->devnode = nyx_devnode;
@@ -133,7 +136,7 @@ static int __init nyx_init(void)
 		/* With a class, the easiest way to instantiate a device is to call device_create() */
 		nyx_device = device_create(nyx_class, NULL, MKDEV(major, n), NULL, DEVICE_NAME "%d", n);
 		if (IS_ERR(nyx_device)) {
-			printk(KERN_ALERT "nyx: failed to create device %d:%d '%s%d'\n", major, n, DEVICE_NAME, n);
+			printk(KERN_ALERT "%s.%d: failed to create device '%d:%d'\n", DEVICE_NAME, n, major, n);
 			goto fail3;
 		}
 	}
@@ -174,10 +177,10 @@ static irqreturn_t nyx_irq_handler(int irq, void *dev_id)
 	if (y && ((i = y->iomem->dma_isr) & 1)) {
 		y->iomem->dma_isr = i & 2;
 		wake_up_interruptible(&y->wq);
-//		printk(KERN_INFO "nyx: irq\n");
+//		printk(KERN_INFO "%s.%d: irq\n", DEVICE_NAME, y->minor);
 		return IRQ_HANDLED;
 	}
-	printk(KERN_INFO "nyx: irq miss\n");
+//	printk(KERN_INFO "%s.%d: irq miss\n", DEVICE_NAME, y->minor);
 	return IRQ_NONE;
 }
 
@@ -205,9 +208,10 @@ static int nyx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	u16 vendor, device;
 	unsigned long mmio_start, mmio_len;
 	struct nyx_priv *y;
+	int minor = nyx_cards;
 
-	if (nyx_cards >= NYX_MAX_CARDS) {
-		printk(KERN_INFO "nyx: max %d cards supported\n", NYX_MAX_CARDS);
+	if (minor >= NYX_MAX_CARDS) {
+		printk(KERN_INFO "%s.%d: max %d cards supported\n", DEVICE_NAME, minor, NYX_MAX_CARDS);
 		return -EIO;
 	}
 
@@ -215,7 +219,9 @@ static int nyx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	pci_read_config_word(pdev, PCI_VENDOR_ID, &vendor);
 	pci_read_config_word(pdev, PCI_DEVICE_ID, &device);
 
-	printk(KERN_INFO "nyx: v" VER " vid=%x pid=%x\n", vendor, device);
+	printk(KERN_INFO "%s.%d: found %02x:%02x.%02x %04x:%04x\n", DEVICE_NAME, minor, 
+		pdev->bus->number, PCI_SLOT(pdev->devfn), PCI_FUNC(pdev->devfn),
+		vendor, device);
 
 	bar = pci_select_bars(pdev, IORESOURCE_MEM);
 	err = pci_enable_device_mem(pdev);
@@ -238,13 +244,14 @@ static int nyx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		return -ENOMEM;
 	}
 
-	nyx_priv[nyx_cards++] = y;
+	nyx_priv[minor] = y;
+	y->minor = minor;
 
 	if (!request_irq(pdev->irq, nyx_irq_handler, IRQF_SHARED, "nyx", y)) {
 		y->irq = pdev->irq;
 		init_waitqueue_head(&y->wq);
 	} else
-		printk(KERN_INFO "nyx: can't hook to irq %d\n", pdev->irq);
+		printk(KERN_INFO "%s.%d: can't hook to irq %d\n", DEVICE_NAME, minor, pdev->irq);
 
 	y->iomem = ioremap(mmio_start, mmio_len);
 	if (!y->iomem) {
@@ -253,7 +260,7 @@ static int nyx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	}
 
 	pci_set_drvdata(pdev, y);
-	printk(KERN_INFO "nyx: magic=%08x config=%08x status=%08x\n",
+	printk(KERN_INFO "%s.%d: magic=%08x config=%08x status=%08x\n", DEVICE_NAME, minor,
 		y->iomem->dpram.magic,
 		y->iomem->dpram.config,
 		y->iomem->dpram.status
@@ -262,16 +269,17 @@ static int nyx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	y->dpram_size = sizeof(nyx_dpram);
 	y->dpram = (nyx_dpram *)dma_alloc_coherent(&pdev->dev, y->dpram_size, &y->dpram_bus_addr, 0);
 	if (!y->dpram) {
-		printk(KERN_ERR "nyx: can't allocate DMA memory\n");
+		printk(KERN_ERR "%s.%d: can't allocate DMA memory\n", DEVICE_NAME, minor);
 		iounmap(y->iomem);
 		release_device(pdev);
 		return -EIO;
 	} else {
 		size_t offs = offsetof(struct nyx_dpram, fb);	// should be 512
-		printk(KERN_INFO "nyx: DMA mem: vm:%p bus:%llx offs:%zu\n", y->dpram, y->dpram_bus_addr, offs);
+		printk(KERN_INFO "%s.%d: DMA mem vm:%p bus:%llx offs:%zu\n", DEVICE_NAME, minor, y->dpram, y->dpram_bus_addr, offs);
 	}
 
-	memset(y->dpram, 'X', y->dpram_size);
+	//memset(y->dpram, 'X', y->dpram_size);
+	nyx_cards++;
 
 	return 0;
 }
@@ -280,7 +288,7 @@ static int nyx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 static void nyx_remove(struct pci_dev *pdev)
 {
 	release_device(pdev);
-	printk(KERN_INFO "nyx: unload\n");
+	printk(KERN_INFO "%s: unload\n", DEVICE_NAME);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -342,12 +350,12 @@ static int dpram_read(struct nyx_priv *y, size_t offs, size_t size)  {
 	//	printk(KERN_ERR "nyx: DMA read event timeout\n");
 
 	if (j & 0x40) {
-		printk(KERN_ERR "nyx: DMA read timeout\n");
+		printk(KERN_ERR "%s.%d: DMA read timeout\n", DEVICE_NAME, y->minor);
 		return -4;
 	}
 
 	if (j & 0x10) {	// DMA error
-		printk(KERN_ERR "nyx: DMA read error\n");
+		printk(KERN_ERR "%s.%d: DMA read error\n", DEVICE_NAME, y->minor);
 		return -5;
 	}
 	//printk(KERN_INFO "nyx: DMA read %d retries\n", retries);
@@ -374,12 +382,12 @@ static int dpram_write(struct nyx_priv *y, size_t offs, size_t size)  {
 	} while ((j & 0x40) && retries++ < RETRIES);
 
 	if (retries >= RETRIES) {
-		printk(KERN_ERR "nyx: DMA write timeout\n");
+		printk(KERN_ERR "%s.%d: DMA write timeout\n", DEVICE_NAME, y->minor);
 		return -4;
 	}
 
 	if (j & 0x10) {	// DMA error
-		printk(KERN_ERR "nyx: DMA write error\n");
+		printk(KERN_ERR "%s.%d: DMA write error\n", DEVICE_NAME, y->minor);
 		return -3;
 	}
 	//printk(KERN_INFO "nyx: DMA write %d retries\n", retries);
@@ -534,10 +542,10 @@ static int nyx_mmap(struct file *filp, struct vm_area_struct *vma)
 }
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Dmitry Yurtaev <dmitry@yurtaev.com");
+MODULE_AUTHOR("Dmitry Yurtaev <dmitry@yurtaev.com>");
 MODULE_DESCRIPTION("NYX servo interface card");
 MODULE_VERSION(VER);
-MODULE_SUPPORTED_DEVICE("nyx");
+MODULE_SUPPORTED_DEVICE(DEVICE_NAME);
 
 module_init(nyx_init);
 module_exit(nyx_exit);

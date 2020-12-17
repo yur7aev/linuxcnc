@@ -162,7 +162,7 @@ if len(sys.argv) > 1:
 
 try:
 	i = 0
-	for dir in glob("/sys/bus/pci/devices/*"):
+	for dir in sorted(glob("/sys/bus/pci/devices/*")):
 		vendor = int(open(dir + "/vendor", "r").read(), 16)
 		device = int(open(dir + "/device", "r").read(), 16)
 		if (vendor in vendor_ids) and (device in device_ids):
@@ -575,7 +575,7 @@ def arg(n, m=None, d=None):
 	if len(sys.argv) <= n:
 		if d != None: return d
 		if m == None: return None
-		print "nyxq v2.4.0"
+		print "nyxq v2.4.7"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n]
@@ -583,7 +583,7 @@ def arg(n, m=None, d=None):
 def args(n, m):
 	n += first_arg
 	if len(sys.argv) <= n:
-		print "nyxq v2.4.0"
+		print "nyxq v2.4.7"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n:]
