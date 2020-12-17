@@ -1,5 +1,4 @@
 /********************************************************************
-
 * Description:  hal_vti.c
 *               This is the driver for the Vigilant Technologies
 *               PCI-ENCDAC 4 channel controller.

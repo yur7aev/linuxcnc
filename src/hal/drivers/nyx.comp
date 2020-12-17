@@ -113,6 +113,8 @@ variable unsigned v_seq;
 variable unsigned v_boardno;		// card number
 
 function _;
+function rd;
+function wr;
 
 license "GPL";
 
@@ -347,7 +349,7 @@ static int export_io(char *prefix, int inst_num)
 
 		if (iotype == 1) {
 			io->yi16 |= 1<<i;
-			for (j = 0; j < y->yios; j++) {
+			for (j = 0; j < 16; j++) {
 				rc = hal_pin_bit_newf(HAL_OUT, &(io->in[i][j]), comp_id,
 					            "%s.yio-%02d.in-%02d", prefix, i, j);
 				if(rc != 0) return rc;
@@ -363,7 +365,7 @@ static int export_io(char *prefix, int inst_num)
 			}
 		} else if (iotype == 2) {
 			io->yo16 |= 1<<i;
-			for (j = 0; j < y->yios; j++) {
+			for (j = 0; j < 16; j++) {
 				rc = hal_pin_bit_newf(HAL_IN, &(io->out[i][j]), comp_id,
 					            "%s.yio-%02d.out-%02d", prefix, i, j);
 				if(rc != 0) return rc;
@@ -482,11 +484,15 @@ int freq(YSSC2 *y, int event)
 
 FUNCTION(_)
 {
-	int a, insync;
-	uint32_t u;
-	YSSC2 *y = yssc2_board(v_boardno);
-	uint32_t status = 0;
+	// calling nyx.0 instead of nyx.0.rd, motion-command-handler, motion-controller, nyx.0.wr introduces 1 servo cycle latency
+	rd(__comp_inst, period);
+	wr(__comp_inst, period);
+}
 
+FUNCTION(rd)
+{
+	if (v_seq++ & ((1<<cycle[v_boardno]) - 1)) return;	// skip
+	YSSC2 *y = yssc2_board(v_boardno);
 	if (y == NULL) return;
 /*
 	if (!enable) {
@@ -496,14 +502,13 @@ FUNCTION(_)
 		return;
 	}
 */
-	if (v_seq++ & ((1<<cycle[v_boardno]) - 1)) return;
-
 	yssc2_receive(y);	// should be the very first routine
 
+	int insync;
 	if ((0xffffff00 & yssc2_magic(y)) == (0x55c20000 | (NYX_VER_MAJ<<8))) {	// check if the board hasn't gone away
 		phase = yssc2_irq_time_us(y) * 45.0;
-		status = yssc2_fb_seq(y);
-		insync = status & YS_INSYNC;
+		;
+		insync = (yssc2_fb_seq(y) & YS_INSYNC) != 0;
 	} else {
 		phase = 0;
 		insync = 0;
@@ -551,33 +556,16 @@ FUNCTION(_)
 
 	yssc2_process(y);	// state machine, request servo data: absolute origin, encoder res, etc
 
-	// process received data
+	// parse received feedback data
+	int a;
 	for (a = 0; a < yssc2_axes(y); a++) {
 		//servo_debug(a) = yssc2_debug(y, a);
 		if (ready && yssc2_online(y, a)) {
 			if (yssc2_feedback_res(y, a) == 0) continue;
 
-			// input pins
-			yssc2_power(y, a, servo_power(a));
-			yssc2_enable(y, a, servo_enable(a));
-			yssc2_vel_ctl(y, a, servo_velocity_mode(a));
-			yssc2_vel_cmd(y, a, servo_vel_cmd(a) * servo_vel_scale(a));
-			{
-				int64_t cmd = servo_pos_cmd(a) * yssc2_feedback_res(y, a) / servo_pos_scale(a) + servo_origin(a);
-				cmd &= 0xffffffff;
-				yssc2_pos_cmd(y, a, cmd);
-				servo_counts_cmd(a) = cmd;
-			}
-			yssc2_reset_alarm(y, a, servo_reset_alarm(a));
-			yssc2_limit_torque(y, a, servo_limit_torque(a));
-			yssc2_forward_torque(y, a, servo_forward_torque(a) * servo_trq_scale(a));
-			yssc2_reverse_torque(y, a, servo_reverse_torque(a) * servo_trq_scale(a));
-			yssc2_fwd(y, a, servo_spindle_fwd(a));
-			yssc2_rev(y, a, servo_spindle_rev(a));
-			yssc2_orient(y, a, servo_spindle_orient(a));
-
 			if (yssc2_has_fb(y)) {
 				if (yssc2_valid(y, a)) {
+
 					{
 						int state = y->amp[a].zsm;
 						switch (state) {
@@ -655,10 +643,6 @@ FUNCTION(_)
 					servo_in_01_not(a) = !(servo_in_01(a) = yssc2_di(y, a, 1));
 					servo_in_02_not(a) = !(servo_in_02(a) = yssc2_di(y, a, 2));
 
-					yssc2_do(y, a, 0, servo_out_00(a));     // J3 DO# pins
-					yssc2_do(y, a, 1, servo_out_01(a));
-					yssc2_do(y, a, 2, servo_out_02(a));
-
 					servo_z_passed(a) = yssc2_z_passed(y, a);
 					servo_z_offs(a) = yssc2_z_offs(y, a);
 
@@ -721,12 +705,81 @@ FUNCTION(_)
 		encoder_pos(a) = c / (double)cpr;
 	}
 
-	u = yssc2_gpi(y);
+	uint32_t u = yssc2_gpi(y);
 	for (a = 0; a < 29; a++) {
 		in_not(a) = !(in(a) = u & 1);
 		u >>= 1;
 	}
-	u = 0;
+
+	// YIO
+	for (a = 0; a < y->yios; a++) {
+		int n;
+		uint32_t i, o;
+		if (yio_yi16(a)) {
+			i = yssc2_yi(y, a);
+			for (n = 0; n < 16; n++) {
+				yio_pin_in_not(a, n) = !(yio_pin_in(a, n) = (i & (1<<n)) ? 1 : 0);
+				if (mon) yio_pin_mon(a, n) = yio_pin_in(a, n);
+			}
+			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
+			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
+		}
+		if (yio_yenc(a)) {
+			uint16_t n = (int16_t)yssc2_yi(y, a);
+			int32_t o = yio_pin_enc(a);
+			int32_t d = n - (uint16_t)o;
+			if (d > 32767) o -= 0x10000;
+			else if(d < -32768) o += 0x10000;
+			yio_pin_enc(a) = (o & 0xffff0000) + n;	// expand 16bit counter to 32 bits
+		}
+		if (yio_yo16(a)) {	// output board - input pins
+			i = yssc2_yi(y, a);
+			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
+			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
+		}
+
+	}
+}
+
+FUNCTION(wr)
+{
+	if (v_seq++ & ((1<<cycle[v_boardno]) - 1)) return;	// skip
+	YSSC2 *y = yssc2_board(v_boardno);
+	if (y == NULL) return;
+
+	int a;
+
+	// prepare servo command data
+	for (a = 0; a < yssc2_axes(y); a++) {
+		if (ready && yssc2_online(y, a)) {
+			if (yssc2_feedback_res(y, a) == 0) continue;	// should do it in the very beginning
+
+			// input pins
+			yssc2_power(y, a, servo_power(a));
+			yssc2_enable(y, a, servo_enable(a));
+			yssc2_vel_ctl(y, a, servo_velocity_mode(a));
+			yssc2_vel_cmd(y, a, servo_vel_cmd(a) * servo_vel_scale(a));
+			{
+				int64_t cmd = servo_pos_cmd(a) * yssc2_feedback_res(y, a) / servo_pos_scale(a) + servo_origin(a);
+				cmd &= 0xffffffff;
+				yssc2_pos_cmd(y, a, cmd);
+				servo_counts_cmd(a) = cmd;
+			}
+			yssc2_reset_alarm(y, a, servo_reset_alarm(a));
+			yssc2_limit_torque(y, a, servo_limit_torque(a));
+			yssc2_forward_torque(y, a, servo_forward_torque(a) * servo_trq_scale(a));
+			yssc2_reverse_torque(y, a, servo_reverse_torque(a) * servo_trq_scale(a));
+			yssc2_fwd(y, a, servo_spindle_fwd(a));
+			yssc2_rev(y, a, servo_spindle_rev(a));
+			yssc2_orient(y, a, servo_spindle_orient(a));
+
+			yssc2_do(y, a, 0, servo_out_00(a));     // J3 DO# pins
+			yssc2_do(y, a, 1, servo_out_01(a));
+			yssc2_do(y, a, 2, servo_out_02(a));
+		}
+	}
+
+	uint32_t u = 0;
 	for (a = 0; a <= 7; a++) {
 		if (out(a)) u |= 0x100;
 		u >>= 1;
@@ -742,37 +795,16 @@ FUNCTION(_)
         }
 
 	// YIO
-
 	for (a = 0; a < y->yios; a++) {
 		int n;
-		uint32_t i, o;
+		uint32_t o;
 		if (yio_yo16(a)) {	// output board - input pins
-			i = yssc2_yi(y, a);
-			for (o = n = 0; n < y->yios; n++) {
+			for (o = n = 0; n < 16; n++) {
 				if (yio_pin_out(a, n)) o |= 0x10000;
-				o >>= 1;
 				if (mon) yio_pin_mon(a, n) = yio_pin_out(a, n);
+				o >>= 1;
 			}
 			yssc2_yo(y, a, o);
-			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
-			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
-		}
-		if (yio_yi16(a)) {
-			i = yssc2_yi(y, a);
-			for (n = 0; n < y->yios; n++) {
-				yio_pin_in_not(a, n) = !(yio_pin_in(a, n) = (i & (1<<n)) ? 1 : 0);
-				if (mon) yio_pin_mon(a, n) = yio_pin_in(a, n);
-			}
-			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
-			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
-		}
-		if (yio_yenc(a)) {
-			uint16_t n = (int16_t)yssc2_yi(y, a);
-			int32_t o = yio_pin_enc(a);
-			int32_t d = n - (uint16_t)o;
-			if (d > 32767) o -= 0x10000;
-			else if(d < -32768) o += 0x10000;
-			yio_pin_enc(a) = (o & 0xffff0000) + n;	// expand 16bit counter to 32 bits
 		}
 	}
 
