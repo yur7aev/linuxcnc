@@ -2,7 +2,7 @@ linuxcnc (1:2.8.1nyx16) buster; urgency=low
 
   * merged upstrem 2.8.1
 
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Tue, 8 Dec 2020 20:00:21 +0300
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Thu, 17 Dec 2020 06:10:12 +0300
 
 linuxcnc (1:2.8.1) buster; urgency=low
 
@@ -35,24 +35,6 @@ linuxcnc (1:2.8.1) buster; urgency=low
   * docs: plasmac user guide update
 
  -- andypugh <andy@bodgesoc.org>  Sun, 29 Nov 2020 14:43:33 +0000
-
-linuxcnc (1:2.8.0nyx15) buster; urgency=low
-
-  * encoder velocity is now signed
-  * multiboard support in uspace
-  * encoder zero speed fix
-  * J3/J4 digital outputs support
-  * SSCNET III/H and MR-J4 support
-  * merged upstream 2.8.0
-  * z-index homing for ssc3, mtl
-  * new servo params
-  * nyx 2.4
-  * removed nyxp, moved .par parser to the nyx module
-  * mechatrolink params
-  * mdssp comp
-  * merged with 2.8 branch
-
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Mon, 26 Nov 2020 06:28:22 +0300
 
 linuxcnc (1:2.8.0) buster; urgency=low
 
@@ -234,7 +216,7 @@ linuxcnc (1:2.7.15) unstable; urgency=medium
   * docs: add a pyvcp example
   * docs: fix incorrect pin names in hostmot2 manpage
   * docs: improve O-word examples & docs
-  * docs: fix & improve G27, G30, and G92
+  * docs: fix & improve G28, G30, and G92
   * docs: improve G38 & probe result params
   * docs: improve restart description in M0/M1 docs
   * docs: improve M7, M8, and M9
