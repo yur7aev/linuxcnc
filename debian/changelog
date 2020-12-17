@@ -1,6 +1,21 @@
 linuxcnc (1:2.8.1nyx16) buster; urgency=low
 
+  * YI16/YO16 number of i/o bug fix
+  * split nyx.0 func into rd() and wr()
   * merged upstrem 2.8.1
+  * encoder velocity is now signed
+  * multiboard support in uspace
+  * encoder zero speed fix
+  * J3/J4 digital outputs support
+  * SSCNET III/H and MR-J4 support
+  * merged upstream 2.8.0
+  * z-index homing for ssc3, mtl
+  * new servo params
+  * nyx 2.4
+  * removed nyxp, moved .par parser to the nyx module
+  * mechatrolink params
+  * mdssp comp
+  * merged with 2.8 branch
 
  -- Dmitry Yurtaev <dmitry@yurtaev.com>  Thu, 17 Dec 2020 06:10:12 +0300
 
