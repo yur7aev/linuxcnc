@@ -1,0 +1,113 @@
+;
+; Mitsubishi MDS-DJ/EJ-V default parameters
+;
+; 0: X  MDS-EJ-V1-10 / HG-KR13
+; 1: Y  MDS-DJ-V1-10 / HF-KP23
+; 2: Z  MDS-DJ-V1-10 / HF-KP23
+; 3: A  MDS-DJ-V1-10 / HF-KP23
+;
+; 2019, http://yurtaev.com
+;
+
+;	0	1	2	3
+SV001	1	1	1	1	; PC1	Motor side gear ratio			1-32767
+SV002	1	1	1	1	; PC2	Machine side gear ratio			1-32767
+SV003	33	33	33	33	; PGN1	Position loop gain		rad/s	1-200
+SV004	0	0	0	0	; PGN2	Position loop gain		rad/s	1-999
+SV005	5	5	5	5	; VGN1	Speed loop gain 1			1-30000
+SV006	0	0	0	0	; VGN2	Speed loop gain 2			-1000-30000
+SV007	0	0	0	0	; VIL	Speed loop delay compensation		0-32767
+SV008	1364	1364	1364	1364	; VIA	Speed loop lead compensation		0-9999
+SV009	20480	20480	20480	20480	; IQA	Current loop q axis lead comp		1-20480
+SV010	20480	20480	20480	20480	; IDA	Current loop d axis lead comp		1-20480
+SV011	1024	2048	2048	2048	; IQG	Current loop q axis gain		1-8192
+SV012	1024	2048	2048	2048	; IDG	Current loop d axis gain		1-8192
+SV013	300	300	300	300	; ILMT	Current limit value		%	0-999
+SV014	300	300	300	300	; ILMTsp Current limit in spec ctrl	%/0.01%	0-999/32767
+SV015	0	0	0	0	; FFC	Accel rate feed forward gain	%	0-999
+SV016	0	0	0	0	; LMC1	Lost motion compensation 1	%/0.01%	-1-200/20000
+SV017	0x1000	0x1000	0x1000	0x1000	; SPEC1	Servo specification 1		800=37 200=nothing 40,20=37 4=nothing
+SV018	10	10	10	10	; PIT	Ball screw/Mag pole pitch	mm/rev	1/32767
+SV019	260	260	260	260	; RNG1	Sub side encoder resolution
+SV020	260	260	260	260	; RNG2	Main side encoder resolution
+SV021	60	60	60	60	; OLT	Overload detection time const	%	1-999
+SV022	150	150	150	150	; OLL	Overload detection level	%	110-00
+SV023	6	6	6	6	; OD1	Excessive error detect in SVON	mm	0-32767
+SV024	50	50	50	50	; INP	In-position detection width	um	0-32767
+SV025	0x22c7	0x22b9	0x22EA	0x22EA	; MTYP	Motor/Encoder type (bb) cc for encoder works?
+SV026	6	6	6	6	; OD2	Excessive error detect in SVOFF	mm	0-32767
+SV027	0x4000	0x4000	0x4000	0x4000	; SSF1	Servo function 1
+SV028	-	-	-	-	; MSFT	Mag pole shift(linear/DD)	0.01deg	-18000-18000
+SV029	0	0	0	0	; VCS	Speed loop gain change speed	r/min
+SV030	0	0	0	0	; IVC	Voltage insensitive band comp	%	0-255
+SV031	0	0	0	0	; OVS1	Overshooting compensation 1	%/0.01%	0-100/10000
+SV032	0	0	0	0	; TOF	Torque offset			%	-100-100
+SV033	0x0000	0x0000	0x0000	0x0000	; SSF2	Servo function 2
+SV034	0x0000	0x0000	0x0000	0x0000	; SSF3	Servo function 3
+SV035	0x0000	0x0000	0x0000	0x0000	; SSF4	Servo function 4
+SV036	0x1000	0x1000	0x1000	0x1000	; PTYP	PSU / Regen resistor type
+SV037	0	0	0	0	; JL	Load inertia scale		%/kg	0-5000
+SV038	0	0	0	0	; FHz1	Notch filter frequency 1	Hz	0-2250
+SV039	0	0	0	0	; LMCD	Lost motion comp timing		ms	0-2000
+SV040	0	0	0	0	; LMCT	Lost mot comp non-sens band	um	0-255
+SV041	0	0	0	0	; LMC2	Lost motion compensation 2	%/0.01%	-1-200/20000
+SV042	0	0	0	0	; OVS2	Overshooting compensation 2	%/0.01%	-1-100/10000
+SV043	0	0	0	0	; OBS1	Disturb observer filter freq	rad/s	0-1000
+SV044	0	0	0	0	; OBS2	Disturbance observer gain	%	0-500
+SV045	0	0	0	0	; TRUB	Friction torque			%	0-255
+SV046	0	0	0	0	; FHz2	Notch filter frequency 2	Hz	0-2250
+SV047	100	100	100	100	; EC	Inductive voltage comp gain	%	0-200
+SV048	0	0	0	0	; EMGrt	Vert axis drop preventtime	ms	0-20000
+SV049	15	15	15	15	; PGN1sp Pos loop gain 1 in spndl sync	rad/s	1-200
+SV050	0	0	0	0	; PGN2sp Pos loop gain 2 in spndl sync	rad/s	0-999
+SV051	0	0	0	0	; DFBT	Dual f/b ctrl time constant	ms	0-9999
+SV052	0	0	0	0	; DFBN	Dual f/b ctrl non-sens band	um	0-9999
+SV053	0	0	0	0	; OD3	Exc error det in spec ctrl	mm/um	0-32767
+SV054	0	0	0	0	; ORE	Overrun detect in closed loop	mm/um	-1-32767
+SV055	0	0	0	0	; EMGx	Max. gate off delay after estop	ms	0-20000
+SV056	0	0	0	0	; EMGt	Decel time const at estop	ms	0-20000
+SV057	0	0	0	0	; SHGC	SHG control gain		rad/s	0-1200
+SV058	0	0	0	0	; SHGCsp SHG control gain in sp sync	rad/s	0-1200
+SV059	0	0	0	0	; TCNV	Collision detect trq est gain	%/kg	0-5000
+SV060	0	0	0	0	; TLMT	Collision detect level		%	0-999
+SV061	0	0	0	0	; DA1NO	D/A out ch1 data No.			-1-127
+SV062	0	0	0	0	; DA2NO	D/A out ch2 data No.			-1-127
+SV063	0	0	0	0	; DA1MPY D/A output ch1 output scale		-32768 to 32767
+SV064	0	0	0	0	; DA2MPY D/A output ch2 output scale		-32768 to 32767
+SV065	0	0	0	0	; TLC	Machine end compensation gain	 0.1%	-30000-30000
+SV066	-	-	-	-
+SV067	-	-	-	-
+SV068	-	-	-	-
+SV069	-	-	-	-
+SV070	-	-	-	-
+SV071	-	-	-	-
+SV072	-	-	-	-
+SV073	0	0	0	0	; FEEDout Specified speed output speed	r/min	0-32767
+SV074	-	-	-	-
+SV075	-	-	-	-
+SV076	-	-	-	-
+SV077	-	-	-	-
+SV078	-	-	-	-
+SV079	-	-	-	-
+SV080	-	-	-	-
+SV081	0x0000	0x0000	0x0000	0x0000	; SPEC2	Servo specification 2
+SV082	0x0000	0x0000	0x0000	0x0000	; SSF5	Servo function 5
+SV083	0x0000	0x0000	0x0000	0x0000	; SSF6	Servo function 6
+SV084	0x0000	0x0000	0x0000	0x0000	; SSF7	Servo function 7
+SV085	0	0	0	0	; LMCk	ost motion comp 3 spring const	0.01%/um  0-32767
+SV086	0	0	0	0	; LMCc	Lost motion comp 3 visc coef	0.01%s/mm 0-32767
+SV087	0	0	0	0	; FHz4	Notch filter frequency 4	Hz	0-2250
+SV088	0	0	0	0	; FHz5	Notch filter frequency 5	Hz	0-2250
+SV089	-	-	-	-
+SV090	-	-	-	-
+SV091	0	0	0	0	; LMC4G	Lost motion comp 4 gain		0.01%	0-20000
+SV092	-	-	-	-
+SV093	0	0	0	0
+SV094	10	10	10	10	; MPV	Mag pole pos error detect speed		0-31999
+SV095	0	0	0	0	; ZUPD	Vertical axis pull up distance	um	0-2000
+SV096	-	-	-	-
+SV113	0x0000
+SV114	0x0000
+SV115	0x0000
+SV116	0x0000
+SV164	0x0000

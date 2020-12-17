@@ -878,6 +878,21 @@ int sendHome(int joint)
     return 0;
 }
 
+int sendSetHomed(int joint)
+{
+    EMC_JOINT_UNHOME emc_joint_set_homed_msg;
+
+    emc_joint_set_homed_msg.joint = joint;
+    emcCommandSend(emc_joint_set_homed_msg);
+    if (emcWaitType == EMC_WAIT_RECEIVED) {
+	return emcCommandWaitReceived();
+    } else if (emcWaitType == EMC_WAIT_DONE) {
+	return emcCommandWaitDone();
+    }
+
+    return 0;
+}
+
 int sendUnHome(int joint)
 {
     EMC_JOINT_UNHOME emc_joint_home_msg;

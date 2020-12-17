@@ -1,0 +1,86 @@
+;
+; Mitsubishi MR-J2S-B default parameters
+;
+; 2019, http://yurtaev.com
+;
+
+;	0	1	2	3	4	5		description				range		default
+P01	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; *AMS	Amplifier setting			0000-0001h	0000
+P02	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; *REG	Regenerative brake resistor		0000-01FFh	0000
+P03	0x0080	0x0080	0x0080	0x0080	0x0080	0x0080	;	?					0000-FFFFh	0080
+P04	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	;	?					0000-FFFFh	0000
+P05	1	1	1	1	1	1	;	?					1-3		1
+P06	255	255	255	255	255	255	; *FBP	Feedback pulse number			0-255		0
+P07	0	0	0	0	0	0	; *POL	Rotation direction selection		0-1		0
+P08	0x0001	0x0001	0x0001	0x0001	0x0001	0x0001	;  ATU	Auto tuning				0000-0024h	0001
+P09	0x0005	0x0005	0x0005	0x0005	0x0005	0x0005	;  RSP	Servo response				0001-000Fh	0005
+P10	300	300	300	300	300	300	;  TLP	Forward torque limit		%	0-500		300
+P11	300	300	300	300	300	300	;  TLN	Reverse torque limit		%	0-500		300
+P12	7.0	7.0	7.0	7.0	7.0	7.0	;  GD2	Ratio of load inertia		times	0.0-300.0	7.0
+P13	35	35	35	35	35	35	;  PG1	Position control gain 1		rad/s	4-2000		35
+P14	177	177	177	177	177	177	;  VG1	Speed control gain 1		rad/s	20-8000		177
+P15	35	35	35	35	35	35	;  PG2	Position control gain 2		rad/s	1-1000		35
+P16	817	817	817	817	817	817	;  VG2	Speed control gain 2		rad/s	20-20000	817
+P17	48	48	48	48	48	48	;  VIC	Speed integral compensation	ms	1-1000		48
+P18	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	;  NCH	Filter 1 (Notch filter)			0000-031Fh	0000
+P19	0	0	0	0	0	0	;  FFC	Feed forward gain		%	0-100		0
+P20	100	100	100	100	100	100	;  INP	In-position range		pulse	0-50000		100
+P21	100	100	100	100	100	100	;  MBR	Em. brake seq. output		ms	0-1000		0
+P22	0x0001	0x0001	0x0001	0x0001	0x0001	0x0001	;  MOD	Analog monitor output			0000-4B4Bh	0001
+P23	0x0001	0x0001	0x0001	0x0001	0x0001	0x0001	; *OP1	*Optional function 1			0000-FFFFh	0000
+P24	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; *OP2	*Optional function 2			0000-FFFFh	0000
+P25	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	;  LPF	Low-pass filter/adapt cont.		0000-1217h	0000
+P26	0	0	0	0	0	0	;	?					0-100		0
+P27	0	0	0	0	0	0	;  MO1	Analog monitor 1 offset		mV	-999-999	0
+P28	0	0	0	0	0	0	;  MO2	Analog monitor 2 offset		mV	-999-999	0
+P29	0x0001	0x0001	0x0001	0x0001	0x0001	0x0001	;	?					0000-04AAh	0001
+P30	50	50	50	50	50	50	;  ZSP	Zero speed			r/min	0-10000		50
+P31	8.0	8.0	8.0	8.0	8.0	8.0	;  ERZ	Error excessive alarm level	rev	0.1-100.0	8.0
+P32	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	;  OP5	Optional function 5			0000-FFFFh	0000
+P33	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; *OP6	Optional function 6			0000-FFFFh	0000
+P34	0	0	0	0	0	0	;  VPI	PI-PID switch pos. droop	pulse	0-50000		0
+P35	0	0	0	0	0	0	;	?					-19-9979	0
+P36	980	980	980	980	980	980	;  VDC	Speed differential compen.		0-1000		980
+P37	0x0010	0x0010	0x0010	0x0010	0x0010	0x0010	;	?					0000-FFFFh	0010
+P38	4000	4000	4000	4000	4000	4000	; *ENR	Encoder output pulses		pls/rev	0-65535		4000
+P39	0	0	0	0	0	0	;	?					0-10000		0
+P40	0x000f	0x000f	0x000f	0x000f	0x000f	0x000f	; *BLK	Parameter block				0000-FFFFh	0000
+P41	500	500	500	500	500	500	;	Last stage torque limit value	%	0-500		500
+P42	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	;	?					0000-FFFFh	0000
+P43	0x0111	0x0111	0x0111	0x0111	0x0111	0x0111	;	?					0000-FFFFh	0111
+P44	20	20	20	20	20	20	;	?					0-65535		20
+P45	50	50	50	50	50	50	;	?					0-100		50
+P46	0	0	0	0	0	0	;	?					0-65535		0
+P47	0	0	0	0	0	0	;	?					0-65535		0
+P48	0	0	0	0	0	0	;	?					0-65535		0
+P49	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; *	Gain changing selection			0000-0004h	0000
+P50	10	10	10	10	10	10	;	Gain changing condition			0-9999		10
+P51	1	1	1	1	1	1	;	Gain changing time constant	ms	0-100		1
+P52	7.0	7.0	7.0	7.0	7.0	7.0	;	Ratio of load inertia 2		times	0.0-300.0	7.0
+P53	100	100	100	100	100	100	;	Pos. cont. gain2 change ratio	%	10-200		100
+P54	100	100	100	100	100	100	;	Spd. cont. gain2 change ratio	%	10-200		100
+P55	100	100	100	100	100	100	;	Spd. cont. gain2 change ratio	%	50-1000		100
+P56	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; *OP8	Optional function 8			0000-FFFFh	0000
+P57	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; *OP9	Optional function 9			0000-FFFFh	0000
+P58	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	;	?					0000-FFFFh	0000
+P59	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; *OPB	Optional function B			0000-1000h	0000
+P60	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; *OPC	Optional function C			0000-0110h	0000
+P61	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	;	Filter 2 (Notch filter)			0000-031Fh	0000
+P62	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	; *	Full-closed loop selection		0000-FFFFh	0000
+P63	400	400	400	400	400	400	;	Full-closed alarm det. 1	r/min	1-50000		400
+P64	100	100	100	100	100	100	;	Full-closed alarm det. 2	kpulse	1-20000		100
+P65	1	1	1	1	1	1	; *	Full-closed e-gear numer		1-65535		1
+P66	1	1	1	1	1	1	; *	Full-closed e-gear denom		1-65535		1
+P67	0	0	0	0	0	0	;	?					0-65535		0
+P68	0	0	0	0	0	0	;	?					0-65535		0
+P69	0	0	0	0	0	0	;	?					0-65535		0
+P70	0	0	0	0	0	0	;	?					0-65535		0
+P71	0	0	0	0	0	0	;	?					0-65535		0
+P72	0	0	0	0	0	0	;	?					0-65535		0
+P73	0	0	0	0	0	0	;	?					0-65535		0
+P74	0	0	0	0	0	0	;	?					0-65535		0
+P75	0	0	0	0	0	0	;	Torque control Speed limit	r/min	0-10000		0
+P76	0x0000	0x0000	0x0000	0x0000	0x0000	0x0000	;	D0 output func. select			0000-FFFFh	0000
+P77	0	0	0	0	0	0	;	?					0-65535		0
+P78	0	0	0	0	0	0	;	?					0-65535		0
+P79	0	0	0	0	0	0	;	?					0-65535		0

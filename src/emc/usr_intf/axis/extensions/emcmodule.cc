@@ -1081,6 +1081,14 @@ static PyObject *home(pyCommandChannel *s, PyObject *o) {
     return Py_None;
 }
 
+static PyObject *set_homed(pyCommandChannel *s, PyObject *o) {
+    EMC_JOINT_SET_HOMED m;
+    if(!PyArg_ParseTuple(o, "i", &m.joint)) return NULL;
+    emcSendCommand(s, m);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static PyObject *unhome(pyCommandChannel *s, PyObject *o) {
     EMC_JOINT_UNHOME m;
     if(!PyArg_ParseTuple(o, "i", &m.joint)) return NULL;
@@ -1369,6 +1377,7 @@ static PyMethodDef Command_methods[] = {
     {"task_plan_synch", (PyCFunction)task_plan_synch, METH_NOARGS},
     {"override_limits", (PyCFunction)override_limits, METH_NOARGS},
     {"home", (PyCFunction)home, METH_VARARGS},
+    {"set_homed", (PyCFunction)set_homed, METH_VARARGS},
     {"unhome", (PyCFunction)unhome, METH_VARARGS},
     {"jog", (PyCFunction)jog, METH_VARARGS,
         "jog(JOG_CONTINUOUS, joint_flag, index, speed)\n"

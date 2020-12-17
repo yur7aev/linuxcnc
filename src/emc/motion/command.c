@@ -1511,6 +1511,15 @@ void emcmotCommandHandler(void *arg, long period)
             }
 	    break;
 
+	case EMCMOT_JOINT_SET_HOMED:
+	    /* mark the specified joint homed */
+	    rtapi_print_msg(RTAPI_MSG_DBG, "JOINT_SET_HOMED");
+	    rtapi_print_msg(RTAPI_MSG_DBG, " %d", joint_num);
+	    if (joint) {
+                set_joint_homed(joint_num, 1);
+	    }
+	    break;
+
 	case EMCMOT_JOINT_UNHOME:
             /* unhome the specified joint, or all joints if -1 */
             rtapi_print_msg(RTAPI_MSG_DBG, "JOINT_UNHOME");

@@ -1,0 +1,78 @@
+#
+# NYX v2.3 LinuxCNC 2.8 common sample HAL config
+#
+# 2019, http://www.yurtaev.com
+#
+
+loadrt [KINS]KINEMATICS
+
+loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS
+addf motion-command-handler servo-thread
+addf motion-controller servo-thread
+
+loadrt nyx maxdrives=[NYX]AXES param_file=[NYX]PARAMS nodma=1
+addf nyx.0 servo-thread
+
+#-------- limits --------
+
+#net x-pos-limit joint.0.pos-lim-sw-in <= nyx.0.in-00-not
+#net x-neg-limit joint.0.neg-lim-sw-in <= nyx.0.in-01-not
+#net y-pos-limit joint.1.pos-lim-sw-in <= nyx.0.in-02-not
+#net y-neg-limit joint.1.neg-lim-sw-in <= nyx.0.in-03-not
+#net z-pos-limit joint.2.pos-lim-sw-in <= nyx.0.in-05-not
+#net z-neg-limit joint.2.neg-lim-sw-in <= nyx.0.in-04-not
+
+# shared home/limits
+#net x-neg-limit => joint.0.home-sw-in
+#net y-neg-limit => joint.1.home-sw-in
+#net z-pos-limit => joint.2.home-sw-in
+
+#-------- motion --------
+
+setp nyx.0.servo-00.pos-scale [JOINT_0]SCALE
+setp nyx.0.servo-01.pos-scale [JOINT_1]SCALE
+setp nyx.0.servo-02.pos-scale [JOINT_2]SCALE
+
+setp nyx.0.servo-00.vel-scale [NYX]VEL_SCALE
+setp nyx.0.servo-01.vel-scale [NYX]VEL_SCALE
+setp nyx.0.servo-02.vel-scale [NYX]VEL_SCALE
+
+setp nyx.0.servo-00.trq-scale [NYX]TRQ_SCALE
+setp nyx.0.servo-01.trq-scale [NYX]TRQ_SCALE
+setp nyx.0.servo-02.trq-scale [NYX]TRQ_SCALE
+
+net x-pos-fb joint.0.motor-pos-fb <= nyx.0.servo-00.pos-fb
+net y-pos-fb joint.1.motor-pos-fb <= nyx.0.servo-01.pos-fb
+net z-pos-fb joint.2.motor-pos-fb <= nyx.0.servo-02.pos-fb
+
+net x-cmd joint.0.motor-pos-cmd => nyx.0.servo-00.pos-cmd
+net y-cmd joint.1.motor-pos-cmd => nyx.0.servo-01.pos-cmd
+net z-cmd joint.2.motor-pos-cmd => nyx.0.servo-02.pos-cmd
+
+# alarms are disabled for testing
+#net alarm0 joint.0.amp-fault-in <= nyx.0.servo-00.alarm
+#net alarm1 joint.1.amp-fault-in <= nyx.0.servo-01.alarm
+#net alarm2 joint.2.amp-fault-in <= nyx.0.servo-02.alarm
+
+# set homed flag if absolute position is valid
+net x-absolute halui.joint.0.set-homed <= nyx.0.servo-00.abs-ok
+net y-absolute halui.joint.1.set-homed <= nyx.0.servo-01.abs-ok
+net z-absolute halui.joint.2.set-homed <= nyx.0.servo-02.abs-ok
+
+# unhome axes on absolute position loss
+net x-abs-lost halui.joint.0.unhome <= nyx.0.servo-00.abs-lost
+net y-abs-lost halui.joint.1.unhome <= nyx.0.servo-01.abs-lost
+net z-abs-lost halui.joint.2.unhome <= nyx.0.servo-02.abs-lost
+
+net x-enable joint.0.amp-enable-out => nyx.0.servo-00.enable
+net y-enable joint.1.amp-enable-out => nyx.0.servo-01.enable
+net z-enable joint.2.amp-enable-out => nyx.0.servo-02.enable
+
+net estop => nyx.0.servo-00.power
+net estop => nyx.0.servo-01.power
+net estop => nyx.0.servo-02.power
+
+#-------- misc --------
+
+net estop <= iocontrol.0.user-enable-out
+net estop => iocontrol.0.emc-enable-in

@@ -30,6 +30,7 @@ for details see src/emc/nml_intf/emc.hh
     EMC_JOINT_LOAD_COMP_TYPE
     EMC_JOINT_SET_BACKLASH_TYPE
     EMC_JOINT_UNHOME_TYPE
+    EMC_JOINT_SET_HOMED_TYPE
     EMC_JOINT_STAT_TYPE
 ----
 

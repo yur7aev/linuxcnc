@@ -1,0 +1,215 @@
+;
+; Yaskawa SGDV-xxxx011A
+;
+; * - param active at power-up
+; ! - param change at DEN/ZSPD
+;
+; 2020, http://yurtaev.com
+;
+
+;	0
+;Pn000	0x0000	;	*Function Selection Basic Switch 0
+;Pn001	0x0000	;	*Function Selection Application Switch 1
+;Pn002	0x0113	;	*Function Selection Application Switch 2
+Pn006	0x0002	;	Function Selection Application Switch 6
+Pn007	0x0000	;	Function Selection Application Switch 7
+;Pn008	0x4000	;	*Function Selection Application Switch 8
+;Pn009	0x0010	;	*Function Selection Application Switch 9
+;Pn00B	0x0000	;	*Function Selection Application Switch B
+;Pn00C	0x0000	;	*Function Selection Application Switch C
+;Pn00D	0x0000	;	*Function Selection Application Switch D
+
+Pn100	40.0	; Hz	Speed Loop Gain
+Pn101	20.00	; ms	Speed Loop Integral Time Constant
+Pn102	40.0	; /s	Position Loop Gain
+Pn103	100	; %	Moment of Inertia Ratio
+Pn104	40.0	; Hz	2nd Speed Loop Gain
+Pn105	20.00	; ms	2nd Speed Loop Integral Time Constant
+Pn106	40.0	; /s	2nd Position Loop Gain
+Pn109	0	; %	Feed Forward Gain
+Pn10A	0.00	; ms	Feed Forward Filter Time Constant
+Pn10B	0x0000	; 	*Gain Related Application Switch
+Pn10C	200	; %	Mode Switch (torque reference)
+Pn10D	0	; RPM	Mode Switch (speed reference)
+Pn10E	0	; RPM/s	Mode Switch (acceleration)
+Pn10F	0	; u	Mode Switch (error pulse)
+Pn11F	0.0	; ms	Position Integral Time Constant
+Pn121	100	; %	Friction Compensation Gain
+Pn122	100	; %	2nd Gain for Friction Compensation
+Pn123	0	; %	Friction Compensation Coefficient
+Pn124	0.0	; Hz	Friction Compensation Frequency Correction
+Pn125	100	; %	Friction Compensation Gain Correction
+Pn131	0	; ms	Gain Switching Time 1
+Pn132	0	; ms	Gain Switching Time 2
+Pn135	0	; ms	Gain Switching Waiting Time 1
+Pn136	0	; ms	Gain Switching Waiting Time 2
+Pn139	0x0000	; 	Automatic Gain Changeover Related Switch 1
+Pn13D	2000	; %	Current Gain Level
+Pn140	0x0100	; 	Model Following Control Related Switch
+Pn141	50.0	; /s	Model Following Control Gain
+Pn142	100.0	; %	Model Following Control Gain Compensation
+Pn143	100.0	; %	Model Following Control Bias (Forward Direction)
+Pn144	100.0	; %	Model Following Control Bias (Reverse Direction)
+Pn145	50.0	; Hz	Vibration Suppression 1 Frequency A
+Pn146	70.0	; Hz	Vibration Suppression 1 Frequency B
+Pn147	100.0	; %	Model Following Control Speed Feedforward Compensation
+Pn148	50.0	; %	2nd Model Following Control Gain
+Pn149	100.0	; %	2nd Model Following Control Gain Compensation
+Pn14A	80.0	; Hz	Vibration Suppression 2 Frequency
+Pn14B	10.0	; %	Vibration Suppression 2 Compenstation
+Pn14F	0x0011	; 	*Control Related Switch
+Pn160	0x0010	; 	Anti-Resonance Control Related Switch
+Pn161	100.0	; Hz	Anti-Resonance Frequency
+Pn162	100	; %	Anti-Resonance Gain Compensation
+Pn163	0	; %	Anti-Resonance Damping Gain
+Pn164	0.00	; ms	Anti-Resonance Filter Time Constant 1 Compensation
+Pn165	0.00	; ms	Anti-Resonance Filter Time Constant 2 Compensation
+Pn170	0x1401	;	*Tuning-less Function Related Switch
+
+Pn205	65535	; Rev	*Multi-turn Limit Setting
+Pn207	0x0010	; 	*Position Reference Function Switch
+Pn20AL	32768	; /Rev	*(L) Number of External Scale Pitch
+Pn20EL	4	; 	*(L) Electronic Gear Ratio (Numerator)
+Pn210L	1	; 	*(L) Electronic Gear Ratio (Denominator)
+Pn22A	0x0000	; 	Reserved (Do not change)
+Pn230	0x0000	; 	*Position Control Expanded Function Switch
+Pn231L	0.0	; 	(L) Backlash Compensation Value
+Pn233	0.00	; ms	Backlash Compensation Time Constant
+Pn281	20	; 	Reserved (Do not change)
+
+Pn304	500	; RPM	JOG Speed
+Pn305	0	; ms	Soft Start Acceleration Time
+Pn306	0	; ms	Soft Start Deceleration Time
+Pn310	0x0000	; 	Vibration Detection Switch
+Pn311	100	; %	Vibration Detection Sensibility
+Pn312	50	; RPM	Vibration Detection Level
+Pn324	300	; %	Moment of Inertia Calculating Start Level
+
+Pn401	1.00	; ms	Torque Reference Filter Time Constant
+Pn402	800	; %	Forward Torque Limit
+Pn403	800	; %	Reverse Torque Limit
+Pn404	100	; %	Forward External Torque Limit
+Pn405	100	; %	Reverse External Torque Limit
+Pn406	800	; %	Emergency Stop Torque
+Pn407	10000	; RPM	Speed Limit during Torque Control
+Pn408	0x0000	; 	*Torque Related Function Switch
+Pn409	5000	; Hz	1st Notch Filter Frequency
+Pn40A	0.70	; 	1st Notch Filter Q Value
+Pn40B	0.000	; 	1st Notch Filter Depth
+Pn40C	5000	; Hz	2nd Notch Filter Frequency
+Pn40D	0.70	; 	2nd Notch Filter Q Value
+Pn40E	0.000	; 	2nd Notch Filter Depth
+Pn40F	5000	; Hz	2nd Step 2nd Torque Reference Filter Frequency
+Pn410	0.50	; 	2nd Step 2nd Torque Reference Filter Q Value
+Pn412	1.00	; ms	1st Step 2nd Torque Reference Filter Time Constant
+Pn424	50	;	Reserved (Do not change)
+Pn425	100	;	Reserved (Do not change)
+Pn456	15	; %	Sweep Torque Reference Amplitude
+Pn460	0x0101	; 	Notch Filter Adjustment Switch
+
+Pn501	10	; RPM	Zero Clamp Level
+Pn502	20	; RPM	Zero Speed Level
+Pn503	10	; RPM	Speed Coincidence Signal Output Width
+Pn506	0	; 10ms	Brake Reference
+Pn507	100	; RPM	Brake Reference Output Speed Level
+Pn508	50	; 10ms	Waiting Time for Brake Signal When Motor Running
+Pn509	20	; ms	Reserved (Do not change)
+Pn50A	0x8881	; 	*Input Signal Selection 1 (=1881)
+Pn50B	0x8888	; 	*Input Signal Selection 2 (=8881)
+Pn50C	0x8888	; 	*Input Signal Selection 3
+Pn50D	0x8888	; 	*Input Signal Selection 4
+Pn50E	0x0000	; 	*Output Signal Selection 1
+Pn50F	0x0100	; 	*Output Signal Selection 2
+Pn510	0x0000	; 	*Output Signal Selection 3
+Pn511	0x8880	; 	*Input Signal Selection 5
+Pn512	0x0000	; 	*Output Signal Reversal Setting
+Pn517	0x0000	; 	Reserved (Do not change)
+Pn51BL	1000	; u	Reserved (Do not change)
+Pn51E	100	; %	Excessive Position Error Warning Level
+Pn520L	25242880	; u	(L) Excessive Position Error Alarm Level
+Pn522L	7	; u	(L) Positioning Completion Width
+Pn524L	1073741824	; u	(L) NEAR Signal Width
+Pn526L	25242880	; u	(L) Excessive Position Error Alarm Level at Servo ON
+Pn528	100	; %	Excessive Position Error Warning Detection Level at Servo ON
+Pn529	10000	; RPM	Speed Limit Level at Servo ON
+Pn52A	20	; %	Reserved (Do not change)
+Pn52B	20	; %	Overload Warning Level
+Pn52C	100	; %	*Derating of Base Current at Detecting Overload of Motor
+Pn52D	50	; %	Reserved (Do not change)
+Pn52F	0x0FFF	; 	Monitor Display at Power ON
+Pn530	0x0000	; 	Program JOG Operation Related Switch
+Pn531L	32768	; u	Program JOG Movement Distance
+Pn533	500	; RPM	Program JOG Movement Speed
+Pn534	100	; ms	Program JOG Acceleration/Deceleration Time
+Pn535	100	; ms	Program JOG Waiting Time
+Pn536	1	; time	Number of Times of Program JOG Movement
+Pn550	0.0	; V	Analog Monitor 1 Offset Voltage
+Pn551	0.0	; V	Analog Monitor 2 Offset Voltage
+Pn552	1.00	;	Analog Monitor Magnification (×1)
+Pn553	1.00	;	Analog Monitor Magnification (×2)
+Pn560	40.0	; %	Remained Vibration Detection Width
+Pn561	100	; %	Overshoot Detection Level
+Pn600	0	; W	Reserved (Do not change)
+Pn601	0	; W	Reserved (Do not change)
+
+Pn800	0x0040	; 	Communication Control
+Pn801	0x0003	; 	Function Selection Application 6 (Software LS)
+Pn803	10	; u	Origin Range
+Pn804L	 1073741823 ; u	(L) Forward Software Limit
+Pn806L	-1073741823 ; u	(L) Reverse Software Limit
+Pn808L	0	; u	(L) Absolute Encoder Origin Offset
+Pn80A	100	; ^5/s2	!1st Step Linear Acceleration Constant
+Pn80B	100	; ^5/s2	!2nd Step Linear Acceleration Constant
+Pn80C	0	; 100/s	!Acceleration Constant Switching Speed
+Pn80D	100	; ^5/s2	!1st Step Linear Deceleration Constant
+Pn80E	100	; ^5/s2	!2nd Step Linear Deceleration Constant
+Pn80F	0	; 100/s	!Deceleration Constant Switching Speed
+Pn810	0	; /s	!Exponential Function Accel/Decel Bias
+Pn811	0	; 0.1ms	!Exponential Function Accel/Decel Time Constant
+Pn812	0	; 0.1ms	!Moving Average Time
+Pn814L	100	; u	!(L) Final Travel Distance for External Positioning (EX_POSING)
+Pn816	0x0000	; 	!Homing Mode Setting
+Pn817	50	; 100/s	!Homing Approach Speed 1
+Pn818	5	; 100/s	!Homing Approach Speed 2
+Pn819	100	; u	!Final Travel Distance for homing
+Pn81E	0x0000	; 	Input Signal Monitor Selection
+Pn81F	0x0000	;	Command Data Allocation
+Pn820L	0	; u	(L) Latching Area Upper Limit
+Pn822L	0	; u	(L) Latching Area Lower Limit
+Pn824	0x0000	; 	Option Monitor 1 Selection
+Pn825	0x0000	; 	Option Monitor 2 Selection
+
+
+Pn827	100	;	Linear Deceleration Constant 1 for Stopping
+Pn829	0	;	SVOFF Waiting Time (SVOFF at deceleration to stop)
+Pn82A	0x1813	;	*Option Field Allocation 1
+Pn82B	0x1D1C	;	*Option Field Allocation 2
+Pn82C	0x1F1E	;	*Option Field Allocation 3
+Pn82D	0x0000	;	*Option Field Allocation 4
+Pn82E	0x0000	;	*Option Field Allocation 5
+Pn833	0x0000	;	*Motion Setting
+Pn834	100	;	1st Linear Acceleration Constant 2
+Pn836	100	;	2nd Linear Acceleration Constant 2
+Pn838	0	;	Acceleration Constant Switching Speed 2
+Pn83A	100	;	1st Linear Deceleration Constant 2
+Pn83C	100	;	2nd Linear Deceleration Constant 2
+
+Pn83E	0	;	Deceleration Constant Switching Speed 2
+Pn840	100	;	Linear Deceleration Constant 2 for Stopping
+Pn842	0	;	Homing Approach Speed 12
+Pn850	0	;	Latch Sequence Number
+Pn851	0	;	Continuous Latch Count
+Pn852	0x0000	;	Latch Sequence Signal 1 to 4 Setting
+Pn853	0x0000	;	Latch Sequence Signal 5 to 8 Setting
+;Pn880	0	;	Station Address Monitor (for maintenance, read only)
+;Pn881	0	;	Setting Transmission Byte Monitor [byte] (for maintenance, read only)
+;Pn882	0	;	Transmission Cycle Setting Monitor [0.25 μs] (for maintenance, read only)
+;Pn883	0	;	Communications Cycle Setting Monitor [x transmission cycle] (for maintenance, read only)
+Pn884	0x0000	;	Communications Control 2
+;Pn88A	0	;	MECHATROLINK Receive Error Counter Monitor (for maintenance, read only)
+;Pn890L..Pn89EL ;	Command Data Monitor at Alarm/Warning Occurs (for maintenance, read only)
+;Pn8A0L..Pn8AEL ;	Response Data Monitor at Alarm/Warning Occurs (for maintenance, read only)
+;Pn900	0	;	Parameter Bank Number After restart
+;Pn901	0	;	Parameter Bank Member Number After restart
+;Pn902..Pn910	;	Parameter Bank Member Definition After restart
+;Pn920..Pn95F	;	Parameter Bank Data (nonvolatile memory save disabled)

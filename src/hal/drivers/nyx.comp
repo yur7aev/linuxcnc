@@ -1,0 +1,1619 @@
+/*
+ * YxxxxP servo interface card driver, http://yurtaev.com
+ *
+ * License: GPL Version 2
+ *
+ * (c) 2016-2020 dmitry@yurtaev.com
+ */
+
+component nyx "YxxxxP servo interface card driver";
+
+param rw  signed servo-##.origin[16 : personality] = 0;		// 32bit servo command-feedback offset to prevent integer overflow
+param rw   float servo-##.pos-scale[16 : personality] = 5.0;	// travel units per revolution (5mm)
+param rw   float servo-##.vel-scale[16 : personality] = 10.0;	// rpm (1 rpm resolution)
+param rw   float servo-##.trq-scale[16 : personality] = 1.0;	// 1% resolution
+
+pin out      bit servo-##.online[16 : personality] "drive detected";
+pin out      bit servo-##.offline[16 : personality] = 1 "no drive detected";
+pin out      bit servo-##.ready[16 : personality] "READY ON";
+pin out      bit servo-##.enabled[16 : personality] "SERVO ON";
+pin out      bit servo-##.alarm[16 : personality];
+pin out      bit servo-##.warning[16 : personality];
+pin out unsigned servo-##.alarm-code[16 : personality] "amp display, in hex";
+pin out      bit servo-##.zero-speed[16 : personality];
+pin out      bit servo-##.in-position[16 : personality];
+pin out      bit servo-##.at-speed[16 : personality];
+pin out      bit servo-##.absolute[16 : personality];
+pin out      bit servo-##.abs-lost[16 : personality];
+pin out      bit servo-##.abs-ok[16 : personality];
+pin out      bit servo-##.z-passed[16 : personality];
+
+pin out   signed servo-##.counts[16 : personality];
+pin out   signed servo-##.counts-cmd[16 : personality];
+pin out   signed servo-##.z-offs[16 : personality] "set during z-index pass";
+
+pin  in      bit servo-##.power[16 : personality]	"turn on power relay";
+pin  in      bit servo-##.enable[16 : personality]	"turn on servo";
+pin  in      bit servo-##.reset-alarm[16 : personality];
+
+pin  in    float servo-##.forward-torque[16 : personality] = 300.0;
+pin  in    float servo-##.reverse-torque[16 : personality] = 300.0;
+pin  in      bit servo-##.limit-torque[16 : personality];
+pin out      bit servo-##.torque-clamped[16 : personality];
+
+pin  in    float servo-##.pos-cmd[16 : personality];
+pin out    float servo-##.pos-fb[16 : personality];
+
+pin  in      bit servo-##.velocity-mode[16 : personality];
+pin  in    float servo-##.vel-cmd[16 : personality];
+pin out    float servo-##.vel-fb[16 : personality];
+pin out    float servo-##.trq-fb[16 : personality];
+pin out   signed servo-##.droop[16 : personality];
+
+pin out   signed servo-##.error-cnt[16 : personality] "drive feedback error count";
+
+pin  in      bit servo-##.spindle-fwd[16 : personality];
+pin  in      bit servo-##.spindle-rev[16 : personality];
+pin  in      bit servo-##.spindle-orient[16 : personality];
+pin  out     bit servo-##.spindle-orienting[16 : personality];
+pin  out     bit servo-##.spindle-oriented[16 : personality];
+
+pin out      bit servo-##.in-00[16 : personality];
+pin out      bit servo-##.in-01[16 : personality];
+pin out      bit servo-##.in-02[16 : personality];
+pin out      bit servo-##.in-00-not[16 : personality];
+pin out      bit servo-##.in-01-not[16 : personality];
+pin out      bit servo-##.in-02-not[16 : personality];
+pin in       bit servo-##.out-00[16 : personality];
+pin in       bit servo-##.out-01[16 : personality];
+pin in       bit servo-##.out-02[16 : personality];
+
+pin out   signed servo-##.dbg[16 : personality];
+//pin out unsigned servo-##.debug[16 : personality];
+
+pin  io      bit servo-##.index-enable[16 : personality];
+pin  in      bit servo-##.undroop[16 : personality];
+
+pin out      bit ready "card is in sync with NC";
+pin out    float phase "sync pulse deviation, periods";
+pin out   signed error-cnt "missed comm cycles when not in sync";
+//pin  in      bit enable = 1;
+
+pin out   signed dbg0;
+pin out   signed dbg1;
+pin out   signed dbg2;
+pin out unsigned dbg3;
+
+pin out      bit in-##[29] "CN1 inputs";
+pin out      bit in-##-not[29] "CN1 inputs, inverted";
+pin  in      bit out-##[8] "CN3 outputs";
+
+pin  io      bit encoder-##.index-enable[2];
+pin out    float encoder-##.pos[2];
+param rw   float encoder-##.cpr[2] = 10000;
+pin out    float encoder-##.velocity[2];
+param rw   float encoder-##.min-speed-estimate[2] = 1.0;
+pin out   signed encoder-##.counts[2];
+
+pin  in    float dac-##.value[2];
+param rw   float dac-##.scale[2] = 1.0;
+param rw   float dac-##.bias[2] = 0.0;
+
+//
+
+option extra_setup;
+option extra_cleanup;
+option rtapi_app no;
+option count_function yes;
+
+variable int glitch_len;
+variable int enc_counts[2];
+variable int enc_changed[2];
+variable unsigned v_seq;
+variable unsigned v_boardno;		// card number
+
+function _;
+function rd;
+function wr;
+
+license "GPL";
+
+include "nyx2.h";
+
+;;
+
+//
+//
+//
+
+// per-amplifier data
+typedef struct yssc2_amp {	// data collected during initialization
+	char fw[16];		// firmware version: 'B26W200B3   '
+	uint16_t param[256];	// parameters value, live
+	uint32_t fbres;		// feedback pulse number, as set in param No.6
+	uint32_t cyc0;		// 1-rev motor position, in fb_res units
+	uint32_t abs0;		// absolute rev counter
+	uint32_t type;
+	int index_req_pos;	// z-index homing
+	int zsm;			// z-index state machine
+	uint32_t prev_status;
+} YSSC2_amp;
+
+#define ZSM_IDLE		0
+#define ZSM_INDEX_REQ	1
+#define ZSM_WAIT_Z	2
+#define ZSM_WAIT_OFFS	3
+#define ZSM_SET_OFFS	40
+
+struct freq_data {
+	int b[16];
+	unsigned i, j;
+	int bucket;
+	int sum;
+};
+
+typedef struct servo_param {
+	uint16_t no;
+	uint16_t size;		// number of bytes: 2 or 4
+	uint32_t val;
+} servo_param;
+
+typedef struct servo_params {
+	servo_param *pa;	// an array of params for a single axis, sorted by no
+	size_t count;		// number of items in the array
+	size_t size;		// size of allocated array
+	long load_axis;
+} servo_params;
+
+typedef struct yssc2 {
+	int no;
+	nyx_dpram *dpram;	// local copy
+
+	// uspace
+	int axes;
+	int yios;
+
+#ifdef __KERNEL__
+	volatile nyx_iomem *iomem;
+	uint32_t iolen;
+	void *dev;
+	dma_addr_t dpram_bus_addr;
+#else
+	int fd;			// nyx device file descriptor
+#endif
+
+	YSSC2_amp amp[NYX_AXES];
+	uint32_t prev_fb_seq;	// to detect index req change
+	struct io_pins *io;
+	int initial_delay;
+	int errors_shown;
+	struct freq_data freq;
+	int was_ready;
+
+	servo_params par[NYX_AXES];
+} YSSC2;
+
+//
+// helper functions
+//
+
+#define FB(a) y->dpram->fb.servo_fb[a]
+#define CMD(a) y->dpram->cmd.servo_cmd[a]
+
+uint32_t yssc2_magic(YSSC2 *y)		{ return y->dpram->magic; }
+int yssc2_axes(YSSC2 *y)		{ return y->axes; }
+int yssc2_fb_seq(YSSC2 *y)		{ return y->dpram->fb.seq; }
+double yssc2_irq_time_us(YSSC2 *y)	{ return y->dpram->fb.irq_time / 45.0; }
+///double yssc2_debug(YSSC2 *y, int n)	{ return 0; } ///y->dpram->dbg[n]; }
+double   yssc2_state(YSSC2 *y, int n)	{ return FB(n).state; }
+double yssc2_rx_time(YSSC2 *y, int n)	{ return FB(n).rxtime; }
+int yssc2_z_offs(YSSC2 *y, int n)       { return FB(n).smth2; }
+
+int yssc2_has_fb(YSSC2 *y)		{ return (y->dpram->fb.seq & YS_FB) && 1; }
+int yssc2_valid(YSSC2 *y, int a)	{ return (y->dpram->fb.valid & (1<<a)) && (FB(a).state & YF_VALID); }
+int yssc2_feedback_res(YSSC2 *y, int a)	{ return  y->amp[a].fbres; }
+int yssc2_cyc0(YSSC2 *y, int a)		{ return  y->amp[a].cyc0; }
+int yssc2_abs0(YSSC2 *y, int a)		{ return  y->amp[a].abs0; }
+
+int yssc2_online(YSSC2 *y, int a)	{ return (FB(a).state & YF_ONLINE) && 1; }
+int yssc2_ready(YSSC2 *y, int a)	{ return (FB(a).state & YF_READY) && 1; }
+int yssc2_enabled(YSSC2 *y, int a)	{ return (FB(a).state & YF_ENABLED) && 1; }
+int yssc2_in_position(YSSC2 *y, int a)	{ return (FB(a).state & YF_IN_POSITION) && 1; }
+int yssc2_zero_speed(YSSC2 *y, int a)	{ return (FB(a).state & YF_ZERO_SPEED) && 1; }
+int yssc2_at_speed(YSSC2 *y, int a)	{ return (FB(a).state & YF_AT_SPEED) && 1; }
+int yssc2_alarm(YSSC2 *y, int a)	{ return (FB(a).state & YF_ALARM) && 1; }
+int yssc2_warning(YSSC2 *y, int a)	{ return (FB(a).state & YF_WARNING) && 1; }
+int yssc2_in_vel_ctl(YSSC2 *y, int a)	{ return (FB(a).state & YF_VEL_CTL) && 1; }
+int yssc2_absolute(YSSC2 *y, int a)	{ return (FB(a).state & YF_ABS) && 1; }
+int yssc2_abs_lost(YSSC2 *y, int a)	{ return (FB(a).state & YF_ABS_LOST) && 1; }
+int yssc2_oriented(YSSC2 *y, int a)	{ return (FB(a).state & YF_ORIENTED) && 1; }
+int yssc2_orienting(YSSC2 *y, int a)	{ return (FB(a).state & YF_ORIENTING) && 1; }
+int yssc2_di(YSSC2 *y, int a, int n)	{ return (FB(a).state & (YF_DI1 << n)) && 1; }
+int yssc2_torque_clamped(YSSC2 *y, int a) { return (FB(a).state & YF_TORQUE_LIM) && 1; }
+int yssc2_z_passed(YSSC2 *y, int a)	{ return (FB(a).state & YF_Z_PASSED) && 1; }
+
+int yssc2_droop(YSSC2 *y, int a)	{ return FB(a).droop; }
+int yssc2_pos_fb(YSSC2 *y, int a)	{ return FB(a).pos; }
+int yssc2_vel_fb(YSSC2 *y, int a)	{ return FB(a).vel; }
+int yssc2_trq_fb(YSSC2 *y, int a)	{ return FB(a).trq; }
+int yssc2_alarm_code(YSSC2 *y, int a)	{ return FB(a).alarm; }
+unsigned yssc2_flags(YSSC2 *y, int a)   { return FB(a).state; }
+
+void yssc2_pos_cmd(YSSC2 *y, int a, int p) { CMD(a).pos = p; }
+void yssc2_vel_cmd(YSSC2 *y, int a, int p) { CMD(a).vel = p; }
+void yssc2_vel_ctl(YSSC2 *y, int a, int e)      { if (e) CMD(a).flags |= YC_VEL_CTL;    else CMD(a).flags &= ~YC_VEL_CTL; }
+void yssc2_power(YSSC2 *y, int a, int e)        { if (e) CMD(a).flags |= YC_POWER;      else CMD(a).flags &= ~YC_POWER; }
+void yssc2_enable(YSSC2 *y, int a, int e)       { if (e) CMD(a).flags |= YC_ENABLE;     else CMD(a).flags &= ~YC_ENABLE; }
+void yssc2_reset_alarm(YSSC2 *y, int a, int e)  { if (e) CMD(a).flags |= YC_RST_ALARM;  else CMD(a).flags &= ~YC_RST_ALARM; }
+void yssc2_limit_torque(YSSC2 *y, int a, int e) { if (e) CMD(a).flags |= YC_LIM_TORQUE; else CMD(a).flags &= ~YC_LIM_TORQUE; }
+void yssc2_fwd(YSSC2 *y, int a, int e)          { if (e) CMD(a).flags |= YC_FWD;        else CMD(a).flags &= ~YC_FWD; }
+void yssc2_rev(YSSC2 *y, int a, int e)          { if (e) CMD(a).flags |= YC_REV;        else CMD(a).flags &= ~YC_REV; }
+void yssc2_orient(YSSC2 *y, int a, int e)       { if (e) CMD(a).flags |= YC_ORIENT;     else CMD(a).flags &= ~YC_ORIENT; }
+void yssc2_forward_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 0x4000) t = 0x4000; CMD(a).fwd_trq = t; }
+void yssc2_reverse_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 0x4000) t = 0x4000; CMD(a).rev_trq = t; }
+void yssc2_reset_z(YSSC2 *y, int a, int e)      { if (e) CMD(a).flags |= YC_RST_Z;      else CMD(a).flags &= ~YC_RST_Z; }
+void yssc2_do(YSSC2 *y, int a, int n, int e)    { if (e) CMD(a).flags |= (YC_DO1<<n);   else CMD(a).flags &= ~(YC_DO1<<n); }
+
+uint32_t yssc2_gpi(YSSC2 *y)                { return y->dpram->fb.gpi; }
+int      yssc2_enc(YSSC2 *y, int a)         { return (y->dpram->fb.enc[a]); }
+uint32_t yssc2_yi(YSSC2 *y, int a)          { return y->dpram->fb.yi[a]; }
+void yssc2_dac(YSSC2 *y, int a, uint16_t v) { y->dpram->cmd.dac[a] = v; }
+void yssc2_gpo(YSSC2 *y, int a)             { y->dpram->cmd.gpo = a; }
+void yssc2_yo(YSSC2 *y, int a, uint32_t v)  { y->dpram->cmd.yo[a] = v; }
+
+void yssc2_index_req(YSSC2 *y, int a, int n) {
+	if (n) {
+		y->dpram->cmd.seq |= YS_INDEX0 << a;
+	} else {
+		y->dpram->cmd.seq &= ~(YS_INDEX0 << a);
+	}
+}
+
+int  yssc2_index_falling(YSSC2 *y, int a) {
+	return (y->prev_fb_seq & (YS_INDEX0<<a)) && !(y->dpram->fb.seq & (YS_INDEX0<<a));
+}
+
+#define YSSC2_VENDOR_ID 0x1067
+#define YSSC2P_A_DEVICE_ID 0x55c2
+#define YSSC3_VENDOR_ID 0x1067
+#define YSSC3P_A_DEVICE_ID 0x55c3
+#define YMTL2_VENDOR_ID 0x1313
+#define YMTL2P_A_DEVICE_ID 0x0712
+#define YSSC2_MAX_BOARDS 8
+
+int  yssc2_init(void);
+int  yssc2_start(int instance, int maxdrives);
+void yssc2_cleanup(void);
+void yssc2_receive(YSSC2 *y);
+void yssc2_process(YSSC2 *y);
+int  yssc2_transmit(YSSC2 *y);
+int  get_count(void);
+YSSC2 *yssc2_board(int i);
+
+// dynamic HAL pins
+struct io_pins {
+	hal_bit_t *in[16][16];
+	hal_bit_t *in_not[16][16];
+	hal_bit_t *out[16][16];
+	hal_bit_t *alarm[16];
+	hal_s32_t *yio_error_cnt[16];
+	hal_bit_t *mon[16][16];		// mirrors either input or outpus pins for monitoring
+	hal_s32_t *enc[16];
+	uint32_t yi16, yo16, yenc;	// set bit indicates corresponding slave is present
+};
+
+char *param_file[YSSC2_MAX_BOARDS] = {0,};
+RTAPI_MP_ARRAY_STRING(param_file, YSSC2_MAX_BOARDS, "Servo parameter file names");
+
+static int nodma;
+RTAPI_MP_INT(nodma, "disable PCI DMA: read (1), write (2), both (3)");
+
+static int maxdrives;
+RTAPI_MP_INT(maxdrives, "max number of drives");
+
+static int mon;
+RTAPI_MP_INT(mon, "duplicate YIO pins for monitoring connection");
+
+static int debug;
+RTAPI_MP_INT(debug, "enable debugging messages");
+
+static int cycle[YSSC2_MAX_BOARDS] = {0,};
+RTAPI_MP_ARRAY_INT(cycle, YSSC2_MAX_BOARDS, "comm cycle freqency: 0=servo-period, 1=1/2, 2=1/4, ...");
+
+//
+//
+//
+
+static int export_io(char *prefix, int inst_num)
+{
+	int i, j;
+	int rc = 0;
+	struct io_pins *io = hal_malloc(sizeof(struct io_pins));
+	YSSC2 *y = yssc2_board(inst_num);
+
+	yssc2_receive(y);
+	io->yi16 = io->yo16 = io->yenc = 0;
+
+	for (i = 0; i < y->yios; i++) {
+		uint32_t iotype = yssc2_yi(y, i) >> 24;
+
+		if (iotype >= 1 && iotype <= 2) {	// known YIO module
+			rc = hal_pin_bit_newf(HAL_OUT, &(io->alarm[i]), comp_id,
+					"%s.yio-%02d.alarm", prefix, i);
+			if(rc != 0) return rc;
+
+			rc = hal_pin_s32_newf(HAL_OUT, &(io->yio_error_cnt[i]), comp_id,
+					"%s.yio-%02d.error-cnt", prefix, i);
+			if(rc != 0) return rc;
+		}
+
+		if (iotype == 1) {
+			io->yi16 |= 1<<i;
+			for (j = 0; j < 16; j++) {
+				rc = hal_pin_bit_newf(HAL_OUT, &(io->in[i][j]), comp_id,
+					            "%s.yio-%02d.in-%02d", prefix, i, j);
+				if(rc != 0) return rc;
+				rc = hal_pin_bit_newf(HAL_OUT, &(io->in_not[i][j]), comp_id,
+					            "%s.yio-%02d.in-%02d-not", prefix, i, j);
+				if(rc != 0) return rc;
+
+				if (mon) {
+					rc = hal_pin_bit_newf(HAL_OUT, &(io->mon[i][j]), comp_id,
+						"%s.yio-%02d.mon-%02d", prefix, i, j);
+					if(rc != 0) return rc;
+				}
+			}
+		} else if (iotype == 2) {
+			io->yo16 |= 1<<i;
+			for (j = 0; j < 16; j++) {
+				rc = hal_pin_bit_newf(HAL_IN, &(io->out[i][j]), comp_id,
+					            "%s.yio-%02d.out-%02d", prefix, i, j);
+				if(rc != 0) return rc;
+				if (mon) {
+					rc = hal_pin_bit_newf(HAL_OUT, &(io->mon[i][j]), comp_id,
+						            "%s.yio-%02d.mon-%02d", prefix, i, j);
+					if(rc != 0) return rc;
+				}
+			}
+		} else if (iotype == 3) {	// incremental encoder
+			io->yenc |= 1<<i;
+			rc = hal_pin_s32_newf(HAL_OUT, &(io->enc[i]), comp_id,
+					"%s.encoder-%02d.counts", prefix, i);
+			if(rc != 0) return rc;
+		}
+	}
+
+	y->io = io;
+
+	return 0;
+}
+
+#define yio_pin_in(a,b) (*(y->io->in[a][b]))
+#define yio_pin_in_not(a,b) (*(y->io->in_not[a][b]))
+#define yio_pin_out(a,b) (*(y->io->out[a][b]))
+#define yio_pin_mon(a,b) (*(y->io->mon[a][b]))
+#define yio_pin_alarm(a) (*(y->io->alarm[a]))
+#define yio_pin_error_cnt(a) (*(y->io->yio_error_cnt[a]))
+#define yio_pin_enc(a) (*(y->io->enc[a]))
+#define yio_yi16(a) (y->io->yi16 & (1<<a))
+#define yio_yo16(a) (y->io->yo16 & (1<<a))
+#define yio_yenc(a) (y->io->yenc & (1<<a))
+
+//
+//
+//
+
+int rtapi_app_main(void) {
+	int i, count, r;
+
+	if (maxdrives < 1) maxdrives = 1;
+	if (maxdrives > 18) maxdrives = 18;
+	if (maxdrives > NYX_AXES) maxdrives = NYX_AXES;
+
+	comp_id = hal_init("nyx");
+	yssc2_init();
+	count = get_count();
+	if (comp_id < 0) return comp_id;
+
+	for (i = r = 0; !r && i < count; i++) {
+		YSSC2 *y = yssc2_board(i);
+		static char prefix[HAL_NAME_LEN + 1];
+		rtapi_snprintf(prefix, sizeof(prefix), "nyx.%d", i);
+
+		yssc2_start(i, maxdrives);
+
+		r |= export(prefix, i, yssc2_axes(y));
+		r |= export_io(prefix, i);
+	}
+
+	// rtapi_print_msg(RTAPI_MSG_ERR, "started %d boards, r=%d\n", i, r);
+
+	if (r) {
+		extra_cleanup();
+		hal_exit(comp_id);
+	} else {
+		hal_ready(comp_id);
+	}
+	return r;
+}
+
+void rtapi_app_exit(void) {
+	yssc2_cleanup();
+	hal_exit(comp_id);
+}
+
+EXTRA_SETUP()
+{
+
+	if (yssc2_board(v_boardno = extra_arg) == NULL) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: no board #%d\n", v_boardno);
+		return -EINVAL;
+	}
+
+	enc_changed[0] = -1;
+	enc_changed[1] = -1;
+
+	return 0;
+}
+
+EXTRA_CLEANUP()
+{
+	// yssc2_cleanup();
+	// rtapi_print_msg(RTAPI_MSG_INFO, "nyx: unloaded\n");
+}
+
+// calculate event frequency
+// 1125 hz ~= 1024 hz = 256 * 4 * 4 = 4 sec;
+int freq(YSSC2 *y, int event)
+{
+	if (y->freq.i & 0xff) {
+		y->freq.bucket += event;
+	} else {
+		y->freq.j = y->freq.i >> 8;
+		y->freq.sum -= y->freq.b[y->freq.j];
+		y->freq.sum += (y->freq.b[y->freq.j] = y->freq.bucket + event);
+		y->freq.bucket = 0;
+	}
+	++y->freq.i;
+	y->freq.i &= 0xfff;
+
+	return y->freq.sum;
+}
+
+#include <rtapi_math.h>
+
+FUNCTION(_)
+{
+	// calling nyx.0 instead of nyx.0.rd, motion-command-handler, motion-controller, nyx.0.wr introduces 1 servo cycle latency
+	rd(__comp_inst, period);
+	wr(__comp_inst, period);
+}
+
+FUNCTION(rd)
+{
+	if (v_seq++ & ((1<<cycle[v_boardno]) - 1)) return;	// skip
+	YSSC2 *y = yssc2_board(v_boardno);
+	if (y == NULL) return;
+/*
+	if (!enable) {
+		phase = 0;
+		insync = 0;
+		ready = 0;
+		return;
+	}
+*/
+	yssc2_receive(y);	// should be the very first routine
+
+	int insync;
+	if ((0xffffff00 & yssc2_magic(y)) == (0x55c20000 | (NYX_VER_MAJ<<8))) {	// check if the board hasn't gone away
+		phase = yssc2_irq_time_us(y) * 45.0;
+		;
+		insync = (yssc2_fb_seq(y) & YS_INSYNC) != 0;
+	} else {
+		phase = 0;
+		insync = 0;
+	}
+
+	dbg0 = yssc2_yi(y, 13);
+	dbg1 = yssc2_yi(y, 14);
+	dbg2 = yssc2_yi(y, 15);
+	dbg3 = yssc2_fb_seq(y);
+
+#define MAX_GLITCH 5
+#define MAX_ERRORS 5
+
+	if (freq(y, !insync) == 0) y->errors_shown = 0;	// reset message inhibit
+	if (y->initial_delay < 1000000) ++y->initial_delay;
+
+	if (insync) {
+		if (!ready) {
+			if(y->initial_delay > 1000000000 / period * 5) {
+				if (++y->errors_shown < MAX_ERRORS) {
+					rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: sync glitch, %d ticks\n", y->no, glitch_len);
+				} else if (y->errors_shown == MAX_ERRORS) {
+					rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: sync glitch, %d ticks. check servo thread period!\n", y->no, glitch_len);
+				} else {
+					y->errors_shown = MAX_ERRORS + 1;
+				}
+			}
+			ready = 1;
+		}
+		glitch_len = 0;
+	} else {
+		if (++glitch_len >= MAX_GLITCH) {
+			ready = 0;
+		}
+		++error_cnt;
+	}
+
+	{
+		if (!ready && glitch_len == 1000000000 / period * 5 && y->errors_shown < MAX_ERRORS) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: board firmware NOT READY\n", y->no);
+			++y->errors_shown;
+		}
+		y->was_ready = ready;
+	}
+
+	yssc2_process(y);	// state machine, request servo data: absolute origin, encoder res, etc
+
+	// parse received feedback data
+	int a;
+	for (a = 0; a < yssc2_axes(y); a++) {
+		//servo_debug(a) = yssc2_debug(y, a);
+		if (ready && yssc2_online(y, a)) {
+			if (yssc2_feedback_res(y, a) == 0) continue;
+
+			if (yssc2_has_fb(y)) {
+				if (yssc2_valid(y, a)) {
+
+					{
+						int state = y->amp[a].zsm;
+						switch (state) {
+						case ZSM_IDLE:
+							if (servo_index_enable(a)) {
+								yssc2_reset_z(y, a, 1);
+								y->amp[a].index_req_pos = servo_counts_cmd(a);
+								state = ZSM_INDEX_REQ;
+							} else {
+		idle:						yssc2_reset_z(y, a, 0);
+								state = ZSM_IDLE;
+							}
+							break;
+						case ZSM_INDEX_REQ:
+							if (servo_index_enable(a)) {
+								if (!yssc2_z_passed(y, a)) {
+									yssc2_reset_z(y, a, 0);
+									state = ZSM_WAIT_Z;
+								} else  {
+									yssc2_reset_z(y, a, 1);
+								}
+							} else
+								goto idle;
+							break;
+						case ZSM_WAIT_Z:
+							if (servo_index_enable(a)) {
+								if (yssc2_z_passed(y, a)) {
+									state = ZSM_WAIT_OFFS;
+								}
+							} else
+								goto idle;
+							break;
+						case ZSM_SET_OFFS:
+							if (servo_index_enable(a)) {
+								servo_origin(a) = y->amp[a].index_req_pos + yssc2_z_offs(y, a);
+								servo_index_enable(a) = 0;
+							} else
+								goto idle;
+							break;
+						default: state++; break;
+						}
+						y->amp[a].zsm = state;
+						servo_dbg(a) = state;
+					}
+
+					int32_t fb = (servo_counts(a) = yssc2_pos_fb(y, a)) - servo_origin(a);
+
+					servo_dbg(a) = yssc2_rx_time(y, a);
+					servo_online(a) = 1;
+					servo_offline(a) = 0;
+					servo_ready(a) = yssc2_ready(y, a);
+					servo_enabled(a) = yssc2_enabled(y, a);
+					servo_warning(a) = yssc2_warning(y, a);
+					servo_alarm(a) = yssc2_alarm(y, a);
+					servo_alarm_code(a) = yssc2_alarm_code(y, a);
+					servo_zero_speed(a) = yssc2_zero_speed(y, a);
+					servo_in_position(a) = yssc2_in_position(y, a);
+					servo_at_speed(a) = yssc2_at_speed(y, a);
+					servo_spindle_oriented(a) = yssc2_oriented(y, a);
+					servo_spindle_orienting(a) = yssc2_orienting(y, a);
+
+//					if (!yssc2_zero_speed(y, a) && servo_undroop(a)) fb += yssc2_droop(y, a);
+					if (servo_undroop(a)) fb += yssc2_droop(y, a);
+
+					servo_pos_fb(a) = (fb) * servo_pos_scale(a) / yssc2_feedback_res(y, a);
+					servo_vel_fb(a) = yssc2_vel_fb(y, a) / servo_vel_scale(a);
+					servo_trq_fb(a) = yssc2_trq_fb(y, a) / 10.0;
+					servo_droop(a) = yssc2_droop(y, a);
+					servo_torque_clamped(a) = yssc2_torque_clamped(y, a);
+					servo_absolute(a) = yssc2_absolute(y, a);
+					servo_abs_lost(a) = yssc2_abs_lost(y, a);
+					servo_abs_ok(a) = yssc2_absolute(y, a) && !yssc2_abs_lost(y, a);
+
+					servo_in_00_not(a) = !(servo_in_00(a) = yssc2_di(y, a, 0));     // J3 DI# pins
+					servo_in_01_not(a) = !(servo_in_01(a) = yssc2_di(y, a, 1));
+					servo_in_02_not(a) = !(servo_in_02(a) = yssc2_di(y, a, 2));
+
+					servo_z_passed(a) = yssc2_z_passed(y, a);
+					servo_z_offs(a) = yssc2_z_offs(y, a);
+
+				} else {
+					servo_dbg(a) = 0;
+					++servo_error_cnt(a);
+				}
+			}
+
+		} else {
+			servo_online(a) = 0;
+			servo_offline(a) = 1;
+			servo_ready(a) = 0;
+			servo_enabled(a) = 0;
+			servo_alarm(a) = 1;
+			servo_alarm_code(a) = 0;
+			servo_absolute(a) = 0;
+			servo_abs_lost(a) = 1;
+			servo_abs_ok(a) = 0;
+		//	yssc2_power(y, a, 0);	// the controller will do that
+		//	yssc2_enable(y, a, 0);
+		}
+	}
+
+#define MAXI 2000000000
+
+	for (a = 0; a < 2; a++) {
+		int c;
+
+		if (yssc2_index_falling(y, a)) encoder_index_enable(a) = 0;
+		yssc2_index_req(y, a, encoder_index_enable(a));	// rising
+
+		int cpr = encoder_cpr(a);
+		double min_spd = encoder_min_speed_estimate(a);
+
+		if (cpr == 0) cpr = 1;
+		if (min_spd < 0.001) min_spd = 0.001;
+
+		c = yssc2_enc(y, a);
+		if (enc_changed[a] >= 0) {
+			if (c != encoder_counts(a)) {
+				int d = c - encoder_counts(a);
+				if (d > -MAXI && d < MAXI) {      // just ignore integer overflow
+					double v = d * 60 / fperiod / cpr / (enc_changed[a] + 1); // rpm
+					if (fabs(v) < min_spd) v = 0.0;
+					encoder_velocity(a) = v;
+				}
+				enc_changed[a] = 0;
+			} else {
+				if (enc_changed[a] > fabs(60 / fperiod / cpr / min_spd) - 1)
+					encoder_velocity(a) = 0.0;
+				if (enc_changed[a] < MAXI)
+					enc_changed[a]++;
+			}
+		} else {
+			enc_changed[a] = 0;
+			encoder_velocity(a) = 0.0;
+		}
+		encoder_counts(a) = c;
+		encoder_pos(a) = c / (double)cpr;
+	}
+
+	uint32_t u = yssc2_gpi(y);
+	for (a = 0; a < 29; a++) {
+		in_not(a) = !(in(a) = u & 1);
+		u >>= 1;
+	}
+
+	// YIO
+	for (a = 0; a < y->yios; a++) {
+		int n;
+		uint32_t i, o;
+		if (yio_yi16(a)) {
+			i = yssc2_yi(y, a);
+			for (n = 0; n < 16; n++) {
+				yio_pin_in_not(a, n) = !(yio_pin_in(a, n) = (i & (1<<n)) ? 1 : 0);
+				if (mon) yio_pin_mon(a, n) = yio_pin_in(a, n);
+			}
+			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
+			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
+		}
+		if (yio_yenc(a)) {
+			uint16_t n = (int16_t)yssc2_yi(y, a);
+			int32_t o = yio_pin_enc(a);
+			int32_t d = n - (uint16_t)o;
+			if (d > 32767) o -= 0x10000;
+			else if(d < -32768) o += 0x10000;
+			yio_pin_enc(a) = (o & 0xffff0000) + n;	// expand 16bit counter to 32 bits
+		}
+		if (yio_yo16(a)) {	// output board - input pins
+			i = yssc2_yi(y, a);
+			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
+			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
+		}
+
+	}
+}
+
+FUNCTION(wr)
+{
+	if (v_seq++ & ((1<<cycle[v_boardno]) - 1)) return;	// skip
+	YSSC2 *y = yssc2_board(v_boardno);
+	if (y == NULL) return;
+
+	int a;
+
+	// prepare servo command data
+	for (a = 0; a < yssc2_axes(y); a++) {
+		if (ready && yssc2_online(y, a)) {
+			if (yssc2_feedback_res(y, a) == 0) continue;	// should do it in the very beginning
+
+			// input pins
+			yssc2_power(y, a, servo_power(a));
+			yssc2_enable(y, a, servo_enable(a));
+			yssc2_vel_ctl(y, a, servo_velocity_mode(a));
+			yssc2_vel_cmd(y, a, servo_vel_cmd(a) * servo_vel_scale(a));
+			{
+				int64_t cmd = servo_pos_cmd(a) * yssc2_feedback_res(y, a) / servo_pos_scale(a) + servo_origin(a);
+				cmd &= 0xffffffff;
+				yssc2_pos_cmd(y, a, cmd);
+				servo_counts_cmd(a) = cmd;
+			}
+			yssc2_reset_alarm(y, a, servo_reset_alarm(a));
+			yssc2_limit_torque(y, a, servo_limit_torque(a));
+			yssc2_forward_torque(y, a, servo_forward_torque(a) * servo_trq_scale(a));
+			yssc2_reverse_torque(y, a, servo_reverse_torque(a) * servo_trq_scale(a));
+			yssc2_fwd(y, a, servo_spindle_fwd(a));
+			yssc2_rev(y, a, servo_spindle_rev(a));
+			yssc2_orient(y, a, servo_spindle_orient(a));
+
+			yssc2_do(y, a, 0, servo_out_00(a));     // J3 DO# pins
+			yssc2_do(y, a, 1, servo_out_01(a));
+			yssc2_do(y, a, 2, servo_out_02(a));
+		}
+	}
+
+	uint32_t u = 0;
+	for (a = 0; a <= 7; a++) {
+		if (out(a)) u |= 0x100;
+		u >>= 1;
+	}
+	yssc2_gpo(y, u);
+
+        for (a = 0; a < 2; a++) {
+		double s = dac_scale(a) != 0 ? dac_scale(a) : 1;
+                double f = dac_value(a) / s + dac_bias(a);
+                if (f < 0) f = 0;
+                if (f > 1) f = 1;
+                yssc2_dac(y, a, f * 65535);
+        }
+
+	// YIO
+	for (a = 0; a < y->yios; a++) {
+		int n;
+		uint32_t o;
+		if (yio_yo16(a)) {	// output board - input pins
+			for (o = n = 0; n < 16; n++) {
+				if (yio_pin_out(a, n)) o |= 0x10000;
+				if (mon) yio_pin_mon(a, n) = yio_pin_out(a, n);
+				o >>= 1;
+			}
+			yssc2_yo(y, a, o);
+		}
+	}
+
+	yssc2_transmit(y);
+}
+
+//
+// sero parameter file stuff
+//
+
+#include <rtapi_slab.h>
+
+#ifdef __KERNEL__
+#include <linux/fs.h>		// Needed by filp
+#include <linux/delay.h>	// Needed by filp
+#include <asm/uaccess.h>	// Needed by segment descriptors
+#include <rtapi_pci.h>
+#define malloc(a) kmalloc(a, GFP_KERNEL)
+#define free(a) kfree(a)
+#define realloc(p, a) krealloc(p, a, GFP_KERNEL)
+int strtol(char *s, char **endptr, int base)
+{
+	long l;
+	if (kstrtol(s, base, &l)) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params bad number '%s'", s);
+		return 0xffff;	// error
+	}
+	return l;
+}
+#else
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#endif
+
+int params_init(servo_params *params)
+{
+	int a;
+
+	for (a = 0; a < NYX_AXES; a++) {
+		params[a].pa = NULL;
+		params[a].size = 0;
+		params[a].count = 0;
+		params[a].load_axis = 0;
+	}
+
+	for (a = 0; a < NYX_AXES; a++) {
+		params[a].pa = malloc(sizeof(struct servo_param));
+		if (params[a].pa == NULL) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_init can't allocate params buffer");
+			return -1;
+		}
+		params[a].size = 1;
+		params[a].count = 0;
+	}
+	return 0;
+}
+
+void params_free(servo_params *params)
+{
+	int a;
+
+	for (a = 0; a < NYX_AXES; a++) {
+		if (params[a].pa) {
+			free(params[a].pa);
+			params[a].pa = NULL;
+		}
+		params[a].size = 0;
+		params[a].count = 0;
+	}
+}
+
+servo_param *params_bfind(uint16_t key, servo_param *base, size_t num)
+{
+	servo_param *pivot = 0;
+
+	while (num > 0) {
+		pivot = base + (num >> 1);
+
+		if (key == pivot->no)
+			return pivot;
+
+		if (key > pivot->no) {
+			base = pivot + 1;
+			num--;
+		}
+		num >>= 1;
+	}
+
+	return pivot;
+}
+
+int params_add(servo_params *params, uint16_t no, uint16_t size, uint32_t val)
+{
+	servo_param *p = params->pa;
+
+	if (params->count >= params->size) {
+		p = realloc(params->pa, params->size * 2 * sizeof(servo_param));
+		if (p == NULL) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: param realloc failed");
+			return -1;
+		}
+		params->pa = p;
+		params->size <<= 1;
+	}
+	if (params->count > 0) {
+		p = params_bfind(no, params->pa, params->count);
+		if (p->no == no) {
+			return -1;
+		}
+		if (p->no < no) ++p;
+		memmove(p+1, p, (params->count - (p - params->pa)) * sizeof(servo_param));
+	}
+	p->no = no;
+	p->size = size;
+	p->val = val;
+	++params->count;
+
+	return p - params->pa;
+}
+
+int params_parse_no(char *s, servo_param *p)
+{
+	int l;
+
+	l = strlen(s);
+
+	if (l < 3) return -1;
+
+	p->size = 2;	// 16-bit param by default
+	if (s[0] == 'P' && s[1] == 'n' && s[2] >= '0' && s[2] <= '9') {
+		if (s[l-1] == 'L') {
+			s[l-1] = 0;
+			p->size = 4;
+		}
+		p->no = strtol(s+3, NULL, 16) | ((s[2] - '0') << 8);
+
+	} else if (s[0] == 'P' && s[1] >= '0' && s[1] <= '9') {
+		p->no = strtol(s+1, NULL, 10);
+
+	} else if (s[0] == 'S' && s[1] == 'V') {
+		p->no = strtol(s+2, NULL, 10);
+
+	} else if (s[0] == 'S' && s[1] == 'P') {
+		p->no = strtol(s+2, NULL, 10) | (1 << 10);
+
+	} else if (s[0] == 'P' && s[2] >= '0' && s[2] <= '9') {
+		uint16_t grp = 0;
+		switch(s[1]) {
+		case 'A': // 0
+		case 'B': // 1
+		case 'C': // 2
+		case 'D': // 3
+		case 'E': // 4
+		case 'F': // 5
+		case 'G': // 6
+		case 'H': grp = s[1] - 'A'; break; // 7
+		case 'J': grp = 8; break;
+		case 'O': grp = 9; break;
+		case 'S': grp = 10; break;
+		case 'L': grp = 11; break;
+		case 'T': grp = 12; break;
+		case 'M': grp = 13; break;
+		case 'N': grp = 14; break;
+		default:  return -1;
+		}
+		p->no = strtol(s+2, NULL, 10) | (grp << 10);
+	} else
+		return -1;
+
+	return p->no == 0xffff ? -1 : 0;
+}
+
+
+void params_parse_line(servo_params *params, char *str, int ln)
+{
+	servo_param par;
+	char *s = str, *t, *p;
+	int a;
+
+	while (*s == ' ' || *s == '\t') s++;
+	if ((t = strchr(s, ';'))) *t = 0;
+	p = strsep(&s, " \t\r\n");	// chop leading whitespaces
+	if (*p) {
+		if (!strcmp(p, "AXIS")) {	// set base axis number
+			while (s) {
+				t = strsep(&s, " \t\r\n");
+				if (*t) {
+					params->load_axis = strtol(t, NULL, 0);
+					break;
+				}
+			}
+			return;
+		}
+
+		if (params_parse_no(p, &par) < 0) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_parse_line bad param '%s' at line %d", p, ln);
+			return;
+		}
+
+		for (a = params->load_axis; par.no && s && a < NYX_AXES;) {
+			t = strsep(&s, " \t\r\n");
+			if (*t)	{
+				if (t[0] != '-' || t[1] != 0)  {
+					char *d;
+					if ((d = strchr(t, '.'))) {	// remove decimal point
+						do {
+							*d = d[1];
+						} while (*d++);
+					}
+					params_add(params + a, par.no, par.size, strtol(t, NULL, 0));
+				}
+				a++;
+			}
+		}
+	}
+}
+
+#ifdef __KERNEL__
+
+
+int params_load(servo_params *params, const char *filename)
+{
+	struct file *f;
+
+	f = filp_open(filename, O_RDONLY, 0);
+	if (!IS_ERR(f)) {
+		if (f->f_op && f->f_op->read && f->f_op->llseek) {
+			mm_segment_t fs;
+			loff_t size, n;
+			char *buf, *s, *l;
+
+			fs = get_fs();		// Get current segment descriptor
+			set_fs(get_ds());	// Set segment descriptor associated to kernel space
+
+			size = f->f_op->llseek(f, 0, SEEK_END);
+///			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: par file size %d", (int)size);
+			f->f_op->llseek(f, 0, SEEK_SET);
+
+			buf = kmalloc(size + 1, GFP_KERNEL);
+			if (buf) {
+				int ln = 1;
+				n = f->f_op->read(f, buf, size, &f->f_pos);	// gulp the file
+///        			rtapi_print_msg(RTAPI_MSG_ERR, "nyx:par file read %d", (int)n);
+				buf[size] = 0;
+
+				s = buf;
+				while (s) {
+					l = strsep(&s, "\n");
+					if (l && *l) params_parse_line(params, l, ln);
+					ln++;
+				}
+
+				kfree(buf);
+			} else {
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_load malloc of %d failed", (int)size+1);
+			}
+
+			set_fs(fs);	        // Restore segment descriptor
+		} else {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_load can't read par file %s : no read, llseek f_ops", filename);
+		}
+		filp_close(f, NULL);
+	} else {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_load can't open %s", filename);
+	}
+
+	if(debug) rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_load %d", (int)params->count);
+
+	return 0;
+}
+#else // userspace
+
+//#include <sys/types.h>
+//#include <sys/stat.h>
+//#include <sys/ioctl.h>
+//#include <fcntl.h>
+//#include <stdlib.h>
+//#include <unistd.h>
+
+//#include <rtapi_slab.h>
+//#include <rtapi_io.h>
+
+int params_load(servo_params *params, const char *filename)
+{
+	int f;
+
+	f = open(filename, O_RDONLY);
+	if (f >= 0) {
+		struct stat st;
+		char *buf, *s, *l;
+
+		if (fstat(f, &st) < 0) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_load can't stat %s", filename);
+			return -1;
+		}
+
+		buf = malloc(st.st_size + 1);
+		if (buf) {
+			int ln = 1;
+			read(f, buf, st.st_size);	// gulp the file
+			buf[st.st_size] = 0;
+
+			s = buf;
+			while (s) {
+				l = strsep(&s, "\n");
+				if (l && *l) params_parse_line(params, l, ln);
+				ln++;
+			}
+			free(buf);
+		} else {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_load malloc of %d failed", (int)st.st_size+1);
+		}
+
+		close(f);
+	} else {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_load can't open %s", filename);
+	}
+
+	if(debug) rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_load %d", (int)params->count);
+
+	return 0;
+}
+#endif
+
+void params_get_span(servo_params *params, uint16_t first, int count, uint16_t *dm, uint16_t *dp)
+{
+	servo_param *p;
+	uint32_t mask = 0;
+	int i;
+
+	p = params_bfind(first, params->pa, params->count);
+	for (i = 0; i < count; i++) {
+		if (p && p - params->pa < params->count && p->no == first + i) {
+			mask |= 1<<i;
+			dp[i] = p->val;
+			p++;
+		} else {
+			dp[i] = 0;
+		}
+	}
+	*dm = mask;
+}
+
+void params_get_next(servo_params *params, uint16_t *no, uint16_t *size, uint32_t *val)
+{
+	servo_param *p;
+
+	p = params_bfind(*no, params->pa, params->count);
+	if (p && p->no >= *no) {
+		*no = p->no;
+		*size = p->size;
+		*val = p->val;
+	} else if (p && p - params->pa < params->count - 1) {	// the last item
+		p++;
+		*no = p->no;
+		*size = p->size;
+		*val = p->val;
+	} else {	// the last item
+		*no = 0xffff;
+		*size = 0;
+		*val = 0;
+	}
+
+
+}
+
+static YSSC2 yssc2_brd[YSSC2_MAX_BOARDS];
+static unsigned int num_boards = 0;
+
+//int yssc2_board_count()
+int get_count(void)
+{
+	return num_boards;
+}
+
+YSSC2 *yssc2_board(int i)
+{
+	if(i >= num_boards) return NULL;
+	return &yssc2_brd[i];
+}
+
+void freq_init(YSSC2 *y)
+{
+	y->freq.i =
+	y->freq.j =
+	y->freq.bucket =
+	y->freq.sum = 0;
+}
+
+
+#ifdef __KERNEL__
+
+
+static struct rtapi_pci_device_id yssc2_pci_tbl[] = {
+	{
+		.vendor = YSSC3_VENDOR_ID,
+		.device = YSSC3P_A_DEVICE_ID,
+		.subvendor = YSSC3_VENDOR_ID,
+		.subdevice = YSSC3P_A_DEVICE_ID,
+	},
+	{
+		.vendor = YSSC2_VENDOR_ID,
+		.device = YSSC2P_A_DEVICE_ID,
+		.subvendor = YSSC2_VENDOR_ID,
+		.subdevice = YSSC2P_A_DEVICE_ID,
+	},
+	{
+		.vendor = YMTL2_VENDOR_ID,
+		.device = YMTL2P_A_DEVICE_ID,
+		.subvendor = YMTL2_VENDOR_ID,
+		.subdevice = YMTL2P_A_DEVICE_ID,
+	},
+	{0,},
+};
+
+static int yssc2_pci_probe(struct rtapi_pci_dev *dev, const struct rtapi_pci_device_id *id) {
+	int r;
+	YSSC2 *y;
+
+	if (num_boards >= YSSC2_MAX_BOARDS) {
+		rtapi_print_msg(RTAPI_MSG_WARN, "nyx: skipping board %d\n", num_boards);
+		return -EINVAL;
+	}
+
+	if (rtapi_pci_enable_device(dev)) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: failed to enable PCI device %s\n", rtapi_pci_name(dev));
+		return -ENODEV;
+	}
+
+	y = &yssc2_brd[num_boards];
+	memset(y, 0, sizeof(YSSC2));
+	y->iomem = rtapi_pci_ioremap_bar(dev, 0);
+	y->iolen = rtapi_pci_resource_len(dev, 0);
+
+
+        if (y->iomem == NULL) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: could not map %s PCI address space\n", rtapi_pci_name(dev));
+		r = -ENODEV;
+		goto fail0;
+	} else {
+		uint32_t magic = y->iomem->dpram.magic;
+		int rev_min = magic & 0xff;
+		int rev_maj = (magic & 0xff00) >> 8;
+
+		if ((0xffffff00 & magic) != (0x55c20000 | (NYX_VER_MAJ<<8))) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: this driver v%d.%d is not compatible with YxxxnP (%x) v%d.%d at %s\n",
+					NYX_VER_MAJ, NYX_VER_MIN, magic, rev_maj, rev_min, rtapi_pci_name(dev));
+			r = -ENODEV;
+			goto fail1;
+		}
+
+		rtapi_print_msg(RTAPI_MSG_INFO, "nyx: YxxxnP v%d.%d #%d at %s, mapped to %p..%p, y=%p\n", rev_maj, rev_min,
+			num_boards, rtapi_pci_name(dev), y->iomem, y->iomem - y->iolen, y);
+	}
+
+	y->dpram = (nyx_dpram *)dma_alloc_coherent(&dev->dev, sizeof(nyx_dpram), &y->dpram_bus_addr, 0);
+	{
+		size_t offs = offsetof(struct nyx_dpram, fb);	// should be 512
+		rtapi_print_msg(RTAPI_MSG_INFO, "nyx: DMA mem: vm:%lx bus:%x offs:%x\n", (uintptr_t)y->dpram, y->dpram_bus_addr, offs);
+	}
+
+	if (y->dpram == NULL) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: can't allocate DMA memory: vm:%lx bus:%x\n", (uintptr_t)y->dpram, y->dpram_bus_addr);
+		goto fail1;
+	}
+
+	// period - in ns
+	y->initial_delay = 0;
+	y->errors_shown = 0;
+	freq_init(y);
+	y->was_ready = 0;
+	y->prev_fb_seq = 0;
+
+	y->dev = dev;
+	rtapi_pci_set_drvdata(dev, y);
+
+	y->dpram->magic = y->iomem->dpram.magic;
+	y->dpram->config = y->iomem->dpram.config;
+
+	y->axes = y->dpram->config & 0xff;
+	y->yios = (y->dpram->config >> 8) & 0xff;
+
+	if (y->axes > NYX_AXES) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: card has %d axes, limited to %d", y->axes, NYX_AXES);
+		y->axes = NYX_AXES;
+	}
+
+	if (y->yios > 16) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: number of yio nodes is %d, limited to 16", y->yios);
+		y->yios = 16;
+	}
+
+	++num_boards;
+	return 0;
+
+fail1:	rtapi_pci_set_drvdata(dev, NULL);
+	rtapi_iounmap(y->iomem);
+	y->iomem = NULL;
+
+fail0:  rtapi_pci_disable_device(dev);
+	return r;
+}
+
+static void yssc2_pci_remove(struct rtapi_pci_dev *dev) {
+	YSSC2 *y = pci_get_drvdata(dev); //dev->driver_data;
+
+	if (y != NULL) {
+		if (y->dpram != NULL) {
+			dma_free_coherent(&dev->dev, sizeof(nyx_dpram), y->dpram, y->dpram_bus_addr);
+			y->dpram = NULL;
+		}
+		if (y->iomem != NULL) {
+			rtapi_iounmap(y->iomem);
+			y->iomem = NULL;
+		}
+		y->dev = NULL;
+	}
+
+	rtapi_pci_disable_device(dev);
+	rtapi_pci_set_drvdata(dev, NULL);
+}
+
+static struct rtapi_pci_driver yssc2_pci_driver = {
+	.name = "nyx",
+	.id_table = yssc2_pci_tbl,
+	.probe = yssc2_pci_probe,
+	.remove = yssc2_pci_remove,
+};
+
+int yssc2_init()
+{
+	int rc;
+
+	if ((rc = rtapi_pci_register_driver(&yssc2_pci_driver))) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: can't register PCI driver\n");
+	}
+
+	return rc;
+}
+
+void yssc2_cleanup()
+{
+	int i;
+	rtapi_pci_unregister_driver(&yssc2_pci_driver);
+
+	for (i = 0; i < num_boards; i++) {
+		YSSC2 *y = &yssc2_brd[i];
+		params_free(y->par);
+	}
+}
+
+#else
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stddef.h>
+
+#include <rtapi_slab.h>
+#include <rtapi_io.h>
+
+int yssc2_init()
+{
+	char dev[32];
+	YSSC2 *y;
+
+	for (num_boards = 0; num_boards < YSSC2_MAX_BOARDS; num_boards++) {
+		y = &yssc2_brd[num_boards];
+		y->no = num_boards;
+
+		rtapi_snprintf(dev, 32, "/dev/nyx%d", num_boards);
+		y->fd = open(dev, O_RDWR);
+		if (y->fd < 0) {
+			break;
+//			rtapi_print_msg(RTAPI_MSG_ERR, "nyx: can't open /dev/nyx0");
+//			return -1;
+		}
+
+		if (ioctl(y->fd, 1, nodma))
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d:init dma ioctl failed - old driver?", num_boards);
+
+//		y->dpram = mmap(NULL, sizeof(nyx_dpram), PROT_READ | PROT_WRITE, MAP_SHARED, y->fd, 0);
+//		if (y->dpram == (void *)-1) {
+			y->dpram = calloc(sizeof(nyx_dpram), 1);
+
+			if (y->dpram == NULL) {
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: malloc failed");
+				close(y->fd);
+				return -1;
+			}
+//		}
+
+		lseek(y->fd, offsetof(struct nyx_dpram, magic), SEEK_SET);
+		read(y->fd, y->dpram, 16);	// includes "magic" and "config" field
+
+		y->axes = y->dpram->config & 0xff;
+		y->yios = (y->dpram->config >> 8) & 0xff;
+
+		if (y->axes > NYX_AXES) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: card has %d axes, limited to %d", num_boards, y->axes, NYX_AXES);
+			y->axes = NYX_AXES;
+		}
+
+		if (y->yios > 16) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: number of yio nodes is %d, limited to 16", num_boards, y->yios);
+			y->yios = 16;
+		}
+
+//		rtapi_print_msg(RTAPI_MSG_ERR, "nyx%d: magic: %x, %d axes", num_boards, y->dpram->magic, y->axes );
+
+		y->initial_delay = 0;
+		y->errors_shown = 0;
+		freq_init(y);
+		y->was_ready = 0;
+		y->prev_fb_seq = 0;
+	}
+
+	if (num_boards < 1) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: can't open /dev/nyx0");
+		return -1;
+	}
+
+	return 0;
+}
+
+void yssc2_cleanup()
+{
+	int i;
+
+	for (i = 0; i < num_boards; i++) {
+		YSSC2 *y = &yssc2_brd[i];
+		params_free(y->par);
+		close(y->fd);
+		free(y->dpram);
+	}
+}
+
+#endif
+
+//
+// common rtai/uspace
+//
+
+int yssc2_start(int no, int maxdrives)
+{
+	YSSC2 *y = &yssc2_brd[no];
+
+	params_init(y->par);
+
+	if(param_file[no] == NULL || !param_file[no]) {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no param file specified", no);
+		return -1;
+	}
+
+	if (y->axes > maxdrives) y->axes = maxdrives;
+	params_load(y->par, param_file[no]);
+
+	return 0;
+}
+
+
+void yssc2_process(YSSC2 *y)
+{
+	int a;
+
+	if (!(y->dpram->fb.seq & YS_INSYNC)) return;	// do nothing until insync
+
+	for (a = 0; a < y->axes; a++) {
+//		if (yssc2_online(y, a)) {
+			nyx_servo_fb *fb = &y->dpram->fb.servo_fb[a];
+			nyx_servo_cmd *cmd = &y->dpram->cmd.servo_cmd[a];
+
+			switch (fb->state & Y_TYPE) {
+			case Y_TYPE_ORIGIN:
+				if (y->amp[a].fbres == 0) {
+					y->amp[a].fbres = fb->fbres;
+					y->amp[a].cyc0 = fb->cyc0;
+					y->amp[a].abs0 = fb->abs0;
+					//rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d fbres=%d cyc=%d abs=%d", a, y->amp[a].fbres, y->amp[a].cyc0, y->amp[a].abs0);
+				}
+				break;
+			case Y_TYPE_PARAM: {
+				nyx_param_req *pq = (nyx_param_req*)fb;
+				nyx_param_req *pr = (nyx_param_req*)cmd;
+				pr->flags = Y_TYPE_PARAM;
+				params_get_span(&y->par[a], pq->first, 10, &pr->mask, pr->param);
+				pr->first = pq->first;
+				pr->count = 10;	// max number if fb struct
+				//rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d param req %x\n", a, pq->first);
+				}
+				break;
+			case Y_TYPE_PARAM1: {
+				nyx_param1_req *pq = (nyx_param1_req*)fb;
+				nyx_param1_req *pr = (nyx_param1_req*)cmd;
+
+				pr->flags = Y_TYPE_PARAM1;
+				pr->no = pr->first = pq->first;
+				params_get_next(&y->par[a], &pr->no, &pr->size, &pr->val);
+//				if (pr->no > 0 && pr->no != 0xffff)
+//				rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d param req %x -> %x (%x:%x)\n", a, pr->first, pr->no, pr->size, pr->val);
+				}
+				break;
+			}
+
+			if (yssc2_valid(y, a)) {
+				if (y->amp[a].fbres == 0) {	// cant start until feedback resolution and origin is known
+					cmd->flags = (cmd->flags & ~Y_TYPE) | Y_TYPE_ORIGIN;
+					fb->state &= ~YF_VALID;
+				} else {
+					cmd->flags = (cmd->flags & ~Y_TYPE) | Y_TYPE_FB;
+				}
+			}
+//		}
+	}
+}
+
+#ifdef __KERNEL__
+void yssc2_receive(YSSC2 *y)
+{
+	if (y == NULL) return;
+	if (y->iomem == NULL) return;
+
+	y->iomem->jtag = 0x80;	// sync pulse
+	y->iomem->jtag = 0;
+
+	if (nodma & 2) {
+		memcpy(&y->dpram->fb, (void*)&y->iomem->dpram.fb, offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * y->axes);
+	} else {
+		size_t offs = offsetof(struct nyx_dpram, fb);	// should be 512
+
+		y->iomem->dma_dst = y->dpram_bus_addr + offs;
+		y->iomem->dma_src = offs;	// start of fb in dpram
+		y->iomem->dma_len = offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * y->axes;
+		y->iomem->jtag = 0x40;    // start DMA transfer ram write <- pci
+
+		do { udelay(5); } while (y->iomem->jtag & 0x40);
+		if (y->iomem->jtag & 8) {	// DMA error
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: DMA mem write error\n", y->no);
+		}
+	}
+
+	y->dpram->cmd.seq =
+		(y->dpram->cmd.seq & ~YS_SEQ) |
+		(y->dpram->fb.seq  &  YS_SEQ);
+}
+
+int yssc2_transmit(YSSC2 *y)
+{
+	if (y == NULL) return -1;
+	if (y->iomem == NULL) return -1;
+
+	y->prev_fb_seq = y->dpram->fb.seq;
+	if (nodma & 1) {
+		memcpy((void*)&y->iomem->dpram.cmd, &y->dpram->cmd, offsetof(struct nyx_dp_cmd, servo_cmd) + sizeof(nyx_servo_cmd) * y->axes);
+	} else {
+		size_t offs = offsetof(struct nyx_dpram, cmd);	// should be 256
+
+		y->iomem->dma_dst = y->dpram_bus_addr + offs;
+		y->iomem->dma_src = offs;	// start of cmd in dpram
+		///y->iomem->dma_len = sizeof(nyx_dp_cmd);
+		y->iomem->dma_len = offsetof(struct nyx_dp_cmd, servo_cmd) + sizeof(nyx_servo_cmd) * y->axes;
+		// do {
+			y->iomem->jtag = 0x60;	// start DMA transfer ram read -> pci
+			do { udelay(5); } while (y->iomem->jtag & 0x40);
+		// } while (y->iomem->jtag & 8);	// DMA error
+
+		if (y->iomem->jtag & 8) {	// DMA error
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: DMA mem read error\n", y->no);
+		}
+	}
+
+	return 0;
+}
+
+#else
+
+void yssc2_receive(YSSC2 *y)
+{
+	int rc;
+	if (y == NULL) return;
+
+	lseek(y->fd, offsetof(struct nyx_dpram, fb), SEEK_SET);
+	rc = read(y->fd, &y->dpram->fb, offsetof(struct nyx_dp_fb, servo_fb) + sizeof(nyx_servo_fb) * y->axes);
+	if (rc <= 0)
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: read err %d", y->no, rc);
+
+	y->dpram->cmd.seq =
+		(y->dpram->cmd.seq & ~YS_SEQ) |
+		(y->dpram->fb.seq  &  YS_SEQ);
+}
+
+int yssc2_transmit(YSSC2 *y)
+{
+	int rc;
+	if (y == NULL) return -1;
+
+	y->prev_fb_seq = y->dpram->fb.seq;
+
+	lseek(y->fd, offsetof(struct nyx_dpram, cmd), SEEK_SET);
+	rc = write(y->fd, &y->dpram->cmd, offsetof(struct nyx_dp_cmd, servo_cmd) + sizeof(nyx_servo_cmd) * y->axes);
+	if (rc <= 0)
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: write err %d\n", y->no, rc);
+
+	return 0;
+}
+
+#endif

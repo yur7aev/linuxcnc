@@ -1,0 +1,67 @@
+#
+# NYX v2.3 LinuxCNC 2.8 sample PyVCP config, 6 axes
+#
+# 2019, http://www.yurtaev.com
+#
+
+net nyx-ready nyx.0.ready => pyvcp.led-ready
+net nyx-phase nyx.0.phase => pyvcp.phase
+
+net trq0 nyx.0.servo-00.trq-fb => pyvcp.trq0
+net trq1 nyx.0.servo-01.trq-fb => pyvcp.trq1
+net trq2 nyx.0.servo-02.trq-fb => pyvcp.trq2
+net trq3 nyx.0.servo-03.trq-fb => pyvcp.trq3
+net trq4 nyx.0.servo-04.trq-fb => pyvcp.trq4
+net trq5 nyx.0.servo-05.trq-fb => pyvcp.trq5
+
+net s-vel-fb => pyvcp.s-vel
+
+net offline0 nyx.0.servo-00.offline => pyvcp.led-offline0 pyvcp.led-ready0.disable pyvcp.led-alarm0.disable pyvcp.led-warning0.disable
+net offline1 nyx.0.servo-01.offline => pyvcp.led-offline1 pyvcp.led-ready1.disable pyvcp.led-alarm1.disable pyvcp.led-warning1.disable
+net offline2 nyx.0.servo-02.offline => pyvcp.led-offline2 pyvcp.led-ready2.disable pyvcp.led-alarm2.disable pyvcp.led-warning2.disable
+net offline3 nyx.0.servo-03.offline => pyvcp.led-offline3 pyvcp.led-ready3.disable pyvcp.led-alarm3.disable pyvcp.led-warning3.disable
+net offline4 nyx.0.servo-04.offline => pyvcp.led-offline4 pyvcp.led-ready4.disable pyvcp.led-alarm4.disable pyvcp.led-warning4.disable
+net offline5 nyx.0.servo-05.offline => pyvcp.led-offline5 pyvcp.led-ready5.disable pyvcp.led-alarm5.disable pyvcp.led-warning5.disable
+
+net ready0 nyx.0.servo-00.ready => pyvcp.led-ready0
+net ready1 nyx.0.servo-01.ready => pyvcp.led-ready1
+net ready2 nyx.0.servo-02.ready => pyvcp.led-ready2
+net ready3 nyx.0.servo-03.ready => pyvcp.led-ready3
+net ready4 nyx.0.servo-04.ready => pyvcp.led-ready4
+net ready5 nyx.0.servo-05.ready => pyvcp.led-ready5
+
+net alarm0 nyx.0.servo-00.alarm pyvcp.led-alarm0
+net alarm1 nyx.0.servo-01.alarm pyvcp.led-alarm1
+net alarm2 nyx.0.servo-02.alarm pyvcp.led-alarm2
+net alarm3 nyx.0.servo-03.alarm pyvcp.led-alarm3
+net alarm4 nyx.0.servo-04.alarm pyvcp.led-alarm4
+net alarm5 nyx.0.servo-05.alarm pyvcp.led-alarm5
+
+net warning0 nyx.0.servo-00.warning pyvcp.led-warning0
+net warning1 nyx.0.servo-01.warning pyvcp.led-warning1
+net warning2 nyx.0.servo-02.warning pyvcp.led-warning2
+net warning3 nyx.0.servo-03.warning pyvcp.led-warning3
+net warning4 nyx.0.servo-04.warning pyvcp.led-warning4
+net warning5 nyx.0.servo-05.warning pyvcp.led-warning5
+
+net enabled0 nyx.0.servo-00.enabled => pyvcp.led-enabled0
+net enabled1 nyx.0.servo-01.enabled => pyvcp.led-enabled1
+net enabled2 nyx.0.servo-02.enabled => pyvcp.led-enabled2
+net enabled3 nyx.0.servo-03.enabled => pyvcp.led-enabled3
+net enabled4 nyx.0.servo-04.enabled => pyvcp.led-enabled4
+net enabled5 nyx.0.servo-05.enabled => pyvcp.led-enabled5
+
+net reset-alarm <= pyvcp.reset-alarm
+net reset-alarm => nyx.0.servo-00.reset-alarm
+net reset-alarm => nyx.0.servo-01.reset-alarm
+net reset-alarm => nyx.0.servo-02.reset-alarm
+net reset-alarm => nyx.0.servo-03.reset-alarm
+net reset-alarm => nyx.0.servo-04.reset-alarm
+net reset-alarm => nyx.0.servo-05.reset-alarm
+
+net code0 nyx.0.servo-00.alarm-code => pyvcp.code0
+net code1 nyx.0.servo-01.alarm-code => pyvcp.code1
+net code2 nyx.0.servo-02.alarm-code => pyvcp.code2
+net code3 nyx.0.servo-03.alarm-code => pyvcp.code3
+net code4 nyx.0.servo-04.alarm-code => pyvcp.code4
+net code5 nyx.0.servo-05.alarm-code => pyvcp.code5

@@ -1,3 +1,9 @@
+linuxcnc (1:2.9.0nyx16sk~pre0) stretch; urgency=medium
+
+  * nyx16 on top of dgarr/s_kins
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Mon, 15 Dec 2020 02:06:22 +0300
+
 linuxcnc (1:2.9.0~pre0) stretch; urgency=medium
 
   * Master branch open for new features.
