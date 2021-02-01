@@ -1,3 +1,12 @@
+linuxcnc (1:2.8.1nyx17) buster; urgency=low
+
+  * nyxq pll extra arg
+  * removed python-serial dep for wheezy
+  * nyx.hal: split the nyx.0 function into nyx.0.rd/nyx.0.wr
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Mon, 1 Feb 2021 19:54:05 +0300
+
+
 linuxcnc (1:2.8.1nyx16) buster; urgency=low
 
   * YI16/YO16 number of i/o bug fix
