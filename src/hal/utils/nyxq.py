@@ -442,12 +442,13 @@ def servo_abs(l):
 			sys.exit('bad axis format, %s' % s)
 	req(0x00030019, first)
 
-def pll(y, p, i, s):
+def pll(y, p, i, s, h):
 	dp.buf.dword[0] = int(y)
 	dp.buf.dword[1] = int(p)
 	dp.buf.dword[2] = int(i)
 	dp.buf.dword[3] = int(s)
-	req(0x00090000, 0, 0, 4)
+	dp.buf.dword[4] = int(h)
+	req(0x00090000, 0, 0, 5)
 
 # ------------------------------
 
@@ -564,7 +565,7 @@ def config(cfg):
 	elif cfg == None:
 		req(0x00040021) # read
 		print "excfg: %x" % dp.buf.dword[1]
-                print "pll: %d %d %d %d" % (dp.buf.dword[2], dp.buf.dword[3], dp.buf.dword[4], dp.buf.dword[5])
+                print "pll: %d %d %d %d %d" % (dp.buf.dword[2], dp.buf.dword[3], dp.buf.dword[4], dp.buf.dword[5], dp.buf.dword[6])
         else:
 		req(0x00040023, int(cfg, 16))    # write
 
@@ -616,12 +617,13 @@ try:
 	elif cmd == 'reboot':
 		reboot()
 	elif cmd == 'pll':
-		msg = "pll <insync> <kp> <ki> <step>"
+		msg = "pll <insync> <kp> <ki> <step> <hunt>"
 		y = arg(2, msg)
 		p = arg(3, msg)
 		i = arg(4, msg)
 		s = arg(5, msg)
-		pll(y, p, i, s)
+		h = arg(6, msg)
+		pll(y, p, i, s, h)
 	elif cmd == 'io':
 		io_info()
 	elif cmd == 'config':
