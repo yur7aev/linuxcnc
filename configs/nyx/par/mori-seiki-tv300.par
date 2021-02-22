@@ -30,7 +30,6 @@ SV014	500	500	500	500	500	; ILMTsp current limit special	0-500%
 SV015	0	0	0	0	0	; FFC	acc rate ff gain	0-999%
 SV016	0	0	15	0	0	; LMC1	lost motion comp	-1-200%
 SV017	0x0000	0x0000	0x0000	0x0000	0x0000	; SPEC
-;SV017	0x0080	0x0080	0x0080	0x0000	0x0080	; SPEC	X, Y, Z 4 use abs enc (0x0080)
 SV018	16	16	16	360	360	; PIT	ballscrew pitch		1..32767
 SV019	25	25	25	4	25	; RNG1	position detector res	8,16,25,100
 SV020	25	25	25	4	25	; RNG2	speed detector res	8,16,25,100
