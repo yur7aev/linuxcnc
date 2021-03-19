@@ -1,3 +1,9 @@
+linuxcnc (1:2.8.1nyx30) buster; urgency=low
+
+  * nyx3 - YAO2, YEX3, RTAI5 support
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Fri, 19 Mar 2021 04:10:21 +0300
+
 linuxcnc (1:2.8.1nyx17) buster; urgency=low
 
   * nyxq pll extra arg
