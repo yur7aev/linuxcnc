@@ -5,8 +5,9 @@
 ; 1: Y  MDS-DJ-V1-10 / HF-KP23
 ; 2: Z  MDS-DJ-V1-10 / HF-KP23
 ; 3: A  MDS-DJ-V1-10 / HF-KP23
+; 6: S  MDS-D-SPJ-075 / HF-KP46
 ;
-; 2019, http://yurtaev.com
+; 2019-2021, http://yurtaev.com
 ;
 
 ;	0	1	2	3
@@ -106,3 +107,207 @@ SV093	0	0	0	0
 SV094	10	10	10	10	; MPV	Mag pole pos error detect speed		0-31999
 SV095	0	0	0	0	; ZUPD	Vertical axis pull up distance	um	0-2000
 SV096	-	-	-	-
+
+AXIS 5
+
+SP001	15	; PGV	Position loop gain non-interpolation mode 15 15 15
+SP002	33	; PGN	Position loop gain interpolation mode 33 33 33
+SP003	15	; PGS	Position loop gain spindle synchronization 15 15 15
+SP004	-
+SP005	10	; VGN1	Speed loop gain 1 10 10 20
+SP006	40	; VIA1	Speed loop lead compensation 1 40 70 270
+SP007	0	; VIL1	Speed loop delay compensation 1 0 0 0
+SP008	10	; VGN2	Speed loop gain 2 10 10 20
+SP009	40	; VIA2	Speed loop lead compensation 2 40 70 270
+SP010	0	; VIL2	Speed loop delay compensation 2  0 0 0
+SP011	-
+SP012	-
+SP013	-
+SP014	0	; PY1	Minimum excitation rate 1 000
+SP015	0	; PY2	Minimum excitation rate 2 000
+SP016	20	; DDT	Phase alignment deceleration rate 20 20 20
+SP017	0x4008	; SPEC1	Spindle specification 1 4008 4008 4008
+SP018	0x0000	; SPEC2	Spindle specification 2 0000 0000 0000
+SP019	260	; RNG1	Sub side detector resolution 260 260 260
+SP020	260	; RNG2	Main side detector resolution 260 260 260
+SP021	40	; OLT	Overload detection time constant 40 40 40
+SP022	100	; OLL	Overload detection level 100 100 100
+SP023	120	; OD1	Excessive error detection width (interpolation mode - spindle synchronization) 120 120 120
+SP024	875	; INP	In-position width 875 875 875
+SP025	875	; INP2	2nd in-position width 875 875 875
+SP026	6000	; TSP	Maximum motor speed 6000 6000 6000
+SP027	25	; ZSP	Motor zero speed 25 25 25
+SP028	600	; SDTS	Speed detection set value 600 600 600
+SP029	30	; SDTR	Speed detection reset width 30 30 30
+SP030	0	; SDT2	2nd speed detection setting value 0 0 0
+SP031	0x2200	; MTYP	Motor type 2200 2200 2200
+SP032	0x0000	; PTYP	Power supply type/ Regenerative resistor type 0000 0000 0000
+SP033	0x0000	; SFNC1	Spindle function 1 0000 0000 0000
+SP034	0x0100	; SFNC2	Spindle function 2 0100 0100 0100
+SP035	0x1600	; SFNC3	Spindle function 3 1600 1600 1600
+SP036	0x0000	; SFNC4	Spindle function 4 0000 0000 0000
+SP037	100	; JL	Load inertia scale 100 100 100
+SP038	0	; FHz1	Notch filter frequency 1 0 0 0
+SP039	0	; LMCD	Lost motion compensation timing 0 0 0
+SP040	0	; LMCT	Lost motion compensation non-sensitive band 000
+SP041	0	; LMC2	Lost motion compensation 2 000
+SP042	0	; OVS2	Overshooting compensation 2 000
+SP043	0	; OVS1	Overshooting compensation 1 000
+SP044	0	; OBS2	Disturbance observer gain 000
+SP045	0	; OBS1	Disturbance observer filter frequency 000
+SP046	0	; FHz2	Notch filter frequency 2 000
+SP047	100	; EC	Inductive voltage compensation gain 100 100 100
+SP048	0	; LMC1	Lost motion compensation 1 000
+SP049	0	; FFC	Acceleration rate feed forward gain 000
+SP050	0	; TOF	Torque offset 000
+SP051	0	; DFBT	Dual feed back control time constant 000
+SP052	0	; DFBN	Dual feedback control non-sensitive band 000
+SP053	1200	; ODS	Excessive error detection width (non-interpolation mode) 1200 1200 1200
+SP054	0	; ORE	Overrun detection width in closed loop control 000
+SP055	20000	; EMGx	Max. gate off delay time after emergency stop 20000 20000 20000
+SP056	300	; EMGt	Deceleration time constant at emergency stop 300 300 300
+SP057	1	; GRA1	Spindle side gear ratio 1 111
+SP058	1	; GRA2	Spindle side gear ratio 2 111
+SP059	1	; GRA3	Spindle side gear ratio 3 111
+SP060	1	; GRA4	Spindle side gear ratio 4 111
+SP061	1	; GRB1	Motor side gear ratio 1 111
+SP062	1	; GRB2	Motor side gear ratio 2 111
+SP063	1	; GRB3	Motor side gear ratio 3 111
+SP064	1	; GRB4	Motor side gear ratio 4 111
+SP065	10	; TLM1	Torque limit 1 10 10 10
+SP066	10	; TLM2	Torque limit 2 10 10 10
+SP067	10	; TLM3	Torque limit 3 10 10 10
+SP068	10	; TLM4	Torque limit 4 10 10 10
+SP069	10	; PCMP	Phase alignment completion width 875 875 875
+SP070	0	; KDDT	Phase alignment deceleration rate scale 000
+SP071	100	; DIQM	Variable current limit during deceleration, lower limit value 100 100 100
+SP072	3000	; DIQN	Variable current limit during deceleration, break point speed 3000 3000 3000
+SP073	0	; VGVN	Variable speed gain target value 000
+SP074	0	; VGVS	Variable speed gain change start speed 000
+SP075	0	; DWSH	Slip compensation scale during regeneration high-speed coil 000
+SP076	0	; DWSL	Slip compensation scale during regeneration lowspeed coil 000
+SP077	1000	; IQA	Q axis current lead compensation 1000 1950 600
+SP078	1000	; IDA	D axis current lead compensation 1000 1950 600
+SP079	800	; IQG	Q axis current gain 800 1024 900
+SP080	800	; IDG	D axis current gain 800 1024 900
+SP081	0	; IQAL	Q axis current lead compensation low-speed coil 000
+SP082	0	; IDAL	D axis current lead compensation low-speed coil 000
+SP083	0	; IQGL	Q axis current gain low-speed coil 000
+SP084	0	; IDGL	D axis current gain low-speed coil 000
+SP085	0	; LMCk	Lost motion compensation 3 spring constant 000
+SP086	0	; LMCc	Lost motion compensation 3 viscous coefficient 000
+SP087	0	; FHz4	Notch filter frequency 4 000
+SP088	0	; FHz5	Notch filter frequency 5 000
+SP089	100	; TMKQ	Spindle output stabilizing gain Q axis 100 100 100
+SP090	100	; TMKD	Spindle output stabilizing gain D axis 100 100 100
+SP091	-
+SP092	-
+SP093	-
+SP094	0	; MPV	Magnetic pole error detection speed 000
+SP095	0	; VIAX	Lead compensation scale during high-response acceleration/deceleration 000
+SP096	0	; SDW	Speed slowdown allowable width 000
+SP097	0	; RNG1ex	Sub side extension detector resolution 000
+SP098	0	; RNG2ex	Main side extension detector resolution 000
+SP099	-
+; ...
+SP112	-
+SP113	0	; OPLP	Current command value for open loop 000
+SP114	0	; MKT	Coil changeover gate cutoff timer 000
+SP115	0	; MKT2	Coil changeover current limit timer 000
+SP116	0	; MKIL	Coil changeover current limit value 000
+SP117	12	; SETM	Excessive speed deviation timer 12 12 12
+SP118	0	; MSFT	Magnetic pole shift amount 000
+SP119	0	; FSP4	Notch filter specifications 4 000
+SP120	0	; FSP5	Notch filter specifications 5 000
+SP121	0	; MP Kpp	Magnetic pole detection position loop gain 000
+SP122	0	; MP Kvp	Magnetic pole detection speed loop gain 000
+SP123	0	; MP Kvi	Magnetic pole detection speed loop lead compensation 000
+SP124	0	; ILMTsp	Magnetic pole detection current limit value 000
+SP125	0	; DA1NO	D/A output ch1 data No. 000
+SP126	0	; DA2NO	D/A output ch2 data No. 000
+SP127	0	; DA1MPY	D/A output ch1 output scale 000
+SP128	0	; DA2MPY	D/A output ch2 output scale 000
+SP129	3	; PM	(H) 333
+SP130	1	; JM	(H) 111
+SP131	20	; ATYP	(H) 20 20 20
+SP132	-
+SP133	8000	; NR	(H) 8000 8000 8000
+SP134	6000	; NB	(H) 6000 6000 6000
+SP135	0	; NF	(H) 000
+SP136	424	; KT	(H) 424 442 398
+SP137	4096	; KF1	(H) 4096 4096 4096
+SP138	1024	; KF2	(H) 1024 1024 1024
+SP139	25	; KF3	(H) 25 66 74
+SP140	1024	; KF4	(H) 1024 1024 1024
+SP141	5345	; KF5	(H) 5345 2022 1806
+SP142	0	; KF6	(H) 000
+SP143	-
+SP144	714	; TMIL	(H) 714 1609 2105
+SP145	828	; TMBR	(H) 828 600 899
+SP146	800	; TMBD	(H) 800 822 868
+SP147	1000	; KE	(H) 1000 1000 1000
+SP148	11366	; LA	(H) 11366 4299 3841
+SP149	150	; IQSM	(H) 150 180 360
+SP150	0	; IDSM	(H) 000
+SP151	5062	; R1	(H) 5062 1484 548
+SP152	330	; TMLR	(H) 330 565 388
+SP153	330	; TMLD	(H) 330 565 388
+SP154	367	; TMLS	(H) 367 628 431
+SP155	1000	; KI1	(H) 1000 1000 1000
+SP156	100	; PCNT	(H) 100 100 100
+SP157	-
+SP158	0	; DNB	(H) 000
+SP159	0	; SNB	(H) 000
+SP160	0	; BSD	(H) 000
+SP161	-
+; :::
+SP164	-
+SP165	0	; NRL	(L) 000
+SP166	0	; NBL	(L) 000
+SP167	0	; NFL	(L) 000
+SP168	0	; KT	(L) 000
+SP169	0	; KF1L	(L) 000
+SP170	0	; KF2L	(L) 000
+SP171	0	; KF3L	(L) 000
+SP172	0	; KF4L	(L) 000
+SP173	0	; KF5L	(L) 000
+SP174	0	; KF6L	(L) 000
+SP175	-
+SP176	0	; TMILL	(L) 000
+SP177	0	; TMBRL	(L) 000
+SP178	0	; TMBDL	(L) 000
+SP179	0	; KEL	(L) 000
+SP180	0	; LAL	(L) 000
+SP181	0	; IQSML	(L) 000
+SP182	0	; IDSML	(L) 000
+SP183	0	; R1L	(L) 000
+SP184	-
+SP185	0	; TMLRL	(L) 000
+SP186	0	; TMLSL	(L) 000
+SP187	0	; KI1L	(L) 000
+SP188	0	; PCNTL	(L) 000
+SP189	-
+SP190	0	; DNBL	(L) 000
+SP191	0	; SNBL	(L) 000
+SP192	0	; BSDL	(L) 000
+SP193	-
+; :::
+SP224	-
+SP225	0x0004	; SFNC5	Spindle function 5 0004 0004 0004
+SP226	0x0000	; SFNC6	Spindle function 6 0000 0000 0000
+SP227	0x0000	; SFNC7	Spindle function 7 0000 0000 0000
+SP228	0x0000	; SFNC8	Spindle function 8 0000 0000 0000
+SP229	0x0000	; SFNC9	Spindle function 9 0000 0000 0000
+SP230	0x0000	; SFNC10 Spindle function 10 0000 0000 0000
+SP231	0x0000
+SP232	0x0000
+SP233	0	; IVC/Icx Voltage non-sensitive band compensation/Current bias cx 000
+SP234	0	; Icy/Ib1 Current bias cy/Current bias b1 000
+SP235	0	; R2H	Temperature compensation gain 000
+SP236	0	; WIH	Temperature compensation time constant 000
+SP237	500	; TCF	Torque command filter 500 500 500
+SP238	0	; SSCFEED Safety observation Safety speed 000
+SP239	0	; SSCRPM Safety observation Safety motor speed 000
+SP240	-
+;
+SP256	-
