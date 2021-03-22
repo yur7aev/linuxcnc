@@ -64,8 +64,8 @@ use -g WIDTHxHEIGHT for just setting size or -g +XOFFSET+YOFFSET for just positi
           , Option( '--push_xid', action='store_true', dest='push_XID'
                   , help="reparent window into a plug add push the plug xid number to standardout")
           , Option( '-u', dest='usermod', default="", help='file path of user defined handler file')
-          , Option( '-U', dest='useropts', action='append', metavar='USEROPT', default=[]
-                  , help='pass USEROPTs to Python modules')
+          , Option( '-o', dest='useropts', action='append', metavar='USEROPTS', default=[]
+                  , help='pass USEROPTS strings to handler under self.w.USEROPTIONS_ list varible')
           ]
 
 class QTVCP: 
@@ -116,10 +116,12 @@ class QTVCP:
         elif INIPATH:
             basepath = "qt_cnc"
         else:
-            PATH.set_paths()
-
+            print(parser.print_help())
+            sys.exit(0)
         # set paths using basename
-        PATH.set_paths(basepath, bool(INIPATH))
+        error = PATH.set_paths(basepath, bool(INIPATH))
+        if error:
+            sys.exit(0)
 
         # keep track of python version during this transition
         if sys.version_info.major > 2:
@@ -212,11 +214,16 @@ Pressing cancel will close linuxcnc.""" % target)
             self.hal = QComponent(self.halcomp)
         except:
             LOG.critical("Asking for a HAL component using a name that already exists?")
-            sys.exit(0)
+            raise Exception('"Asking for a HAL component using a name that already exists?')
 
         # initialize the window
         window = qt_makegui.VCPWindow(self.hal, PATH)
  
+        if opts.useropts:
+            window.USEROPTIONS_ = opts.useropts
+        else:
+            window.USEROPTIONS_ = None
+
         # load optional user handler file
         if opts.usermod:
             LOG.debug('Loading the handler file')
@@ -235,6 +242,13 @@ Pressing cancel will close linuxcnc.""" % target)
 
         # actually build the widgets
         window.instance()
+
+        # title
+        if INIPATH:
+            title = 'QTvcp-Screen-%s'% opts.component
+        else:
+            title = 'QTvcp-Panel-%s'% opts.component
+        window.setWindowTitle(title)
 
         # make QT widget HAL pins
         self.panel = qt_makepins.QTPanel(self.hal, PATH, window, opts.debug)
@@ -312,13 +326,6 @@ Pressing cancel will close linuxcnc.""" % target)
         else:
             window.apply_styles()
 
-        # title
-        if INIPATH:
-            title = 'QTvcp-Screen-%s'% opts.component
-        else:
-            title = 'QTvcp-Panel-%s'% opts.component
-        window.setWindowTitle(title)
-
         LOG.debug('Show window')
         # maximize
         if opts.maximum:
@@ -370,7 +377,10 @@ Pressing cancel will close linuxcnc.""" % target)
         except AttributeError:
             pass
         STATUS.shutdown()
-        self.halcomp.exit()
+        try:
+            self.halcomp.exit()
+        except:
+            pass
         sys.exit(0)
 
         # Throws up a dialog with debug info when an error is encountered 
@@ -395,7 +405,9 @@ Pressing cancel will close linuxcnc.""" % target)
         msg.show()
         retval = msg.exec_()
         if retval == QtWidgets.QMessageBox.Abort: #cancel button
-            LOG.critical("Canceled from Error Dialog\n {}\n{}\n".format(message,''.join(lines)))
+            LOG.critical("Aborted from Error Dialog\n {}\n{}\n".format(message,''.join(lines)))
+            self.shutdown()
+        if ERROR_COUNT == 1:
             self.shutdown()
 
 # starts Qtvcp

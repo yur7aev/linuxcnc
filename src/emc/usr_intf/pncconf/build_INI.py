@@ -39,6 +39,9 @@ class INI:
             print("DISPLAY = gmoccapy", file=file)
         elif self.d.frontend == _PD._TOUCHY:
             print("DISPLAY = touchy", file=file)
+        elif self.d.frontend == _PD._QTDRAGON:
+            print("DISPLAY = qtvcp qtdragon", file=file)
+            print("PREFERENCE_FILE_PATH = WORKINGFOLDER/qtdragon.pref", file=file)
         if self.d.gladevcp:
             theme = self.d.gladevcptheme
             if theme == "Follow System Theme":theme = ""
@@ -68,8 +71,17 @@ class INI:
         else: temp = "COMMANDED"
         print("POSITION_FEEDBACK = %s"% temp, file=file)
         print("MAX_FEED_OVERRIDE = %f"% self.d.max_feed_override, file=file)
-        print("MAX_SPINDLE_OVERRIDE = %f"% self.d.max_spindle_override, file=file)
-        print("MIN_SPINDLE_OVERRIDE = %f"% self.d.min_spindle_override, file=file)
+
+        if self.d.frontend == _PD._QTDRAGON:
+            print("MAX_SPINDLE_0_OVERRIDE = %f"% self.d.max_spindle_override, file=file)
+            print("MIN_SPINDLE_0_OVERRIDE = %f"% self.d.min_spindle_override, file=file)
+            print("DEFAULT_SPINDLE_0_SPEED = 500", file=file)
+            print("MIN_SPINDLE_0_SPEED = 100", file=file)
+            print("MAX_SPINDLE_0_SPEED = 2500", file=file)
+        else:
+            print("MAX_SPINDLE_OVERRIDE = %f"% self.d.max_spindle_override, file=file)
+            print("MIN_SPINDLE_OVERRIDE = %f"% self.d.min_spindle_override, file=file)
+
         print("INTRO_GRAPHIC = linuxcnc.gif", file=file)
         print("INTRO_TIME = 5", file=file)
         print("PROGRAM_PREFIX = %s" % \
@@ -92,6 +104,7 @@ class INI:
         print("MIN_ANGULAR_VELOCITY = %f"% self.d.min_angular_velocity, file=file)
         print("EDITOR = %s"% self.d.editor, file=file)
         print("GEOMETRY = %s"% self.d.geometry, file=file) 
+        print("CYCLE_TIME = 100", file=file)
 
         print(file=file)
         print("[FILTER]", file=file)
@@ -140,7 +153,7 @@ class INI:
         print("HALUI = halui", file=file)          
         print("HALFILE = %s.hal" % self.d.machinename, file=file)
         print("HALFILE = custom.hal", file=file)
-        if self.d.frontend in( _PD._AXIS, _PD._GMOCCAPY):
+        if self.d.frontend in( _PD._AXIS, _PD._GMOCCAPY, _PD._QTDRAGON):
             print("POSTGUI_HALFILE = postgui_call_list.hal", file=file)
         print("SHUTDOWN = shutdown.hal", file=file)
         print(file=file)

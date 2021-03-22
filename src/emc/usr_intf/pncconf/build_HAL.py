@@ -740,12 +740,27 @@ class HAL:
         if self.d.toolchangeprompt:
             print(_("#  ---manual tool change signals---"), file=file)
             print(file=file)
-            print("loadusr -W hal_manualtoolchange", file=file)
-            print("net tool-change-request     iocontrol.0.tool-change       =>  hal_manualtoolchange.change", file=file)
-            print("net tool-change-confirmed   iocontrol.0.tool-changed      <=  hal_manualtoolchange.changed", file=file)
-            print("net tool-number             iocontrol.0.tool-prep-number  =>  hal_manualtoolchange.number", file=file)
+            if not self.d.frontend == _PD._QTDRAGON:
+                print("loadusr -W hal_manualtoolchange", file=file)
+                print("net tool-change-request     iocontrol.0.tool-change       =>  hal_manualtoolchange.change", file=file)
+                print("net tool-change-confirmed   iocontrol.0.tool-changed      <=  hal_manualtoolchange.changed", file=file)
+                print("net tool-number             iocontrol.0.tool-prep-number  =>  hal_manualtoolchange.number", file=file)
+
+                print(file=file)
+            else:
+                print("net tool-change-request     <= iocontrol.0.tool-change", file=file)
+                print("net tool-changed-confirmed  => iocontrol.0.tool-changed", file=file)
+                print("net tool-number             <= iocontrol.0.tool-prep-number", file=file)
+                qt = os.path.join(base, "qtvcp_postgui.hal")
+                if not os.path.exists(qt):
+                    f1 = open(qt, "w")
+                    print(_("#  ---manual tool change signals to qtdragon---"), file=file)
+                    print(file=file)
+                    print("net tool-change  => hal_manualtoolchange.change", file=f1)
+                    print("net tool-changed <= hal_manualtoolchange.changed", file=f1)
+                    print("net tool-number  => hal_manualtoolchange.number", file=f1)
+                    f1.close()
             print("net tool-prepare-loopback   iocontrol.0.tool-prepare      =>  iocontrol.0.tool-prepared", file=file)
-            print(file=file)
         else:
             print(_("#  ---toolchange signals for custom tool changer---"), file=file)
             print(file=file)
@@ -867,6 +882,8 @@ class HAL:
                     print("source gs2_vfd.hal", file=f1)
                 if self.d.mitsub_vfd:
                     print("source mitsub_vfd.hal", file=f1)
+            if self.d.toolchangeprompt and self.d.frontend == _PD._QTDRAGON:
+                print("source qtvcp_postgui.hal", file=f1)
             print("source custom_postgui.hal", file=f1)
             f1.close()
 
@@ -1406,6 +1423,7 @@ class HAL:
             if let == 's':
                 print("net spindle-revs             <=   " + encoderpinname + ".position", file=file)
                 print("net spindle-vel-fb-rps       <=   " + encoderpinname + ".velocity", file=file)
+                print("net spindle-vel-fb-rpm       <=   " + encoderpinname + ".velocity-rpm", file=file)
                 print("net spindle-index-enable     <=>  " + encoderpinname + ".index-enable", file=file)
             else:
                 print("net %s-pos-fb               <=  "% (let) + encoderpinname+".position", file=file)
@@ -1425,6 +1443,7 @@ class HAL:
             if let == 's':
                 print("net spindle-revs             <=   " + resolverpinname + ".position", file=file)
                 print("net spindle-vel-fb-rps       <=   " + resolverpinname + ".velocity", file=file)
+                print("net spindle-vel-fb-rpm       <=   " + resolverpinname + ".velocity-rpm", file=file)
                 print("net spindle-index-enable     <=>  " + resolverpinname + ".index-enable", file=file)
             else:
                 print("net %s-pos-fb               <=  "% (let) + resolverpinname+".position", file=file)

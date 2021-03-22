@@ -43,7 +43,7 @@ errorCount   = 0
 # create pmx485 component
 pmx485 = hal.component('pmx485')
 pmx485.newpin('mode_set', hal.HAL_FLOAT, hal.HAL_IN)      #set cutting mode
-pmx485.newpin('current_set', hal.HAL_FLOAT, hal.HAL_IN)   #set cutting current 
+pmx485.newpin('current_set', hal.HAL_FLOAT, hal.HAL_IN)   #set cutting current
 pmx485.newpin('pressure_set', hal.HAL_FLOAT, hal.HAL_IN)  #set gas pressure
 pmx485.newpin('enable', hal.HAL_BIT, hal.HAL_IN)          #enabler
 pmx485.newpin('mode', hal.HAL_FLOAT, hal.HAL_OUT)         #cut mode feedback
@@ -169,7 +169,14 @@ def get_limits():
 # main loop
 try:
     while 1:
-        if hal.component_exists('plasmac_run'):
+        # if hal.component_exists('qtplasmac') or \
+        #    hal.component_exists('qtplasmac_9x16') or \
+        #    hal.component_exists('qtplasmac_4x3') or \
+        #    hal.component_exists('plasmac_run'):
+
+        # we don't really need the gui stuff above active to run this.
+        if 1:
+
             if enabled != pmx485.enable:
                 enabled = pmx485.enable
                 if not enabled:
@@ -245,6 +252,7 @@ try:
                             comms.close()
                             pmx485.status = False
                             started = False
+                            comms.close()
 except:
     print('Shutting down pmx485 communications')
     if started:

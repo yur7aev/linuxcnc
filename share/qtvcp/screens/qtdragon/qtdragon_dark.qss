@@ -75,7 +75,7 @@ QLabel#label_axis_a {
     color: #00FF00;
 }
 
-DROLabel[homed=false] {
+DROLabel[isHomed=false] {
     color: red;
 }
 
@@ -319,6 +319,19 @@ QSlider::handle:vertical:disabled{
     border-radius: 4px;
 }
 
+/* warning colors for overrides if out of normal range*/
+
+    #slider_spindle_ovr[alertState='over'] {
+        background: red;
+    }
+    #slider_feed_ovr[alertState='over'] {
+        background: red;
+    }
+    #slider_feed_ovr[alertState='under'] {
+        background: yellow;
+    }
+
+QDialog,
 LcncDialog,
 ToolDialog,
 CloseDialog,
@@ -333,12 +346,14 @@ ToolDialog QPushButton {
     height: 40px;
 }
 
+RunFromLineDialog QPushButton,
 CalculatorDialog QPushButton,
 EntryDialog QPushButton,
 CloseDialog QPushButton {
     width: 80px;
     height: 40px;
 }
+
 
 QMenu {
     background-color: #ABABAB; /* sets background of the menu */
@@ -353,4 +368,36 @@ QMenu::item {
 
 QMenu::item:selected { /* when user selects item using mouse or keyboard */
     background-color: darkblue;
+}
+
+QHeaderView::section {
+    background-color:  foregnd;
+    color: white;
+    border: 1px solid #6c6c6c;
+}
+
+QSpinBox {
+    padding-right: 15px; /* make room for the arrows */
+    border-width: 3px;
+    height: 40px;
+}
+
+QSpinBox::down-button {
+    width: 20px;
+    height: 20px;
+}
+
+QSpinBox::down-arrow {
+    width: 20px;
+    height: 20px;
+}
+
+QSpinBox::up-button {
+    width: 20px;
+    height: 20px;
+}
+
+QSpinBox::up-arrow {
+    width: 20px;
+    height: 20px;
 }

@@ -2449,6 +2449,40 @@ PLATE</string>
                </widget>
               </item>
               <item>
+               <widget class="QPushButton" name="btn_utils">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>70</width>
+                  <height>40</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>80</width>
+                  <height>40</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>UTILS</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="index" stdset="0">
+                 <number>10</number>
+                </property>
+                <attribute name="buttonGroup">
+                 <string notr="true">page_buttonGroup</string>
+                </attribute>
+               </widget>
+              </item>
+              <item>
                <widget class="ActionButton" name="action_machine_on">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -2503,7 +2537,7 @@ OFF</string>
                  <bool>false</bool>
                 </property>
                 <property name="indicator_status_option" stdset="0">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="checked_state_text_option" stdset="0">
                  <bool>true</bool>
@@ -4989,6 +5023,9 @@ TO FILE</string>
                           <property name="text">
                            <string>USE TOOL SENSOR</string>
                           </property>
+                          <property name="checked">
+                           <bool>true</bool>
+                          </property>
                          </widget>
                         </item>
                         <item>
@@ -5004,6 +5041,9 @@ TO FILE</string>
                           </property>
                           <property name="text">
                            <string>USE CAMERA</string>
+                          </property>
+                          <property name="checked">
+                           <bool>true</bool>
                           </property>
                          </widget>
                         </item>
@@ -6061,6 +6101,29 @@ TO FILE</string>
                          </widget>
                         </item>
                        </layout>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                   <widget class="QWidget" name="main_tab_widgetPage11">
+                    <layout class="QVBoxLayout" name="verticalLayout_14">
+                     <item>
+                      <widget class="QTabWidget" name="tabWidget_utilities">
+                       <property name="currentIndex">
+                        <number>1</number>
+                       </property>
+                       <widget class="QWidget" name="facing">
+                        <attribute name="title">
+                         <string>FACING</string>
+                        </attribute>
+                        <layout class="QVBoxLayout" name="layout_facing"/>
+                       </widget>
+                       <widget class="QWidget" name="hole_circle">
+                        <attribute name="title">
+                         <string>Bolt Hole Cirlce</string>
+                        </attribute>
+                        <layout class="QVBoxLayout" name="layout_hole_circle"/>
+                       </widget>
                       </widget>
                      </item>
                     </layout>
@@ -13074,7 +13137,7 @@ ZERO</string>
             <number>2</number>
            </property>
            <property name="text">
-            <string>02:56:06 PM</string>
+            <string>06:51:27 AM</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -13538,8 +13601,8 @@ ZERO</string>
    <slot>btn_m61_clicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>299</x>
-     <y>444</y>
+     <x>85</x>
+     <y>55</y>
     </hint>
     <hint type="destinationlabel">
      <x>-3</x>
@@ -13554,8 +13617,8 @@ ZERO</string>
    <slot>btn_touchoff_clicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>397</x>
-     <y>444</y>
+     <x>85</x>
+     <y>55</y>
     </hint>
     <hint type="destinationlabel">
      <x>-2</x>
@@ -13661,7 +13724,7 @@ ZERO</string>
   </connection>
   <connection>
    <sender>chk_run_from_line</sender>
-   <signal>stateChanged(int)</signal>
+   <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
    <slot>chk_run_from_line_checked()</slot>
    <hints>
@@ -13677,7 +13740,7 @@ ZERO</string>
   </connection>
   <connection>
    <sender>chk_override_limits</sender>
-   <signal>stateChanged(int)</signal>
+   <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
    <slot>chk_override_limits_checked()</slot>
    <hints>
@@ -13725,13 +13788,13 @@ ZERO</string>
   </connection>
   <connection>
    <sender>chk_alpha_mode</sender>
-   <signal>clicked()</signal>
+   <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
-   <slot>chk_alpha_mode_clicked()</slot>
+   <slot>chk_alpha_mode_changed()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>678</x>
-     <y>277</y>
+     <y>236</y>
     </hint>
     <hint type="destinationlabel">
      <x>645</x>
@@ -13773,7 +13836,7 @@ ZERO</string>
   </connection>
   <connection>
    <sender>chk_use_camera</sender>
-   <signal>stateChanged(int)</signal>
+   <signal>toggled(bool)</signal>
    <receiver>MainWindow</receiver>
    <slot>chk_use_camera_changed()</slot>
    <hints>
@@ -13810,8 +13873,8 @@ ZERO</string>
    <slot>cam_dia_changed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1131</x>
-     <y>338</y>
+     <x>458</x>
+     <y>156</y>
     </hint>
     <hint type="destinationlabel">
      <x>1124</x>
@@ -13826,8 +13889,8 @@ ZERO</string>
    <slot>cam_rot_changed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1131</x>
-     <y>491</y>
+     <x>458</x>
+     <y>156</y>
     </hint>
     <hint type="destinationlabel">
      <x>1156</x>
@@ -13842,8 +13905,8 @@ ZERO</string>
    <slot>cam_zoom_changed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1131</x>
-     <y>186</y>
+     <x>458</x>
+     <y>156</y>
     </hint>
     <hint type="destinationlabel">
      <x>1105</x>
@@ -13858,8 +13921,8 @@ ZERO</string>
    <slot>percent_done_changed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>103</x>
-     <y>33</y>
+     <x>111</x>
+     <y>59</y>
     </hint>
     <hint type="destinationlabel">
      <x>-68</x>
@@ -13874,8 +13937,8 @@ ZERO</string>
    <slot>percent_loaded_changed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>528</x>
-     <y>86</y>
+     <x>-5</x>
+     <y>-115</y>
     </hint>
     <hint type="destinationlabel">
      <x>832</x>
@@ -13912,6 +13975,22 @@ ZERO</string>
     <hint type="destinationlabel">
      <x>761</x>
      <y>-32</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>chk_inhibit_selection</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>chk_inhibit_selection_changed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>557</x>
+     <y>251</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>719</x>
+     <y>429</y>
     </hint>
    </hints>
   </connection>
@@ -13975,8 +14054,8 @@ ZERO</string>
   <slot>kb_test_clicked()</slot>
   <slot>chk_use_virtual_changed()</slot>
   <slot>btn_maxv_50_clicked()</slot>
-  <slot>chk_alpha_mode_clicked()</slot>
-  <slot>chk_inhibit_selection_clicked()</slot>
+  <slot>chk_alpha_mode_changed()</slot>
+  <slot>chk_inhibit_selection_changed()</slot>
   <slot>chk_use_sensor_changed()</slot>
   <slot>chk_use_camera_changed()</slot>
   <slot>btn_ref_camera_clicked()</slot>
@@ -13989,7 +14068,7 @@ ZERO</string>
   <slot>chk_use_versaprobe_changed()</slot>
  </slots>
  <buttongroups>
-  <buttongroup name="page_buttonGroup"/>
   <buttongroup name="mode_buttonGroup"/>
+  <buttongroup name="page_buttonGroup"/>
  </buttongroups>
 </ui>

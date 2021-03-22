@@ -71,6 +71,9 @@ class INI:
             print("DISPLAY = axis", file=file)
         elif self.d.select_gmoccapy:
             print("DISPLAY = gmoccapy", file=file)
+        elif self.d.select_qtdragon:
+            print("DISPLAY = qtvcp qtdragon", file=file)
+            print("PREFERENCE_FILE_PATH = WORKINGFOLDER/qtdragon.pref", file=file)
         print("EDITOR = gedit", file=file)
         print("POSITION_OFFSET = RELATIVE", file=file)
         print("POSITION_FEEDBACK = ACTUAL", file=file)
@@ -88,6 +91,7 @@ class INI:
             print("MIN_ANGULAR_VELOCITY = 0", file=file)
             print("MAX_ANGULAR_VELOCITY = %.2f" % self.d.amaxvel, file=file)
 
+        print("CYCLE_TIME = 0.100", file=file)
         print("INTRO_GRAPHIC = linuxcnc.gif", file=file)
         print("INTRO_TIME = 5", file=file)
         print("PROGRAM_PREFIX = %s" % os.path.expanduser("~/linuxcnc/nc_files"), file=file)
