@@ -959,7 +959,7 @@ FUNCTION(wr)
 			yssc2_yo(y, a, o);
 		}
 
-		if (yio_yao2(a)) {	// 
+		if (yio_yao2(a)) {	//
 			uint32_t dac = 0;
 			uint32_t outs = 0;
 		        for (n = 1; n >= 0; n--) {
@@ -1378,7 +1378,7 @@ void params_get_next(servo_params *params, uint16_t *no, uint16_t *size, uint32_
 
 static YSSC2 yssc2_brd[YSSC2_MAX_BOARDS];
 
-int get_count(void)
+static int get_count(void)
 {
 	return num_boards;
 }
@@ -1509,13 +1509,6 @@ static int yssc2_pci_probe(struct rtapi_pci_dev *dev, const struct rtapi_pci_dev
 	{
 		size_t offs = offsetof(struct nyx_dpram, fb);	// should be 512
 		rtapi_print_msg(RTAPI_MSG_INFO, "nyx: DMA mem: vm:%lx bus:%llx offs:%lx\n", (uintptr_t)y->dpram, y->dpram_bus_addr, offs);
-	}
-
-	r = config_dpram(y);
-	if (r < 0) {
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: this driver v%d.%d is not compatible with YxxxnP (%x) v%d.%d at %s\n",
-				NYX_VER_MAJ, NYX_VER_MIN, magic, rev_maj, rev_min, rtapi_pci_name(dev));
-		goto fail1;
 	}
 
 	if (y->dpram == NULL) {
