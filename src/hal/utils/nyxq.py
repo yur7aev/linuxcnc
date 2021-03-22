@@ -76,6 +76,7 @@ if magic == 0x55c20200:		# fw version 2.x.x
 	size_yio = 1
 	num_gpo = 8
 	num_dac = 2
+	num_dbg = 0
 elif magic == 0x4e590300:	# fw version 3.x.x
 	num_gpi =  dph.config2 & 0xff
 	num_enc = (dph.config>>16) & 0xff
