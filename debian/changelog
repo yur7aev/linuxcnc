@@ -1,12 +1,13 @@
-linuxcnc (1:2.9.0nyx15~pre0) stretch; urgency=medium
+linuxcnc (1:2.9.0nyx30~pre0) buster; urgency=medium
 
+  * nyx3
   * multiple board support in userspace
   * encoder zero speed fix, signed velocity
   * J3 DOs
   * pulled in the master changes
   * applied nyx patch
 
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Mon, 23 Nov 2020 17:04:12 +0300
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Mon, 22 Mar 2021 06:18:12 +0300
 
 linuxcnc (1:2.9.0~pre0) stretch; urgency=medium
 

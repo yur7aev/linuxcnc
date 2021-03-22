@@ -30,7 +30,6 @@ SV014	500	500	500	500	500	; ILMTsp current limit special	0-500%
 SV015	0	0	0	0	0	; FFC	acc rate ff gain	0-999%
 SV016	0	0	15	0	0	; LMC1	lost motion comp	-1-200%
 SV017	0x0000	0x0000	0x0000	0x0000	0x0000	; SPEC
-;SV017	0x0080	0x0080	0x0080	0x0000	0x0080	; SPEC	X, Y, Z 4 use abs enc (0x0080)
 SV018	16	16	16	360	360	; PIT	ballscrew pitch		1..32767
 SV019	25	25	25	4	25	; RNG1	position detector res	8,16,25,100
 SV020	25	25	25	4	25	; RNG2	speed detector res	8,16,25,100
@@ -78,6 +77,22 @@ SV061	0	0	0	0	0	; DA1NO	D/A ch1 data num	0-102
 SV062	0	0	0	0	0	; DA2NO	D/A ch1 data num	0-102
 SV063	0	0	0	0	0	; DA1MPY D/A ch1 scale		-32768-32767
 SV064	0	0	0	0	0	; MA2MPY
+SV065	-	-	-	-	-	;
+SV066	-	-	-	-	-	;
+SV067	2	2	2	2	2	; cmd unit
+SV068	0x0404	0x0404	0x0404	0x0404	0x0404	; 3.55ms cycle
+SV069	0	0	0	0	0	;
+SV070	20000	20000	16000	20000	16000	; rapid
+SV071	0	0	0	0	0	;
+SV072	10000	10000	10000	10000	10000	; clamp
+SV073	-	-	-	-	-	;
+SV074	-	-	-	-	-	;
+SV075	-	-	-	-	-	;
+SV076	-	-	-	-	-	;
+SV077	-	-	-	-	-	;
+SV078	-	-	-	-	-	;
+SV079	-	-	-	-	-	; origin - hi
+SV080	-	-	-	-	-	; origin - low
 
 AXIS 5
 ;	5:SP

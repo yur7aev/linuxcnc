@@ -14,6 +14,82 @@ import sys
 import re
 import string
 
+
+class nyx_dpram_hdr(Structure):
+	_fields_ = [
+		( "magic",    c_uint ),
+		( "config",   c_uint ),
+		( "status",   c_uint ),
+		( "config2",  c_uint ),
+		]
+
+# ------------------------------
+
+instance = -1
+boards = []
+first_arg = 0
+vendor_ids = [ 0x1067,  0x1313 ]
+device_ids = [ 0x55c2,  0x55c3,  0x0712 ]
+
+if len(sys.argv) > 1:
+	if sys.argv[1] == '-0': instance = 0
+	if sys.argv[1] == '-1': instance = 1
+	if sys.argv[1] == '-2': instance = 2
+	if sys.argv[1] == '-3': instance = 3
+	if instance >= 0: first_arg = 1
+
+try:
+	i = 0
+	for dir in sorted(glob("/sys/bus/pci/devices/*")):
+		vendor = int(open(dir + "/vendor", "r").read(), 16)
+		device = int(open(dir + "/device", "r").read(), 16)
+		if (vendor in vendor_ids) and (device in device_ids):
+			boards.append(dir)
+			if i >= instance and not 'mem' in globals():
+				with open(dir + "/resource0", "r+b" ) as f:
+					mem = mmap(f.fileno(), 4096)
+					pcidev = re.sub(r'.+/', '', dir)
+			i += 1
+except:
+	print("need root access to PCI device")
+	exit(1)
+
+if len(boards) == 0 or not 'mem' in globals():
+	print "can't find any YxxxnP card"
+	exit(1)
+
+if instance < 0 and i > 1:
+	print "multiple boards found:"
+	print '\n'.join(boards)
+	print "specify instance with -0, -1..."
+	exit(1)
+
+dph = nyx_dpram_hdr.from_buffer(mem, 0x800)
+magic = dph.magic & 0xffffff00;
+
+num_axes = dph.config & 0xff
+num_yio = (dph.config>>8) & 0xff
+
+if magic == 0x55c20200:		# fw version 2.x.x
+	num_gpi = 12+17
+	num_enc = 2
+	size_yio = 1
+	num_gpo = 8
+	num_dac = 2
+elif magic == 0x4e590300:	# fw version 3.x.x
+	num_gpi =  dph.config2 & 0xff
+	num_enc = (dph.config>>16) & 0xff
+	size_yio = 2
+	num_gpo = (dph.config2>>8) & 0xff
+	num_dac = (dph.config>>24) & 0xff
+	num_dbg = (dph.config2>>16) & 0xff
+else:
+	print "unsupported firmware %x %x %x %x" % (magic, dph.config, dph.status, dph.config2)
+	exit(1)
+
+# ------------------------------
+
+
 # TODO: generate from nyx2.h
 
 class servo_fb(Structure):
@@ -30,11 +106,12 @@ class nyx_rly(Structure):
 		( "seq", c_uint ),
 		( "irq", c_uint ),
 		( "valid", c_uint ),
-		( "gpi", c_uint ),
-		( "enc", c_int * 2 ),
-		( "yi", c_uint * 16 ),
-		( "fb",  servo_fb * 16 ),
-		( "unused", c_uint * (192-6-16-8*16) ),
+		( "gpi", c_uint * int(num_gpi/32+1) ),
+		( "enc", c_int * num_enc ),
+		( "yi", c_uint * (num_yio * size_yio) ),
+		( "dbg", c_uint * num_dbg ),
+		( "fb",  servo_fb * num_axes ),
+		( "unused", c_uint * (192 - 3 - int(num_gpi/32+1) - num_enc - num_yio*size_yio - num_dbg - 8*num_axes) ),
 		]
 
 class servo_cmd(Structure):
@@ -49,11 +126,11 @@ class servo_cmd(Structure):
 class nyx_cmd(Structure):
 	_fields_ = [
 		( "seq", c_uint ),
-		( "gpo", c_uint ),
-		( "dac", c_ushort * 2 ),
-		( "yo", c_uint * 16 ),
-		( "axis",  servo_cmd * 16 ),
-		( "unused", c_uint * (192-3-16-8*16) ),
+		( "gpo", c_uint * int(num_gpo/32+1) ),
+		( "dac", c_ushort * num_dac ),
+		( "yo", c_uint * (num_yio * size_yio) ),
+		( "axis",  servo_cmd * num_axes ),
+		( "unused", c_uint * (192 - 1 - int(num_gpo/32+1) - int(num_dac/2) - num_yio*size_yio - 8*num_axes) ),
 		]
 
 class servo_info(Structure):
@@ -77,7 +154,7 @@ class nyx_dpram(Structure):
 		( "magic",    c_uint ),
 		( "config",   c_uint ),
 		( "status",   c_uint ),
-		( "reserved", c_uint ),
+		( "config2",  c_uint ),
 		# nyx_req
 		( "code",     c_uint ),
 		( "arg1",     c_uint ),
@@ -87,6 +164,8 @@ class nyx_dpram(Structure):
 		( "rly",      nyx_rly ),
 		( "cmd",      nyx_cmd ),
 		]
+
+dp = nyx_dpram.from_buffer(mem, 0x800)
 
 # ------------------------------
 
@@ -146,54 +225,6 @@ def fatal(msg):
 	sys.exit(msg)
 
 # ------------------------------
-
-instance = -1
-boards = []
-first_arg = 0
-vendor_ids = [ 0x1067,  0x1313 ]
-device_ids = [ 0x55c2,  0x55c3,  0x0712 ]
-
-if len(sys.argv) > 1:
-	if sys.argv[1] == '-0': instance = 0
-	if sys.argv[1] == '-1': instance = 1
-	if sys.argv[1] == '-2': instance = 2
-	if sys.argv[1] == '-3': instance = 3
-	if instance >= 0: first_arg = 1
-
-try:
-	i = 0
-	for dir in glob("/sys/bus/pci/devices/*"):
-		vendor = int(open(dir + "/vendor", "r").read(), 16)
-		device = int(open(dir + "/device", "r").read(), 16)
-		if (vendor in vendor_ids) and (device in device_ids):
-			boards.append(dir)
-			if i >= instance and not 'mem' in globals():
-				with open(dir + "/resource0", "r+b" ) as f:
-					mem = mmap(f.fileno(), 4096)
-					dp = nyx_dpram.from_buffer(mem, 0x800)
-					pcidev = re.sub(r'.+/', '', dir)
-			i += 1
-except:
-	print("need root access to PCI device")
-	exit(1)
-
-if len(boards):
-	if instance < 0 and i > 1:
-		print "multiple boards found:"
-		print '\n'.join(boards)
-		print "specify instance with -0, -1..."
-		exit(1)
-#	print "-------", boards[instance], "-------"
-
-try:
-	if (0xffffff00 & dp.magic) != 0x55c20200:
-		print "unsupported firmware %x" % dp.magic
-		exit(1)
-except:
-	print "can't find any YxxxnP card"
-	exit(1)
-
-# ------------------------------
 class ReqError(Exception):
 	def __init__(self, msg):
 		self.msg = msg
@@ -240,30 +271,41 @@ def bin(a, l):
 	return s
 
 def io_info():
-	print "ENC0: %d" % dp.rly.enc[0]
-	print "ENC1: %d" % dp.rly.enc[1]
+        for i in range(0,6):
+            print "ENC%d: %d" % (i, dp.rly.enc[i])
 	print "DAC0: %d" % dp.cmd.dac[0]
 	print "DAC1: %d" % dp.cmd.dac[1]
 	print "------- fedcba9876543210fedcba9876543210"
-	print "GPI:    " + bin(dp.rly.gpi, 29)
-	print "GPO:    " + bin(dp.cmd.gpo, 8)
+	print "GPI:    " + bin(dp.rly.gpi[0], 29)
+	print "GPO:    " + bin(dp.cmd.gpo[0], 8)
 
-	for i in range(0, 16):
-#		print "%x: %08x %08x" % (i, dp.rly.yi[i], dp.cmd.yo[i])
-		yi = dp.rly.yi[i]
+	for i in range(0, num_yio):
+		yi = dp.rly.yi[i*2]
+		yi2 = dp.rly.yi[i*2+1]
+                yo = dp.cmd.yo[i*2]
+                yo2 = dp.cmd.yo[i*2+1]
+
 		typ = yi >> 24
 		ok = (yi >> 16) & 0xff
 
 		if typ != 0:
-			print "%x:" % i,
+			print "%x:" % (i),
 			if typ == 1:
-				print "YI16    " + bin(yi, 16),
+				print "YI16 " + bin(yi, 16),
 			elif typ == 2:
-				print "YO16    " + bin(dp.cmd.yo[i], 16),
+				print "YO16 " + bin(yo, 16),
 			elif typ == 3:
 				print "YENC " + "%d" % (yi & 0xffff),
+			elif typ == 5:
+                            i1 = "1" if yi & 0x1 else "-"
+                            o1 = "1" if yo & 0x10000 else "-"
+                            i2 = "1" if yi & 0x4 else "-"
+                            o2 = "1" if yo & 0x40000 else "-"
+                            print "YAO2 " + "%+.3fV %05d %c%c %+.3fV %05d %c%c" % (\
+                                    ((yo2 & 0xffff) - 32767) * 10.0 / 32768 , yi2 & 0xffff, i1, o1,
+                                    ((yo2 >> 16) - 32767) * 10.0 / 32768 , yi2 >> 16, i2, o2),
 			else:
-				print typ, "?", "%x" % yi,
+				print typ, "?", "%x,%x %x,%x" % (yi, yi2, yo,yo2),
 			if ok:
 				print "err:",ok
 			else:
@@ -313,12 +355,13 @@ def servo_fw():
 	for a in range(8):
 		try:
 			req(0x00030007, a)
-			print "%d:" % a, cstr(dp.buf.byte)
+                        s = bytearray(dp.buf.byte)
+                        print "%d:" % a, s[16:0].replace('\0', ' ')
 		except:
 			pass
 
 def servo_mon():
-	print "seq=%d %x res=%x" % (dp.rly.seq, dp.cmd.seq, dp.reserved)
+	print "seq=%d %x config2=%x" % (dp.rly.seq, dp.cmd.seq, dp.config2)
 	for a in range(7):
 		r = dp.rly.fb[a]
 		c = dp.cmd.axis[a]
@@ -442,12 +485,13 @@ def servo_abs(l):
 			sys.exit('bad axis format, %s' % s)
 	req(0x00030019, first)
 
-def pll(y, p, i, s):
+def pll(y, p, i, s, h):
 	dp.buf.dword[0] = int(y)
 	dp.buf.dword[1] = int(p)
 	dp.buf.dword[2] = int(i)
 	dp.buf.dword[3] = int(s)
-	req(0x00090000, 0, 0, 4)
+	dp.buf.dword[4] = int(h)
+	req(0x00090000, 0, 0, 5)
 
 # ------------------------------
 
@@ -564,7 +608,7 @@ def config(cfg):
 	elif cfg == None:
 		req(0x00040021) # read
 		print "excfg: %x" % dp.buf.dword[1]
-                print "pll: %d %d %d %d" % (dp.buf.dword[2], dp.buf.dword[3], dp.buf.dword[4], dp.buf.dword[5])
+                print "pll: %d %d %d %d %d" % (dp.buf.dword[2], dp.buf.dword[3], dp.buf.dword[4], dp.buf.dword[5], dp.buf.dword[6])
         else:
 		req(0x00040023, int(cfg, 16))    # write
 
@@ -575,7 +619,7 @@ def arg(n, m=None, d=None):
 	if len(sys.argv) <= n:
 		if d != None: return d
 		if m == None: return None
-		print "nyxq v2.4.0"
+		print "nyxq v3.0.0"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n]
@@ -583,7 +627,7 @@ def arg(n, m=None, d=None):
 def args(n, m):
 	n += first_arg
 	if len(sys.argv) <= n:
-		print "nyxq v2.4.0"
+		print "nyxq v3.0.0"
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n:]
@@ -616,12 +660,13 @@ try:
 	elif cmd == 'reboot':
 		reboot()
 	elif cmd == 'pll':
-		msg = "pll <insync> <kp> <ki> <step>"
+		msg = "pll <insync> <kp> <ki> <step> <hunt>"
 		y = arg(2, msg)
 		p = arg(3, msg)
 		i = arg(4, msg)
 		s = arg(5, msg)
-		pll(y, p, i, s)
+		h = arg(6, msg)
+		pll(y, p, i, s, h)
 	elif cmd == 'io':
 		io_info()
 	elif cmd == 'config':
