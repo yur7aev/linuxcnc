@@ -25,47 +25,74 @@ from PyQt5.QtGui import QPixmap
 
 def preview(P, W):
     if P.dialogError: return
-    if W.dEntry.text():
-        radius = float(W.dEntry.text()) / 2
-    else:
-        radius = 0
+    try:
+        if W.dEntry.text():
+            radius = float(W.dEntry.text()) / 2
+        else:
+            radius = 0
+    except:
+        msg = 'Invalid DIAMETER entry detected.\n'
+        error_set(P, msg)
+        return
     if radius > 0:
+        msg = ''
         angle = math.radians(45)
         ijOffset = radius * math.sin(angle)
         ijDiff = 0
-        if W.kOffset.isChecked():
-            if W.cExt.isChecked():
-                ijDiff = float(W.kerf_width.text()) / 2 * math.sin(angle)
+        try:
+            if W.kOffset.isChecked():
+                if W.cExt.isChecked():
+                    ijDiff = float(W.kerf_width.value()) / 2 * math.sin(angle)
+                else:
+                    ijDiff = float(W.kerf_width.value()) / 2 * -math.sin(angle)
+        except:
+            msg += 'Kerf Width entry in material\n'
+        try:
+            if W.liEntry.text():
+                leadInOffset = math.sin(angle) * float(W.liEntry.text())
             else:
-                ijDiff = float(W.kerf_width.text()) / 2 * -math.sin(angle)
-
-        if W.liEntry.text():
-            leadInOffset = math.sin(angle) * float(W.liEntry.text())
-        else:
-            leadInOffset = 0
-        if W.loEntry.text():
-            leadOutOffset = math.sin(math.radians(45)) * float(W.loEntry.text())
-        else:
-            leadOutOffset = 0
-        kOffset = float(W.kerf_width.text()) * W.kOffset.isChecked() / 2
+                leadInOffset = 0
+        except:
+            msg += 'LEAD IN\n'
+        try:
+            if W.loEntry.text():
+                leadOutOffset = math.sin(math.radians(45)) * float(W.loEntry.text())
+            else:
+                leadOutOffset = 0
+        except:
+            msg += 'LEAD OUT\n'
+        try:
+            kOffset = float(W.kerf_width.value()) * W.kOffset.isChecked() / 2
+        except:
+            msg += 'Kerf Width entry in material\n'
         if not W.xsEntry.text():
             W.xsEntry.setText('{:0.3f}'.format(P.xOrigin))
-        if W.center.isChecked():
-            xC = float(W.xsEntry.text())
-        else:
-            if W.cExt.isChecked():
-                xC = float(W.xsEntry.text()) + radius + kOffset
+        try:
+            if W.center.isChecked():
+                xC = float(W.xsEntry.text())
             else:
-                xC = float(W.xsEntry.text()) + radius - kOffset
+                if W.cExt.isChecked():
+                    xC = float(W.xsEntry.text()) + radius + kOffset
+                else:
+                    xC = float(W.xsEntry.text()) + radius - kOffset
+        except:
+            msg += 'X ORIGIN\n'
         if not W.ysEntry.text():
             W.ysEntry.setText('{:0.3f}'.format(P.yOrigin))
-        if W.center.isChecked():
-            yC = float(W.ysEntry.text())
-        else:
-            if W.cExt.isChecked():
-                yC = float(W.ysEntry.text()) + radius + kOffset
+        try:
+            if W.center.isChecked():
+                yC = float(W.ysEntry.text())
             else:
-                yC = float(W.ysEntry.text()) + radius - kOffset
+                if W.cExt.isChecked():
+                    yC = float(W.ysEntry.text()) + radius + kOffset
+                else:
+                    yC = float(W.ysEntry.text()) + radius - kOffset
+        except:
+            msg += 'Y ORIGIN\n'
+        if msg:
+            errMsg = 'Invalid entry detected in:\n\n{}'.format(msg)
+            error_set(P, errMsg)
+            return
         xS = xC - ijOffset - ijDiff
         yS = yC - ijOffset - ijDiff
         right = math.radians(0)
@@ -158,14 +185,22 @@ def preview(P, W):
         W.add.setEnabled(True)
         W.undo.setEnabled(True)
     else:
-        P.dialogError = True
-        P.dialog_show(QMessageBox.Warning, 'CIRCLE', 'Diameter is required')
+        msg = 'DIAMETER is required'
+        error_set(P, msg)
+
+def error_set(P, msg):
+    P.conv_undo_shape()
+    P.dialogError = True
+    P.dialog_show_ok(QMessageBox.Warning, 'Circle Error', msg)
 
 def over_cut(P, W, lastX, lastY, IJ, radius, outTmp):
     try:
         oclength = float(W.ocEntry.text())
     except:
+        msg = 'Invalid OC LENGTH entry detected.\n'
+        error_set(P, msg)
         oclength = 0
+        return
     centerX = lastX + IJ
     centerY = lastY + IJ
     cosA = math.cos(oclength / radius)
@@ -229,8 +264,7 @@ def entry_changed(P, W, widget):
             W.ocEntry.setEnabled(True)
 
 def auto_preview(P, W):
-    if W.main_tab_widget.currentIndex() == 1 and \
-       W.dEntry.text() and float(W.dEntry.text()) > 0:
+    if W.main_tab_widget.currentIndex() == 1 and W.dEntry.text():
         preview(P, W)
 
 def add_shape_to_file(P, W):
@@ -258,13 +292,13 @@ def widgets(P, W):
     W.bLeft = QRadioButton('BTM LEFT')
     W.spGroup.addButton(W.bLeft)
     W.xsLabel = QLabel('X ORIGIN')
-    W.xsEntry = QLineEdit(objectName = 'xsEntry')
+    W.xsEntry = QLineEdit(str(P.xSaved), objectName = 'xsEntry')
     W.ysLabel = QLabel('Y ORIGIN')
-    W.ysEntry = QLineEdit(objectName = 'ysEntry')
+    W.ysEntry = QLineEdit(str(P.ySaved), objectName = 'ysEntry')
     W.liLabel = QLabel('LEAD IN')
-    W.liEntry = QLineEdit(objectName = 'liEntry')
+    W.liEntry = QLineEdit(str(P.leadIn), objectName = 'liEntry')
     W.loLabel = QLabel('LEAD OUT')
-    W.loEntry = QLineEdit(objectName = 'loEntry')
+    W.loEntry = QLineEdit(str(P.leadOut), objectName = 'loEntry')
     W.dLabel = QLabel('DIAMETER')
     W.dEntry = QLineEdit(objectName = '')
     W.overcut = QPushButton('OVER CUT')
@@ -309,10 +343,6 @@ def widgets(P, W):
         W.center.setChecked(True)
     else:
         W.bLeft.setChecked(True)
-    W.liEntry.setText('{}'.format(P.leadIn))
-    W.loEntry.setText('{}'.format(P.leadOut))
-    W.xsEntry.setText('{}'.format(P.xSaved))
-    W.ysEntry.setText('{}'.format(P.ySaved))
     P.conv_undo_shape()
     #connections
     W.conv_material.currentTextChanged.connect(lambda:auto_preview(P, W))
@@ -326,7 +356,7 @@ def widgets(P, W):
     entries = ['xsEntry', 'ysEntry', 'liEntry', 'loEntry', 'dEntry', 'ocEntry']
     for entry in entries:
         W[entry].textChanged.connect(lambda:entry_changed(P, W, W.sender()))
-        W[entry].editingFinished.connect(lambda:auto_preview(P, W))
+        W[entry].returnPressed.connect(lambda:preview(P, W))
     #add to layout
     if P.landscape:
         W.entries.addWidget(W.ctLabel, 0, 0)

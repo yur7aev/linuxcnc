@@ -211,7 +211,7 @@ Pressing cancel will close linuxcnc.""" % target)
         # initialize HAL
         try:
             self.halcomp = hal.component(opts.component)
-            self.hal = QComponent(self.halcomp)
+            self.hal = QComponent(self.halcomp, hal)
         except:
             LOG.critical("Asking for a HAL component using a name that already exists?")
             raise Exception('"Asking for a HAL component using a name that already exists?')
@@ -219,6 +219,7 @@ Pressing cancel will close linuxcnc.""" % target)
         # initialize the window
         window = qt_makegui.VCPWindow(self.hal, PATH)
  
+        # give reference to user command line options
         if opts.useropts:
             window.USEROPTIONS_ = opts.useropts
         else:
@@ -358,12 +359,13 @@ Pressing cancel will close linuxcnc.""" % target)
     def postgui(self):
         postgui_halfile = INFO.POSTGUI_HALFILE_PATH
         LOG.info("postgui filename: yellow<{}>".format(postgui_halfile))
-        if postgui_halfile:
-            if postgui_halfile.lower().endswith('.tcl'):
-                res = os.spawnvp(os.P_WAIT, "haltcl", ["haltcl", "-i",self.inipath, postgui_halfile])
-            else:
-                res = os.spawnvp(os.P_WAIT, "halcmd", ["halcmd", "-i",self.inipath,"-f", postgui_halfile])
-            if res: raise SystemExit(res)
+        if postgui_halfile is not None:
+            for f in postgui_halfile:
+                if f.lower().endswith('.tcl'):
+                    res = os.spawnvp(os.P_WAIT, "haltcl", ["haltcl", "-i",self.inipath, f])
+                else:
+                    res = os.spawnvp(os.P_WAIT, "halcmd", ["halcmd", "-i",self.inipath,"-f", f])
+                if res: raise SystemExit(res)
 
     # This can be called normally or by control c
     # call optional handlerfile cleanup function

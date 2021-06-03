@@ -91,6 +91,7 @@ class HandlerClass:
         STATUS.connect('interp-idle', lambda w: self.stop_timer())
         STATUS.connect('actual-spindle-speed-changed',self.update_spindle)
         STATUS.connect('requested-spindle-speed-changed',self.update_spindle_requested)
+        STATUS.connect('override-limits-changed', lambda w, state, data: self._check_override_limits(state, data))
 
         self.html = """<html>
 <head>
@@ -489,30 +490,19 @@ class HandlerClass:
         else:
             self.w.progressBar.setFormat('COMPLETE: {}%'.format(fraction))
 
-    def homed(self, obj, joint):
-        i = int(joint)
-        axis = INFO.GET_NAME_FROM_JOINT.get(i).lower()
-        try:
-            widget = self.w["dro_axis_{}".format(axis)]
-            widget.setProperty('homed', True)
-            widget.style().unpolish(widget)
-            widget.style().polish(widget)
-        except:
-            pass
-
     def all_homed(self, obj):
         self.home_all = True
         self.w.btn_home_all.setText("ALL HOMED")
         if self.first_turnon is True:
             self.first_turnon = False
             if self.w.chk_reload_tool.isChecked():
-                command = "M61 Q{}".format(self.reload_tool)
+                command = "M61 Q{} G43".format(self.reload_tool)
                 ACTION.CALL_MDI(command)
             if self.last_loaded_program is not None and self.w.chk_reload_program.isChecked():
                 if os.path.isfile(self.last_loaded_program):
                     self.w.cmb_gcode_history.addItem(self.last_loaded_program)
                     self.w.cmb_gcode_history.setCurrentIndex(self.w.cmb_gcode_history.count() - 1)
-                    self.w.cmb_gcode_history.setToolTip(fname)
+                    self.w.cmb_gcode_history.setToolTip(self.last_loaded_program)
                     ACTION.OPEN_PROGRAM(self.last_loaded_program)
         ACTION.SET_MANUAL_MODE()
         self.w.manual_mode_button.setChecked(True)
@@ -526,7 +516,14 @@ class HandlerClass:
         self.w.chk_override_limits.setEnabled(tripped)
         if not tripped:
             self.w.chk_override_limits.setChecked(False)
-    
+
+    # keep check button in synch of external changes
+    def _check_override_limits(self,state,data):
+        if 0 in data:
+            self.w.chk_override_limits.setChecked(False)
+        else:
+            self.w.chk_override_limits.setChecked(True)
+
     #######################
     # CALLBACKS FROM FORM #
     #######################
@@ -684,7 +681,7 @@ class HandlerClass:
     def btn_home_clicked(self):
         joint = self.w.sender().property('joint')
         axis = INFO.GET_NAME_FROM_JOINT.get(joint).lower()
-        if self.w["dro_axis_{}".format(axis)].property('homed') is True:
+        if self.w["dro_axis_{}".format(axis)].property('isHomed') is True:
             ACTION.SET_MACHINE_UNHOMED(joint)
         else:
             ACTION.SET_MACHINE_HOMING(joint)
@@ -768,7 +765,7 @@ class HandlerClass:
             self.add_status("Select only 1 tool to load")
         elif checked:
             self.add_status("Loaded tool {}".format(checked[0]))
-            ACTION.CALL_MDI("M61 Q{}".format(checked[0]))
+            ACTION.CALL_MDI("M61 Q{} G43".format(checked[0]))
         else:
             self.add_status("No tool selected")
 
@@ -799,13 +796,21 @@ class HandlerClass:
         self.w.camview.rotation = float(value) / 10
 
     # settings tab
+
     def chk_override_limits_checked(self, state):
-        if state:
-            print("Override limits set")
+        # only toggle override if it's not in synch with the button
+        if state and not STATUS.is_limits_override_set():
+            self.add_status("Override limits set")
             ACTION.TOGGLE_LIMITS_OVERRIDE()
-        else:
-            ACTION.TOGGLE_LIMITS_OVERRIDE()
-            print("Override limits not set")
+        elif not state and STATUS.is_limits_override_set():
+            error = ACTION.TOGGLE_LIMITS_OVERRIDE()
+            # if override can't be released set the check button to reflect this
+            if error == False:
+                self.w.chk_override_limits.blockSignals(True)
+                self.w.chk_override_limits.setChecked(True)
+                self.w.chk_override_limits.blockSignals(False)
+            else:
+                self.add_status("Override limits not set")
 
     def chk_run_from_line_changed(self, state):
         if not state:
@@ -845,7 +850,7 @@ class HandlerClass:
     def load_code(self, fname):
         if fname is None: return
         filename, file_extension = os.path.splitext(fname)
-        if not fname.endswith(".html"):
+        if not file_extension in (".html", '.pdf'):
             if not (INFO.program_extension_valid(fname)):
                 self.add_status("Unknown or invalid filename extension {}".format(file_extension))
                 return
@@ -856,15 +861,25 @@ class HandlerClass:
             self.add_status("Loaded program file : {}".format(fname))
             self.w.main_tab_widget.setCurrentIndex(TAB_MAIN)
             self.w.filemanager.recordBookKeeping()
-            # adjust ending to check for related setup files
+
+            # adjust ending to check for related HTML setup files
             fname = filename+'.html'
             if os.path.exists(fname):
                 self.w.web_view.load(QtCore.QUrl.fromLocalFile(fname))
                 self.add_status("Loaded HTML file : {}".format(fname))
             else:
                 self.w.web_view.setHtml(self.html)
+
+            # look for PDF setup files
+            # load it with system program
+            fname = filename+'.pdf'
+            if os.path.exists(fname):
+                url = QtCore.QUrl.fromLocalFile(fname)
+                QtGui.QDesktopServices.openUrl(url)
+                self.add_status("Loaded PDF file : {}".format(fname))
             return
-        else:
+
+        if file_extension == ".html":
             try:
                 self.w.web_view.load(QtCore.QUrl.fromLocalFile(fname))
                 self.add_status("Loaded HTML file : {}".format(fname))
@@ -874,7 +889,12 @@ class HandlerClass:
                 self.w.jogging_frame.hide()
             except Exception as e:
                 print("Error loading HTML file : {}".format(e))
-
+        else:
+            # load PDF with system program
+            if os.path.exists(fname):
+                url = QtCore.QUrl.fromLocalFile(fname)
+                QtGui.QDesktopServices.openUrl(url)
+                self.add_status("Loaded PDF file : {}".format(fname))
 
     def disable_spindle_pause(self):
         self.h['eoffset_count'] = 0

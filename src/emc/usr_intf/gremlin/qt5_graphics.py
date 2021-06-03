@@ -151,8 +151,8 @@ class Progress:
             print(".info.progress", text)
 
 class StatCanon(glcanon.GLCanon, interpret.StatMixin):
-    def __init__(self, colors, geometry, lathe_view_option, stat, random, text, linecount, progress, arcdivision):
-        glcanon.GLCanon.__init__(self, colors, geometry)
+    def __init__(self, colors, geometry, is_foam, lathe_view_option, stat, random, text, linecount, progress, arcdivision):
+        glcanon.GLCanon.__init__(self, colors, geometry, is_foam)
         interpret.StatMixin.__init__(self, stat, random)
         self.lathe_view_option = lathe_view_option
         self.text = text
@@ -215,6 +215,7 @@ class Lcnc_3dGraphics(QGLWidget,  glcanon.GlCanonDraw, glnav.GlNavBase):
             stat = fakeStatus()
 
         self.inifile = linuxcnc.ini(inifile)
+        self.foam_option = bool(self.inifile.find("DISPLAY", "FOAM"))
         self.logger = linuxcnc.positionlogger(linuxcnc.stat(),
             C('backplotjog'),
             C('backplottraverse'),
@@ -222,7 +223,7 @@ class Lcnc_3dGraphics(QGLWidget,  glcanon.GlCanonDraw, glnav.GlNavBase):
             C('backplotarc'),
             C('backplottoolchange'),
             C('backplotprobing'),
-            self.get_geometry()
+            self.get_geometry(), self.foam_option
         )
         # start tracking linuxcnc position so we can plot it
         _thread.start_new_thread(self.logger.start, (.01,))
@@ -256,7 +257,7 @@ class Lcnc_3dGraphics(QGLWidget,  glcanon.GlCanonDraw, glnav.GlNavBase):
         self.grid_size = 0.0
         temp = self.inifile.find("DISPLAY", "LATHE")
         self.lathe_option = bool(temp == "1" or temp == "True" or temp == "true" )
-        self.foam_option = bool(self.inifile.find("DISPLAY", "FOAM"))
+
         self.show_offsets = False
         self.show_overlay = False
         self.enable_dro = False
@@ -350,7 +351,12 @@ class Lcnc_3dGraphics(QGLWidget,  glcanon.GlCanonDraw, glnav.GlNavBase):
             random = int(self.inifile.find("EMCIO", "RANDOM_TOOLCHANGER") or 0)
             arcdivision = int(self.inifile.find("DISPLAY", "ARCDIVISION") or 64)
             text = ''
-            canon = StatCanon(self.colors, self.get_geometry(),self.lathe_option, s, text, random, i, progress, arcdivision)
+            canon = StatCanon(self.colors,
+                                self.get_geometry(),
+                                self.foam_option,
+                                self.lathe_option,
+                                s, text, random, i,
+                                progress, arcdivision)
             parameter = self.inifile.find("RS274NGC", "PARAMETER_FILE")
             temp_parameter = os.path.join(td, os.path.basename(parameter or "linuxcnc.var"))
             if parameter:
@@ -361,6 +367,8 @@ class Lcnc_3dGraphics(QGLWidget,  glcanon.GlCanonDraw, glnav.GlNavBase):
             result, seq = self.load_preview(filename, canon, unitcode, initcode)
             if result > gcode.MIN_ERROR:
                 self.report_gcode_error(result, seq, filename)
+            self.logger.set_depth(self.from_internal_linear_unit(self.get_foam_z()),
+                       self.from_internal_linear_unit(self.get_foam_w()))
             self.calculate_gcode_properties(canon)
         except Exception as e:
             print (e)
@@ -378,6 +386,12 @@ class Lcnc_3dGraphics(QGLWidget,  glcanon.GlCanonDraw, glnav.GlNavBase):
     def emit_percent(self, percent):
         self.percentLoaded.emit(percent)
 
+    def from_internal_linear_unit(self, v, unit=None):
+        if unit is None:
+            unit = self.stat.linear_units
+        lu = (unit or 1) * 25.4
+        return v*lu
+
     def calculate_gcode_properties(self, canon):
         def dist(xxx_todo_changeme, xxx_todo_changeme1):
             (x,y,z) = xxx_todo_changeme
@@ -390,11 +404,6 @@ class Lcnc_3dGraphics(QGLWidget,  glcanon.GlCanonDraw, glnav.GlNavBase):
 
             lus = [lu, lu, lu, 1, 1, 1, lu, lu, lu]
             return [a*b for a, b in zip(pos, lus)]
-        def from_internal_linear_unit(v, unit=None):
-            if unit is None:
-                unit = self.stat.linear_units
-            lu = (unit or 1) * 25.4
-            return v*lu
 
         props = {}
         loaded_file = self._current_file
@@ -442,8 +451,8 @@ class Lcnc_3dGraphics(QGLWidget,  glcanon.GlCanonDraw, glnav.GlNavBase):
                 canon.dwell_time
                 )
  
-            props['G0'] = "%f %s".replace("%f", fmt) % (from_internal_linear_unit(g0, conv), units)
-            props['G1'] = "%f %s".replace("%f", fmt) % (from_internal_linear_unit(g1, conv), units)
+            props['G0'] = "%f %s".replace("%f", fmt) % (self.from_internal_linear_unit(g0, conv), units)
+            props['G1'] = "%f %s".replace("%f", fmt) % (self.from_internal_linear_unit(g1, conv), units)
             if gt > 120:
                 props['Run'] = _("%.1f Minutes") % (gt/60)
             else:
@@ -761,7 +770,7 @@ class Lcnc_3dGraphics(QGLWidget,  glcanon.GlCanonDraw, glnav.GlNavBase):
             GL.glFlush()                               # Tidy up
             GL.glPopMatrix()                   # Restore the matrix
 
-    # replaces glcanoon function
+    # override glcanon function
     def redraw_ortho(self):
         if not self.initialised: return
         w = self.winfo_width()
@@ -816,6 +825,20 @@ class Lcnc_3dGraphics(QGLWidget,  glcanon.GlCanonDraw, glnav.GlNavBase):
         finally:
             GL.glFlush()                               # Tidy up
             GL.glPopMatrix()                   # Restore the matrix
+
+    # override glcanon function
+    def basic_lighting(self):
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, (1, -1, 1, 0))
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, self.colors['tool_ambient'] + (0,))
+        GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, self.colors['tool_diffuse'] + (0,))
+        GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_AMBIENT, (.6,.6,.6,0))
+        GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_DIFFUSE, (1,1,1,0))
+        GL.glEnable(GL.GL_LIGHTING)
+        GL.glEnable(GL.GL_LIGHT0)
+        GL.glDepthFunc(GL.GL_LESS)
+        GL.glEnable(GL.GL_DEPTH_TEST)
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glLoadIdentity()
 
     # resizes the view to fit the window
     def resizeGL(self, width, height):
