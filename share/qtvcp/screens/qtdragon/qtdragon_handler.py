@@ -293,9 +293,9 @@ class HandlerClass:
 
             if flag:
                 if isinstance(receiver2, GCODE):
-                    # if in manual do our keybindings - otherwise
+                    # if in manual or in readonly mode do our keybindings - otherwise
                     # send events to gcode widget
-                    if STATUS.is_man_mode() == False:
+                    if STATUS.is_man_mode() == False or not receiver2.isReadOnly():
                         if is_pressed:
                             receiver.keyPressEvent(event)
                             event.accept()
@@ -309,21 +309,11 @@ class HandlerClass:
                     return True
 
         if event.isAutoRepeat():return True
-        # ok if we got here then try keybindings
-        try:
-            KEYBIND.call(self,event,is_pressed,shift,cntrl)
-            event.accept()
-            return True
-        except NameError as e:
-            if is_pressed:
-                LOG.debug('Exception in KEYBINDING: {}'.format (e))
-                self.add_status('Exception in KEYBINDING: {}'.format (e))
-        except Exception as e:
-            if is_pressed:
-                LOG.debug('Exception in KEYBINDING:', exc_info=e)
-                print 'Error in, or no function for: %s in handler file for-%s'%(KEYBIND.convert(event),key)
-        event.accept()
-        return True
+
+        # ok if we got here then try keybindings function calls
+        # KEYBINDING will call functions from handler file as
+        # registered by KEYBIND.add_call(KEY,FUNCTION) above
+        return KEYBIND.manage_function_calls(self,event,is_pressed,key,shift,cntrl)
 
     #########################
     # CALLBACKS FROM STATUS #
@@ -459,12 +449,15 @@ class HandlerClass:
 
     # main button bar
     def main_tab_changed(self, btn):
-        if STATUS.is_auto_mode():
-            self.add_status("Cannot switch pages while in AUTO mode")
-            self.w.btn_main.setChecked(True)
-            return
         index = btn.property("index")
         if index is None: return
+        # if in automode still allow settings to show so override limits can be used
+        if STATUS.is_auto_mode() and index !=8:
+            self.add_status("Cannot switch pages while in AUTO mode")
+            # make sure main page is showing
+            self.w.main_tab_widget.setCurrentIndex(0)
+            self.w.btn_main.setChecked(True)
+            return
         self.w.main_tab_widget.setCurrentIndex(index)
         if index == TAB_MAIN:
             self.w.stackedWidget.setCurrentIndex(0)
@@ -679,8 +672,9 @@ class HandlerClass:
     def chk_override_limits_checked(self, state):
         if state:
             print("Override limits set")
-            ACTION.SET_LIMITS_OVERRIDE()
+            ACTION.TOGGLE_LIMITS_OVERRIDE()
         else:
+            ACTION.TOGGLE_LIMITS_OVERRIDE()
             print("Override limits not set")
 
     def chk_run_from_line_checked(self, state):

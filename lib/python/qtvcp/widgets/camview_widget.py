@@ -51,6 +51,7 @@ class CamView(QtWidgets.QWidget, _HalWidgetBase):
         self.video = None
         self.grabbed = None
         self.frame = None
+        self._camNum = 0
         self.diameter = 20
         self.rotation = 0
         self.scale = 1
@@ -71,8 +72,13 @@ class CamView(QtWidgets.QWidget, _HalWidgetBase):
         self.stopped = False
         self.degree = u"\N{DEGREE SIGN}".encode('utf-8')
 
-    def hal_init(self):
-        self.pin_ = self.HAL_GCOMP_.newpin('cam-rotation',hal.HAL_FLOAT, hal.HAL_OUT)
+    def _hal_init(self):
+        try:
+            self.pin_ = self.HAL_GCOMP_.newpin('cam-rotation',hal.HAL_FLOAT, hal.HAL_OUT)
+        except Exception as e:
+            self.pin_ = None
+            LOG.error('HAL pin error: {}'.format(e))
+
         if LIB_GOOD:
             STATUS.connect('periodic', self.nextFrameSlot)
 
@@ -155,12 +161,13 @@ class CamView(QtWidgets.QWidget, _HalWidgetBase):
         self.pix = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
         # repaint the window
         self.update()
-        self.pin_.set(360 - self.rotation)
+        if self.pin_ is not None:
+            self.pin_.set(360 - self.rotation)
 
     def showEvent(self, event):
         if LIB_GOOD:
             try:
-                self.video = WebcamVideoStream(src=0).start()
+                self.video = WebcamVideoStream(src=self._camNum).start()
             except:
                 LOG.error('Video capture error: {}'.format(self.video))
 
