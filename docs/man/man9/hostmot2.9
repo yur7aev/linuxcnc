@@ -292,7 +292,7 @@ this may take some experimentation
 (float, in) hm2_\fI<BoardType>\fR.\fI<BoardNum>\fR.dpll.base\-freq\-khz
 This pin sets the base frequency of the phase-locked loop. by default it will 
 be set to the nominal frequency of the thread in which the PLL is running and
-wil not normally need to be changed. 
+will not normally need to be changed. 
 .TP
 (float, out) hm2_\fI<BoardType>\fR.\fI<BoardNum>\fR.dpll.phase\-error\-us
 Indicates the phase error of the DPLL. If the number cycles by a large amount 
@@ -621,11 +621,11 @@ p: (Pad) No Parameters.
 b: (Boolean) No Parameters.
 .TP
 u: (Unsigned) 
-(float, r/w) hm2_XXXX.N.ssi.MM.<name>.scalemax. The scaling factor for the
+(float, r/w) hm2_XXXX.N.ssi.MM.<name>-scalemax. The scaling factor for the
  channel.
 .TP
 s: (Signed)
-(float, r/w) hm2_XXXX.N.ssi.MM.<name>.scalemax. The scaling factor for the
+(float, r/w) hm2_XXXX.N.ssi.MM.<name>-scalemax. The scaling factor for the
 channel.
 .TP
 f: (bitField): No parameters.
@@ -1440,8 +1440,8 @@ make them act like a closed switch.
 .SH xy2mod
 
 The xy2mod is a xy2-100 galvanometer interface. It supports 16 and 18 bit 
-data modes and includes interpolation to provide position updates between
-servo thread invocations. 
+data modes and includes parabolic interpolation to provide position updates 
+between servo thread invocations. 
 
 .TP
 Pins:
@@ -1481,7 +1481,7 @@ and overflow flags are cleared. Must be True for normal operation.
 
 .TP 
 (u32 in) controlx, controly
-These set the galavanometer control bits. There 3 bits per channel in 16 bit mode but just 1
+These set the galvanometer control bits. There 3 bits per channel in 16 bit mode but just 1
 control bit in 18 bit mode, so values from 0..7 are valid in 16 bit mode but only 0 and 4
 are valid in 18 bit mode
 
@@ -1507,7 +1507,7 @@ When True, these indicate an attempted velocity update move beyond the full scal
 
 .TP 
 (u32 out) status
-Raw 16 bit return status from galavanometer.
+Raw 16 bit return status from galvanometer.
 
 .TP
 Parameters:
@@ -1536,7 +1536,7 @@ bite.  Pet the watchdog by running the hm2 write() HAL function.
 When the watchdog bites, all the board's I/O pins are disconnected from
 their Module instances and become high-impedance inputs (pulled high),
 and all communication with the board stops.  The state of the HostMot2
-firwmare modules is not disturbed (except for the configuration of the
+firmware modules is not disturbed (except for the configuration of the
 IO Pins).  Encoder instances keep counting quadrature pulses, and pwm-
 and step-generators keep generating signals (which are *not* relayed to
 the motors, because the IO Pins have become inputs).
@@ -1652,7 +1652,7 @@ EPP bus.)
 .TP
 \fBhm2_\fI<BoardType>\fB.\fI<BoardNum>\fB.trigger\-encoders\fR
 This function will only appear if the firmware contains a BiSS, Fanuc or SSI 
-encoder module and if the firmare does not contain a hm2dpll 
+encoder module and if the firmware does not contain a hm2dpll 
 module (qv) or if the modparam contains num_dplls=0.
 This function should be inserted first in the thread so that the encoder data is
 ready when the main \fBhm2_XXXX.NN.read\fR function runs. An error message will

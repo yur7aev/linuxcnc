@@ -20,6 +20,7 @@ import locale
 import operator
 
 from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, pyqtProperty
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (QTableView, QAbstractItemView, QCheckBox,
 QItemEditorFactory,QDoubleSpinBox,QSpinBox,QStyledItemDelegate)
 from qtvcp.widgets.widget_baseclass import _HalWidgetBase
@@ -74,8 +75,6 @@ class ToolOffsetView(QTableView, _HalWidgetBase):
         self.editing_flag = False
         self.current_system = None
         self.current_tool = 0
-        self.mm_text_template = '%10.3f'
-        self.imperial_text_template = '%9.4f'
         self.setEnabled(False)
         self.dialog_code = 'CALCULATOR'
         self.text_dialog_code = 'KEYBOARD'
@@ -137,10 +136,11 @@ class ToolOffsetView(QTableView, _HalWidgetBase):
 
         # set horizontal header properties
         hh = self.horizontalHeader()
-        hh.setMinimumSectionSize(75)
+        # auto adjust to contents
+        hh.setSectionResizeMode(3)
+        
         hh.setStretchLastSection(True)
         hh.setSortIndicator(1,Qt.AscendingOrder)
-
 
         vh = self.verticalHeader()
         vh.setVisible(False)
@@ -244,6 +244,16 @@ class ToolOffsetView(QTableView, _HalWidgetBase):
     def get_checked_list(self):
         return self.tablemodel.listCheckedTools()
 
+    # This function uses the color name (string); setProperty
+    # expects a QColor object
+    def highlight(self, color):
+        self.setProperty('styleColorHighlight', QColor(color))
+
+    # This function uses the color name (string); calling setProperty
+    # expects a QColor object
+    def selected(self, color):
+        self.setProperty('styleColorSelection', QColor(color))
+
     #########################################################################
     # This is how designer can interact with our widget properties.
     # designer will show the pyqtProperty properties in the editor
@@ -260,12 +270,42 @@ class ToolOffsetView(QTableView, _HalWidgetBase):
     dialog_code_string = pyqtProperty(str, get_dialog_code, set_dialog_code, reset_dialog_code)
 
     def set_keyboard_code(self, data):
-        self.dialog_code = data
+        self.text_dialog_code = data
     def get_keyboard_code(self):
-        return self.dialog_code
+        return self.text_dialog_code
     def reset_keyboard_code(self):
-        self.dialog_code = 'KEYBOARD'
+        self.text_dialog_code = 'KEYBOARD'
     text_dialog_code_string = pyqtProperty(str, get_keyboard_code, set_keyboard_code, reset_keyboard_code)
+
+    def setmetrictemplate(self, data):
+        self.tablemodel.metric_text_template = data
+    def getmetrictemplate(self):
+        return self.tablemodel.metric_text_template
+    def resetmetrictemplate(self):
+        self.tablemodel.metric_text_template =  '%10.3f'
+    metric_template = pyqtProperty(str, getmetrictemplate, setmetrictemplate, resetmetrictemplate)
+
+    def setimperialtexttemplate(self, data):
+        self.tablemodel.imperial_text_template = data
+    def getimperialtexttemplate(self):
+        return self.tablemodel.imperial_text_template
+    def resetimperialtexttemplate(self):
+        self.tablemodel.imperial_text_template =  '%9.4f'
+    imperial_template = pyqtProperty(str, getimperialtexttemplate, setimperialtexttemplate, resetimperialtexttemplate)
+
+    def getColorHighlight(self):
+        return QColor(self.tablemodel._highlightcolor)
+    def setColorHighlight(self, value):
+        self.tablemodel._highlightcolor = value.name()
+        #self.tablemodel.layoutChanged.emit()
+    styleColorHighlight = pyqtProperty(QColor, getColorHighlight, setColorHighlight)
+
+    def getColorSelection(self):
+        return QColor(self.tablemodel._selectedcolor)
+    def setColorSelection(self, value):
+        self.tablemodel._selectedcolor = value.name()
+        #self.tablemodel.layoutChanged.emit()
+    styleColorSelection = pyqtProperty(QColor, getColorSelection, setColorSelection)
 
 #########################################
 # custom model
@@ -279,13 +319,17 @@ class MyTableModel(QAbstractTableModel):
         """
         super(MyTableModel, self).__init__(parent)
         self.text_template = '%.4f'
-        self.mm_text_template = '%10.3f'
+        self.metric_text_template = '%10.3f'
         self.zero_text_template = '%10.1f'
         self.imperial_text_template = '%9.4f'
         self.degree_text_template = '%10.1f'
         self.metric_display = False
         self.diameter_display = False
-        self.headerdata = ['Select','tool','pocket','X','X Wear', 'Y', 'Y Wear', 'Z', 'Z Wear', 'A', 'B', 'C', 'U', 'V', 'W', 'Diameter', 'Front Angle', 'Back Angle','Orientation','Comment']
+        self._highlightcolor = '#00ffff'
+        self._selectedcolor = '#00ff00'
+        self.headerdata = ['','tool','pocket','X','X Wear', 'Y', 'Y Wear', 'Z', 'Z Wear', 'A', 'B', 'C', 'U', 'V', 'W', 'Diameter', 'Front Angle', 'Back Angle','Orient','Comment']
+        if INFO.MACHINE_IS_LATHE:
+            self.headerdata[2] = 'Stn'
         self.vheaderdata = []
         self.arraydata = [[0, 0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, 0,'No Tool']]
         STATUS.connect('toolfile-stale',lambda o, d: self.update(d))
@@ -340,6 +384,7 @@ class MyTableModel(QAbstractTableModel):
     def data(self, index, role=Qt.DisplayRole):
         if role == Qt.EditRole:
             return self.arraydata[index.row()][index.column()]
+
         elif role == Qt.DisplayRole:
             value = self.arraydata[index.row()][index.column()]
             col = index.column()
@@ -351,7 +396,7 @@ class MyTableModel(QAbstractTableModel):
                     tmpl = lambda s: self.degree_text_template % s
                     return tmpl(value)
                 elif self.metric_display:
-                    tmpl = lambda s: self.mm_text_template % s
+                    tmpl = lambda s: self.metric_text_template % s
                 else:
                     tmpl = lambda s: self.imperial_text_template % s
                 if self.metric_display != INFO.MACHINE_IS_METRIC:
@@ -368,9 +413,19 @@ class MyTableModel(QAbstractTableModel):
 
             if isinstance(value, str):
                 return '%s' % value
-
             # Default (anything not captured above: e.g. int)
             return value
+
+        elif role == Qt.BackgroundRole:
+            value = self.arraydata[index.row()][index.column()]
+            if (isinstance(value, int) or isinstance(value, float) or
+                  isinstance(value, str)):
+                if self.arraydata[index.row()][1] == self.parent().current_tool:
+                    return QColor(self._highlightcolor)
+                elif self.arraydata[index.row()][0].isChecked():
+                    return QColor(self._selectedcolor)
+                else:
+                    return QVariant()
             
         elif role == Qt.CheckStateRole:
             if index.column() == 0:
@@ -379,6 +434,7 @@ class MyTableModel(QAbstractTableModel):
                     return Qt.Checked
                 else:
                     return Qt.Unchecked
+
         return QVariant()
 
 
@@ -415,6 +471,7 @@ class MyTableModel(QAbstractTableModel):
                 self.arraydata[index.row()][index.column()].setChecked(False)
                 #self.arraydata[index.row()][index.column()].setText("Un")
             # don't emit dataChanged - return right away
+            self.parent().reset()
             return True
 
         try:
@@ -465,5 +522,7 @@ if __name__ == "__main__":
     w = ToolOffsetView()
     w.setEnabled(True)
     w._hal_init()
+    w.highlight('lightblue')
+    #w.setProperty('styleColorHighlight',QColor('purple'))
     w.show()
     sys.exit(app.exec_())

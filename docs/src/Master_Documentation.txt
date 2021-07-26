@@ -141,6 +141,8 @@ include::config/ini-config.txt[]
 
 include::config/ini-homing.txt[]
 
+include::config/iov2.txt[]
+
 include::config/lathe-config.txt[]
 
 include::hal/haltcl.txt[]
@@ -287,6 +289,8 @@ include::motion/kinematics.txt[]
 include::motion/dh-parameters.txt[]
 
 include::motion/5-axis-kinematics.txt[]
+
+include::motion/switchkins.txt[]
 
 include::motion/pid-theory.txt[]
 

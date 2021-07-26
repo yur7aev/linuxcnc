@@ -50,6 +50,7 @@ DOC_SRCS_EN := \
 	config/core-components.txt \
 	config/ini-config.txt \
 	config/ini-homing.txt \
+  config/iov2.txt \
 	config/integrator-concepts.txt \
 	config/lathe-config.txt \
 	config/moveoff.txt \
@@ -101,6 +102,7 @@ DOC_SRCS_EN := \
 	gui/gscreen.txt \
 	gui/qtdragon.txt \
 	gui/qtvcp.txt \
+	gui/qtvcp_VCPpanels.txt \
 	gui/qtvcp_widgets.txt \
 	gui/qtvcp_libraries.txt \
 	gui/qtvcp_custom_widgets.txt \
@@ -147,8 +149,9 @@ DOC_SRCS_EN := \
 	motion/tweaking-steppers.txt \
 	motion/5-axis-kinematics.txt \
 	motion/external-offsets.txt \
-	plasma/qtplasmac.txt \
+	motion/switchkins.txt \
 	tooldatabase/tooldatabase.txt \
+	plasma/qtplasmac.txt \
 	plasma/plasmac-user-guide.txt \
 	plasma/plasma-cnc-primer.txt \
 	remap/remap.txt \

@@ -19,7 +19,8 @@
 #motion_config, #probe_config, #safety_config,
 #scribe_config, #spotting_config, #utility_frame,
 #gui_frame, #materials_frame, #camview_frame,
-#conv_frame, #stats_frame {
+#conv_frame, #stats_frame, #pmx_stats_frame, 
+#machinelog_frame {
     border: 1px solid frames;
     background: backgnd;
     border-radius: 4px }
@@ -35,7 +36,7 @@
 #probe_conf_lbl, #safety_conf_lbl, #scribe_conf_lbl,
 #spotting_conf_lbl, #utility_label, #gui_label,
 #materials_label, #camview_label, #conv_label,
-#stats_label {
+#stats_label, #pmx_stats_label, #machinelog_label {
     color: backgnd;
     background: frames;
     border-top-left-radius: 2px;
@@ -66,6 +67,13 @@ QLineEdit {
     height: 24px }
 
 /****** DIALOGS ************/
+QFileDialog {
+    min-width: 686 }
+
+QFileDialog QListView {
+    border: 1px solid foregnd;
+    border-radius: 4px }
+
 QDialog {
     border: 1px solid foregnd;
     border-radius: 4px;
@@ -166,19 +174,23 @@ QPushButton:checked:pressed, QToolButton:checked:pressed {
     border-color: e-stop }
 
 /****** TOUCHOFF BUTTON<<<<<<<<<<<<*/
-#touch_a, #touch_x, #touch_y, #touch_z    {
+#touch_x, #touch_y, #touch_z, #touch_a, #touch_b {
     font: 20pt 'Lato' }
 
 /******    JOG BUTTON ************/
-#jog_a_minus, #jog_a_plus, #jog_x_minus, #jog_x_plus,
-#jog_y_minus, #jog_y_plus, #jog_z_minus, #jog_z_plus {
+#jog_x_minus, #jog_x_plus,
+#jog_y_minus, #jog_y_plus,
+#jog_z_minus, #jog_z_plus,
+#jog_a_minus, #jog_a_plus,
+#jog_b_minus, #jog_b_plus {
     background: backgnd;
     border: none }
 
 #jog_x_minus:pressed, #jog_x_plus:pressed,
 #jog_y_minus:pressed, #jog_y_plus:pressed,
 #jog_z_minus:pressed, #jog_z_plus:pressed,
-#jog_a_minus:pressed, #jog_a_plus:pressed {
+#jog_a_minus:pressed, #jog_a_plus:pressed,
+#jog_b_minus:pressed, #jog_b_plus:pressed {
     background: backalt }
 
 /******    CUT_RECOVERY BUTTON ************/
@@ -230,20 +242,22 @@ DROLabel[homed=false] {
     border-color: inactive }
 
 /****** DRO LABEL ************/
-#dro_label_a,
 #dro_label_x,
 #dro_label_y,
-#dro_label_z {
+#dro_label_z,
+#dro_label_a,
+#dro_label_b {
     color: backgnd;
     background: foregnd;
     border: 1px solid foregnd;
     border-radius: 4px;
     font: 20pt 'Lato' }
 
-#dro_label_a[homed=false],
 #dro_label_x[homed=false],
 #dro_label_y[homed=false],
-#dro_label_z[homed=false] {
+#dro_label_z[homed=false],
+#dro_label_a[homed=false],
+#dro_label_b[homed=false] {
     background: inactive;
     border-color: inactive }
 
@@ -715,6 +729,7 @@ QInputDialog QLineEdit{
     font: 11pt }
 
 QInputDialog QPushButton {
+    width: 120;
     height: 40;
     font: 11pt }
 

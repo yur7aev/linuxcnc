@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 '''
 pmx485.py
@@ -25,6 +24,8 @@ import hal
 import time
 import serial
 
+print('Starting pmx485 communications')
+
 address      = '01'
 regRead      = '04'
 regWrite     = '06'
@@ -36,6 +37,8 @@ rMode        = '2093'
 rPressure    = '2096'
 rPressureMax = '209D'
 rPressureMin = '209C'
+rArcTimeLow  = '209E'
+rArcTimeHigh = '209F'
 validRead    = '0402'
 started      = False
 errorCount   = 0
@@ -55,6 +58,7 @@ pmx485.newpin('current_min', hal.HAL_FLOAT, hal.HAL_OUT)  #minimum allowed curre
 pmx485.newpin('current_max', hal.HAL_FLOAT, hal.HAL_OUT)  #maximum allowed current
 pmx485.newpin('pressure_min', hal.HAL_FLOAT, hal.HAL_OUT) #minimum allowed gas pressure
 pmx485.newpin('pressure_max', hal.HAL_FLOAT, hal.HAL_OUT) #maximum allowed gas pressure
+pmx485.newpin('arcTime', hal.HAL_FLOAT, hal.HAL_OUT)     #arc on time feedback
 pmx485.ready()
 
 enabled = pmx485.enable
@@ -92,8 +96,8 @@ def write_register(reg, value):
         lrc = get_lrc(data)
         packet = ':{}{}\r\n'.format(data, lrc)
         reply = ''
-        comms.write(packet)
-        reply = comms.readline()
+        comms.write(packet.encode())
+        reply = comms.readline().decode()
         if reply:
             if reply == packet:
                 return 1
@@ -106,8 +110,8 @@ def read_register(reg):
         lrc = get_lrc(data)
         packet = ':{}{}\r\n'.format(data, lrc)
         reply = ''
-        comms.write(packet)
-        reply = comms.readline()
+        comms.write(packet.encode())
+        reply = comms.readline().decode()
         if reply:
             if len(reply) == 15 and reply[:7] == ':{}{}'.format(address, validRead):
                 lrc = get_lrc(reply[1:11])
@@ -230,8 +234,13 @@ try:
                     fault = read_register(rFault)
                     if fault:
                         pmx485.fault = int(fault, 16)
+                    # get arc on time
+                    arcTimeLow = read_register(rArcTimeLow)
+                    arcTimeHigh = read_register(rArcTimeHigh)
+                    if arcTimeLow and arcTimeHigh:
+                        pmx485.arcTime = int((arcTimeHigh + arcTimeLow), 16)
                     # set status
-                    if mode and current and pressure and fault:
+                    if mode and current and pressure and fault and arcTimeLow and arcTimeHigh:
                         pmx485.status = True
                         errorCount = 0
                     else:
@@ -254,7 +263,7 @@ try:
                             started = False
                             comms.close()
 except:
-    print('Shutting down pmx485 communications')
+    print('Shutting down pmx485 communications, unknown error')
     if started:
         if not comms.isOpen():
             comms.open()

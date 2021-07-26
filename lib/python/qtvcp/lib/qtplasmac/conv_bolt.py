@@ -25,28 +25,49 @@ from PyQt5.QtGui import QPixmap
 
 def preview(P, W):
     if P.dialogError: return
-    if W.dEntry.text():
-        cRadius = float(W.dEntry.text()) / 2
-    else:
-        cRadius = 0
-    if W.hdEntry.text():
-        hRadius = float(W.hdEntry.text()) / 2
-    else:
-        hRadius = 0
-    if W.hEntry.text():
-        holes = int(W.hEntry.text())
-    else:
-        holes = 0
+    msg = ''
+    try:
+        if W.dEntry.text():
+            cRadius = float(W.dEntry.text()) / 2
+        else:
+            cRadius = 0
+    except:
+        msg += 'DIAMETER\n'
+    try:
+        if W.hdEntry.text():
+            hRadius = float(W.hdEntry.text()) / 2
+        else:
+            hRadius = 0
+    except:
+        msg += 'HOLE DIA\n'
+    try:
+        if W.hEntry.text():
+            holes = int(W.hEntry.text())
+        else:
+            holes = 0
+    except:
+        msg += '# OF HOLES\n'
+    if msg:
+        errMsg = 'Invalid entry detected in:\n\n{}'.format(msg)
+        error_set(P, errMsg)
+        return
     if cRadius > 0 and hRadius > 0 and holes > 0:
-        if W.caEntry.text():
-            cAngle = float(W.caEntry.text())
-        else:
-            cAngle = 360.0
-        if cAngle == 360:
-            hAngle = math.radians(cAngle / holes)
-        else:
-            hAngle = math.radians(cAngle / (holes - 1))
-        ijDiff = float(W.kerf_width.text()) *W.kOffset.isChecked() / 2
+        msg =''
+        try:
+            if W.caEntry.text():
+                cAngle = float(W.caEntry.text())
+            else:
+                cAngle = 360.0
+            if cAngle == 360:
+                hAngle = math.radians(cAngle / holes)
+            else:
+                hAngle = math.radians(cAngle / (holes - 1))
+        except:
+            msg += 'CIRCLE ANG\n'
+        try:
+            ijDiff = float(W.kerf_width.value()) *W.kOffset.isChecked() / 2
+        except:
+            msg += 'Kerf Width entry in material\n'
         right = math.radians(0)
         up = math.radians(90)
         left = math.radians(180)
@@ -55,32 +76,48 @@ def preview(P, W):
             sHole = True
         else:
             sHole = False
-        if W.aEntry.text():
-            angle = math.radians(float(W.aEntry.text()))
-        else:
-            angle = 0
-        if W.liEntry.text():
-            leadIn = float(W.liEntry.text())
-            leadInOffset = leadIn * math.sin(math.radians(45))
-        else:
-            leadIn = 0
-            leadInOffset = 0
-        if leadIn > hRadius:
-            leadIn = hRadius
-        if leadInOffset > hRadius:
-            leadInOffset = hRadius
+        try:
+            if W.aEntry.text():
+                angle = math.radians(float(W.aEntry.text()))
+            else:
+                angle = 0
+        except:
+            msg += 'ANGLE\n'
+        try:
+            if W.liEntry.text():
+                leadIn = float(W.liEntry.text())
+                leadInOffset = leadIn * math.sin(math.radians(45))
+            else:
+                leadIn = 0
+                leadInOffset = 0
+            if leadIn > hRadius:
+                leadIn = hRadius
+            if leadInOffset > hRadius:
+                leadInOffset = hRadius
+        except:
+            msg += 'LEAD IN\n'
         if not W.xsEntry.text():
             W.xsEntry.setText('{:0.3f}'.format(P.xOrigin))
-        if W.center.isChecked():
-            xC = float(W.xsEntry.text())
-        else:
-            xC = float(W.xsEntry.text()) + cRadius
+        try:
+            if W.center.isChecked():
+                xC = float(W.xsEntry.text())
+            else:
+                xC = float(W.xsEntry.text()) + cRadius
+        except:
+            msg += 'X ORIGIN\n'
         if not W.ysEntry.text():
             W.ysEntry.setText('{:0.3f}'.format(P.yOrigin))
-        if W.center.isChecked():
-            yC = float(W.ysEntry.text())
-        else:
-            yC = float(W.ysEntry.text()) + cRadius
+        try:
+            if W.center.isChecked():
+                yC = float(W.ysEntry.text())
+            else:
+                yC = float(W.ysEntry.text()) + cRadius
+        except:
+            msg += 'Y ORIGIN\n'
+        if msg:
+            errMsg = 'Invalid entry detected in:\n\n{}'.format(msg)
+            error_set(P, errMsg)
+            return
         outTmp = open(P.fTmp, 'w')
         outNgc = open(P.fNgc, 'w')
         inWiz = open(P.fNgcBkp, 'r')
@@ -116,12 +153,9 @@ def preview(P, W):
                 ylStart = ylCentre + (leadInOffset * math.sin(angle + up))
                 outTmp.write('g0 x{:.6f} y{:.6f}\n'.format(xlStart, ylStart))
                 outTmp.write('m3 $0 s1\n')
-                outTmp.write('g3 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xS, yS, xlCentre - xlStart, ylCentre - ylStart))
+                if leadIn:
+                    outTmp.write('g3 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xS, yS, xlCentre - xlStart, ylCentre - ylStart))
             outTmp.write('g3 x{:.6f} y{:.6f} i{:.6f}\n'.format(xS, yS, hRadius - ijDiff))
-            if not sHole:
-                xlEnd = xlCentre + (leadInOffset * math.cos(angle + down))
-                ylEnd = ylCentre + (leadInOffset * math.sin(angle + down))
-                outTmp.write('g3 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xlEnd, ylEnd, xlCentre - xS, ylCentre - yS))
             torch = True
             if W.overcut.isChecked() and sHole:
                 Torch = False
@@ -148,19 +182,26 @@ def preview(P, W):
     else:
         msg = ''
         if cRadius == 0:
-            msg += 'Diameter is required\n\n'
+            msg += 'DIAMETER is required.\n\n'
         if hRadius == 0:
-            msg += 'Hole Diameter is required\n\n'
+            msg += 'HOLE DIA is required.\n\n'
         if holes == 0:
-            msg += '# of Holes are required'
-        P.dialogError = True
-        P.dialog_show(QMessageBox.Warning, 'BOLT-CIRCLE', msg)
+            msg += '# OF HOLES is required.\n'
+        error_set(P, msg)
+
+def error_set(P, msg):
+    P.conv_undo_shape()
+    P.dialogError = True
+    P.dialog_show_ok(QMessageBox.Warning, 'Bolt-Circle Error', msg)
 
 def over_cut(P, W, lastX, lastY, IJ, radius, outTmp):
     try:
         oclength = float(W.ocEntry.text())
     except:
+        msg = 'Invalid OC LENGTH entry detected.\n'
+        error_set(P, msg)
         oclength = 0
+        return
     centerX = lastX + IJ
     centerY = lastY
     cosA = math.cos(oclength / radius)
@@ -216,21 +257,21 @@ def widgets(P, W):
     W.bLeft = QRadioButton('BTM LEFT')
     W.spGroup.addButton(W.bLeft)
     W.xsLabel = QLabel('X ORIGIN')
-    W.xsEntry = QLineEdit(objectName = 'xsEntry')
+    W.xsEntry = QLineEdit(str(P.xSaved), objectName = 'xsEntry')
     W.ysLabel = QLabel('Y ORIGIN')
-    W.ysEntry = QLineEdit(objectName = 'ysEntry')
+    W.ysEntry = QLineEdit(str(P.ySaved), objectName = 'ysEntry')
     W.liLabel = QLabel('LEAD IN')
-    W.liEntry = QLineEdit(objectName = 'liEntry')
+    W.liEntry = QLineEdit(str(P.leadIn), objectName = 'liEntry')
     W.dLabel = QLabel('DIAMETER')
     W.dEntry = QLineEdit(objectName = '')
     W.hdLabel = QLabel('HOLE DIA')
     W.hdEntry = QLineEdit()
     W.hLabel = QLabel('# OF HOLES')
-    W.hEntry = QLineEdit()
+    W.hEntry = QLineEdit(objectName='intEntry')
     W.aLabel = QLabel('ANGLE')
-    W.aEntry = QLineEdit()
+    W.aEntry = QLineEdit('0.0', objectName='aEntry')
     W.caLabel = QLabel('CIRCLE ANG')
-    W.caEntry = QLineEdit()
+    W.caEntry = QLineEdit('360')
     W.preview = QPushButton('PREVIEW')
     W.add = QPushButton('ADD')
     W.undo = QPushButton('UNDO')
@@ -267,11 +308,6 @@ def widgets(P, W):
         W.center.setChecked(True)
     else:
         W.bLeft.setChecked(True)
-    W.liEntry.setText('{}'.format(P.leadIn))
-    W.xsEntry.setText('{}'.format(P.xSaved))
-    W.ysEntry.setText('{}'.format(P.ySaved))
-    W.aEntry.setText('0')
-    W.caEntry.setText('360')
     P.conv_undo_shape()
     #connections
     W.conv_material.currentTextChanged.connect(lambda:auto_preview(P, W))
@@ -285,7 +321,7 @@ def widgets(P, W):
                'hdEntry', 'hEntry', 'aEntry', 'caEntry']
     for entry in entries:
         W[entry].textChanged.connect(lambda:entry_changed(P, W, W.sender()))
-        W[entry].editingFinished.connect(lambda:auto_preview(P, W))
+        W[entry].returnPressed.connect(lambda:preview(P, W))
     #add to layout
     if P.landscape:
         W.entries.addWidget(W.overcut, 0, 0)

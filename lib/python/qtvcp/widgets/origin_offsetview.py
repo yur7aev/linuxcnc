@@ -19,6 +19,7 @@ import os
 import locale
 
 from PyQt5.QtCore import Qt, QAbstractTableModel, QVariant, pyqtProperty
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QTableView, QAbstractItemView
 import linuxcnc
 
@@ -52,9 +53,10 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
         self.filename = INFO.PARAMETER_FILE
         self.axisletters = ["x", "y", "z", "a", "b", "c", "u", "v", "w"]
         self.current_system = None
+        self._system_int = 1
         self.current_tool = 0
         self.metric_display = False
-        self.mm_text_template = '%10.3f'
+        self.metric_text_template = '%10.3f'
         self.imperial_text_template = '%9.4f'
         self.setEnabled(False)
         self.dialog_code = 'CALCULATOR'
@@ -110,6 +112,7 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
     def _convert_system(self, w, data):
         convert = ("None", "G54", "G55", "G56", "G57", "G58", "G59", "G59.1", "G59.2", "G59.3")
         self.current_system = convert[int(data)]
+        self._system_int = int(data)
 
     def currentTool(self, data):
         self.current_tool = data
@@ -205,6 +208,11 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
         if code and (name or name2) and num is not None:
             self.tablemodel.setData(item, num, None)
 
+    # This function uses the color name (string); setProperty
+    # expects a QColor object
+    def highlight(self, color):
+        self.setProperty('styleColorHighlight', QColor(color))
+
     #############################################################
 
     # Reload the offsets into display
@@ -215,6 +223,7 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
         # fake if linuxcnc is not running
         if STATUS.is_status_valid() == False:
             self.current_system = "G54"
+            self._system_int = 1
 
         # Get the offsets arrays and convert the units if the display
         # is not in machine native units
@@ -240,7 +249,7 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
 
         # set the text style based on unit type
         if self.metric_display:
-            tmpl = self.mm_text_template
+            tmpl = self.metric_text_template
         else:
             tmpl = self.imperial_text_template
 
@@ -316,12 +325,6 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
         # dont evaluate text column
         if col ==9 :return
 
-        # set the text style based on unit type
-        if self.metric_display:
-            tmpl = lambda s: self.mm_text_template % s
-        else:
-            tmpl = lambda s: self.imperial_text_template % s
-
         # make sure we switch to correct units for machine and rotational, row 2, does not get converted
         try:
                 qualified = float(data)
@@ -380,6 +383,37 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
         self.dialog_code = 'CALCULATOR'
     dialog_code_string = pyqtProperty(str, get_dialog_code, set_dialog_code, reset_dialog_code)
 
+    def set_keyboard_code(self, data):
+        self.text_dialog_code = data
+    def get_keyboard_code(self):
+        return self.text_dialog_code
+    def reset_keyboard_code(self):
+        self.text_dialog_code = 'KEYBOARD'
+    text_dialog_code_string = pyqtProperty(str, get_keyboard_code, set_keyboard_code, reset_keyboard_code)
+
+    def setmetrictemplate(self, data):
+        self.metric_text_template = data
+    def getmetrictemplate(self):
+        return self.metric_text_template
+    def resetmetrictemplate(self):
+        self.metric_text_template =  '%10.3f'
+    metric_template = pyqtProperty(str, getmetrictemplate, setmetrictemplate, resetmetrictemplate)
+
+    def setimperialtexttemplate(self, data):
+        self.imperial_text_template = data
+    def getimperialtexttemplate(self):
+        return self.imperial_text_template
+    def resetimperialtexttemplate(self):
+        self.imperial_text_template =  '%9.4f'
+    imperial_template = pyqtProperty(str, getimperialtexttemplate, setimperialtexttemplate, resetimperialtexttemplate)
+
+    def getColorHighlight(self):
+        return QColor(self.tablemodel._highlightcolor)
+    def setColorHighlight(self, value):
+        self.tablemodel._highlightcolor = value.name()
+        #self.tablemodel.layoutChanged.emit()
+    styleColorHighlight = pyqtProperty(QColor, getColorHighlight, setColorHighlight)
+
 #########################################
 # custom model
 #########################################
@@ -394,6 +428,7 @@ class MyTableModel(QAbstractTableModel):
         self.arraydata = datain
         self.headerdata = headerdata
         self.Vheaderdata = vheaderdata
+        self._highlightcolor = '#00ffff'
 
     def rowCount(self, parent):
         return len(self.arraydata)
@@ -408,6 +443,14 @@ class MyTableModel(QAbstractTableModel):
             return self.arraydata[index.row()][index.column()]
         if role == Qt.DisplayRole:
             return QVariant(self.arraydata[index.row()][index.column()])
+        elif role == Qt.BackgroundRole:
+            value = self.arraydata[index.row()][index.column()]
+            if (isinstance(value, int) or isinstance(value, float) or
+                  isinstance(value, str)):
+                if int(index.row()) == self.parent()._system_int + 3:
+                    return QColor(self._highlightcolor)
+                else:
+                    return QVariant()
         return QVariant()
 
 
@@ -465,6 +508,8 @@ if __name__ == "__main__":
     from PyQt5.QtWidgets import QApplication
     app = QApplication([])
     w = OriginOffsetView()
+    w.PREFS_ = None
     w._hal_init()
+    w.setProperty('styleColorHighlight',QColor('purple'))
     w.show()
     sys.exit(app.exec_())

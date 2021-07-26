@@ -73,7 +73,7 @@ sys.excepthook = excepthook
 
 # constants
 #         # gmoccapy  #"
-_RELEASE = " 3.1.3.1"
+_RELEASE = " 3.1.3.8"
 _INCH = 0                         # imperial units are active
 _MM = 1                           # metric units are active
 
@@ -1034,8 +1034,9 @@ class gmoccapy(object):
     def _jog_increment_changed(self, widget,):
         # first cancel any joints jogging
         JOGMODE = self._get_jog_mode()
-        for jnum in range(self.stat.joints):
-            self.command.jog(linuxcnc.JOG_STOP, JOGMODE, jnum)
+        if self.stat.task_mode == linuxcnc.MODE_MANUAL:
+            for jnum in range(self.stat.joints):
+                self.command.jog(linuxcnc.JOG_STOP, JOGMODE, jnum)
         self.distance = self._parse_increment(widget.name)
         self.halcomp["jog.jog-increment"] = self.distance
         self.active_increment = widget.name
@@ -1704,6 +1705,10 @@ class gmoccapy(object):
         try:
             for t, c, name in zip(tab_names, tab_cmd, tab_locations):
                 nb = self.widgets[name]
+                if c == "hide":
+                    print("hide widget : ", name, type(self.widgets[name])) 
+                    nb.hide()
+                    continue
                 xid = self._dynamic_tab(nb, t)
                 if not xid: continue
                 cmd = c.replace('{XID}', str(xid))
@@ -1712,6 +1717,8 @@ class gmoccapy(object):
                 nb.show_all()
         except:
             print(_("ERROR, trying to initialize the user tabs or panels, check for typos"))
+            print(tab_locations)
+
         self.set_up_user_tab_widgets(tab_locations)
 
     # adds the embedded object to a notebook tab or box
@@ -1732,7 +1739,6 @@ class gmoccapy(object):
             child.terminate()
 
     def set_up_user_tab_widgets(self, tab_locations):
-        print(tab_locations)
         if tab_locations:
             # make sure the user tabs button is disabled
             # if no ntb_user_tabs in location is given
@@ -1746,7 +1752,7 @@ class gmoccapy(object):
 
             # This is normaly only used for the plasma screen layout
             if "box_coolant_and_spindle" in tab_locations:
-                widgetlist = ["box_spindle", "box_cooling"]
+                widgetlist = ["box_spindle", "box_cooling", "frm_spindle"]
                 for widget in widgetlist:
                     self.widgets[widget].hide()
 
@@ -1761,7 +1767,7 @@ class gmoccapy(object):
                     self.widgets[widget].hide()
 
             if "box_vel_info" in tab_locations:
-                widgetlist = ["frm_max_vel", "frm_feed_override"]
+                widgetlist = ["vbx_overrides", "frm_rapid_override", "frm_feed_override"]
                 for widget in widgetlist:
                     self.widgets[widget].hide()
 
@@ -1778,7 +1784,7 @@ class gmoccapy(object):
                 self.widgets.box_custom_4.show()
 
             if "box_tool_and_code_info" in tab_locations:
-                widgetlist = ["frm_tool_info", "active_speed_label", "lbl_speed", "box_vel_info"]
+                widgetlist = ["frm_tool_info", "active_speed_label", "lbl_speed"]
                 for widget in widgetlist:
                     self.widgets[widget].hide()
                 self.widgets.btn_tool.set_sensitive( False )
@@ -1818,7 +1824,7 @@ class gmoccapy(object):
         # If there are themes then add them to combo box
         model = self.widgets.theme_choice.get_model()
         model.clear()
-        model.append((_("Follow System Theme"),))
+        model.append(("Follow System Theme",))
         themes = []
         if os.path.exists(USERTHEMEDIR):
             names = os.listdir(USERTHEMEDIR)
@@ -2309,7 +2315,7 @@ class gmoccapy(object):
             self.stat.poll()
             if self.stat.task_state == linuxcnc.STATE_ESTOP:
                 widget.set_active(True)
-                self._show_error((11, _("ERROR : External ESTOP is set, could not change state!")))
+                self._show_error((11, _("External ESTOP is set, could not change state!")))
 
     # toggle machine on / off button
     def on_tbtn_on_toggled(self, widget, data=None):
@@ -2322,7 +2328,7 @@ class gmoccapy(object):
             self.stat.poll()
             if self.stat.task_state != linuxcnc.STATE_ON:
                 widget.set_active(False)
-                self._show_error((11, _("ERROR : Could not switch the machine on, is limit switch activated?")))
+                self._show_error((11, _("Could not switch the machine on, is limit switch activated?")))
                 self._update_widgets(False)
                 return
             self._update_widgets(True)
@@ -2451,6 +2457,7 @@ class gmoccapy(object):
             self.macro_dic["keyboard"].set_sensitive(False)
 
         self.widgets.btn_run.set_sensitive(True)
+        self.widgets.btn_stop.set_sensitive(False)
 
         if self.tool_change:
             self.command.mode(linuxcnc.MODE_MANUAL)
@@ -2474,6 +2481,7 @@ class gmoccapy(object):
 
         self._sensitize_widgets(widgetlist, False)
         self.widgets.btn_run.set_sensitive(False)
+        self.widgets.btn_stop.set_sensitive(True)
 
         self._change_kbd_image("stop")
         self.macro_dic["keyboard"].set_sensitive(True)
@@ -4766,7 +4774,7 @@ class gmoccapy(object):
     # this can not be done with the status widget,
     # because it will not emit a RESUME signal
     def on_tbtn_pause_toggled(self, widget, data=None):
-        widgetlist = ["rbt_forward", "rbt_reverse", "rbt_stop"]
+        widgetlist = ["rbt_forward", "rbt_reverse", "rbt_stop", "ntb_jog"]
         self._sensitize_widgets(widgetlist, widget.get_active())
 
     def on_btn_stop_clicked(self, widget, data=None):
@@ -4970,9 +4978,9 @@ class gmoccapy(object):
                 self.notification.del_last()
 
     def _on_pin_incr_changed(self, pin, buttonnumber):
-        if self.stat.state != 1:
-            self.command.abort()
-            self.command.wait_complete()
+#        if self.stat.state != 1:
+#            self.command.abort()
+#            self.command.wait_complete()
         if not pin.get():
             return
         btn_name = "rbt_{0}".format(buttonnumber)
@@ -5222,14 +5230,13 @@ if __name__ == "__main__":
     print ("**** GMOCCAPY INFO : inifile = {0} ****:".format(sys.argv[2]))
     postgui_halfile = app.get_ini_info.get_postgui_halfile()
     print ("**** GMOCCAPY INFO : postgui halfile = {0} ****:".format(postgui_halfile))
-
-    if postgui_halfile:
-        if postgui_halfile.lower().endswith('.tcl'):
-            res = os.spawnvp(os.P_WAIT, "haltcl", ["haltcl", "-i", inifile, postgui_halfile])
-        else:
-            res = os.spawnvp(os.P_WAIT, "halcmd", ["halcmd", "-i", inifile, "-f", postgui_halfile])
-        if res:
-            raise SystemExit(res)
+    if postgui_halfile is not None:
+        for f in postgui_halfile:
+            if f.lower().endswith('.tcl'):
+                res = os.spawnvp(os.P_WAIT, "haltcl", ["haltcl", "-i", inifile, f])
+            else:
+                res = os.spawnvp(os.P_WAIT, "halcmd", ["halcmd", "-i", inifile, "-f", f])
+            if res: raise SystemExit(res)
 
     gtk.main()
 

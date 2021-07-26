@@ -26,7 +26,7 @@ section <<cha:getting-linuxcnc,Getting LinuxCNC>>.
 
 Furthermore, if you are running Ubuntu Precise or Debian Wheezy it is
 well worth considering making a backup of the "linuxcnc" directory on
-removeable media and performing a
+removable media and performing a
 <<cha:getting-linuxcnc,clean install of a newer OS and LinuxCNC version>>
 as these releases were EOL in 2017 and 2018 respectively.
 If you are running on Ubuntu Lucid then you will have to do this, as
@@ -47,7 +47,7 @@ Codename:       wheezy
 ----
 
 You should be running on Debian Stretch or Wheezy (as above), or Ubuntu
-Precise. Packages are also avaialble for Debian Jessie or Debian Buster
+Precise. Packages are also available for Debian Jessie or Debian Buster
 if you happen to already be running one of those.
 
 You will also need to check which realtime kernel is being used:
@@ -446,7 +446,7 @@ Note: Custom kinematics modules that implement non-identity kinematics (like
 
 *Negative* values may be used for the ini file items
 named [JOINT_n]HOME_SEQUENCE.  Prior to joints_axes incorporation a value
-of -1 or the ommission of the item indicated no sequence was applicable.
+of -1 or the omission of the item indicated no sequence was applicable.
 Now, only omission of the item is used for that purpose.
 See the chapter: <<cha:homing-configuration, 'Homing Configuration'>> 
 for more information.
@@ -709,7 +709,7 @@ simple machines.
 In most cases, you can think of joints as 'motors'.
 
 The relationships between joints and axis coordinates are
-determined by the mathmatical kinematics functions that describe a
+determined by the mathematical kinematics functions that describe a
 machine's motion.
 
 World coordinates (X,Y,Z,A,B,C,U,V,W) are determined by applying
@@ -820,7 +820,7 @@ All pins for joint jogging were renamed for specificity:
 where 'N' is a joint number (0 ... num_noints-1) or 'selected'
 for the joint selected by the halui.joint.N.select pins.
 
-====  Aditional pin renames
+====  Additional pin renames
 
 The hal pins for 'selected' joints were renamed for consistency
 with related pins.
@@ -972,7 +972,7 @@ ShuttleXpress, so the old driver name is no longer accurate.
 "Home All" is now supported with the set home subcommand
 by using -1 for the joint number
 
-The jogging commands have been altered to accomodate both joint (free)
+The jogging commands have been altered to accommodate both joint (free)
 and teleop (world) jogging.
 
 ----
@@ -992,7 +992,7 @@ Note: Test for teleop mode using command: get teleop_enable
 
 Note: Formerly, the command 'set jog 0 1.234' would jog the zeroth
 axis (X) with requested speed=1.234 in any mode (free or teleop).
-This command now attemps to jog the zeroth joint (Joint0) provided
+This command now attempts to jog the zeroth joint (Joint0) provided
 the mode is free (not teleop).  To jog the X axis, the mode
 must be teleop and the corresponding command is: 'set jog x 1.234'
 
@@ -1254,6 +1254,13 @@ loadrt hm2_eth board_ip=10.10.10.10 config="num_encoders=2 num_pwmgens=2 num_ste
 The master branch is version-tagged with prerelease notation, typically
 2.9~pre*
 
+=== LinuxCNC startup
+
+The main script, *linuxcnc*, supports a new option (-H dirname) to
+specify an additional user-specified directory for Halfiles.  This
+directory is searched before the usual search of 1) theini directory
+and 2)the system halfile library directory.
+
 === G-code changes
 G43.2 (additional offsets) now accepts transient offsets to be added by
 axis words as well as from the tool table.
@@ -1314,9 +1321,54 @@ A homing api is provided by src/emc/motion/homing.h to support users'
 custom homing code that replaces src/emc/motion/homing.c with
 a user-customized homing.c file.
 
+==== Motion
+
+The motion module supports kinematics modules that define new
+functions kinematicsSwitchable() and kinematicsSwitch() to switch
+their kinematics type.  A hal pin, motion.switchkins-type, is
+provided for use of such kinematics modules.
+
+Provided kinematics modules that implement kinematics switching
+use the switchkins.o object to supply the required rtapi_main()
+and related functions.  Kinematics modules that do not support
+kinematics switching use the macro "KINS_NOT_SWITCHABLE"
+provided by kinematics.h.
+
+==== Switchkins Kinematics Modules
+
+Several kinematics modules are now switchable between their
+eponymous kinematics and an alternate identity kinematics mode.
+
+Kinematic modules supporting switchkins:
+
+. xyzac-trt-kins table-rotary-tilting (supersedes xyzac-trt-kins)
+. xyzbc-trt-kins table-rotary-tilting (supersedes xyzbc-trt-kins)
+. genserkins     generalized serial-link kinematics
+. genhexkins     generalized hexapod parallel kinematics
+. scarakins      scara robot
+. pumakins       puma robot
+. 5axiskins      bridgemill (xyzbcw 6axes)
+
+The switchkins modules above (and trivkins) support a
+coordinates= parameter that optionally specifies an ordered set
+of coordinate letters that are sequentially assigned to joint
+numbers (beginning with joint0).
+
+The switchkins modules above include provisions for compile-time
+support of an additional user-specified kinematics type identified
+on the make command line by the userkfuncs environmental
+variable.  (See src/Makefile)
+
+The userspace test program bin/genserkins has been isolated to
+a single file (ugenserkins.c) since its original source file
+(genserkins.c) has been refactored for switchkins support.
+The userspace test program has not been actively maintained and
+its use is deprecated.  The ugenserkins.c file may be removed
+in the future.
+
 ==== Other
 
-lib/hallib/sim_lib.tcL: simulate encoder index if [JOINT_n]HOME_USE_INDEX
+lib/hallib/sim_lib.tcl: simulate encoder index if [JOINT_n]HOME_USE_INDEX
 is specified.
 
 lib/python/vismach.py: new hal pin vismach.plotclear

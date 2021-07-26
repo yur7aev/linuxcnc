@@ -219,6 +219,7 @@ class App:
         window.show()
         self.axis_under_test = False
         self.jogminus = self.jogplus = 0
+        self.origname = ['','']
 
         # set preferences if they exist
         link = short = advanced = show_pages = False
@@ -317,6 +318,39 @@ class App:
         #self.write_readme(base)
         self.INI.write_inifile(base)
         self.HAL.write_halfile(base)
+        # link to qtplasmac common directory
+        if self.d.frontend == _PD._QTPLASMAC:
+            if BASE == "/usr":
+                commonPath = '/usr/share/doc/linuxcnc/examples/sample-configs/by_machine/qtplasmac/qtplasmac/'
+            else:
+                commonPath = '{}/configs/by_machine/qtplasmac/qtplasmac/'.format(BASE)
+            oldDir = '{}/qtplasmac'.format(base)
+            if os.path.islink(oldDir):
+                os.unlink(oldDir)
+            elif os.path.exists(oldDir):
+                os.rename(oldDir, '{}_old_{}'.format(oldDir, time.time()))
+            os.symlink(commonPath, '{}/qtplasmac'.format(base))
+            # different tool table for plasmac
+            filename = os.path.join(base, "tool.tbl")
+            file = open(filename, "w")
+            print("T0 P1 X0 Y0 ;torch", file=file)
+            print("T1 P2 X0 Y0 ;scribe", file=file)
+            file.close()
+            # if using thcad for arc voltage
+            if self.d.thcadenc == 1:
+                if self.d.voltsrdiv < 150:
+                    dratio = self.d.voltsrdiv
+                else:
+                    dratio = (self.d.voltsrdiv + 100000) / 100000
+                vscale = dratio / (((self.d.voltsfullf - self.d.voltszerof) * 1000) / int(self.d.voltsfjumper) / int(self.d.voltsmodel))
+                voffset = self.d.voltszerof * 1000 / int(self.d.voltsfjumper)
+                prefsfile = os.path.join(base, "qtplasmac.prefs")
+                if not os.path.exists(prefsfile):
+                    f1 = open(prefsfile, "w")
+                    print(("[PLASMA_PARAMETERS]"), file=f1)
+                    print("Arc Voltage Offset = %.3f" % voffset, file=f1)
+                    print("Arc Voltage Scale = %.6f" % vscale, file=f1)
+                    f1.close()
         self.copy(base, "tool.tbl")
         if self.warning_dialog(self._p.MESS_FINISH_QUIT,False):
             gtk.main_quit()
@@ -353,14 +387,22 @@ class App:
         else:
             self.widgets.discovery_address_entry.set_sensitive(False)
 
-    def get_board_meta(self, name):
+    def get_board_meta(self, name, num):
         name = name.lower()
-        meta = _PD.MESA_BOARD_META.get(name)
+        # 7i80hd and 7i80db don't use the HD or DB in the Hal name
+        # store the original name here for getting the board meta
+        if name != '7i80':
+            self.origname[num] = name
+        # change the name in currentfirmwaredata to the Hal name
+        if name in ['7i80hd', '7i80db'] and self.d["mesa%d_currentfirmwaredata"% num]:
+            self.d["mesa%d_currentfirmwaredata"% num][_PD._BOARDNAME] = '7i80'
+
+        meta = _PD.MESA_BOARD_META.get(self.origname[num])
         if meta:
             return meta
         else:
             for key in _PD.MESA_BOARD_META:
-                if key in name:
+                if key in self.origname[num]:
                     return _PD.MESA_BOARD_META.get(key)
 
         print('boardname %s not found in hardware metadata array'% name)
@@ -921,7 +963,7 @@ PNCconf will use internal firmware data"%self._p.FIRMDIR),True)
             self._p.MESA_FIRMWAREDATA.append(firmdata)
         self.window.hide()
 
-    def parse_xml(self, driver, boardtitle, firmname, xml_path):
+    def parse_xml(self, driver, boardtitle, firmname, xml_path, boardnum=0):
             def search(elementlist):
                 for i in elementlist:
                     temp = root.find(i)
@@ -965,7 +1007,7 @@ PNCconf will use internal firmware data"%self._p.FIRMDIR),True)
             hifreq = int(text)/1000000
             modules = root.findall(".//modules")[0]
             if driver == None:
-                meta = self.get_board_meta(boardname)
+                meta = self.get_board_meta(boardname, boardnum)
                 driver = meta.get('DRIVER')
             for i,j in enumerate(modules):
                 k = modules[i].find("tagname").text
@@ -1490,7 +1532,7 @@ PNCconf will use internal firmware data"%self._p.FIRMDIR),True)
         driver, boardname, firmname, path = self.parse_discovery(info,boardnum=bdnum)
         print(driver, boardname, firmname, path) 
         boardname = 'Discovered:%s'% boardname
-        firmdata = self.parse_xml( driver,boardname,firmname,path)
+        firmdata = self.parse_xml( driver,boardname,firmname,path,boardnum)
         self._p.MESA_FIRMWAREDATA.append(firmdata)
         self._p.MESA_INTERNAL_FIRMWAREDATA.append(firmdata)
         self._p.MESA_BOARDNAMES.append(boardname)
@@ -2020,7 +2062,7 @@ Clicking 'existing custom program' will aviod this warning. "),False):
             self.widgets["mesa%dsserial0_%d"%(boardnum,i)].hide()
         if title == None: return
         if 'Discovery Option' not in title:
-            meta = self.get_board_meta(title)
+            meta = self.get_board_meta(title, boardnum)
             names = meta.get('TAB_NAMES')
             tnums = meta.get('TAB_NUMS')
             if names and tnums:
@@ -2298,7 +2340,7 @@ Clicking 'existing custom program' will aviod this warning. "),False):
                                    _PD.TXEN2,_PD.TXDATA3,_PD.RXDATA3,_PD.TXEN3,_PD.TXDATA4,_PD.RXDATA4,_PD.TXEN4,
                                   _PD.TXDATA5,_PD.RXDATA5,_PD.TXEN5,_PD.TXDATA6,_PD.RXDATA6,_PD.TXEN6,_PD.TXDATA7,_PD.RXDATA7,_PD.TXEN7 ):
                     index2 = 0
-                #print index,index2,signaltocheck[index+index2]
+                #print(index,index2,signaltocheck[index+index2])
                 self.d[p] = signaltocheck[index+index2]
                 self.d[ptype] = widgetptype
                 self.d[pinv] = self.widgets[pinv].get_active()
@@ -2453,7 +2495,7 @@ Clicking 'existing custom program' will aviod this warning. "),False):
                 pass
 
         currentboard = self.d["mesa%d_currentfirmwaredata"% boardnum][_PD._BOARDNAME]
-        meta = self.get_board_meta(currentboard)
+        meta = self.get_board_meta(currentboard, boardnum)
         ppc = meta.get('PINS_PER_CONNECTOR')
 
         for concount,connector in enumerate(self.d["mesa%d_currentfirmwaredata"% boardnum][_PD._NUMOFCNCTRS]) :
@@ -3415,6 +3457,13 @@ Clicking 'existing custom program' will aviod this warning. "),False):
                     relatedsearch = [_PD.ENCA,_PD.ENCB,_PD.ENCI,_PD.ENCM]
                     relatedending = ["-a","-b","-i","-m"]
                     customindex = len(humansignallist)-1
+                    # check for a thcad encoder
+                    if "Arc Voltage" in pinchanged:
+                        self.p.page_set_state('thcad', True)
+                        self.d.thcadenc = 1
+                    else:
+                        self.p.page_set_state('thcad', False)
+                        self.d.thcadenc = 0
                 # for mux encoder pins
                 elif widgetptype in(_PD.MXE0,_PD.MXE1): 
                     #print"\nptype encoder"
@@ -4067,7 +4116,7 @@ Clicking 'existing custom program' will aviod this warning. "),False):
             set_active("searchdir")
             set_active("latchdir")
             set_active("usehomeindex")
-            thisaxishome = set(("all-home", "home-" + axis, "min-home-" + axis,"max-home-" + axis, "both-home-" + axis))
+            thisaxishome = set(("all-limit-home", "all-home", "home-" + axis, "min-home-" + axis,"max-home-" + axis, "both-home-" + axis))
             homes = False
             for i in thisaxishome:
                 test = self.findsignal(i)
@@ -4886,19 +4935,19 @@ Clicking 'existing custom program' will aviod this warning. "),False):
            return test
 
     def home_sig(self, axis):
-        thisaxishome = set(("all-home", "home-" + axis, "min-home-" + axis, "max-home-" + axis, "both-home-" + axis))
+        thisaxishome = set(("all-limit-home", "all-home", "home-" + axis, "min-home-" + axis, "max-home-" + axis, "both-home-" + axis))
         for i in thisaxishome:
             if self.findsignal(i): return i
         return None
 
     def min_lim_sig(self, axis):
-           thisaxishome = set(("all-limit", "min-" + axis,"min-home-" + axis, "both-" + axis, "both-home-" + axis))
+           thisaxishome = set(("all-limit-home", "all-limit", "min-" + axis,"min-home-" + axis, "both-" + axis, "both-home-" + axis))
            for i in thisaxishome:
                if self.findsignal(i): return i
            return None
 
     def max_lim_sig(self, axis):
-           thisaxishome = set(("all-limit", "max-" + axis, "max-home-" + axis, "both-" + axis, "both-home-" + axis))
+           thisaxishome = set(("all-limit-home", "all-limit", "max-" + axis, "max-home-" + axis, "both-" + axis, "both-home-" + axis))
            for i in thisaxishome:
                if self.findsignal(i): return i
            return None
@@ -4934,22 +4983,29 @@ Clicking 'existing custom program' will aviod this warning. "),False):
             mesa0_3pwm = mesa1_3pwm = ''
             mesa0_ioaddr = mesa1_ioaddr = ''
             load_cmnds.append("loadrt hostmot2")
-            if '7i43' in board0:
-                mesa0_ioaddr = ' ioaddr=%s ioaddr_hi=0 epp_wide=1'% self.d.mesa0_parportaddrs
-            if '7i43' in board1:
-                mesa1_ioaddr = ' ioaddr=%s ioaddr_hi=0 epp_wide=1'% self.d.mesa1_parportaddrs
+            if '7i43' in board0 or '7i90' in board0:
+                mesa0_ioaddr = ' ioaddr=%s ioaddr_hi=0 epp_wide=0'% self.d.mesa0_parportaddrs
+            if '7i43' in board1 or '7i90' in board1:
+                if mesa0_ioaddr:
+                    mesa0_ioaddr = ' ioaddr=%s,%s ioaddr_hi=0,0 epp_wide=0,0'% (self.d.mesa0_parportaddrs, self.d.mesa1_parportaddrs)
+                else:
+                    mesa1_ioaddr = ' ioaddr=%s ioaddr_hi=0 epp_wide=0'% self.d.mesa1_parportaddrs
             if 'eth' in driver0:
                 firmstring0 =''
                 if self.d.mesa0_card_addrs:
                     board0_ip = ''' board_ip="%s"''' % self.d.mesa0_card_addrs
-            elif not "5i25" in board0:
-                firmstring0 = "firmware=hm2/%s/%s.BIT" % (directory0, firm0)
+            elif not "5i25" in board0 and not '7i90' in board0:
+                firmstring0 = "firmware=hm2/%s/%s.BIT " % (directory0, firm0)
             if 'eth' in driver1:
                 firmstring1 =''
                 if self.d.mesa1_card_addrs:
-                    board1_ip = ''' board_ip="%s"'''% self.d.mesa1_card_addrs
-            elif not "5i25" in board1:
-                firmstring1 = "firmware=hm2/%s/%s.BIT" % (directory1, firm1)
+                    if board0_ip:
+                        board0_ip = board0_ip.rstrip('"') + ","
+                        board1_ip = ' %s"'% self.d.mesa1_card_addrs
+                    else:
+                        board1_ip = ' board_ip="%s"' % self.d.mesa1_card_addrs
+            elif not "5i25" in board1 and not '7i90' in board1:
+                firmstring1 = "firmware=hm2/%s/%s.BIT " % (directory1, firm1)
 
             # TODO fix this hardcoded hack: only one serialport
             ssconfig0 = ssconfig1 = resolver0 = resolver1 = temp = ""
@@ -4987,23 +5043,28 @@ Clicking 'existing custom program' will aviod this warning. "),False):
                 mesa1_3pwm = ' num_3pwmgens=%d' %self.d.mesa1_numof_tppwmgens
 
             if self.d.number_mesa == 1:            
-                load_cmnds.append( """loadrt%s%s%s config="%s num_encoders=%d num_pwmgens=%d%s num_stepgens=%d%s%s" """ % (
-                    driver0, board0_ip, mesa0_ioaddr, firmstring0, self.d.mesa0_numof_encodergens, self.d.mesa0_numof_pwmgens, 
-                    mesa0_3pwm, self.d.mesa0_numof_stepgens, ssconfig0, resolver0))
+                load_cmnds.append( """loadrt%s%s%s config="%snum_encoders=%d num_pwmgens=%d%s num_stepgens=%d%s%s" """ % (
+                    driver0, board0_ip, mesa0_ioaddr,
+                    firmstring0, self.d.mesa0_numof_encodergens, self.d.mesa0_numof_pwmgens, mesa0_3pwm, self.d.mesa0_numof_stepgens,
+                    ssconfig0, resolver0))
             elif self.d.number_mesa == 2 and (driver0 == driver1):
-                load_cmnds.append( """loadrt%s%s%s config="%s num_encoders=%d num_pwmgens=%d%s num_stepgens=%d%s%s,\
-                                %s%s num_encoders=%d num_pwmgens=%d%s num_stepgens=%d%s%s" """ % (
-                    driver0, board0_ip, mesa0_ioaddr, firmstring0, self.d.mesa0_numof_encodergens, self.d.mesa0_numof_pwmgens,
-                     mesa0_3pwm, self.d.mesa0_numof_stepgens, ssconfig0, resolver0, mesa1_ioaddr, firmstring1,
-                    self.d.mesa1_numof_encodergens, self.d.mesa1_numof_pwmgens, mesa1_3pwm,
-                    self.d.mesa1_numof_stepgens, ssconfig1, resolver1))
+                loadstring  = """loadrt%s%s%s%s%s config="%snum_encoders=%d num_pwmgens=%d%s num_stepgens=%d%s%s,""" % (
+                    driver0, board0_ip, board1_ip, mesa0_ioaddr, mesa1_ioaddr, 
+                    firmstring0, self.d.mesa0_numof_encodergens, self.d.mesa0_numof_pwmgens, mesa0_3pwm, self.d.mesa0_numof_stepgens,
+                    ssconfig0, resolver0)
+                loadstring += """ %snum_encoders=%d num_pwmgens=%d%s num_stepgens=%d%s%s" """ % (
+                    firmstring1, self.d.mesa1_numof_encodergens, self.d.mesa1_numof_pwmgens, mesa1_3pwm, self.d.mesa1_numof_stepgens,
+                    ssconfig1, resolver1)
+                load_cmnds.append(loadstring)
             elif self.d.number_mesa == 2:
-                load_cmnds.append( """loadrt%s%s%s config="%s num_encoders=%d num_pwmgens=%d%s num_stepgens=%d%s%s" """ % (
-                    driver0, board0_ip, mesa0_ioaddr, firmstring0, self.d.mesa0_numof_encodergens, self.d.mesa0_numof_pwmgens,
-                    mesa0_3pwm, self.d.mesa0_numof_stepgens, ssconfig0, resolver0 ))
-                load_cmnds.append( """loadrt%s%s%s config="%s num_encoders=%d num_pwmgens=%d%s num_stepgens=%d%s%s" """ % (
-                    driver1, board1_ip, mesa1_ioaddr, firmstring1, self.d.mesa1_numof_encodergens, self.d.mesa1_numof_pwmgens,
-                    mesa0_3pwm, self.d.mesa1_numof_stepgens, ssconfig1, resolver1 ))
+                load_cmnds.append( """loadrt%s%s%s config="%snum_encoders=%d num_pwmgens=%d%s num_stepgens=%d%s%s" """ % (
+                    driver0, board0_ip, mesa0_ioaddr,
+                    firmstring0, self.d.mesa0_numof_encodergens, self.d.mesa0_numof_pwmgens, mesa0_3pwm, self.d.mesa0_numof_stepgens,
+                    ssconfig0, resolver0 ))
+                load_cmnds.append( """loadrt%s%s%s config="%snum_encoders=%d num_pwmgens=%d%s num_stepgens=%d%s%s" """ % (
+                    driver1, board1_ip, mesa1_ioaddr,
+                    firmstring1, self.d.mesa1_numof_encodergens, self.d.mesa1_numof_pwmgens, mesa1_3pwm, self.d.mesa1_numof_stepgens,
+                    ssconfig1, resolver1 ))
             for boardnum in range(0,int(self.d.number_mesa)):
                 if boardnum == 1 and (board0 == board1):
                     halnum = 1
@@ -5201,7 +5262,7 @@ Clicking 'existing custom program' will aviod this warning. "),False):
                 _PD.POTE:"spinena",_PD.POTD:"spindir",_PD.ANALOGIN:"analog","Error":"None" }
             boardnum = int(test[4:5])
             boardname = self.d["mesa%d_currentfirmwaredata"% boardnum][_PD._BOARDNAME]
-            meta = self.get_board_meta(boardname)
+            meta = self.get_board_meta(boardname, boardnum)
             num_of_pins = meta.get('PINS_PER_CONNECTOR')
 
             ptype = self.d[pin+"type"]

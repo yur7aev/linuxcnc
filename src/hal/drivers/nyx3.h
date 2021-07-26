@@ -5,7 +5,7 @@
  *
  *  DPRAM definition
  *
- *  (c) 2016-2020, http://yurtaev.com
+ *  (c) 2016-2021, http://yurtaev.com
  */
 
 #define RELEASE
@@ -21,7 +21,7 @@
 
 #define NYX_VER_MAJ 3
 #define NYX_VER_MIN 0
-#define NYX_VER_REV 0
+#define NYX_VER_REV 2
 
 #ifndef NYX_AXES
 #define NYX_AXES 10
@@ -54,7 +54,7 @@
 #define YC_VFF		0x00100000      // ----Y M-II velocity feed-forward
 #define YC_RST_Z	0x00200000	// z passed flag reset
 #define YC_ORIENT	0x00400000	// MDS spindle
-//#define YC_		0x00800000
+#define YC_LCOIL	0x00800000	// MDS L-coil changeover
 //#define YC_GR1	0x01000000
 //#define YC_GR2	0x02000000
 //#define YC_GR3	0x04000000
@@ -89,8 +89,8 @@
 #define YF_ABS_LOST	0x00010000	/* amp lost absolute position */
 #define YF_HOME_ACK	0x00020000
 #define YF_HOME_NACK	0x00040000
-#define YF_PARAM_ACK	0x00080000
-#define YF_PARAM_NFY	0x00100000	/* amplifier parameter w[10] changed to w[11] */
+#define YF_LCOIL	0x00080000
+#define YF_COIL_CH	0x00100000	/* amplifier parameter w[10] changed to w[11] */
 #define YF_VEL_CTL	0x00200000
 #define YF_ORIENTED	0x00400000	/* spindle */
 #define YF_ORIENTING	0x00800000
@@ -114,6 +114,8 @@
 #define YS_INDEX3	0x00008000
 #define YS_INDEXI	0x0000F000
 
+#define YS_DISABLE	0x00010000	/* disable servos */
+
 //////////////////////////////////
 
 typedef struct nyx_servo_cmd {
@@ -130,11 +132,8 @@ typedef struct nyx_servo_cmd {
 	uint16_t pval1, pno1;
 	uint16_t pval2, pno2;
 #endif
-	union {
-//		uint8_t zb[16];
-//		uint16_t zw[8];
-		uint32_t zl[2];		// 7,8
-	};
+	uint32_t mon;
+	int32_t pos64;
 } _P nyx_servo_cmd;	// 8 dwords
 
 //
@@ -179,11 +178,13 @@ typedef struct nyx_servo_fb {
 #ifdef __BIG_ENDIAN__
 	int16_t trq;
 	uint16_t alarm;		// 4
-	uint16_t pno, pval;	// 6
+//	uint16_t pno, pval;	// 6
+	int16_t mon1, mon2;	// 6
 #else
 	uint16_t alarm;
 	int16_t trq;
-	uint16_t pval, pno;
+//	uint16_t pval, pno;
+	int16_t mon2, mon1;	// 6
 #endif
 	union {
 		struct {		// Y_TYPE_ORIGIN
@@ -197,6 +198,11 @@ typedef struct nyx_servo_fb {
 		struct {		// Y_TYPE_FB
 			int32_t droop;	// 6
 			int32_t smth2;	// 7
+//#ifdef __BIG_ENDIAN__
+//			int16_t mon3, mon4;	// 6
+//#else
+//			int16_t mon4, mon3;	// 6
+//#endif
 			int32_t rxtime;	// 8 !!!DEBUG!!!
 		};
 	};
@@ -421,7 +427,7 @@ typedef struct nyx_dpram {
 			uint32_t magic;			// 55c20300
 			uint32_t config;		// v3 NEW: DACs,enc,yio,servo
 			volatile uint32_t status;	// +8 STATUS_xxx
-			uint32_t config2;		// v3 NEW: 0,0,gpo,gpi
+			uint32_t config2;		// v3 NEW: 0,dbg,gpo,gpi
 			union {
 				struct nyx_req req;
 				struct nyx_req_flash flash;

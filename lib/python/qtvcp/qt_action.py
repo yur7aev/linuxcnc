@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt
@@ -109,12 +110,13 @@ class _Lcnc_Action(object):
     def TOGGLE_LIMITS_OVERRIDE(self):
         if STATUS.is_limits_override_set() and STATUS.is_hard_limits_tripped():
             STATUS.emit('error', linuxcnc.OPERATOR_ERROR, '''Can Not Reset Limits Override - Still On Hard Limits''')
+            # let calling function know we didn't release the limit override
+            return False
         elif not STATUS.is_limits_override_set() and STATUS.is_hard_limits_tripped():
-            STATUS.emit('error', linuxcnc.OPERATOR_ERROR, 'Hard Limits Are Overridden!')
+            STATUS.emit('error', STATUS.TEMPARARY_MESSAGE, 'Hard Limits Are Overridden!')
             self.cmd.override_limits()
         else:
-            # make it temporary
-            STATUS.emit('error', 255, 'Hard Limits Are Reset To Active!')
+            STATUS.emit('error', STATUS.TEMPARARY_MESSAGE, 'Hard Limits Are Reset To Active!')
             self.cmd.override_limits()
 
     def SET_MDI_MODE(self):
@@ -123,13 +125,28 @@ class _Lcnc_Action(object):
     def SET_MANUAL_MODE(self):
         self.ensure_mode(linuxcnc.MODE_MANUAL)
 
+    # sets up a python generator that goes through the MDI list of lists.
+    # if it's a command that we have to wait indefinately
+    # ie like a manual tool change.
+    # then we wait for STATUS to return 'command-stopped'
+    # and then continue where we left off.
+    # normal commands just call normal mdi
+    # when the generator ends it forces the return
+    # to the recorded mode.
+    def CALL_MDI_LIST(self, code):
+        self.RECORD_CURRENT_MODE()
+        self.ensure_mode(linuxcnc.MODE_MDI)
+        gen = self.generate_list(code)
+        self.change_mode_after(gen)
+        next(gen)
+
     def CALL_MDI(self, code):
         self.ensure_mode(linuxcnc.MODE_MDI)
         self.cmd.mdi('%s' % code)
 
-    def CALL_MDI_WAIT(self, code, time=5):
+    def CALL_MDI_WAIT(self, code, time=5, mode_return=False):
         log.debug('MDI_WAIT_COMMAND= {}, maxt = {}'.format(code, time))
-        self.ensure_mode(linuxcnc.MODE_MDI)
+        fail, premode = self.ensure_mode(linuxcnc.MODE_MDI)
         for l in code.split("\n"):
             log.debug('MDI_COMMAND: {}'.format(l))
             self.cmd.mdi(l)
@@ -148,6 +165,8 @@ class _Lcnc_Action(object):
                 STATUS.emit('error', result[0], result[1])
                 log.error('MDI_COMMAND_WAIT Error channel: {}'.format(result[1]))
                 return -1
+        if mode_return:
+            self.ensure_mode(premode)
         return 0
 
     def CALL_INI_MDI(self, number):
@@ -223,22 +242,22 @@ class _Lcnc_Action(object):
             if old == fname:
                 STATUS.emit('file-loaded', fname)
 
-    def SAVE_PROGRAM(self, source, fname):
+    def SAVE_PROGRAM(self, source, fname, ending = '.ngc'):
         # no gcode - ignore
         if source == '':
-            return
+            return None
 
         npath = None
         # normalize to absolute path
         try:
             path = os.path.abspath(fname)
             if '.' not in path:
-                path += '.ngc'
+                path += ending
             if path.count('.') > 1:
                 e = 'Save Error: Multiple \'.\' not allowed in Linuxcnc'
                 STATUS.emit('error', linuxcnc.OPERATOR_ERROR, e)
                 log.debug(e)
-                return
+                return None
             name, ext = path.rsplit('.')
             npath = name + '.' + ext.lower()
         except Exception as e:
@@ -256,11 +275,17 @@ class _Lcnc_Action(object):
         except Exception as e:
             print(e)
             STATUS.emit('error', linuxcnc.OPERATOR_ERROR, e)
+            try:
+                outfile.close()
+            except:
+                pass
+            return None
         finally:
             try:
                 outfile.close()
             except:
                 pass
+            return npath
 
     def SET_AXIS_ORIGIN(self, axis, value):
         if axis == '' or axis.upper() not in ("XYZABCUVW"):
@@ -636,6 +661,15 @@ class _Lcnc_Action(object):
         self.CALL_MDI("G10 L2 P0 R0")
         self.RELOAD_DISPLAY()
 
+    # Some systems need repeat disabled for keyboard jogging because repeat rate is uneven
+    def DISABLE_AUTOREPEAT_KEYS(self, keys={'34','35','111','112','113','114','116','117'}):
+        for k in keys:
+            subprocess.Popen('xset -r {}'.format(k), stdout = subprocess.PIPE, shell = True)
+
+    def ENABLE_AUTOREPEAT_KEYS(self, keys={'34','35','111','112','113','114','116','117'}):
+        for k in keys:
+            subprocess.Popen('xset r {}'.format(k), stdout = subprocess.PIPE, shell = True)
+
     ######################################
     # Action Helper functions
     ######################################
@@ -693,6 +727,40 @@ class _Lcnc_Action(object):
             return
         self.tmp = tempfile.mkdtemp(prefix='emcflt-', suffix='.d')
         atexit.register(lambda: shutil.rmtree(self.tmp))
+
+
+    #-------MDI call list helpers----------
+    def change_mode_after(self, gen):
+        self._a = STATUS.connect('command-stopped', lambda w: self.command_stopped(gen))
+        print self._a
+    # when command stops - we try to continue the generator.
+    # if generator is done - return to recorded mode.
+    def command_stopped(self, gen):
+        print gen,'stopped'
+        try:
+            state = next(gen)
+            print gen,'returned:',state
+        except StopIteration:
+            STATUS.handler_disconnect(self._a)
+            self.RESTORE_RECORDED_MODE()
+    # python generator that goes through the MDI list.
+    # if it's a command that we have to wait indefinately
+    # ie like a manual tool change.
+    # then we wait for STATUS to return 'command-stopped'
+    # and then continue where we left off.
+    # normal commands just call normal mdi
+    # when the generator ends it forces the return
+    # to the recorded mode.
+    def generate_list(self,cmdList):
+        for calltype, cmd in cmdList:
+            print calltype, 'cmd', cmd
+            if calltype == 'commandStatusWait':
+                self.cmd.mdi('%s' % cmd)
+                yield cmd
+            else:
+                result = self.CALL_MDI_WAIT(cmd,mode_return=False)
+                if result == -1:
+                    print 'error'
 
     def __getitem__(self, item):
         return getattr(self, item)

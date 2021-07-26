@@ -345,27 +345,29 @@ class Notification(Tkinter.Frame):
 
     def add(self, iconname, message):
         self.place(relx=1, rely=1, y=-20, anchor="se")
-        iconname = self.tk.call("load_image", "std_" + iconname)
+        iconname_image = self.tk.call("load_image", "std_" + iconname)
         close = self.tk.call("load_image", "close", "notification-close")
         if len(self.widgets) > 10:
             self.remove(self.widgets[0])
         if self.cache:
             frame, icon, text, button, discard = self.cache.pop()
-            icon.configure(image=iconname)
+            icon.configure(image=iconname_image)
             text.configure(text=message)
-            widgets = frame, icon, text, button, iconname
+            widgets = frame, icon, text, button, iconname_image
         else:
             frame = Tkinter.Frame(self)
-            icon = Tkinter.Label(frame, image=iconname)
+            icon = Tkinter.Label(frame, image=iconname_image)
             text = Tkinter.Label(frame, text=message, wraplength=300, justify="left")
             button = Tkinter.Button(frame, image=close)
-            widgets = frame, icon, text, button, iconname
+            widgets = frame, icon, text, button, iconname_image
             text.pack(side="left")
             icon.pack(side="left")
             button.pack(side="left")
         button.configure(command=lambda: self.remove(widgets))
         frame.pack(side="top", anchor="e")
         self.widgets.append(widgets)
+        if iconname == "error":
+           comp["error"] = True
 
     def remove(self, widgets):
         self.widgets.remove(widgets)
@@ -376,6 +378,18 @@ class Notification(Tkinter.Frame):
             widgets[0].destroy()
         if len(self.widgets) == 0:
             self.place_forget()
+        if self._remaining_error_count() == 0:
+            comp["error"] = False
+
+    def _remaining_error_count(self):
+        """ Returns the count of remaining error messages """
+        count = 0
+        for i, item in enumerate(self.widgets):
+            frame, icon, text, button, iname = item
+            if iname == "icon_std_error":
+                count += 1
+        return count
+
 
 def soft_limits():
     def fudge(x):
@@ -2356,8 +2370,11 @@ class TclCommands(nf.TclCommands):
     def task_stop(*event):
         if s.task_mode == linuxcnc.MODE_AUTO and vars.running_line.get() != 0:
             o.set_highlight_line(vars.running_line.get())
+        comp["abort"] = True
         c.abort()
         c.wait_complete()
+        time.sleep(0.3)
+        comp["abort"] = False
 
     def mdi_up_cmd(*args):
         if args and args[0].char: return   # e.g., for KP_Up with numlock on
@@ -3295,7 +3312,7 @@ vars.machine.set(inifile.find("EMC", "MACHINE"))
 extensions = inifile.findall("FILTER", "PROGRAM_EXTENSION")
 extensions = [e.split(None, 1) for e in extensions]
 extensions = tuple([(v, tuple(k.split(","))) for k, v in extensions])
-postgui_halfile = inifile.find("HAL", "POSTGUI_HALFILE")
+postgui_halfile = inifile.findall("HAL", "POSTGUI_HALFILE") or None
 max_feed_override = float(inifile.find("DISPLAY", "MAX_FEED_OVERRIDE") or 1.0)
 max_spindle_override = float(inifile.find("DISPLAY", "MAX_SPINDLE_OVERRIDE") or max_feed_override)
 max_feed_override = int(max_feed_override * 100 + 0.5)
@@ -3619,7 +3636,7 @@ for jnum in range(num_joints):
         ja_name = _("Joint")
         if not homing_order_defined:
             widgets.homebutton.configure(text=_("Home Joint"))
-        if joint_sequence[jnum] is '':
+        if joint_sequence[jnum] == '':
             ja_id = "%d"%jnum
         elif (int(joint_sequence[jnum]) < 0):
             ja_id = "%d (Sequence: %2s SYNC)"%(jnum,joint_sequence[jnum])
@@ -3865,6 +3882,8 @@ if hal_present == 1 :
     comp.newpin("notifications-clear-info",hal.HAL_BIT,hal.HAL_IN)
     comp.newpin("notifications-clear-error",hal.HAL_BIT,hal.HAL_IN)
     comp.newpin("resume-inhibit",hal.HAL_BIT,hal.HAL_IN)
+    comp.newpin("error", hal.HAL_BIT, hal.HAL_OUT)
+    comp.newpin("abort", hal.HAL_BIT, hal.HAL_OUT)
 
     vars.has_ladder.set(hal.component_exists('classicladder_rt'))
 
@@ -4018,12 +4037,13 @@ def check_dynamic_tabs():
                              (" ".join(cmd), r))
         raise SystemExit(r)
     else:
-        if postgui_halfile:
-            if postgui_halfile.lower().endswith('.tcl'):
-                res = os.spawnvp(os.P_WAIT, "haltcl", ["haltcl", "-i", vars.emcini.get(), postgui_halfile])
-            else:
-                res = os.spawnvp(os.P_WAIT, "halcmd", ["halcmd", "-i", vars.emcini.get(), "-f", postgui_halfile])
-            if res: raise SystemExit(res)
+        if postgui_halfile is not None:
+            for f in postgui_halfile:
+                if f.lower().endswith('.tcl'):
+                    res = os.spawnvp(os.P_WAIT, "haltcl", ["haltcl", "-i", vars.emcini.get(), f])
+                else:
+                    res = os.spawnvp(os.P_WAIT, "halcmd", ["halcmd", "-i", vars.emcini.get(), "-f", f])
+                if res: raise SystemExit(res)
         root_window.deiconify()
         destroy_splash()
         return

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gmoccapy\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-07 18:02+0100\n"
-"PO-Revision-Date: 2021-03-07 18:10+0100\n"
+"POT-Creation-Date: 2021-05-14 10:21+0200\n"
+"PO-Revision-Date: 2021-05-14 10:24+0200\n"
 "Last-Translator: Norbert Schechner <gmoccapy@web.de>\n"
 "Language-Team: N. Schechner <gmoccapy@web.de>\n"
 "Language: de\n"
@@ -44,12 +44,12 @@ msgstr "Logo Eintrag gefunden, konnte aber den Pfad nicht auflösen\n"
 
 #: gmoccapy.py:245
 msgid "The file path should not contain any spaces"
-msgstr "Der Dateipfad sollte keine Lehrzeichen enthalten"
+msgstr "Der Dateipfad sollte keine Leerzeichen enthalten"
 
 #: gmoccapy.py:632
 #, python-brace-format
 msgid "Press to home all {0}"
-msgstr "Drucken um alle Achsen zu referenzieren{0}"
+msgstr "Drücken um alle Achsen zu referenzieren{0}"
 
 #: gmoccapy.py:641 gmoccapy.py:891
 msgid "Press to display previous homing button"
@@ -67,13 +67,13 @@ msgstr "Drücken um die nächsten Referenzknöpfe zu zeigen"
 #: gmoccapy.py:687
 #, python-brace-format
 msgid "Press to unhome all {0}"
-msgstr "Drücken um die Referenz aller Achsen aufzuheben{0}"
+msgstr "Drücken um die Referenz aller Achsen aufzuheben {0}"
 
 #: gmoccapy.py:693 gmoccapy.py:951
 msgid "Press to return to main button list"
 msgstr "Gehe zurück zur Hauptknopfleiste"
 
-#: gmoccapy.py:723 gmoccapy.py:1795 gmoccapy.py:2036
+#: gmoccapy.py:723 gmoccapy.py:1796 gmoccapy.py:2037
 msgid "**** GMOCCAPY ERROR ****\n"
 msgstr "**** GMOCCAPY FEHLER ****\n"
 
@@ -137,16 +137,16 @@ msgstr ""
 msgid "Press to set the selected coordinate system to be the active one"
 msgstr "Setze das gewählte Koordinatensystem als aktives"
 
-#: gmoccapy.py:966 gmoccapy.py:982 gmoccapy.py:1126 gmoccapy.py:1699
-#: gmoccapy.py:1857 gmoccapy.py:1870 gmoccapy.py:1880 gmoccapy.py:1951
-#: gmoccapy.py:1958 gmoccapy.py:1961
+#: gmoccapy.py:966 gmoccapy.py:982 gmoccapy.py:1127 gmoccapy.py:1700
+#: gmoccapy.py:1858 gmoccapy.py:1871 gmoccapy.py:1881 gmoccapy.py:1952
+#: gmoccapy.py:1959 gmoccapy.py:1962
 msgid "**** GMOCCAPY INFO ****"
 msgstr "**** GMOCCAPY INFO ****"
 
 #: gmoccapy.py:967
 msgid "**** no valid probe config in INI File ****"
 msgstr ""
-"**** Keine gültige Werkzeugvermessungs Konfiguration in der INI Datei ****"
+"**** Keine gültige Werkzeugvermessungskonfiguration in der INI Datei ****"
 
 #: gmoccapy.py:968
 msgid "**** disabled tool measurement ****"
@@ -176,138 +176,134 @@ msgstr "**** Nur die ersten 10 werden erreichbar sein. ****"
 msgid "Continuous"
 msgstr "Durchgehend"
 
-#: gmoccapy.py:1127
+#: gmoccapy.py:1128
 #, python-brace-format
 msgid "unknown jog command {0}"
 msgstr "Unbekannter Jog Befehl {0}"
 
-#: gmoccapy.py:1154
+#: gmoccapy.py:1155
 #, python-brace-format
 msgid "Press to jog axis {0}"
 msgstr "Drücken um Achse {0} zu verfahren"
 
-#: gmoccapy.py:1173
+#: gmoccapy.py:1174
 #, python-brace-format
 msgid "Press to jog joint {0}"
-msgstr "Drücken um Joint {0} zu verfahren"
+msgstr "Drücken um Gelenk {0} zu verfahren"
 
-#: gmoccapy.py:1196
+#: gmoccapy.py:1197
 msgid "**** GMOCCAPY INFO ****\n"
 msgstr "**** GMOCCAPY INFO ****\n"
 
-#: gmoccapy.py:1197
+#: gmoccapy.py:1198
 msgid "**** found more than 16 macros, will use only the first 16 ****"
 msgstr ""
-"**** Mehr wie 16 Makros sind nicht erlaubt, nur die ersten 16 werden "
+"**** Mehr als 16 Makros sind nicht erlaubt, nur die ersten 16 werden "
 "berücksichtigt ****"
 
-#: gmoccapy.py:1204
+#: gmoccapy.py:1205
 msgid "Press to display previous macro button"
-msgstr "Drücken um die vorherigen Makro anzuzeigen"
+msgstr "Drücken um die vorherigen Makros anzuzeigen"
 
-#: gmoccapy.py:1223
+#: gmoccapy.py:1224
 #, python-brace-format
 msgid "Press to run macro {0}"
 msgstr "Drücken um Makro {0} auszuführen"
 
-#: gmoccapy.py:1230
+#: gmoccapy.py:1231
 msgid "Press to display next macro button"
 msgstr "Drücken um weitere Makros anzuzeigen"
 
-#: gmoccapy.py:1250
+#: gmoccapy.py:1251
 msgid "Press to display the virtual keyboard"
 msgstr "Virtuelle Tastatur anzeigen oder verbergen"
 
-#: gmoccapy.py:1349
+#: gmoccapy.py:1350
 msgid "*****  GMOCCAPY ERROR  *****"
 msgstr "**** GMOCCAPY FEHLER ****"
 
-#: gmoccapy.py:1350
+#: gmoccapy.py:1351
 msgid "this is not a lathe, as a lathe must have at least\n"
 msgstr "Dies ist keine Drehmaschine, eine solche muss zumindest\n"
 
-#: gmoccapy.py:1351
+#: gmoccapy.py:1352
 msgid "an X and an Z axis\n"
 msgstr "eine X und Z Achse enthalten\n"
 
-#: gmoccapy.py:1352
+#: gmoccapy.py:1353
 msgid "Wrong lathe configuration, we will leave here"
 msgstr "Falsche Drehmaschinenkonfiguration, wir beenden hier"
 
-#: gmoccapy.py:1353 gmoccapy.py:1798 gmoccapy.py:2039
+#: gmoccapy.py:1354 gmoccapy.py:1799 gmoccapy.py:2040
 msgid "Very critical situation"
 msgstr "Sehr kritische Situation"
 
-#: gmoccapy.py:1503
+#: gmoccapy.py:1504
 msgid "*****  GMOCCAPY INFO  *****"
 msgstr "**** GMOCCAPY INFO ****"
 
-#: gmoccapy.py:1504
+#: gmoccapy.py:1505
 msgid "this is not a usual config\n"
 msgstr "Dies ist keine gängige Konfiguration\n"
 
-#: gmoccapy.py:1505
+#: gmoccapy.py:1506
 msgid "we miss one of X , Y or Z axis\n"
 msgstr "Eine der Achsen X, Y oder Z fehlt\n"
 
-#: gmoccapy.py:1506
+#: gmoccapy.py:1507
 msgid "We will use by axisletter ordered jog button"
 msgstr "Die Verfahrknöpfe werden nach Achsenbuchstaben sortiert"
 
-#: gmoccapy.py:1672 gmoccapy.py:2704
+#: gmoccapy.py:1673 gmoccapy.py:2707
 msgid "mm/min"
 msgstr "mm/min"
 
-#: gmoccapy.py:1675 gmoccapy.py:2707
+#: gmoccapy.py:1676 gmoccapy.py:2710
 msgid "inch/min"
-msgstr "inch/mm"
+msgstr "inch/min"
 
-#: gmoccapy.py:1700
+#: gmoccapy.py:1701
 msgid "**** Invalid embedded tab configuration ****"
 msgstr ""
 "**** Ungültige Konfiguration der eingebundenen Programme (embedded tab) ****"
 
-#: gmoccapy.py:1701
+#: gmoccapy.py:1702
 msgid "**** No tabs will be added! ****"
 msgstr "**** Es werden keine externe Programme eingebunden ****"
 
-#: gmoccapy.py:1714
+#: gmoccapy.py:1715
 msgid "ERROR, trying to initialize the user tabs or panels, check for typos"
 msgstr ""
 "FEHLER : Beim Versuch die User Tabs oder Teilprogramme zu initialisieren. "
 "Bitte auf Rechtschreibfehler achten."
 
-#: gmoccapy.py:1796
+#: gmoccapy.py:1797
 msgid "**** Did not find a toolfile file in [EMCIO] TOOL_TABLE ****"
 msgstr ""
 "**** Keine Datei zur Werkzeugverwaltung in der INI Datei [EMCIO] TOOL_TABLE "
 "angegeben ****"
 
-#: gmoccapy.py:1821
-msgid "Follow System Theme"
-msgstr "System Thema anwenden"
-
-#: gmoccapy.py:1858
+#: gmoccapy.py:1859
 msgid "**** audio available! ****"
 msgstr "**** Audio Meldungen verfügbar ****"
 
-#: gmoccapy.py:1871
+#: gmoccapy.py:1872
 msgid "**** no audio available! ****"
 msgstr "**** Keine Audio Meldung möglich **** "
 
-#: gmoccapy.py:1872
-msgid "**** PYGST libray not installed? ****"
-msgstr "**** PYGST libray nicht installiert? ****"
-
 #: gmoccapy.py:1873
-msgid "**** is python-gstX.XX installed? ****"
-msgstr "**** PYGST libray nicht installiert? ****"
+msgid "**** PYGST libray not installed? ****"
+msgstr "**** PYGST library nicht installiert? ****"
 
-#: gmoccapy.py:1881
+#: gmoccapy.py:1874
+msgid "**** is python-gstX.XX installed? ****"
+msgstr "**** PYGST library nicht installiert? ****"
+
+#: gmoccapy.py:1882
 msgid "**** Entering init gremlin ****"
 msgstr "**** Gremlin Einrichtung gestartet ****"
 
-#: gmoccapy.py:1901 gmoccapy.py:4796
+#: gmoccapy.py:1902 gmoccapy.py:4799
 msgid ""
 " Joint\n"
 "mode"
@@ -315,15 +311,15 @@ msgstr ""
 " Joint\n"
 "mode"
 
-#: gmoccapy.py:1952
+#: gmoccapy.py:1953
 msgid "**** virtual keyboard program found : <onboard>"
 msgstr "**** Virtuelle Tastatur gefunden : <onboard>"
 
-#: gmoccapy.py:1959
+#: gmoccapy.py:1960
 msgid "**** virtual keyboard program found : <matchbox-keyboard>"
 msgstr "**** Virtuelle Tastatur gefunden : <matchbox-keyboard>"
 
-#: gmoccapy.py:1962
+#: gmoccapy.py:1963
 msgid ""
 "**** No virtual keyboard installed, we checked for <onboard> and <matchbox-"
 "keyboard>."
@@ -331,214 +327,213 @@ msgstr ""
 "**** Keine virtuelle Tastatur installiert, geprüft wurde nach <onboard> und "
 "<matchbox-keyboard>."
 
-#: gmoccapy.py:1973 gmoccapy.py:3148 gmoccapy.py:3158
+#: gmoccapy.py:1974 gmoccapy.py:3151 gmoccapy.py:3161
 msgid "**** GMOCCAPY ERROR ****"
 msgstr "**** GMOCCAPY FEHLER ****"
 
-#: gmoccapy.py:1974
+#: gmoccapy.py:1975
 msgid "**** Error with launching virtual keyboard,"
 msgstr "**** Fehler beim Aktivieren der virtuellen Bildschirmtastatur."
 
-#: gmoccapy.py:1975
+#: gmoccapy.py:1976
 msgid "**** is onboard or matchbox-keyboard installed? ****"
 msgstr "**** ist onboard oder matchbox-keyboard installiert? ****"
 
-#: gmoccapy.py:2007 gmoccapy.py:2828
+#: gmoccapy.py:2008 gmoccapy.py:2831
 msgid "interrupt running macro"
 msgstr "Makro unterbrechen"
 
-#: gmoccapy.py:2037
+#: gmoccapy.py:2038
 msgid "**** Did not find a parameter file in [RS274NGC] PARAMETER_FILE ****"
 msgstr ""
 "**** Keine Parameter Datei unter [RS274NGC] PARAMETER_FILE gefunden ****"
 
-#: gmoccapy.py:2107
+#: gmoccapy.py:2108
 msgid "Select the file you want to be loaded at program start"
 msgstr "Bitte die Datei auswählen, die zum Start geladen werden soll."
 
-#: gmoccapy.py:2141 gmoccapy.py:2165
+#: gmoccapy.py:2142 gmoccapy.py:2166
 #, python-brace-format
 msgid "**** GMOCCAPY ERROR **** /n Message type {0} not supported"
 msgstr "**** GMOCCAPY FEHLER **** /n Meldungstyp {0} wird nicht unterstützt"
 
-#: gmoccapy.py:2278
+#: gmoccapy.py:2279
 msgid "Unknown error type and no error text given"
 msgstr "Unbekannter Fehlertyp und kein Fehlertext angegeben"
 
-#: gmoccapy.py:2292
+#: gmoccapy.py:2293
 msgid "Important Warning"
 msgstr "Wichtige Warnung"
 
-#: gmoccapy.py:2312
-msgid "ERROR : External ESTOP is set, could not change state!"
-msgstr "FEHLER : Externer Not Aus ist aktiv, konnte den Status nicht wechseln!"
+#: gmoccapy.py:2313
+msgid "External ESTOP is set, could not change state!"
+msgstr "Externer Not-Aus ist aktiv, konnte den Status nicht wechseln!"
 
-#: gmoccapy.py:2325
-msgid "ERROR : Could not switch the machine on, is limit switch activated?"
-msgstr ""
-"FEHLER : Konnte die Maschine nicht einschalten, ist ein Endschalter aktiv?"
+#: gmoccapy.py:2326
+msgid "Could not switch the machine on, is limit switch activated?"
+msgstr "Konnte die Maschine nicht einschalten, ist ein Endschalter aktiv?"
 
-#: gmoccapy.py:2405
+#: gmoccapy.py:2406
 msgid "No file loaded"
 msgstr "Kein Programm geladen"
 
-#: gmoccapy.py:2594
+#: gmoccapy.py:2597
 msgid "It is not possible to change to MDI Mode at the moment"
 msgstr "Es ist derzeit nicht möglich in den MDI Modus zu wechseln"
 
-#: gmoccapy.py:2626
+#: gmoccapy.py:2629
 msgid "It is not possible to change to Auto Mode at the moment"
 msgstr "Es ist derzeit nicht möglich in den AUTO Modus zu wechseln."
 
-#: gmoccapy.py:2787
+#: gmoccapy.py:2790
 msgid "Enter value:"
 msgstr "Wert eingeben:"
 
-#: gmoccapy.py:2788
+#: gmoccapy.py:2791
 #, python-brace-format
 msgid "Set parameter {0} to:"
 msgstr "Setze Parameter {0} zu:"
 
-#: gmoccapy.py:2790
+#: gmoccapy.py:2793
 msgid "conversion error"
 msgstr "Umwandlungsfehler"
 
-#: gmoccapy.py:2791 gmoccapy.py:4493 gmoccapy.py:4516
+#: gmoccapy.py:2794 gmoccapy.py:4496 gmoccapy.py:4519
 msgid "Conversion error !"
 msgstr "Umwandlungsfehler !"
 
-#: gmoccapy.py:2826
+#: gmoccapy.py:2829
 msgid "This button will show or hide the keyboard"
 msgstr "Dieser Knopf wird das Keyboard anzeigen oder verbergen"
 
-#: gmoccapy.py:2934
+#: gmoccapy.py:2937
 msgid "Mode change is only allowed if the interpreter is idle!"
-msgstr "Modus wechsel ist nur bei inaktivem Interpreter möglich"
+msgstr "Moduswechsel ist nur bei inaktivem Interpreter möglich"
 
-#: gmoccapy.py:3149
+#: gmoccapy.py:3152
 #, python-brace-format
 msgid "**** {0} ****"
 msgstr "**** {0} ****"
 
-#: gmoccapy.py:3159
+#: gmoccapy.py:3162
 #, python-brace-format
 msgid "**** No widget named: {0} to sensitize ****"
 msgstr "**** Keine Widget mit Namen {0} zum Aktivieren ****"
 
-#: gmoccapy.py:3321 gmoccapy.glade.h:33
+#: gmoccapy.py:3324 gmoccapy.glade.h:33
 msgid "No tool description available"
 msgstr "Keine Werkzeugbeschreibung verfügbar"
 
-#: gmoccapy.py:3462
+#: gmoccapy.py:3465
 #, python-brace-format
 msgid "Halo, welcome to the test message {0}"
 msgstr "Hallo, dies ist die {0}. Testnachricht."
 
-#: gmoccapy.py:3558
+#: gmoccapy.py:3561
 msgid "Hal Pin is low, Access denied"
 msgstr "Hal pin ist nicht aktiv, Zugang verweigert"
 
-#: gmoccapy.py:3560
+#: gmoccapy.py:3563
 msgid "wrong code entered, Access denied"
 msgstr "Falscher Code, Zugang verweigert"
 
-#: gmoccapy.py:3561
+#: gmoccapy.py:3564
 msgid "Just to warn you"
 msgstr "Nur zur Warnung"
 
-#: gmoccapy.py:3701
+#: gmoccapy.py:3704
 msgid "INFO:"
 msgstr "INFO:"
 
-#: gmoccapy.py:3702
+#: gmoccapy.py:3705
 msgid "Classicladder real-time component not detected"
 msgstr "Die Echtzeitkomponente Classicladder wurde nicht gefunden."
 
-#: gmoccapy.py:3817
+#: gmoccapy.py:3820
 #, python-brace-format
 msgid "Something went wrong, we have an unknown spindle widget {0}"
 msgstr "Irgendwas lief falsch, es wurde ein unbekanntes Widget {0} übergeben"
 
-#: gmoccapy.py:3928
+#: gmoccapy.py:3931
 msgid "Do you really want to delete the MDI history?\n"
 msgstr "Wollen Sie wirklich die MDI Historie löschen?\n"
 
-#: gmoccapy.py:3929
+#: gmoccapy.py:3932
 msgid "this will not delete the MDI History file, but will\n"
 msgstr "dies wird nicht die History Datei löschen, sondern \n"
 
-#: gmoccapy.py:3930
+#: gmoccapy.py:3933
 msgid "delete the listbox entries for this session"
 msgstr "nur die Einträge der Listbox werden entfernt."
 
-#: gmoccapy.py:3931 gmoccapy.py:3979
+#: gmoccapy.py:3934 gmoccapy.py:3982
 msgid "Attention!!"
 msgstr "Achtung!!"
 
-#: gmoccapy.py:4056
+#: gmoccapy.py:4059
 msgid "Enter value for diameter"
 msgstr "Bitte Wert für den Durchmesser eingeben"
 
-#: gmoccapy.py:4057
-msgid "Set diameter to:"
-msgstr "Setze Durchmesser zu:"
-
 #: gmoccapy.py:4060
-msgid "Enter value for radius"
-msgstr "Bitte Wert für den Raius eingeben"
+msgid "Set diameter to:"
+msgstr "Setze Durchmesser auf:"
 
-#: gmoccapy.py:4061
-msgid "Set radius to:"
-msgstr "Setze Radius zu:"
+#: gmoccapy.py:4063
+msgid "Enter value for radius"
+msgstr "Bitte Wert für den Radius eingeben"
 
 #: gmoccapy.py:4064
+msgid "Set radius to:"
+msgstr "Setze Radius auf:"
+
+#: gmoccapy.py:4067
 #, python-brace-format
 msgid "Enter value for axis {0}"
 msgstr "Bitte Wert für Achse {0} eingeben"
 
-#: gmoccapy.py:4065
+#: gmoccapy.py:4068
 #, python-brace-format
 msgid "Set axis {0} to:"
-msgstr "Setze Achse {0} zu:"
+msgstr "Setze Achse {0} auf:"
 
-#: gmoccapy.py:4069
+#: gmoccapy.py:4072
 msgid "Conversion error in btn_set_value"
 msgstr "Umwandlungsfehler in btn_set_value"
 
-#: gmoccapy.py:4070
+#: gmoccapy.py:4073
 msgid "Conversion error in btn_set_value!"
 msgstr "Umwandlungsfehler in btn_set_value"
 
-#: gmoccapy.py:4071
+#: gmoccapy.py:4074
 msgid "Please enter only numerical values. Values have not been applied"
 msgstr ""
 "Bitte nur numerische Werte eingeben. Die Werte wurden nicht angewendet."
 
-#: gmoccapy.py:4085
+#: gmoccapy.py:4088
 msgid ""
 "you did not selected a system to be changed to, so nothing will be changed"
 msgstr ""
 "Sie haben kein zu setzendes Koordinatensystem gewählt, es wird nicht "
 "gewechselt."
 
-#: gmoccapy.py:4086 gmoccapy.py:4522 gmoccapy.py:4536 gmoccapy.py:4540
-#: gmoccapy.py:4555
+#: gmoccapy.py:4089 gmoccapy.py:4525 gmoccapy.py:4539 gmoccapy.py:4543
+#: gmoccapy.py:4558
 msgid "Important Warning!"
 msgstr "Wichtige Warnung!"
 
-#: gmoccapy.py:4136
+#: gmoccapy.py:4139
 msgid "Enter the block height"
 msgstr "Bitte die Werkstückhöhe über Tisch angeben"
 
-#: gmoccapy.py:4137
+#: gmoccapy.py:4140
 msgid "Block height measured from base table"
 msgstr "Werkstückoberfläche vom Tisch aus gemessen"
 
-#: gmoccapy.py:4149
+#: gmoccapy.py:4152
 msgid "Conversion error in btn_block_height!"
 msgstr "Umwandlungsfehler in btn_block_height!"
 
-#: gmoccapy.py:4150
+#: gmoccapy.py:4153
 msgid ""
 "Please enter only numerical values\n"
 "Values have not been applied"
@@ -546,11 +541,11 @@ msgstr ""
 "Bitte nur numerische Werte eingeben\n"
 "Die Werte wurden nicht angewendet."
 
-#: gmoccapy.py:4415
+#: gmoccapy.py:4418
 msgid "Please remove the mounted tool and press OK when done"
 msgstr "Bitte das Werkzeug entnehmen und dann OK klicken."
 
-#: gmoccapy.py:4418
+#: gmoccapy.py:4421
 #, python-brace-format
 msgid ""
 "Please change to tool\n"
@@ -565,128 +560,128 @@ msgstr ""
 "\n"
 "ein und klicken dann auf OK"
 
-#: gmoccapy.py:4419
+#: gmoccapy.py:4422
 msgid "Manual Tool change"
 msgstr "Manueller Werkzeugwechsel"
 
-#: gmoccapy.py:4428
+#: gmoccapy.py:4431
 msgid "Tool Change has been aborted!\n"
 msgstr "Werkzeugwechsel wurde abgebrochen!\n"
 
-#: gmoccapy.py:4429
+#: gmoccapy.py:4432
 msgid "The old tool will remain set!"
 msgstr "Das alte Werkzeug bleibt gesetzt!"
 
-#: gmoccapy.py:4437
+#: gmoccapy.py:4440
 msgid "You are trying to delete the tool mounted in the spindle\n"
 msgstr ""
 "Sie können kein Werkzeug löschen solange es in der Spindel eingebaut ist!\n"
 
-#: gmoccapy.py:4438
+#: gmoccapy.py:4441
 msgid "This is not allowed, please change tool prior to delete it"
 msgstr ""
 "Dies ist nicht erlaubt, bitte Werkzeug wechseln, bevor es gelöscht wird"
 
-#: gmoccapy.py:4439
+#: gmoccapy.py:4442
 msgid "Warning Tool can not be deleted!"
 msgstr "Warnung: Werkzeug kann nicht gelöscht werden"
 
-#: gmoccapy.py:4458
+#: gmoccapy.py:4461
 msgid "No or more than one tool selected in tool table"
-msgstr "Sie haben kein, oder mehr als ein Werkzeug ausgewählt"
+msgstr "Sie haben kein oder mehr als ein Werkzeug ausgewählt"
 
-#: gmoccapy.py:4459
+#: gmoccapy.py:4462
 msgid "Please select only one tool in the table"
 msgstr "Bitte nur ein Werkzeug auswählen"
 
-#: gmoccapy.py:4460 gmoccapy.py:4466 gmoccapy.py:4474
+#: gmoccapy.py:4463 gmoccapy.py:4469 gmoccapy.py:4477
 msgid "Warning Tool Touch off not possible!"
 msgstr "Warnung: Werkzeug Antastung nicht möglich"
 
-#: gmoccapy.py:4464
+#: gmoccapy.py:4467
 msgid "you can not touch of a tool, witch is not mounted in the spindle"
-msgstr "Sie können kein Werkzeug antasten, dass nicht eingebaut ist!"
+msgstr "Sie können kein Werkzeug antasten, das nicht eingebaut ist!"
 
-#: gmoccapy.py:4465
+#: gmoccapy.py:4468
 msgid "your selection has been reseted to the tool in spindle"
 msgstr "Ihre Auswahl wurde zurück gesetzt auf das Werkzeug in der Spindel."
 
-#: gmoccapy.py:4472
+#: gmoccapy.py:4475
 msgid ""
 "Tool touch off is not possible with cutter radius compensation switched on!\n"
 msgstr ""
 "Werkzeug antasten ist bei eingeschalteter Werkzeugradienkompensation nicht "
 "möglich.\n"
 
-#: gmoccapy.py:4473
+#: gmoccapy.py:4476
 msgid "Please emit an G40 before tool touch off"
 msgstr "Bitte G40 vor dem Antasten setzen "
 
-#: gmoccapy.py:4482
+#: gmoccapy.py:4485
 msgid "Real big error!"
-msgstr "Echt großer Fehler !"
+msgstr "Echt großer Fehler!"
 
-#: gmoccapy.py:4483
+#: gmoccapy.py:4486
 msgid ""
 "You managed to come to a place that is not possible in on_btn_tool_touchoff"
 msgstr ""
 "Sie haben es geschafft einen Bereich zu erreichen, der nicht erreichbar ist "
 "in on_btn_tool_touchoff"
 
-#: gmoccapy.py:4487
+#: gmoccapy.py:4490
 #, python-brace-format
 msgid "Enter value for axis {0} to set:"
 msgstr "Bitte den für die {0} Achse zu setzenden Wert eingeben"
 
-#: gmoccapy.py:4488
+#: gmoccapy.py:4491
 #, python-brace-format
 msgid "Set parameter of tool {0:d} and axis {1} to:"
 msgstr "Setze Parameter von Werkzeug {0:d} und Achse {1} auf:"
 
-#: gmoccapy.py:4492
+#: gmoccapy.py:4495
 #, python-brace-format
 msgid "Conversion error because of wrong entry for touch off axis {0}"
 msgstr ""
 "Umwandlungsfehler auf Grund einer falschen Eingabe bei Werkzeugantastung für "
 "Achse {0}"
 
-#: gmoccapy.py:4511
+#: gmoccapy.py:4514
 msgid "Enter the tool number as integer "
 msgstr "Bitte die Werkzeugnummer eingeben"
 
-#: gmoccapy.py:4512
+#: gmoccapy.py:4515
 msgid "Select the tool to change"
 msgstr "Wähle das einzuwechselnde Werkzeug"
 
-#: gmoccapy.py:4514
+#: gmoccapy.py:4517
 msgid "Conversion error because of wrong entry for tool number\n"
 msgstr ""
 "Umwandlungsfehler, verursacht durch falsche Eingabe bei der Werkzeugnummer\n"
 
-#: gmoccapy.py:4515
+#: gmoccapy.py:4518
 msgid "enter only integer numbers"
 msgstr "Bitte nur Ganzzahlen eingeben"
 
-#: gmoccapy.py:4521 gmoccapy.py:4539
+#: gmoccapy.py:4524 gmoccapy.py:4542
 msgid "Selected tool is already in spindle, no change needed."
 msgstr ""
 "Das ausgewählte Werkzeug ist schon in der Spindel, ein Wechsel ist nicht "
 "erforderlich."
 
-#: gmoccapy.py:4535
+#: gmoccapy.py:4538
 msgid ""
 "you selected no or more than one tool, the tool selection must be unique"
 msgstr ""
 "Sie haben mehr als ein Werkzeug ausgewählt, um ein Werkzeug einzuwechseln "
 "muss die Auswahl eindeutig sein."
 
-#: gmoccapy.py:4554
+#: gmoccapy.py:4557
 msgid "Could not understand the entered tool number. Will not change anything"
 msgstr ""
 "Die eingegebene Werkzeugnummer wurde nicht verstanden. Es wird nichts "
 "geändert!"
 
-#: gmoccapy.py:4801
+#: gmoccapy.py:4804
 msgid ""
 "World\n"
 "mode"
@@ -694,52 +689,52 @@ msgstr ""
 "Koordinaten\n"
 " Modus"
 
-#: gmoccapy.py:4987
+#: gmoccapy.py:4990
 msgid "Axis jogging is only allowed in world mode, but you are in joint mode!"
 msgstr ""
-"Das verfahren von Achsen ist nur im Koordinatenmodus erlaubt, sie sind im "
-"Joint Modus"
+"Das verfahren von Achsen ist nur im Koordinatenmodus erlaubt, Sie sind im "
+"Gemeinsam-Modus"
 
-#: gmoccapy.py:5023
+#: gmoccapy.py:5026
 #, python-brace-format
 msgid "Recieved a not clasified signal from pin {0}"
 msgstr "Nicht registriertes Signal von Pin {0} erhalten"
 
-#: gmoccapy.py:5028
+#: gmoccapy.py:5031
 #, python-brace-format
 msgid "Could not translate {0} to number"
 msgstr "Konnte {0} nicht zu einer Nummer konvertieren"
 
-#: gmoccapy.py:5033
+#: gmoccapy.py:5036
 msgid "no button here"
 msgstr "Kein Knopf hier"
 
-#: gmoccapy.py:5036
+#: gmoccapy.py:5039
 msgid "the button is not sensitive"
 msgstr "Dieser Knopf ist nicht aktiv"
 
-#: gmoccapy.py:5041
+#: gmoccapy.py:5044
 #, python-brace-format
 msgid "Button {0} has been toggled"
-msgstr "Knopf {0} wurde getoggled"
+msgstr "Knopf {0} wurde gewechselt"
 
-#: gmoccapy.py:5045
+#: gmoccapy.py:5048
 #, python-brace-format
 msgid "Button {0} has been pressed"
 msgstr "Knopf {0} wurde gedrückt"
 
-#: gmoccapy.py:5048
+#: gmoccapy.py:5051
 #, python-brace-format
 msgid "Button {0} has been clicked"
 msgstr "Knopf {0} wurde geklickt"
 
-#: gmoccapy.py:5061
+#: gmoccapy.py:5064
 msgid "got wrong location to locate the childs"
 msgstr "Habe falschen Ort für das Finden der Kinderelemente erhalten"
 
 #: dialogs.py:46 dialogs.py:51
 msgid "Enter System Unlock Code"
-msgstr "Bitte Endsperrcode eingeben"
+msgstr "Bitte Entsperrcode eingeben"
 
 #: dialogs.py:72
 msgid "Enter value"
@@ -751,7 +746,7 @@ msgstr "Bitte den zu setzenden Wert angeben:"
 
 #: dialogs.py:111 dialogs.py:126 dialogs.py:140
 msgid "Operator Message"
-msgstr "Anwender Hinweis"
+msgstr "Anwenderhinweis"
 
 #: dialogs.py:178 dialogs.py:182
 msgid "Restart Entry"
@@ -790,11 +785,11 @@ msgstr ""
 "**** gmoccapy wird nicht starten ****\n"
 "\n"
 
-#: getiniinfo.py:429
+#: getiniinfo.py:433
 msgid "**** GMOCCAPY GETINIINFO ****\n"
 msgstr "**** GMOCCAPY GETINIINFO ****\n"
 
-#: getiniinfo.py:430
+#: getiniinfo.py:434
 msgid ""
 "**** No subroutine folder or program prefix is given in the ini file **** \n"
 msgstr ""
@@ -874,7 +869,7 @@ msgstr "Werkzeugpfad zeigen / verbergen"
 
 #: gmoccapy.glade.h:17
 msgid "Show or hide dimensions"
-msgstr "Zeige oder Verberge die Einheiten"
+msgstr "Zeige oder verberge die Einheiten"
 
 #: gmoccapy.glade.h:18
 msgid ""
@@ -882,7 +877,7 @@ msgid ""
 "lathe"
 msgstr ""
 "Sicht entlang der Y Achse von positiv nach negativ gesehen wie bei einer "
-"Rückwerzeug-Drehmaschine"
+"Rückwerkzeug-Drehmaschine"
 
 #: gmoccapy.glade.h:19
 msgid "Preview"
@@ -950,7 +945,7 @@ msgstr "<b>Werkzeug Info</b>"
 
 #: gmoccapy.glade.h:36
 msgid "G and M code information as well as speed and feed"
-msgstr "G und M Code Informationen , auch Vorschub und Spindeldrehzahl"
+msgstr "G und M Code Informationen, auch Vorschub und Spindeldrehzahl"
 
 #: gmoccapy.glade.h:37
 msgid "active_mcodes_label"
@@ -1038,7 +1033,7 @@ msgid ""
 "   All"
 msgstr ""
 "Ersetze\n"
-"  Alle"
+"  alle"
 
 #: gmoccapy.glade.h:59
 msgid ""
@@ -1106,7 +1101,7 @@ msgstr "<b>Hauptbildschirm</b>"
 
 #: gmoccapy.glade.h:75
 msgid "Show keyboard on offset"
-msgstr "Zeige Tastatur in Offset"
+msgstr "Zeige Tastatur an Offset"
 
 #: gmoccapy.glade.h:76
 msgid "Show keyboard on tooledit"
@@ -1198,7 +1193,7 @@ msgstr "Zeige DTG"
 
 #: gmoccapy.glade.h:98
 msgid "<b>Mouse Button mode</b>"
-msgstr "<b>Maus Knopf Verhalten</b>"
+msgstr "<b>Mausknopfverhalten</b>"
 
 #: gmoccapy.glade.h:99
 msgid "<b>Preview</b>"
@@ -1222,11 +1217,11 @@ msgstr "<b>Bei Start zu ladende Datei</b>"
 
 #: gmoccapy.glade.h:104
 msgid "Select user dir"
-msgstr "Wähle Nutzer Verz."
+msgstr "Wähle Nutzerverz."
 
 #: gmoccapy.glade.h:105
 msgid "<b>Select jump to dir</b>"
-msgstr "<b>Wähle Sprung Verz.</b>"
+msgstr "<b>Wähle Sprungverz.</b>"
 
 #: gmoccapy.glade.h:106
 msgid "Themes"
@@ -1242,7 +1237,7 @@ msgstr "Alarmhinweis"
 
 #: gmoccapy.glade.h:109
 msgid "<b>Themes and sound</b>"
-msgstr "<b>Themen und Geräusche</b>"
+msgstr "<b>Design und Geräusche</b>"
 
 #: gmoccapy.glade.h:110
 msgid "Appearance"
@@ -1278,11 +1273,11 @@ msgstr "<b>Tastaturbedienung</b>"
 
 #: gmoccapy.glade.h:118
 msgid "Use unlock code"
-msgstr "Nutze Endsperrcode"
+msgstr "Nutze Entsperrcode"
 
 #: gmoccapy.glade.h:119
 msgid "Do not use unlock code"
-msgstr "Kein Endsperrcode verwenden"
+msgstr "Kein Entsperrcode verwenden"
 
 #: gmoccapy.glade.h:120
 msgid "Use hal pin to unlock"
@@ -1381,7 +1376,7 @@ msgstr "<b>Werkzeugmessung</b>"
 
 #: gmoccapy.glade.h:145
 msgid "Reload Tool on Start"
-msgstr "Werkzeug bei Start wiederladen"
+msgstr "Werkzeug bei Start erneut laden"
 
 #: gmoccapy.glade.h:146
 msgid ""
@@ -1393,8 +1388,8 @@ msgid ""
 msgstr ""
 "Wenn angehakt wird das Werkzeug\n"
 "welches in der Spindel ist bei jedem Wechsel\n"
-"gespeichert und beim Wiederstart der Oberfläche\n"
-"neu geladen und auch der Werkzeuglängen-\n"
+"gespeichert und beim Start der Oberfläche\n"
+"neu geladen. Auch der Werkzeuglängen-\n"
 "ausgleich wird neu geladen\n"
 
 #: gmoccapy.glade.h:152
@@ -1404,14 +1399,14 @@ msgid ""
 "is not possible."
 msgstr ""
 "Sie verwenden NO_FORCE_HOMING,\n"
-"daher ist das automatische Wiederladen\n"
-"des Werkzeuges nicht möglich"
+"daher ist das automatische Laden des\n"
+"Werkzeuges bei Start nicht möglich."
 
 #: gmoccapy.glade.h:155
 msgid "<b>Reload Tool</b>"
 msgstr ""
 "<b>Werkzeug\n"
-"wiederladen</b>"
+"erneut laden</b>"
 
 #: gmoccapy.glade.h:156
 msgid "Do not use run from line"
@@ -1434,7 +1429,7 @@ msgid ""
 "If checked, the messages\n"
 "will be in a frame."
 msgstr ""
-"When angewählt, werden die\n"
+"Wenn angewählt, werden die\n"
 "Meldungen in einem Rahmen angezeigt"
 
 #: gmoccapy.glade.h:162
@@ -1501,7 +1496,7 @@ msgstr "Einstellungen"
 
 #: gmoccapy.glade.h:177
 msgid "User tab 1"
-msgstr "Anwender Tabs"
+msgstr "Anwender Tab 1"
 
 #: gmoccapy.glade.h:178
 msgid "User tabs"
@@ -1512,7 +1507,7 @@ msgid ""
 "Estop the machine\n"
 "[F1]"
 msgstr ""
-"Not Aus aktivieren\n"
+"Not-Aus aktivieren\n"
 " [F1]"
 
 #: gmoccapy.glade.h:181
@@ -1587,7 +1582,7 @@ msgid "make the preview as large as possible"
 msgstr "Zeige die Vorschau so groß wie möglich"
 
 #: gmoccapy.glade.h:198
-msgid "Close moccapy / leave the program"
+msgid "Close gmoccapy / leave the program"
 msgstr "Beende gmoccapy / verlasse das Programm"
 
 #: gmoccapy.glade.h:199
@@ -1643,7 +1638,7 @@ msgstr "Lösche MDI"
 
 #: gmoccapy.glade.h:209
 msgid "delete MDI history"
-msgstr "Lösche MDI"
+msgstr "Lösche MDI Historie"
 
 #: gmoccapy.glade.h:210
 msgid "Cl.-ladder"
@@ -1691,7 +1686,7 @@ msgstr "Halshow"
 
 #: gmoccapy.glade.h:221
 msgid "opens the show hal tool"
-msgstr "Hal Show starten"
+msgstr "Halshow starten"
 
 #: gmoccapy.glade.h:222
 msgid "save the file using the original name"
@@ -1745,8 +1740,8 @@ msgstr "Anwenden"
 msgid ""
 "apply the changes you made, G43 will be excecuted only if it is active g-code"
 msgstr ""
-"Änderungen anwenden, wenn G43 aktiv ist, werden die Änderungen auch gleich "
-"im G Code berücksichtigt"
+"Änderungen anwenden, G43 wird nur ausgeführt wenn es aktiver G-Code ist"
+""
 
 #: gmoccapy.glade.h:235
 msgid "Select a tool by number"
@@ -1760,7 +1755,7 @@ msgstr ""
 
 #: gmoccapy.glade.h:237
 msgid "change tool to the selected one"
-msgstr "Wechsle das ausgewählte Werkzeug ein "
+msgstr "Wechsle das ausgewählte Werkzeug ein"
 
 #: gmoccapy.glade.h:238
 msgid ""
@@ -1792,7 +1787,7 @@ msgstr "Gehe eine Verzeichnisebene nach oben"
 
 #: gmoccapy.glade.h:245
 msgid "Select the previos file"
-msgstr "Wähle die vorige Datei"
+msgstr "Wähle die vorherige Datei"
 
 #: gmoccapy.glade.h:246 ../../../../lib/python/gladevcp/iconview.py:136
 msgid "Select the next file"
@@ -1824,7 +1819,7 @@ msgstr "Wechsle in das Stammverzeichnis"
 
 #: ../../../../lib/python/gladevcp/iconview.py:128
 msgid "Select the previous file"
-msgstr "Wähle die vorige Datei"
+msgstr "Wähle die vorherige Datei"
 
 #: ../../../../lib/python/gladevcp/offsetpage_widget.py:142
 msgid ""
@@ -1925,7 +1920,7 @@ msgstr "G5x"
 
 #: ../../../../lib/python/gladevcp/offsetpage.glade.h:13
 msgid "Rot"
-msgstr "Ror"
+msgstr "Rot"
 
 #: ../../../../lib/python/gladevcp/offsetpage.glade.h:14
 msgid "Rotation of Z"
@@ -2017,11 +2012,11 @@ msgstr "Werkzeugtasche"
 
 #: ../../../../lib/python/gladevcp/tooledit_gtk.glade.h:5
 msgid "Front"
-msgstr "Schriftart"
+msgstr "Vorne"
 
 #: ../../../../lib/python/gladevcp/tooledit_gtk.glade.h:6
 msgid "Back"
-msgstr "Zurück"
+msgstr "Hinten"
 
 #: ../../../../lib/python/gladevcp/tooledit_gtk.glade.h:7
 msgid "Orientation"
@@ -2061,7 +2056,10 @@ msgstr "Z Werkzeug"
 
 #: ../../../../lib/python/gladevcp/tooledit_gtk.glade.h:20
 msgid "Lathe Tool Offsets"
-msgstr "Drehmanschine Offsets"
+msgstr "Drehmaschine Offsets"
+
+#~ msgid "Follow System Theme"
+#~ msgstr "Systemdesign übernehmen"
 
 #~ msgid "Home axis %s"
 #~ msgstr "Referenziere die %s Achse"
@@ -2073,7 +2071,7 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "**** Glade 2 Datei Fehler ****"
 
 #~ msgid "**** No gmoccapy2.glade file present ****"
-#~ msgstr "**** Keine gmoccapy Glade 2 Datei verfügbar ****"
+#~ msgstr "**** Keine gmoccapy2.glade Datei verfügbar ****"
 
 #~ msgid "Axis %s are homed"
 #~ msgstr "Achse %s ist referenziert"
@@ -2108,7 +2106,7 @@ msgstr "Drehmanschine Offsets"
 
 #~ msgid "ERROR : No limit switch is active, ignore limits will not be set."
 #~ msgstr ""
-#~ "FEHLER : Es ist kein Endschalter aktiv, der Ignorieren Befehl wird nicht "
+#~ "FEHLER : Es ist kein Endschalter aktiv, der \"Ignoriere Grenzen\" Befehl wird nicht "
 #~ "ausgeführt."
 
 #~ msgid "ladder not available - is the real-time component loaded?"
@@ -2120,7 +2118,7 @@ msgstr "Drehmanschine Offsets"
 #~ "ist."
 
 #~ msgid "Offset conversion error because off wrong entry"
-#~ msgstr "Offset Umwandlungsfehler auf Grund einer falschen Eingabe"
+#~ msgstr "Offset Umwandlungsfehler aufgrund einer falschen Eingabe"
 
 #~ msgid "offset {0} set to {1:f}"
 #~ msgstr "Offset {0} wurde auf {1:f} gesetzt"
@@ -2164,7 +2162,7 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "<b>Werkzeugwechsler</b>"
 
 #~ msgid "Alarm History"
-#~ msgstr "Alarm Hinweise"
+#~ msgstr "Alarm Historie"
 
 #~ msgid "Do you want to use keyboard shortcuts to control the machine?"
 #~ msgstr "Möchten Sie Tastaturkürzel zur Bedienung der Maschine verwenden?"
@@ -2187,7 +2185,7 @@ msgstr "Drehmanschine Offsets"
 #~ "ausgeblendet werden."
 
 #~ msgid "Klick to toggle through the DRO modes"
-#~ msgstr "klicke um durch die DRO Anzeigemodi zu wechseln"
+#~ msgstr "Klicke um durch die DRO Anzeigemodi zu wechseln"
 
 #~ msgid ""
 #~ "Log all actions to the history board, this is very usefull for debugging."
@@ -2214,18 +2212,18 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr ""
 #~ "Wählen Sie ob sie \"Starte ab Zeile\" verwenden möchten. Dies ist nicht "
 #~ "zu empfehlen! Es ist sehr gefährlich, da LinuxCNC alle vorherigen Zeilen "
-#~ "ignoriert und somit keine Offest-, Koordinatensystem- oder Werkzeug- "
+#~ "ignoriert und somit keine Offest-, Koordinatensystem- oder Werkzeug-, "
 #~ "Vorschub- oder Spindeldrehzahlwechsel berücksichtigt."
 
 #~ msgid ""
 #~ "Select the speed to start the spindle with, when no spindle speed has "
 #~ "been given."
 #~ msgstr ""
-#~ "Wähle die Spindlestartdrehzahl, die verwendet werden soll, wenn keine "
-#~ "Spindledrehzahl programmiert wurde."
+#~ "Wähle die Spindelstartdrehzahl, die verwendet werden soll, wenn keine "
+#~ "Spindeldrehzahl programmiert wurde."
 
 #~ msgid "Select the way to unlock the settings page"
-#~ msgstr "Hier wird gewählt, wie die Einstellungsseite entperrt wird."
+#~ msgstr "Hier wird gewählt, wie die Einstellungsseite entsperrt wird."
 
 #~ msgid ""
 #~ "Set the Max limit of the spindle feedback bar, this settings will not "
@@ -2256,7 +2254,7 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "Umschalten zwischen metrischen und Zoll Einheiten"
 
 #~ msgid "Unhome all axis"
-#~ msgstr "Referenz alle Achsen aufheben"
+#~ msgstr "Referenz aller Achsen aufheben"
 
 #~ msgid "Use Auto Units"
 #~ msgstr "Nutze Auto Einheiten"
@@ -2266,7 +2264,7 @@ msgstr "Drehmanschine Offsets"
 #~ "(MAX - MIN) / 100 will be used"
 #~ msgstr ""
 #~ "Hier kann man einen Faktor einstellen, der bei der Nutzung des Handrades "
-#~ "verwendet wird, Als Standard wird (MAX - MIN) / 100 verwendet"
+#~ "verwendet wird, als Standard wird (MAX - MIN) / 100 verwendet"
 
 #~ msgid "adjust feed override"
 #~ msgstr "Vorschubübersteuerung anpassen"
@@ -2278,7 +2276,7 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "Zurück zur den Hauptknöpfen"
 
 #~ msgid "home all axis"
-#~ msgstr "Refernziere alle Achsen"
+#~ msgstr "Referenziere alle Achsen"
 
 #~ msgid "home y axis"
 #~ msgstr "Referenziere die Y Achse"
@@ -2317,7 +2315,7 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "Jog. Geschw."
 
 #~ msgid "save the program reload it and run it"
-#~ msgstr "Speichern, Neu Laden und Starten"
+#~ msgstr "Speichern, neu laden und starten"
 
 #~ msgid "undo"
 #~ msgstr "Rückgängig"
@@ -2393,7 +2391,7 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "Schrittweite anwählen"
 
 #~ msgid "shows the source of the loaded program"
-#~ msgstr "Zeigt den Quellcode des geladenen Programmes"
+#~ msgstr "Zeigt den Quellcode des geladenen Programms"
 
 #~ msgid "Path %s from DISPLAY , PROGRAM_PREFIX does not exist"
 #~ msgstr "Pfad %s aus DISPLAY - PROGRAM_PREFIX existiert nicht"
@@ -2422,10 +2420,10 @@ msgstr "Drehmanschine Offsets"
 #~ "Keine Jog Schrittweiten im Abschnitt [DISPLAY] der INI Datei gefunden"
 
 #~ msgid "adding import dir %s"
-#~ msgstr "ergänze import Verzeichnisse %s"
+#~ msgstr "ergänze Importverzeichnis %s"
 
 #~ msgid "module '%s' imported OK"
-#~ msgstr "Module %s importiert OK"
+#~ msgstr "Modul '%s' importiert OK"
 
 #~ msgid ""
 #~ "\n"
@@ -2561,7 +2559,7 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "Die Echtzeitkomponente Classicladder wurde nicht gefunden."
 
 #~ msgid "ladder not available - is the realtime component loaded?"
-#~ msgstr "Ladder ist nicht verfügbar, würde die Komponente geladen? "
+#~ msgstr "Ladder ist nicht verfügbar - wurde die Echtzeit-Komponente geladen? "
 
 #~ msgid "Override Entry"
 #~ msgstr "Eingabe für Übersteuerung"
@@ -2570,19 +2568,19 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "Maschine eingeschaltet"
 
 #~ msgid "Machine Estopped!"
-#~ msgstr "Notaus würde aktiviert"
+#~ msgstr "Not-Aus wurde aktiviert"
 
 #~ msgid "Calculator"
 #~ msgstr "Rechner"
 
 #~ msgid "Axes %s are homed"
-#~ msgstr "Achse %s ist referenziert"
+#~ msgstr "Achsen %s sind referenziert"
 
 #~ msgid "All the axes have been homed"
 #~ msgstr "Alle Achsen wurden referenziert"
 
 #~ msgid "There are unhomed axes: %s"
-#~ msgstr "Es sind noch unreferenzierte Achsen %s vorghanden"
+#~ msgstr "Es sind noch unreferenzierte Achsen vorhanden: %s"
 
 #~ msgid "Program loaded: %s"
 #~ msgstr "Programm %s geladen"
@@ -2632,13 +2630,13 @@ msgstr "Drehmanschine Offsets"
 
 #~ msgid "Dialog error - Is the dialog handler missing from the handler file?"
 #~ msgstr ""
-#~ "Dialog Fehler - Es wird der dialog handler aus der handler Datei vermisst?"
+#~ "Dialog Fehler - Fehlt der dialog handler in der handler Datei?"
 
 #~ msgid "Can't jog multiple axis"
 #~ msgstr "Kann nicht mehrere Achse gleichzeitig verfahren"
 
 #~ msgid "No axis selected to jog"
-#~ msgstr "Keine Achse zum verfahren gewählt"
+#~ msgstr "Keine Achse zum Verfahren gewählt"
 
 #~ msgid "No axis selected to move"
 #~ msgstr "Keine Achse zum Bewegen ausgewählt"
@@ -2652,7 +2650,7 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "Keine Achse zur Referenzierung gewählt"
 
 #~ msgid "Can't unhome multiple axis"
-#~ msgstr "Kann nicht die Refernzierung mehrere Achsen gleichzeitig aufheben"
+#~ msgstr "Kann nicht die Referenzierung mehrere Achsen gleichzeitig aufheben"
 
 #~ msgid "No axis selected to unhome"
 #~ msgstr "Keine Achse zum Aufheben der Referenzierung gewählt"
@@ -2661,25 +2659,25 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "Keine Achse zum Nullen des Ursprungs gewählt"
 
 #~ msgid "No axis selected for origin touch-off"
-#~ msgstr "Keine Achse zur ursprungsantastung gewählt"
+#~ msgstr "Keine Achse zur Ursprungsantastung gewählt"
 
 #~ msgid "Can't tool touch-off multiple axes"
 #~ msgstr "Kann Werkzeug nicht in mehreren Achsen gleichzeitig antasten"
 
 #~ msgid "No axis selected for tool touch-off"
-#~ msgstr "keien Achse zum antasten gew3ählt"
+#~ msgstr "Keine Achse zum Antasten gewählt"
 
 #~ msgid "Tool editor error - is the %s editor available?"
 #~ msgstr "Werkzeugverwaltungs Fehler: Der Editor %s ist nicht verfügbar"
 
 #~ msgid "%d RPM"
-#~ msgstr "%dUPM"
+#~ msgstr "%d UPM"
 
 #~ msgid "Start"
 #~ msgstr "Start"
 
 #~ msgid "Stop"
-#~ msgstr "stop"
+#~ msgstr "Stop"
 
 #~ msgid "Machine"
 #~ msgstr "Maschine"
@@ -2720,7 +2718,7 @@ msgstr "Drehmanschine Offsets"
 #~ "Zeige Hinweise und Fehlermeldungen auch als \"Blasenmeldung\" des "
 #~ "Betriebssystemes. Dies ist nicht empfehlenswert, da nur die letzte "
 #~ "Meldung sichtbar wird und diese auch nach einer gewissen Zeit "
-#~ "selbstständig ausgeblendet wird."
+#~ "selbständig ausgeblendet wird."
 
 #~ msgid "Use desktop notify"
 #~ msgstr "nutze Desktop Hinweise"
@@ -2733,10 +2731,10 @@ msgstr "Drehmanschine Offsets"
 #~ "benötigt etwas mehr Platz."
 
 #~ msgid "Use gmoccapy style"
-#~ msgstr "Nutze gmoccapy Stiel"
+#~ msgstr "Nutze gmoccapy Stil"
 
 #~ msgid "Use gscreen style"
-#~ msgstr "Nutze gscreen Stiel"
+#~ msgstr "Nutze gscreen Stil"
 
 #~ msgid ""
 #~ "Use the gmoccapy error reporting style, showing the errors in little "
@@ -2774,8 +2772,8 @@ msgstr "Drehmanschine Offsets"
 
 #~ msgid "Display the second screen"
 #~ msgstr ""
-#~ "    Zeige\n"
-#~ "Hilfsschirm"
+#~ " Zeige 2.\n"
+#~ "Bildschirm"
 
 #~ msgid "Do not load any file on start up"
 #~ msgstr "Lade keine Datei beim Start der Oberfläche"
@@ -2784,7 +2782,7 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "Möchten Sie die DRO im Vorschaufenster anzeigen?"
 
 #~ msgid "Hide or show the mouse"
-#~ msgstr "Zeige oder verberge den Mauscursor"
+#~ msgstr "Zeige oder verberge den Mauszeiger"
 
 #~ msgid "Load the currently loaded file at start up"
 #~ msgstr "Lade das derzeit geladene Programm beim Start der Oberfläche"
@@ -2833,7 +2831,7 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "Zeige die Onboard Tastatur beim Datei bearbeiten"
 
 #~ msgid "Show the onboard keyboard when the offset page is shown"
-#~ msgstr "Zeige die Onboard Tastatur when die Offset Seite angezeigt wird"
+#~ msgstr "Zeige die Onboard Tastatur wenn die Offset Seite angezeigt wird"
 
 #~ msgid "Show the onboard keyboard when the tooledit page is shown"
 #~ msgstr "Zeige die Onboard Tastatur beim Anzeigen der Werkzeugverwaltung"
@@ -2856,8 +2854,8 @@ msgstr "Drehmanschine Offsets"
 #~ "The size of the grid shown on preview, must be given in imperial units "
 #~ "and will not be visible in perspective mode"
 #~ msgstr ""
-#~ "Die Größe des Grids im Vorschaufensters, die Angabe muss in Inch "
-#~ "erfolgen. Das Grid wird nicht in der perspektivischen Ansicht gezeigt."
+#~ "Die Größe des Rasters im Vorschaufensters, die Angabe muss in Inch "
+#~ "erfolgen. Das Raster wird nicht in der perspektivischen Ansicht gezeigt."
 
 #~ msgid "The width of the window"
 #~ msgstr "Die Breite des Fensters"
@@ -2923,10 +2921,10 @@ msgstr "Drehmanschine Offsets"
 #~ msgstr "Öffne das zu bearbeitende Programm"
 
 #~ msgid "switch flood coolant"
-#~ msgstr "Kühlung ein- ausschalten"
+#~ msgstr "Kühlung ein-/ausschalten"
 
 #~ msgid "switch mist coolant"
-#~ msgstr "Sprühkühlung ein- ausschalten"
+#~ msgstr "Sprühkühlung ein-/ausschalten"
 
 #~ msgid "turn on spindle counterclockwise"
 #~ msgstr "Spindel im Gegenuhrzeigersinn anschalten"

@@ -147,6 +147,9 @@ RTAPI_BEGIN_DECLS
 #define HAL_LOCK_PARAMS   4     /* locking of parameter set commands */
 #define HAL_LOCK_RUN      8     /* locking of start/stop of HAL threads */
 
+/* locks required for the 'tune' command */
+#define HAL_LOCK_TUNE (HAL_LOCK_LOAD | HAL_LOCK_CONFIG)
+
 #define HAL_LOCK_ALL      255   /* locks every action */
 
 /***********************************************************************
@@ -516,7 +519,7 @@ extern int hal_unlink(const char *pin_name);
     stored.  'data_addr' must point to memory allocated by hal_malloc().
     Typically the component allocates space for a data structure with
     hal_malloc(), and 'data_addr' is the address of a member of that
-    structure.  Creating the paremeter does not initialize or modify the
+    structure.  Creating the parameter does not initialize or modify the
     value at *data_addr - the component should load a reasonable default
     value.
     'comp_id' is the ID of the component that will 'own' the parameter.

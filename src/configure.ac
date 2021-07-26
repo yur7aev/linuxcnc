@@ -1,6 +1,6 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
-# 
+#
 # Description: configure.ac
 #   Autonconf produce a ./configure from this file
 #   that's used to discover various programs/dependencies
@@ -9,7 +9,7 @@
 # Authors: paul_c alex_joni jepler
 # License: GPL Version 2
 # System: Linux
-#    
+#
 # Copyright (c) 2004 All rights reserved.
 #
 # Last change:
@@ -59,7 +59,7 @@ m4_define([AX_BOOST_PYTHON_EMC],
 AC_LANG_PUSH([C++])
 saved_CPPFLAGS=$CPPFLAGS
 saved_LIBS=$LIBS
-# Note that this requires PYTHON_CPPFLAGS 
+# Note that this requires PYTHON_CPPFLAGS
 # Note that this expects boost/ to be at some top-level such as /usr/include/
 # We couldn't check for anything else anyway because there's no pkg-config file to tell us where it is
 CPPFLAGS="$PYTHON_CPPFLAGS $saved_CPPFLAGS"
@@ -262,7 +262,7 @@ AC_ARG_ENABLE(toolnml,
 # validity. That is done by checking default locations for a certain script  #
 # (similar to 2)                                                             #
 #                                                                            #
-# 2. If no RT has been specified explicitely by the user, one has to be      #
+# 2. If no RT has been specified explicitly by the user, one has to be       #
 # found by search. In order to do that the following code will search for a  #
 # RT-specific script:                                                        #
 # rtai-config for RTAI 3.x                                                   #
@@ -619,7 +619,7 @@ else
 fi
 KERNEL_VERS=`$CC -E -dM ${VERSION_FILE} | grep UTS | cut -s -d '"' -f 2`
 
-if test -z "$KERNEL_VERS"; then 
+if test -z "$KERNEL_VERS"; then
     AC_MSG_ERROR(Kernel version string not found)
 fi
 
@@ -705,7 +705,7 @@ if test "x" = "x$MODULE_DIR" ; then
     AC_MSG_ERROR([$RTS --module-dir did not specify an existing directory.  You must use specify it using --with-module-dir=...])
   fi
 fi
-    
+
 if test "$RUN_IN_PLACE" = "yes"; then
     RIP_MODULE_DIR="${BUILD_TOPLEVEL}/rtlib"
     AC_MSG_RESULT([configuring for run-in-place])
@@ -856,25 +856,15 @@ AC_ARG_ENABLE(gtk,
     [BUILD_GTK=yes])
 
 if test "$BUILD_GTK" = "yes"; then
-  AC_MSG_CHECKING([for GTK 2.4.0 or above])
-  if pkg-config gtk+-2.0 --atleast-version 2.4.0 >/dev/null 2>&1; then
-    GTK_VER=`pkg-config gtk+-2.0 --modversion`
+  AC_MSG_CHECKING([for GTK 3.22.4 or above])
+  if pkg-config gtk+-3.0 --atleast-version 3.22.4 >/dev/null 2>&1; then
+    GTK_VER=`pkg-config gtk+-3.0 --modversion`
     AC_MSG_RESULT(yes - $GTK_VER)
-    GTK_CFLAGS=`pkg-config gtk+-2.0 --cflags`
-    GTK_LIBS=`pkg-config gtk+-2.0 --libs`
-    AC_MSG_CHECKING(for libgnomeprintui-2.2)
-    if pkg-config --exists libgnomeprintui-2.2; then
-      AC_MSG_RESULT(yes)
-      GTK_CFLAGS="$GTK_CFLAGS `pkg-config --cflags libgnomeprintui-2.2`"
-      GTK_LIBS="$GTK_LIBS `pkg-config --libs libgnomeprintui-2.2`"
-      HAVE_GNOMEPRINT=yes
-    else
-      AC_MSG_RESULT(no -- printing from classicladder will not be possible)
-      HAVE_GNOMEPRINT= 
-    fi
+    GTK_CFLAGS=`pkg-config gtk+-3.0 --cflags`
+    GTK_LIBS=`pkg-config gtk+-3.0 --libs`
   else
     AC_MSG_RESULT(no)
-    AC_MSG_ERROR([GTK2 missing.  Install it or specify --disable-gtk to skip the parts of LinuxCNC that depend on GTK])
+    AC_MSG_ERROR([GTK3 missing.  Install with "sudo apt install libgtk-3-dev" or specify --disable-gtk to skip the parts of LinuxCNC that depend on GTK])
   fi
 fi
 
@@ -884,6 +874,48 @@ AC_SUBST(GTK_LIBS)
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GLIB_CFLAGS)
+
+AC_ARG_ENABLE(gtk2,
+    AS_HELP_STRING(
+        [--disable-gtk2],
+        [Disable the parts of LinuxCNC that depend on GTK2. Ónly needed for classicladder)]
+    ),
+    [
+	case "$enableval" in
+	Y*|y*)
+	    BUILD_GTK2=yes ;;
+	*)
+	    BUILD_GTK2=no ;;
+	esac
+    ],
+    [BUILD_GTK2=yes])
+
+if test "$BUILD_GTK2" = "yes"; then
+  AC_MSG_CHECKING([for GTK 2.4.0 or above])
+  if pkg-config gtk+-2.0 --atleast-version 2.4.0 >/dev/null 2>&1; then
+    GTK2_VER=`pkg-config gtk+-2.0 --modversion`
+    AC_MSG_RESULT(yes - $GTK2_VER)
+    GTK2_CFLAGS=`pkg-config gtk+-2.0 --cflags`
+    GTK2_LIBS=`pkg-config gtk+-2.0 --libs`
+    AC_MSG_CHECKING(for libgnomeprintui-2.2)
+    if pkg-config --exists libgnomeprintui-2.2; then
+      AC_MSG_RESULT(yes)
+      GTK2_CFLAGS="$GTK2_CFLAGS `pkg-config --cflags libgnomeprintui-2.2`"
+      GTK2_LIBS="$GTK2_LIBS `pkg-config --libs libgnomeprintui-2.2`"
+      HAVE_GNOMEPRINT=yes
+    else
+      AC_MSG_RESULT(no -- printing from classicladder will not be possible)
+      HAVE_GNOMEPRINT=
+    fi
+  else
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR([GTK2 missing.  Install with "sudo apt install libgtk2.0-dev" or specify --disable-gtk2 to skip building classicladder])
+  fi
+fi
+
+AC_SUBST(GTK2_VER)
+AC_SUBST(GTK2_LIBS)
+AC_SUBST(GTK2_CFLAGS)
 
 ##############################################################################
 # Subsection 3.6 - check for utility programs needed to build and run EMC    #
@@ -1243,7 +1275,7 @@ AH_TOP([/********************************************************************
 * Author: Autogenerated by autoheader
 * License: LGPL Version 2
 * System: Linux
-*    
+*
 * Copyright (c) 2004 All rights reserved.
 ********************************************************************/
 #ifndef EMC2_CONFIG_H
@@ -1388,7 +1420,7 @@ else
 # extracting vars
    AC_MSG_RESULT([$TKCONFIG found])
    . "$TKCONFIG"
-   TK_CFLAGS="$TK_INCLUDE_SPEC $TK_XINCLUDES" 
+   TK_CFLAGS="$TK_INCLUDE_SPEC $TK_XINCLUDES"
    TK_LIBS="$TK_LIBS $TK_LIB_SPEC"
 fi
 
@@ -1596,15 +1628,15 @@ AC_SUBST(USE_NLS)
 if test "$USE_NLS" = "yes"; then
   AC_CHECK_HEADERS(locale.h)
   AC_CHECK_FUNCS(setlocale)
-  AC_SUBST(HAVE_LOCALE_H)  
+  AC_SUBST(HAVE_LOCALE_H)
 
 # Add languages here when they are translated.
 # Grep the LINGUAS file.
   LANGUAGES=""
-  AC_SUBST(LANGUAGES)  
+  AC_SUBST(LANGUAGES)
   AC_CHECK_HEADERS(libintl.h)
   AC_CHECK_LIB(intl,gettext)
-  AC_SUBST(HAVE_LIBINTL_H)  
+  AC_SUBST(HAVE_LIBINTL_H)
   AC_SUBST(HAVE_LIBINTL)
 
 # The default locale directory is /usr/share/locale - This is generally fixed
@@ -1736,7 +1768,7 @@ AC_TRY_COMPILE([
     [GLUquadric *q;],
     [AC_MSG_RESULT(yes)],[
             AC_MSG_ERROR([Required GLU library missing.  Install it or specify --disable-python to skip the parts of LinuxCNC that depend on Python])]
-    
+
 )
 
 AC_MSG_CHECKING(for Xmu headers)

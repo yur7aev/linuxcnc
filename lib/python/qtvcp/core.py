@@ -122,10 +122,11 @@ class DummyPin(QObject):
 
 
 class QComponent:
-    def __init__(self, comp):
+    def __init__(self, comp, hal):
         if isinstance(comp, QComponent):
             comp = comp.comp
         self.comp = comp
+        self.hal = hal
 
     def newpin(self, *a, **kw):
         try:
@@ -158,7 +159,7 @@ class Status(GStat):
     __gsignals__ = {
         'toolfile-stale': (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT,)),
     }
-
+    TEMPARARY_MESSAGE = 255
     # only make one instance of the class - pass it to all other
     # requested instances
     def __new__(cls, *args, **kwargs):
