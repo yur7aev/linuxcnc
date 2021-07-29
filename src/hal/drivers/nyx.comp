@@ -3,7 +3,7 @@
  *
  * License: GPL Version 2
  *
- * (c) 2016-2020 dmitry@yurtaev.com
+ * (c) 2016-2021 dmitry@yurtaev.com
  */
 
 component nyx "YxxxxP servo interface card driver";
