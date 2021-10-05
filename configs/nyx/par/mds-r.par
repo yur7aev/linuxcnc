@@ -1,0 +1,90 @@
+;
+; Mitsubishi MDS-A/B default parameters
+;
+; 0: MDS-R-V1-20   HF74
+; 1: MDS-R-V1-20   HF74
+;
+; 2020, http://yurtaev.com
+;
+
+;	0	1
+SV001	1	1	; PC1	motor side gear		1-32767
+SV002	1	1	; PC2	machine side gear	1-32767
+SV003	33	33	; PGN1	position loop gain 1	0-200 rad/s
+SV004	0	0	; PGN2	position loop gain 2	0-999 rad/s
+SV005	20	20	; VGN1	speed loop gain		1-999
+SV006	0	0	;
+SV007	0	0	;
+SV008	1364	1364	; VIA	speed loop lead comp	1-9999
+SV009	6144	6144	; IQA	cur loop q lead comp	1-20480
+SV010	6144	6144	; IDA	cur loop d lead comp	1-20480
+SV011	768	768	; IQG	cur loop q gain		1-2560
+SV012	768	768	; IDG	cur loop d gin		1-2560
+SV013	500	500	; ILMT	current limit		0-500%
+SV014	500	500	; ILMTsp current limit special	0-500%
+SV015	0	0	; FFC	acc rate ff gain	0-999%
+SV016	0	0	; LMC1	lost motion comp	-1-200%
+SV017	0x1000	0x1000	; SPEC	abs=0x80
+SV018	10	10	; PIT	ballscrew pitch		1..32767
+SV019	100	100	; RNG1	position detector res	4,8,16,25,100
+SV020	100	100	; RNG2	speed detector res	4,8,16,25,100
+SV021	60	60	; OLT	ovl detect time const	1-300s
+SV022	150	150	; OLL	ovl detect level	50-180%
+SV023	6	6	; OD1	error excessive svon	0-32767mm
+SV024	50	50	; INP	in position		0-32767um
+SV025	0x220e	0x220e	; MTYP  2290=HA-MH43, 22fa=HC-KFS23 0e=HF74
+SV026	6	6	; OD2	error excessive svoff	0-32767mm
+SV027	0x4000	0x4000	; SSF1
+SV028	0	0	;
+SV029	0	0	;
+SV030	0	0	; IVC	J2 volt dead time comp	0-200%
+SV031	0	0	; OVS1	J2 overshoot comp 1	-1-100%
+SV032	0	0	; TOF	unbalance torque offs	-100-100%
+SV033	0x0000	0x0000	; SSF2	filters
+SV034	0x0000	0x0000	; SSF3	analog monitor
+SV035	0x0000	0x0000	; SSF4	collision det
+SV036	0x1200	0x1200	; PTYP	regen resistor type
+SV037	0	0	; JL	J2 load inertia scale	0-5000%
+SV038	0	0	; FHz1	notch filter freq 1	0-3000Hz
+SV039	0	0	; LMCD	J2 lost mot comp timing	-1-2000ms
+SV040	0	0	; LMCT	non-sens band		0-100um
+SV041	0	0	; LMC2	lost mot comp 2		-1-200%
+SV042	0	0	; OVS2	J2 overshoot comp 2	-1-100%
+SV043	0	0	; OBS1	dist obsrv filter freq	0-1000rad/s
+SV044	0	0	; OBS2	obsrv gain		0-1000%
+SV045	0	0	; TRUB	frictional torque	0-100%
+SV046	0	0	;
+SV047	100	100	; EC	induct volage comp gain	0-200%
+SV048	0	0	; EMGrt	v axis droop prevention	0-2000ms
+SV049	15	15	; PGN1sp			0-200rad/s
+SV050	0	0	; PGN2sp			0-9999rad/s
+SV051	0	0	;
+SV052	0	0	;
+SV053	0	0	; OD3	error excessive (spec)	0-32767mm
+SV054	0	0	;
+SV055	0	0	; EMGdt	?
+SV056	0	0	; EMGt	dec time const im emg	0-5000ms
+SV057	0	0	; SHGC	 SHG control gain	0-999rad/s
+SV058	0	0	; SHGCsp SHG control gain (sp)	0-999rad/s
+SV059	-	-	; TCNV	collis det torque est	0-5000%
+SV060	-	-	; TLMT	collis det level	0-200%
+SV061	0	0	; DA1NO	 D/A ch1 data num	0-102
+SV062	0	0	; DA2NO	 D/A ch1 data num	0-102
+SV063	0	0	; DA1MPY D/A ch1 scale		-32768+32767 (1/256)
+SV064	0	0	; MA2MPY
+SV065	-	-	;
+SV066	-	-	;
+SV067	20	2	; cmd unit: 0=0.5um 1=1um, 2=0.5um, 20=0.05um...
+SV068	0x0404	0x0404	; 0x0404 - 3.55ms cycle
+SV069	0	0	; rapid hi
+SV070	20000	20000	; rapid lo 20000
+SV071	0	0	; clamp hi
+SV072	10000	10000	; clamp lo 10000
+SV073	-	-	;
+SV074	-	-	;
+SV075	-	-	;
+SV076	-	-	;
+SV077	-	-	;
+SV078	-	-	;
+SV079	0	0	; abs home offset hi
+SV080	0	0	; abs home offset low

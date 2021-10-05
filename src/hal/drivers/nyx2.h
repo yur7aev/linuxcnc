@@ -21,7 +21,7 @@
 
 #define NYX_VER_MAJ 2
 #define NYX_VER_MIN 4
-#define NYX_VER_REV 7
+#define NYX_VER_REV 8
 
 #ifndef NYX_AXES
 #define NYX_AXES 10
@@ -55,6 +55,9 @@
 #define YC_RST_Z	0x00200000	// z passed flag reset
 #define YC_ORIENT	0x00400000	// MDS spindle
 //#define YC_		0x00800000
+//#define YC_GR1	0x01000000
+//#define YC_GR2	0x02000000
+//#define YC_GR3	0x04000000
 
 #define Y_TYPE		0xf0000000
 #define Y_TYPE_NONE	0x00000000

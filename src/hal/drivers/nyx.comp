@@ -3,7 +3,7 @@
  *
  * License: GPL Version 2
  *
- * (c) 2016-2020 dmitry@yurtaev.com
+ * (c) 2016-2021 dmitry@yurtaev.com
  */
 
 component nyx "YxxxxP servo interface card driver";
@@ -57,6 +57,9 @@ pin  in      bit servo-##.spindle-rev[16 : personality];
 pin  in      bit servo-##.spindle-orient[16 : personality];
 pin  out     bit servo-##.spindle-orienting[16 : personality];
 pin  out     bit servo-##.spindle-oriented[16 : personality];
+pin  in      bit servo-##.spindle-lcoil[16 : personality];
+pin  out     bit servo-##.spindle-in-coil-change[16 : personality];
+pin  out     bit servo-##.spindle-in-lcoil[16 : personality];
 
 pin out      bit servo-##.in-00[16 : personality];
 pin out      bit servo-##.in-01[16 : personality];
@@ -233,6 +236,7 @@ int yssc2_feedback_res(YSSC2 *y, int a)	{ return  y->amp[a].fbres; }
 int yssc2_cyc0(YSSC2 *y, int a)		{ return  y->amp[a].cyc0; }
 int yssc2_abs0(YSSC2 *y, int a)		{ return  y->amp[a].abs0; }
 
+int yssc2_flag(YSSC2 *y, int a, uint32_t f)	{ return (FB(a).state & f) && 1; }
 int yssc2_online(YSSC2 *y, int a)	{ return (FB(a).state & YF_ONLINE) && 1; }
 int yssc2_ready(YSSC2 *y, int a)	{ return (FB(a).state & YF_READY) && 1; }
 int yssc2_enabled(YSSC2 *y, int a)	{ return (FB(a).state & YF_ENABLED) && 1; }
