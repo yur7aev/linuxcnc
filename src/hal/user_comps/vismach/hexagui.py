@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright 2007 Ben Lipkowitz
 # You may distribute this software under the GNU GPL v2 or later
 #
@@ -144,7 +144,7 @@ for i in range(6):
   base_joints += [base_joint]
   
   #point strut at platform - this also translates the strut to the base joint
-  #because i couldnt figure out how to rotate it around the base of the strut
+  #because i couldn't figure out how to rotate it around the base of the strut
   strut = Track([strut],base_joint_coords, plat_joint_coords, world_coords)
   struts += [strut]
 

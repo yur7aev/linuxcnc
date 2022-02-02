@@ -2,6 +2,7 @@
 conv_ellipse.py
 
 Copyright (C) 2021  Phillip A Carter
+Copyright (C) 2021  Gregory D Carl
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -19,32 +20,25 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 '''
 
 import numpy
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QCoreApplication
 from PyQt5.QtWidgets import QLabel, QLineEdit, QPushButton, QRadioButton, QButtonGroup, QMessageBox
 from PyQt5.QtGui import QPixmap
 
-def preview(P, W):
+_translate = QCoreApplication.translate
+
+def preview(P, W, Conv):
     if P.dialogError: return
     # get width from entry box
+    msg = []
     try:
-        if W.wEntry.text():
-            lenX = float(W.wEntry.text())
-        else:
-            lenX = 0
+        lenX = float(W.wEntry.text())
     except:
-        msg = 'Invalid Width entry detected.\n'
-        error_set(P, msg)
-        return
+        msg.append(_translate('Conversational', 'WIDTH'))
     # get height from entry box
     try:
-        if W.hEntry.text():
-            lenY = float(W.hEntry.text())
-        else:
-            lenY = 0
+        lenY = float(W.hEntry.text())
     except:
-        msg = 'Invalid Height entry detected.\n'
-        error_set(P, msg)
-        return
+        msg.append(_translate('Conversational', 'HEIGHT'))
     # get angle from entry box
     try:
         if W.aEntry.text():
@@ -52,15 +46,21 @@ def preview(P, W):
         else:
             angle = 0
     except:
-        msg = 'Invalid Angle entry detected.\n'
-        error_set(P, msg)
+        msg.append(_translate('Conversational', 'ANGLE'))
+    if msg:
+        msg0 = _translate('Conversational', 'Invalid entry detected in')
+        msg1 = ''
+        for m in msg:
+            msg1 += '{}\n'.format(m)
+        error_set(P, '{}:\n\n{}'.format(msg0, msg1))
         return
     # continue if valid width and height
     if lenX > 0 and lenY > 0:
-        msg = ''
-        # if X origin blank, set to saved X origin 
+        msg = []
+        # if X origin blank, set to saved X origin
         if not W.xsEntry.text():
             W.xsEntry.setText('{:0.3f}'.format(P.xOrigin))
+        text = _translate('Conversational', 'ORIGIN')
         # set ellipse X center
         try:
             if W.center.isChecked():
@@ -68,7 +68,7 @@ def preview(P, W):
             else:
                 centerX = float(W.xsEntry.text()) + lenX / 2
         except:
-            msg += 'X ORIGIN\n'
+            msg.append('X {}'.format(text))
         # if Y origin blank, set to saved Y origin
         if not W.ysEntry.text():
             W.ysEntry.setText('{:0.3f}'.format(P.yOrigin))
@@ -79,7 +79,7 @@ def preview(P, W):
             else:
                 centerY = float(W.ysEntry.text()) + lenY / 2
         except:
-            msg += 'Y ORIGIN\n'
+            msg.append('Y {}'.format(text))
         # adjust ellipse lengths if offsets are set
         try:
             if W.kOffset.isChecked():
@@ -90,10 +90,31 @@ def preview(P, W):
                     lenX -= float(W.kerf_width.value())
                     lenY -= float(W.kerf_width.value())
         except:
-            msg += 'Kerf Width entry in material\n'
+            msg.append(_translate('Conversational', 'KERF'))
+        # get the leadin and leadout length
+        try:
+            if W.liEntry.text():
+                leadInOffset = numpy.sin(45) * float(W.liEntry.text())
+            else:
+                leadInOffset = 0
+        except:
+            msg.append(_translate('Conversational', 'LEAD IN'))
+        try:
+            if W.loEntry.text():
+                leadOutOffset = numpy.sin(45) * float(W.loEntry.text())
+            else:
+                leadOutOffset = 0
+        except:
+            msg.append(_translate('Conversational', 'LEAD OUT'))
+        if msg:
+            msg0 = _translate('Conversational', 'Invalid entry detected in')
+            msg1 = ''
+            for m in msg:
+                msg1 += '{}\n'.format(m)
+            error_set(P, '{}:\n\n{}'.format(msg0, msg1))
+            return
         # approx perimeter in mm
         perim = (numpy.pi * (3 * (lenX + lenY) - numpy.sqrt((3 * lenX + lenY) * (lenX + 3 * lenY)))) * P.unitsPerMm
-        print("\nPERIMETER:{} from X:{} Y:{}".format(perim, lenX, lenY))
         # number of points is 360 unless perimeter is > 360mm then have a segment length of 1mm
         points = 360 if perim <= 360 else int(perim)
         mult = float(360) / points
@@ -121,7 +142,7 @@ def preview(P, W):
             elif '(postamble)' in line:
                 break
             elif 'm2' in line.lower() or 'm30' in line.lower():
-                break
+                continue
             outNgc.write(line)
         outTmp.write('\n(conversational ellipse)\n')
         outTmp.write('M190 P{}\n'.format(int(W.conv_material.currentText().split(':')[0])))
@@ -138,21 +159,6 @@ def preview(P, W):
             dX = X[start] - X[start + 1]
             dY = Y[start] - Y[start + 1]
         segAngle = numpy.arctan2(dY, dX)
-        # get the leadin and leadout length
-        try:
-            if W.liEntry.text():
-                leadInOffset = numpy.sin(45) * float(W.liEntry.text())
-            else:
-                leadInOffset = 0
-        except:
-            msg += 'LEAD IN\n'
-        try:
-            if W.loEntry.text():
-                leadOutOffset = numpy.sin(45) * float(W.loEntry.text())
-            else:
-                leadOutOffset = 0
-        except:
-            msg += 'LEAD OUT\n'
         # set direction constants
         right = numpy.radians(0)
         up = numpy.radians(90)
@@ -210,64 +216,60 @@ def preview(P, W):
         W.conv_preview.set_current_view()
         W.add.setEnabled(True)
         W.undo.setEnabled(True)
+        Conv.conv_preview_button(P, W, True)
     else:
-        msg = 'WIDTH and HEIGHT are required'
-        error_set(P, msg)
+        msg0 = _translate('Conversational', 'Zero is invalid for')
+        msg1 = _translate('Conversational', 'WIDTH')
+        msg2 = _translate('Conversational', 'HEIGHT')
+        error_set(P, '{}:\n\n{}\n{}\n'.format(msg0, msg1, msg2))
 
 def error_set(P, msg):
-    P.conv_undo_shape()
     P.dialogError = True
-    P.dialog_show_ok(QMessageBox.Warning, 'Ellipse Error', msg)
+    P.dialog_show_ok(QMessageBox.Warning, _translate('Conversational', 'Ellipse Error'), msg)
 
-def entry_changed(P, W, widget):
-    P.conv_entry_changed(widget)
+def entry_changed(P, W, Conv, widget):
+    Conv.conv_entry_changed(P, W, widget)
 
-def auto_preview(P, W):
+def auto_preview(P, W, Conv):
     if W.main_tab_widget.currentIndex() == 1 and W.wEntry.text() and W.hEntry.text():
-        preview(P, W)
+        preview(P, W, Conv)
 
-def add_shape_to_file(P, W):
-    P.conv_add_shape_to_file()
-
-def undo_pressed(P, W):
-    P.conv_undo_shape()
-
-def widgets(P, W):
-    #widgets
-    W.ctLabel = QLabel('CUT TYPE')
-    W.ctGroup = QButtonGroup(W)
-    W.cExt = QRadioButton('EXTERNAL')
-    W.cExt.setChecked(True)
-    W.ctGroup.addButton(W.cExt)
-    W.cInt = QRadioButton('INTERNAL')
-    W.ctGroup.addButton(W.cInt)
-    W.koLabel = QLabel('KERF')
-    W.kOffset = QPushButton('OFFSET')
-    W.kOffset.setCheckable(True)
-    W.spLabel = QLabel('START')
+def widgets(P, W, Conv):
     W.spGroup = QButtonGroup(W)
-    W.center = QRadioButton(' CENTER')
+    W.center = QRadioButton(_translate('Conversational', 'CENTER'))
     W.spGroup.addButton(W.center)
-    W.bLeft = QRadioButton('BTM LEFT')
+    W.bLeft = QRadioButton(_translate('Conversational', 'BTM LEFT'))
     W.spGroup.addButton(W.bLeft)
-    W.xsLabel = QLabel('X ORIGIN')
-    W.xsEntry = QLineEdit(str(P.xSaved), objectName = 'xsEntry')
-    W.ysLabel = QLabel('Y ORIGIN')
-    W.ysEntry = QLineEdit(str(P.ySaved), objectName = 'ysEntry')
-    W.liLabel = QLabel('LEAD IN')
+    W.liLabel = QLabel(_translate('Conversational', 'LEAD IN'))
     W.liEntry = QLineEdit(str(P.leadIn), objectName = 'liEntry')
-    W.loLabel = QLabel('LEAD OUT')
+    W.loLabel = QLabel(_translate('Conversational', 'LEAD OUT'))
     W.loEntry = QLineEdit(str(P.leadOut), objectName = 'loEntry')
-    W.wLabel = QLabel('WIDTH')
-    W.wEntry = QLineEdit(objectName = '')
-    W.hLabel = QLabel('HEIGHT')
-    W.hEntry = QLineEdit(objectName = '')
-    W.aLabel = QLabel('ANGLE')
-    W.aEntry = QLineEdit('0', objectName = 'aEntry')
-    W.preview = QPushButton('PREVIEW')
-    W.add = QPushButton('ADD')
-    W.undo = QPushButton('UNDO')
-    W.lDesc = QLabel('CREATING ELLIPSE')
+    if not P.convSettingsChanged:
+        #widgets
+        W.ctLabel = QLabel(_translate('Conversational', 'CUT TYPE'))
+        W.ctGroup = QButtonGroup(W)
+        W.cExt = QRadioButton(_translate('Conversational', 'EXTERNAL'))
+        W.cExt.setChecked(True)
+        W.ctGroup.addButton(W.cExt)
+        W.cInt = QRadioButton(_translate('Conversational', 'INTERNAL'))
+        W.ctGroup.addButton(W.cInt)
+        W.koLabel = QLabel(_translate('Conversational', 'KERF'))
+        W.kOffset = QPushButton(_translate('Conversational', 'OFFSET'))
+        W.kOffset.setCheckable(True)
+        W.spLabel = QLabel(_translate('Conversational', 'START'))
+        text = _translate('Conversational', 'ORIGIN')
+        W.xsLabel = QLabel(_translate('Conversational', 'X {}'.format(text)))
+        W.xsEntry = QLineEdit(str(P.xSaved), objectName = 'xsEntry')
+        W.ysLabel = QLabel(_translate('Conversational', 'Y {}'.format(text)))
+        W.ysEntry = QLineEdit(str(P.ySaved), objectName = 'ysEntry')
+        W.wLabel = QLabel(_translate('Conversational', 'WIDTH'))
+        W.wEntry = QLineEdit(objectName = '')
+        W.hLabel = QLabel(_translate('Conversational', 'HEIGHT'))
+        W.hEntry = QLineEdit(objectName = '')
+        W.aLabel = QLabel(_translate('Conversational', 'ANGLE'))
+        W.aEntry = QLineEdit('0', objectName = 'aEntry')
+    W.add = QPushButton(_translate('Conversational', 'ADD'))
+    W.lDesc = QLabel(_translate('Conversational', 'CREATING ELLIPSE'))
     W.iLabel = QLabel()
     pixmap = QPixmap('{}conv_ellipse_l.png'.format(P.IMAGES)).scaledToWidth(196)
     W.iLabel.setPixmap(pixmap)
@@ -294,24 +296,22 @@ def widgets(P, W):
         W[widget].setFixedHeight(24)
     #starting parameters
     W.add.setEnabled(False)
-    W.undo.setEnabled(False)
     if P.oSaved:
         W.center.setChecked(True)
     else:
         W.bLeft.setChecked(True)
-    P.conv_undo_shape()
     #connections
-    W.conv_material.currentTextChanged.connect(lambda:auto_preview(P, W))
-    W.cExt.toggled.connect(lambda:auto_preview(P, W))
-    W.kOffset.toggled.connect(lambda:auto_preview(P, W))
-    W.center.toggled.connect(lambda:auto_preview(P, W))
-    W.preview.pressed.connect(lambda:preview(P, W))
-    W.add.pressed.connect(lambda:add_shape_to_file(P, W))
-    W.undo.pressed.connect(lambda:undo_pressed(P, W))
+    W.conv_material.currentTextChanged.connect(lambda:auto_preview(P, W, Conv))
+    W.cExt.toggled.connect(lambda:auto_preview(P, W, Conv))
+    W.kOffset.toggled.connect(lambda:auto_preview(P, W, Conv))
+    W.center.toggled.connect(lambda:auto_preview(P, W, Conv))
+    W.preview.pressed.connect(lambda:preview(P, W, Conv))
+    W.add.pressed.connect(lambda:Conv.conv_add_shape_to_file(P, W))
+    W.undo.pressed.connect(lambda:Conv.conv_undo_shape(P, W))
     entries = ['xsEntry', 'ysEntry', 'liEntry', 'loEntry', 'wEntry', 'hEntry', 'aEntry']
     for entry in entries:
-        W[entry].textChanged.connect(lambda:entry_changed(P, W, W.sender()))
-        W[entry].returnPressed.connect(lambda:preview(P, W))
+        W[entry].textChanged.connect(lambda:entry_changed(P, W, Conv, W.sender()))
+        W[entry].returnPressed.connect(lambda:preview(P, W, Conv))
     #add to layout
     if P.landscape:
         W.entries.addWidget(W.ctLabel, 0, 0)
@@ -336,7 +336,7 @@ def widgets(P, W):
         W.entries.addWidget(W.hEntry, 7, 1)
         W.entries.addWidget(W.aLabel, 8, 0)
         W.entries.addWidget(W.aEntry, 8, 1)
-        for r in range(9, 12):
+        for r in [9,10,11]:
             W['s{}'.format(r)] = QLabel('')
             W['s{}'.format(r)].setFixedHeight(24)
             W.entries.addWidget(W['s{}'.format(r)], r, 0)
@@ -369,7 +369,7 @@ def widgets(P, W):
         W.entries.addWidget(W.hEntry, 5, 3)
         W.entries.addWidget(W.aLabel, 6, 0)
         W.entries.addWidget(W.aEntry, 6, 1)
-        for r in range(7, 9):
+        for r in [7,8]:
             W['s{}'.format(r)] = QLabel('')
             W['s{}'.format(r)].setFixedHeight(24)
             W.entries.addWidget(W['s{}'.format(r)], r, 0)
@@ -379,3 +379,4 @@ def widgets(P, W):
         W.entries.addWidget(W.lDesc, 10 , 1, 1, 3)
         W.entries.addWidget(W.iLabel, 0 , 5, 7, 3)
     W.wEntry.setFocus()
+    P.convSettingsChanged = False

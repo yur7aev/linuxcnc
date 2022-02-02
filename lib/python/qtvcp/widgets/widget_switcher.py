@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # qtvcp
 #
 # Copyright (c) 2018  Chris Morley <chrisinnanaimo@hotmail.com>
@@ -78,7 +78,7 @@ class WidgetSwitcher(QStackedWidget, _HalWidgetBase):
     # -1 will return to default layout
     def show_id_widget(self, number):
         #print 'requested:',number
-        if number is 0:
+        if number == 0:
             self.show_default()
             return
         for n, i in enumerate(self._widgetNames):

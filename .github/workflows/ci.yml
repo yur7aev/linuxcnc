@@ -10,7 +10,7 @@ on:
 
 jobs:
   rip-and-test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - name: Dump GitHub context
       env:
@@ -32,7 +32,7 @@ jobs:
         ../scripts/rip-environment runtests -p
     
   htmldocs:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - name: Dump GitHub context
       env:
@@ -53,7 +53,7 @@ jobs:
         # Note that the package build covers html docs
 
   package:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - name: Dump GitHub context
       env:
@@ -70,7 +70,7 @@ jobs:
         ./scripts/travis-install-build-deps.sh
         codename=$(grep VERSION_CODENAME /etc/os-release | cut -d = -f 2)
         dch --maintmaint --distribution $codename "GitHub test package."
-        debuild -uc -us -I -i -j$(nproc)
+        fakeroot ./debian/rules binary
         sudo apt-get install ../*.deb
         ./scripts/runtests -p tests/
         lintian --info --display-info --pedantic --display-experimental ../*.deb

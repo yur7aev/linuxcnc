@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
 #
 #    This is stepconf, a graphical configuration editor for LinuxCNC
@@ -28,17 +28,12 @@
 # add GLADE callbacks for the page here.
 # add large or common function calls to stepconf.py
 
-from __future__ import print_function
-#import gtk
 import os
 from gi.repository import Gtk
-#import gobject
 from gi.repository import GObject
 import sys
-
-if sys.version_info[0] == 2:
-    reload(sys)
-    sys.setdefaultencoding('utf8')
+import importlib
+importlib.reload(sys)
 
 class Pages:
     def __init__(self, app):
@@ -61,7 +56,7 @@ class Pages:
         else:
             return True
 
-    # seaches (self._p.available_page) from the current page forward,
+    # searches (self._p.available_page) from the current page forward,
     # for the next page that is True or till second-to-last page.
     # if state found True: call current page finish function.
     # If that returns False then call the next page prepare function and show page
@@ -89,13 +84,13 @@ class Pages:
         elif u == len(self._p.available_page):
             name,text,state = self._p.available_page[cur]
             self['%s_finish'%name]()
-        # if comming from page 0 to page 1 sensitize 
+        # if coming from page 0 to page 1 sensitize 
         # the back button and change fwd button text
         if cur == 0:
             self.w.button_back.set_sensitive(True)
             self.w.label_fwd.set_text(self._p.MESS_FWD)
 
-    # seaches (self._p.available_page) from the current page backward,
+    # searches (self._p.available_page) from the current page backward,
     # for the next page that is True or till first page.
     # if state found True: call current page finish function.
     # If that returns False then call the next page prepare function and show page
@@ -233,10 +228,12 @@ class Pages:
             filter = Gtk.FileFilter()
             filter.add_pattern("*.stepconf")
             filter.set_name(_("LinuxCNC 'stepconf' configuration files"))
-            dialog = Gtk.FileChooserDialog(_("Modify Existing Configuration"),
-                self.w.window1, Gtk.FileChooserAction.OPEN,
-                (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+            dialog = Gtk.FileChooserDialog(
+                title=_("Modify Existing Configuration"),
+                parent=self.w.window1,
+                action=Gtk.FileChooserAction.OPEN)
+            dialog.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
+            dialog.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
             dialog.set_default_response(Gtk.ResponseType.OK)
             dialog.add_filter(filter)
             if not self.d._lastconfigname == "" and self.d._chooselastconfig:
@@ -404,11 +401,27 @@ class Pages:
             self.w.qtplasmac_estop_1.set_active(True)
         else:
             self.w.qtplasmac_estop.set_active(True)
+        if self.d.qtplasmacdro == 1:
+            self.w.qtplasmac_dro_1.set_active(True)
+        else:
+            self.w.qtplasmac_dro.set_active(True)
+        if self.d.qtplasmacerror == 1:
+            self.w.qtplasmac_error_1.set_active(True)
+        else:
+            self.w.qtplasmac_error.set_active(True)
+        if self.d.qtplasmacstart == 1:
+            self.w.qtplasmac_start_1.set_active(True)
+        else:
+            self.w.qtplasmac_start.set_active(True)
+        if self.d.qtplasmacpause == 1:
+            self.w.qtplasmac_pause_1.set_active(True)
+        else:
+            self.w.qtplasmac_pause.set_active(True)
+        if self.d.qtplasmacstop == 1:
+            self.w.qtplasmac_stop_1.set_active(True)
+        else:
+            self.w.qtplasmac_stop.set_active(True)
         # set the qtplasmac spinboxes
-        self.w.qtplasmac_cam_x.set_value(self.d.qtplasmacxcam)
-        self.w.qtplasmac_cam_y.set_value(self.d.qtplasmacycam)
-        self.w.qtplasmac_laser_x.set_value(self.d.qtplasmacxlaser)
-        self.w.qtplasmac_laser_y.set_value(self.d.qtplasmacylaser)
         self.w.qtplasmac_pmx_port.set_text(self.d.qtplasmacpmx)
 
     def options_finish(self):
@@ -482,10 +495,11 @@ class Pages:
         self.d.qtplasmacmode = [int(i) for i,r in enumerate(reversed(self.w.qtplasmac_mode.get_group())) if r.get_active()][0]
         self.d.qtplasmacscreen = [int(i) for i,r in enumerate(reversed(self.w.qtplasmac_screen.get_group())) if r.get_active()][0]
         self.d.qtplasmacestop = [int(i) for i,r in enumerate(reversed(self.w.qtplasmac_estop.get_group())) if r.get_active()][0]
-        self.d.qtplasmacxcam = self.w.qtplasmac_cam_x.get_value()
-        self.d.qtplasmacycam = self.w.qtplasmac_cam_y.get_value()
-        self.d.qtplasmacxlaser = self.w.qtplasmac_laser_x.get_value()
-        self.d.qtplasmacylaser = self.w.qtplasmac_laser_y.get_value()
+        self.d.qtplasmacdro = [int(i) for i,r in enumerate(reversed(self.w.qtplasmac_dro.get_group())) if r.get_active()][0]
+        self.d.qtplasmacerror = [int(i) for i,r in enumerate(reversed(self.w.qtplasmac_error.get_group())) if r.get_active()][0]
+        self.d.qtplasmacstart = [int(i) for i,r in enumerate(reversed(self.w.qtplasmac_start.get_group())) if r.get_active()][0]
+        self.d.qtplasmacpause = [int(i) for i,r in enumerate(reversed(self.w.qtplasmac_pause.get_group())) if r.get_active()][0]
+        self.d.qtplasmacstop = [int(i) for i,r in enumerate(reversed(self.w.qtplasmac_stop.get_group())) if r.get_active()][0]
         self.d.qtplasmacpmx = self.w.qtplasmac_pmx_port.get_text()
         self.page_set_state('spindle',((self.a.has_spindle_speed_control() or self.a.has_spindle_encoder()) \
                                         and not self.d.select_qtplasmac))
@@ -646,12 +660,15 @@ class Pages:
     def pport1_finish(self):
         self.page_set_state('thcad', False)
         self.d.thcadenc = 0
+        self.d.ohmiccontact = 0
         for pin in (10,11,12,13,15):
             p = 'pin%d' % pin
             self.d[p] = self._p.hal_input_names[self.w[p].get_active()]
             if self.d[p] == "plasmac:arc-voltage-raw":
                 self.page_set_state('thcad', True)
                 self.d.thcadenc = 1
+            if self.d[p] == "plasmac:ohmic-sense-in":
+                self.d.ohmiccontact = 1
         for pin in (1,2,3,4,5,6,7,8,9,14,16,17):
             p = 'pin%d' % pin
             self.d[p] = self._p.hal_output_names[self.w[p].get_active()]
@@ -727,6 +744,11 @@ class Pages:
         for pin in (2,3,4,5,6,7,8,9,10,11,12,13,15):
             p = 'pp2_pin%d_in' % pin
             self.d[p] = self._p.hal_input_names[self.w[p].get_active()]
+            if self.d[p] == "plasmac:arc-voltage-raw":
+                self.page_set_state('thcad', True)
+                self.d.thcadenc = 1
+            if self.d[p] == "plasmac:ohmic-sense-in":
+                self.d.ohmiccontact = 1
             p = 'pp2_pin%d_in_inv' % pin
             self.d[p] = self.w[p].get_active()
         self.d.pp2_direction = self.w.pp2_direction.get_active()
@@ -928,19 +950,19 @@ class Pages:
         if axis == "a":
             self.w[axis + "screwunits"].set_text(_("degree / rev"))
             self.w[axis + "velunits"].set_text(_("deg / s"))
-            self.w[axis + "accunits"].set_text(_(u"deg / s²"))
+            self.w[axis + "accunits"].set_text(_("deg / s²"))
             self.w[axis + "accdistunits"].set_text(_("deg"))
             self.w[axis + "scaleunits"].set_text(_("Steps / deg"))
         elif self.d.units:
             self.w[axis + "screwunits"].set_text(_("mm / rev"))
             self.w[axis + "velunits"].set_text(_("mm / s"))
-            self.w[axis + "accunits"].set_text(_(u"mm / s²"))
+            self.w[axis + "accunits"].set_text(_("mm / s²"))
             self.w[axis + "accdistunits"].set_text(_("mm"))
             self.w[axis + "scaleunits"].set_text(_("Steps / mm"))
         else:
             self.w[axis + "screwunits"].set_text(_("rev / in"))
             self.w[axis + "velunits"].set_text(_("in / s"))
-            self.w[axis + "accunits"].set_text(_(u"in / s²"))
+            self.w[axis + "accunits"].set_text(_("in / s²"))
             self.w[axis + "accdistunits"].set_text(_("in"))
             self.w[axis + "scaleunits"].set_text(_("Steps / in"))
 

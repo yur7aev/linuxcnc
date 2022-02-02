@@ -2,7 +2,8 @@
 * {
     color: foregnd;
     background: backgnd;
-    font: 10pt Lato }
+    font: 10pt DejaVuSans;
+    outline: none }
 
 *:disabled {
     color: inactive;
@@ -19,7 +20,7 @@
 #motion_config, #probe_config, #safety_config,
 #scribe_config, #spotting_config, #utility_frame,
 #gui_frame, #materials_frame, #camview_frame,
-#conv_frame, #stats_frame, #pmx_stats_frame, 
+#conv_frame, #stats_frame, #pmx_stats_frame,
 #machinelog_frame {
     border: 1px solid frames;
     background: backgnd;
@@ -44,11 +45,14 @@
 
 /****** TOOLTIPS ************/
 QToolTip {
+    font: 13px;
+    padding: 4 }
+
+/****** MATERIAL LABEL ************/
+#material_label{
     color: backgnd;
-    background: backgnd;
-    border: none;
-    font: 1px;
-    opacity: 0 }
+    background: frames;
+    border-top-left-radius: 2px }
 
 /****** VELOCITY LABELS ************/
 #velocity_label{
@@ -173,9 +177,14 @@ QPushButton:checked:pressed, QToolButton:checked:pressed {
     background: e-stop;
     border-color: e-stop }
 
+/****** ERROR LABEL ************/
+#error_label {
+    color: e-stop;
+}
+
 /****** TOUCHOFF BUTTON<<<<<<<<<<<<*/
 #touch_x, #touch_y, #touch_z, #touch_a, #touch_b {
-    font: 20pt 'Lato' }
+    font: 20pt 'DejaVuSans' }
 
 /******    JOG BUTTON ************/
 #jog_x_minus, #jog_x_plus,
@@ -215,12 +224,19 @@ QPushButton:checked:pressed, QToolButton:checked:pressed {
     color: backgnd;
     background: frames;
     border: none;
-    border-top-left-radius: 2px;
+    border-top-left-radius: 0px;
     border-top-right-radius: 0px;
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px }
 
-/****** OPEN BUTTON<<<<<<<<<<<<*/
+#file_open:disabled {
+    background: inactive }
+
+#file_open:pressed {
+    color: frames;
+    background: backgnd }
+
+/****** RELOAD BUTTON<<<<<<<<<<<<*/
 #file_reload {
     color: backgnd;
     background: frames;
@@ -230,12 +246,36 @@ QPushButton:checked:pressed, QToolButton:checked:pressed {
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px }
 
+#file_reload:disabled {
+    background: inactive }
+
+#file_reload:pressed {
+    color: frames;
+    background: backgnd }
+
+/****** CLEAR BUTTON<<<<<<<<<<<<*/
+#file_clear {
+    color: backgnd;
+    background: frames;
+    border: none;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px }
+
+#file_clear:disabled {
+    background: inactive }
+
+#file_clear:pressed {
+    color: frames;
+    background: backgnd }
+
 /****** DRO DISPLAY<<<<<<<<<<<<*/
 DROLabel {
     color: foregnd;
     border: 1px solid foregnd;
     border-radius: 4px;
-    font: 20pt 'Lato' }
+    font: 20pt 'DejaVuSans' }
 
 DROLabel[homed=false] {
     color: inactive;
@@ -251,7 +291,7 @@ DROLabel[homed=false] {
     background: foregnd;
     border: 1px solid foregnd;
     border-radius: 4px;
-    font: 20pt 'Lato' }
+    font: 20pt 'DejaVuSans' }
 
 #dro_label_x[homed=false],
 #dro_label_y[homed=false],
@@ -442,42 +482,46 @@ QSlider::groove:vertical:disabled {
 QComboBox {
     border: 1px solid foregnd;
     border-radius: 4px;
-    padding: 0px 0px 0px 18px;
-    selection-color: backgnd;
-    selection-background-color: foregnd }
+    padding-left: 6px }
+
+QComboBox#jogincrements {
+    padding-left: 18px }
+
+QComboBox#material_selector {
+    color: backgnd;
+    background: frames;
+    border: none;
+    border-radius: 0;
+    height: 16px;
+    }
 
 QComboBox::drop-down {
     width: 0;
     image: none }
 
-QComboBox QListView {
-    border: 4px solid foregnd;
-    border-radius: 0px }
+QComboBox QAbstractItemView {
+    border: 1px solid foregnd;
+    border-radius: 4;
+    padding: 20 4 20 4 }
 
-/****** MATERIAL SELECTOR COMBO BOX ************/
-#material_selector {
+QComboBox::item:selected {
     color: backgnd;
-    background: frames;
-    border: none;
-    border-top-left-radius: 2px;
-    border-top-right-radius: 0px;
-    border-bottom-left-radius: 0px;
-    border-bottom-right-radius: 0px;
-    font: 11pt 'Lato';
-    padding: 0px 0px 0px 16px;
-    height: 16px;
-    selection-color: backgnd;
-    selection-background-color: frames }
+    background-color: foregnd;
+    margin-left: 0 }
 
-#material_selector:!editable:off,
-#material_selector::drop-down:editable:off,
-#material_selector:!editable:on,
-#material_selector::drop-down:editable:on {
-    color: frames;
-    background: backgnd }
+QComboBox::item:!selected {
+    color: foregnd;
+    background-color: backgnd }
 
-#material_selector QListView {
-    border-color: frames }
+QComboBox::indicator {
+    color: transparent;
+    background-color: transparent }
+
+#material_selector:disabled,
+#material_label:disabled,
+#velocity_label:disabled,
+#velocity_show:disabled {
+    background: inactive }
 
 /****** FILEMANAGER ************/
 QHeaderView::section {
@@ -487,18 +531,14 @@ QHeaderView::section {
     font-size: 11pt;
     font: italic;
     margin: 1;
-    height: 20;
     padding-top: 5 }
 
 #filemanager QTableView {
     border: 1px solid foregnd;
     border-radius: 4px;
-    font: 11pt 'Lato';
+    font: 11pt 'DejaVuSans';
     alternate-background-color: backalt;
     padding: 2px }
-
-#filemanager QTableView::item {
-    height: 36px }
 
 #filemanager QTableView::item:selected:active {
     color: backgnd;
@@ -521,19 +561,42 @@ QHeaderView::section {
     height: 40px;
     margin: 0px }
 
+/****** ORIGIN OFFSET VIEW ************/
+/* this also uses QHeaderView from FILEMANAGER */
+
+#originoffsetview {
+    font: 11pt 'DejaVuSans';
+    border: 1px solid foregnd;
+    border-radius: 4px;
+    alternate-background-color: backgnd;
+    padding: 2px;
+    gridline-color: backalt }
+
+#originoffsetview {
+    qproperty-styleColorHighlight: backalt }
+
+#originoffsetview::item:selected:active {
+    color: backgnd;
+    background-color: foregnd }
+
+#originoffsetview::item:selected:!active {
+    color: backgnd;
+    background-color: foregnd }
+
 /****** MDI HISTORY************/
 #mdihistory QListView {
     border: 1px solid foregnd;
     border-radius: 4px;
-    font: 11pt 'Lato';
+    font: 11pt 'DejaVuSans';
     alternate-background-color: backalt;
-    show-decoration-selected: 1;
-    selection-background-color: foregnd;
-    selection-color:backgnd;
     padding: 2 }
 
 #mdihistory QListView::item {
     height: 36 }
+
+#mdihistory QListView::item:selected {
+    color: backgnd;
+    background-color: foregnd }
 
 #mdihistory QLineEdit {
     border: 1px solid foregnd;
@@ -584,15 +647,20 @@ QScrollBar::sub-line:vertical {
 
 /****** MENU ************/
 QMenu {
-    background: foregnd;
     font: 11pt;
-    margin: 4px }
+    margin: 0 16 0 16 }
 
 QMenu::item {
     color: foregnd;
     background: backgnd;
-    border: 4px solid foregnd;
-    padding: 8px }
+    border: 1px solid foregnd;
+    border-radius: 4px;
+    padding: 8 0 8 8;
+    margin: 8 0 8 0;
+    width: 68 }
+
+#wcs_button::menu-indicator {
+    width: 0 }
 
 /****** TAB ************/
 QTabWidget::pane {
@@ -618,22 +686,28 @@ QTabBar::tab:selected {
 
 /****** STATUS BAR ************/
 QStatusBar {
-border: none }
+    border: none }
 
 QStatusBar::item {
- image: none }
+    image: none }
 
 QProgressBar {
     color: foregnd;
-    border: 1px solid foregnd;
-    border-radius: 4px }
+    background: backalt;
+    border: 0px;
+    border-radius: 4px;
+    max-width: 20px; }
 
 QProgressBar::chunk {
-    background-color: foregnd }
+    background-color: foregnd;
+    height: 1px;
+    margin: 0.5px }
 
 /****** LED ************/
 LED {
     qproperty-color: l-e-d;
+    qproperty-off_color: backgnd;
+    qproperty-border_color: backgnd;
     qproperty-diameter: 20 }
 
 /****** TEXT ENTRY ************/
@@ -648,12 +722,10 @@ QPlainTextEdit {
 /****** GCODE EDITOR & GCODE DISPLAY ************/
 
 EditorBase#lexer {
-height: 44;
-}
+    height: 44 }
 
 /*QTableView::item{
-height: 44;
-}*/
+    height: 44 }*/
 
 EditorBase {
     qproperty-styleColorBackground: backgnd;
@@ -662,14 +734,19 @@ EditorBase {
     qproperty-styleColor2: foregnd;
     qproperty-styleColor3: foregnd;
     qproperty-styleColor4: foregnd;
+    qproperty-styleColor5: foregnd;
+    qproperty-styleColor6: foregnd;
+    qproperty-styleColor7: foregnd;
     qproperty-styleColorMarginText: foregnd;
     qproperty-styleColorMarginBackground: backgnd;
-    qproperty-styleFont0: 'Lato,11,-1,0,60,0,0,0,0,0';
-    qproperty-styleFont1: 'Lato,11,-1,0,60,0,0,0,0,0';
-    qproperty-styleFont2: 'Lato,11,-1,0,60,0,0,0,0,0';
-    qproperty-styleFont3: 'Lato,11,-1,0,60,0,0,0,0,0';
-    qproperty-styleFont4: 'Lato,11,-1,0,60,0,0,0,0,0';
-    qproperty-styleFontMargin: 'Lato,11,-1,0,20,00,0,0,0,0';
+    qproperty-styleFont0: 'DejaVuSansMono,11,-1,0,60,0,0,0,0,0';
+    qproperty-styleFont1: 'DejaVuSansMono,11,-1,0,60,0,0,0,0,0';
+    qproperty-styleFont2: 'DejaVuSansMono,11,-1,0,60,0,0,0,0,0';
+    qproperty-styleFont3: 'DejaVuSansMono,11,-1,0,60,0,0,0,0,0';
+    qproperty-styleFont4: 'DejaVuSansMono,11,-1,0,60,0,0,0,0,0';
+    qproperty-styleFont5: 'DejaVuSansMono,11,-1,0,60,0,0,0,0,0';
+    qproperty-styleFont6: 'DejaVuSansMono,11,-1,0,60,0,0,0,0,0';
+    qproperty-styleFont7: 'DejaVuSansMono,11,-1,0,60,0,0,0,0,0';
     qproperty-styleColorSelectionText: backgnd;
     qproperty-styleColorSelectionBackground: foregnd }
 

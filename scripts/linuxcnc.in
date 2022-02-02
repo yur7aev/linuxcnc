@@ -117,7 +117,7 @@ Options:
                   ini directory and system library:
                   $HALLIB_DIR
 Note:
-    The -H "dirname" option may be specifed multiple times
+    The -H "dirname" option may be specified multiple times
 EOF
 
 }
@@ -372,8 +372,8 @@ function run_applications () {
              exe_name="$(pwd)/$app_name";;
           *) # try local first then PATH
              exe_name=$(pwd)/$app_name
-             if [ ! -x $exe_name ] ; then
-               exe_name=$(which $app_name)
+             if [ ! -x "$exe_name" ] ; then
+               exe_name=$(command -v $app_name)
              fi
        esac
        if [ ! -f "$exe_name" ] ; then
@@ -469,6 +469,19 @@ if [ "$retval" != "1.1" ]; then
     42) echo "update_ini cancelled by user" ; exit 0;;
     *) echo "update script failed in an unexpected way."; exit $exitval ;;
     esac
+fi
+
+# 2.1.6 check if PlasmaC config, if true it requires migration to QtPlasmaC
+if [ `$INIVAR -ini "$INIFILE" -var MODE -sec PLASMAC 2> /dev/null` ]; then
+    echo -e "\nThis is a PlasmaC configuration, it requires migrating to QtPlasmac.\n"
+    exitstr=$(qtplasmac-plasmac2qt "$INIFILE")
+    exitval=$?
+    case "$exitval" in
+        0) echo -e "$exitstr";;
+        2) echo -e "Migration cancelled by user.\nPlasmaC is not available in LinuxCNC 2.9 and later.\n";;
+        *) echo -e "QtPlasmaC migration failed with an unknown error.\n";;
+    esac
+    exit 0
 fi
 
 @TCLSH@ $HALLIB_DIR/check_config.tcl "$INIFILE"

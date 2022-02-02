@@ -3,9 +3,9 @@ import linuxcnc
 import json
 
 DBG_state = 0
-DBG_supress = True
+DBG_suppress = True
 def DBG(str):
-    if not DBG_state or DBG_supress: return
+    if not DBG_state or DBG_suppress: return
     print(str)
 
 """ Set of base classes """
@@ -16,7 +16,7 @@ class _WidgetBase:
         self.metadata = metadata
         self.widgets = widgets
         self.cmd = command
-        global DBG_supress
+        global DBG_suppress
         global DBG_state
         DBG_state = dbg
         self.state = False
@@ -112,9 +112,9 @@ class _ToggleBase(_WidgetBase):
             self.hal_status_pin_not = self.hal.newpin(self.hal_name+ "-state-not", hal.HAL_BIT, hal.HAL_OUT)
         # Update the pin to the proper state, but don't print debug for this
         if pintype not in ('COMMAND','ZMQ'):
-            DBG_supress = True
+            DBG_suppress = True
             self.hal_update()
-            DBG_supress = False
+            DBG_suppress = False
 
     # This finds the function in either command class or
     # the optionally loaded custom handler class
@@ -177,17 +177,24 @@ class _ToggleBase(_WidgetBase):
                 output = self.true_function if self.state else self.false_function
                 #print ('output',output)
                 if isinstance(output,list):
-                    args = output[1]
+                    args = self.stringToPython(output[1])
                     funct = output[0]
                 else:
-                    arg1 = [None]
+                    funct = output
+                    args = [None]
+
                 if funct != 'NONE':
                     x = {"FUNCTION": funct,
                           "ARGS": args
                         }
                     # convert to json object and send
-                    m1 = json.dumps(x)
-                    self.master._socket.send_multipart([self.master._topic, bytes((m1).encode('utf-8'))])
+                    try:
+                        m1 = json.dumps(x)
+                        self.master._socket.send_multipart(
+                                    [bytes(self.master._topic.encode('utf-8')),
+                                     bytes((m1).encode('utf-8'))])
+                    except Exception as e:
+                        print('Problem with ZMQ message:',e)
             else:
                 print('ZMQ output not enabled:',funct)
 
@@ -195,6 +202,26 @@ class _ToggleBase(_WidgetBase):
         if self.status_pin:
             self.hal_status_pin.set(self.state)
             self.hal_status_pin_not.set(not self.state)
+
+    def stringToPython(self, cmd):
+        def convert(scmd):
+            if 'int(' in scmd:
+                out = eval(scmd)
+            elif 'float(' in scmd:
+                out = eval(scmd)
+            elif 'bool(' in scmd:
+                out = eval(scmd)
+            else:
+                return scmd
+            return out
+
+        if isinstance(cmd,list):
+            for num,i in enumerate(cmd):
+                cmd[num] = convert(i)
+        else:
+            cmd = convert(cmd)
+        return cmd
+
 
 # A group widget is a master widget for other widgets
 # only one of the widgets under it can be true
@@ -213,9 +240,9 @@ class GROUP(_WidgetBase):
         self.widgets[i].set_state(True)
         self.widgets[i].hal_update()
         self.toggle_state(i)
-        DBG_supress = True
+        DBG_suppress = True
         self.hal_update()
-        DBG_supress = False
+        DBG_suppress = False
 
     def add_list(self,grouplist):
         self.group_list = grouplist

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # Qtvcp widget
 # Copyright (c) 2017 Chris Morley
@@ -50,8 +50,8 @@ ACTION = Action()
 
 try:
     SOUND = Player()
-except:
-    LOG.warning('Sound Player did not load')
+except Exception as e:
+    LOG.warning('Sound Player did not load: {}'.format(e))
 
 # Force the log level for this module
 #LOG.setLevel(logger.DEBUG) # One of DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -83,10 +83,11 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
         self.close_event = True
         self.play_sounds = True
         self.mchnMsg_play_sound = True
-        self.mchnMsg_speak_errors = True
+        self.mchnMsg_speak_errors = False
+        self.mchnMsg_speak_text = True
         self.mchnMsg_sound_type  = 'ERROR'
         self.usrMsg_play_sound = True
-        self.usrMsg_sound_type = 'RING'
+        self.usrMsg_sound_type = 'ATTENTION'
         self.usrMsg_use_FocusOverlay = True
         self.shutdown_play_sound = True
         self.shutdown_alert_sound_type = 'READY'
@@ -96,6 +97,7 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
         self.notify_start_detail = 'This option can be changed in the preference file'
         self.notify_start_timeout = 5
         self.shutdown_msg_title = 'Do you want to Shutdown now?'
+        self.shutdown_msg_focus_text = ''
         self.shutdown_msg_detail = ''
         self.user_messages = True
         self.use_pref_file = True
@@ -122,7 +124,6 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
         self._default_tab_name = ''
         self._close_color = QtGui.QColor(100, 0, 0, 150)
         self._messageDialogColor = QtGui.QColor(0, 0, 0, 150)
-        self._closeDialogColor = QtGui.QColor(0, 0, 0, 150)
         self._entryDialogSoftkey = True
         self._entryDialogColor = QtGui.QColor(0, 0, 0, 150)
         self._toolDialogColor = QtGui.QColor(100, 0, 0, 150)
@@ -138,9 +139,10 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
         self._calculatorDialogColor = QtGui.QColor(0, 0, 0, 150)
         self._machineLogDialogColor = QtGui.QColor(0, 0, 0, 150)
         self._runFromLineDialogColor = QtGui.QColor(0, 0, 0, 150)
-        self._zmq_sub_subscribe_name = ""
+        self._zmq_sub_subscribe_name = b""
         self._zmq_sub_socket_address = "tcp://127.0.0.1:5690"
         self._zmq_pub_socket_address = "tcp://127.0.0.1:5690"
+        self._halBaseName = ''
 
     # self.QTVCP_INSTANCE_
     # self.HAL_GCOMP_
@@ -201,6 +203,7 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
             self.play_sounds = self.PREFS_.getpref('sound_player_on', self.play_sounds, bool, 'SCREEN_OPTIONS')
             self.mchnMsg_play_sound = self.PREFS_.getpref('mchnMsg_play_sound', self.mchnMsg_play_sound, bool, 'MCH_MSG_OPTIONS')
             self.mchnMsg_speak_errors = self.PREFS_.getpref('mchnMsg_speak_errors', self.mchnMsg_speak_errors, bool, 'MCH_MSG_OPTIONS')
+            self.mchnMsg_speak_text = self.PREFS_.getpref('mchnMsg_speak_text', self.mchnMsg_speak_text, bool, 'MCH_MSG_OPTIONS')
             self.mchnMsg_sound_type = self.PREFS_.getpref('mchnMsg_sound_type', self.usrMsg_sound_type, str, 'MCH_MSG_OPTIONS')
             self.usrMsg_play_sound = self.PREFS_.getpref('usermsg_play_sound', self.usrMsg_play_sound, bool, 'USR_MSG_OPTIONS')
             self.usrMsg_sound_type = self.PREFS_.getpref('userMsg_sound_type', self.usrMsg_sound_type, str, 'USR_MSG_OPTIONS')
@@ -212,6 +215,8 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
             self.shutdown_exit_sound_type = self.PREFS_.getpref('shutdown_exit_sound_type', self.shutdown_exit_sound_type,
                                                                 str, 'SHUTDOWN_OPTIONS')
             self.shutdown_msg_title = self.PREFS_.getpref('shutdown_msg_title', self.shutdown_msg_title,
+                                                          str, 'SHUTDOWN_OPTIONS')
+            self.shutdown_msg_focus_text = self.PREFS_.getpref('shutdown_msg_focus_text', self.shutdown_msg_focus_text,
                                                           str, 'SHUTDOWN_OPTIONS')
             self.shutdown_msg_detail = self.PREFS_.getpref('shutdown_msg_detail',
                                                             self.shutdown_msg_detail,
@@ -239,7 +244,7 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
                 LOG.warning('Sound Option turned off due to error registering')
 
         if self.user_messages:
-            MSG.message_setup(self.HAL_GCOMP_)
+            self._msg = MSG.message_setup(self.HAL_GCOMP_, self.QTVCP_INSTANCE_)
             MSG.message_option('NOTIFY', NOTICE)
             if self.play_sounds:
                 MSG.message_option('play_sounds', self.usrMsg_play_sound)
@@ -349,7 +354,13 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
             if self.play_sounds and self.mchnMsg_play_sound:
                 STATUS.emit('play-sound', '%s' % self.mchnMsg_sound_type)
                 if self.mchnMsg_speak_errors:
-                    STATUS.emit('play-sound', 'SPEAK %s ' % text)
+                    if kind in (linuxcnc.OPERATOR_ERROR, linuxcnc.NML_ERROR):
+                        STATUS.emit('play-sound', 'SPEAK %s ' % text)
+                if self.mchnMsg_speak_text:
+                    if kind in (linuxcnc.OPERATOR_TEXT, linuxcnc.NML_TEXT,
+                                linuxcnc.OPERATOR_DISPLAY, STATUS.TEMPARARY_MESSAGE):
+                        STATUS.emit('play-sound', 'SPEAK %s ' % text)
+
             STATUS.emit('update-machine-log', text, 'TIME')
 
 
@@ -359,29 +370,36 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
             if self.PREFS_ and self.play_sounds and self.shutdown_play_sound:
                 sound = self.shutdown_alert_sound_type
             try:
+                if self.shutdown_msg_detail == '': details = None
+                else: details = self.shutdown_msg_detail
                 answer = self.QTVCP_INSTANCE_.closeDialog_.showdialog(self.shutdown_msg_title,
                                                                  None,
-                                                                 details=None,
+                                                                 details=details,
                                                                  icon=MSG.CRITICAL,
                                                                  display_type='YESNO',
-                                                                 focus_text='',
+                                                                 focus_text=self.shutdown_msg_focus_text,
                                                                  focus_color=self._close_color,
-                                                                 play_alert=sound)
+                                                                 play_alert=sound, use_exec=True)
             except:
                 answer = True
             # system shutdown
+            HANDLER = self.QTVCP_INSTANCE_.handler_instance
             if answer == QtWidgets.QMessageBox.DestructiveRole:
-                if 'system_shutdown_request__' in dir(self.QTVCP_INSTANCE_):
-                    self.QTVCP_INSTANCE_.system_shutdown_request__()
+                if 'system_shutdown_request__' in dir(HANDLER):
+                    HANDLER.system_shutdown_request__()
                 else:
                     from qtvcp.core import Action
                     ACTION = Action()
                     ACTION.SHUT_SYSTEM_DOWN_PROMPT()
+                if '_hal_cleanup' in dir(HANDLER):
+                    HANDLER._hal_cleanup()
                 event.accept()
             # close linuxcnc
             elif answer:
                 if self.PREFS_ and self.play_sounds and self.shutdown_play_sound:
                     STATUS.emit('play-sound', self.shutdown_exit_sound_type)
+                if '_hal_cleanup' in dir(HANDLER):
+                    HANDLER._hal_cleanup()
                 event.accept()
             # cancel
             elif answer == False:
@@ -649,7 +667,8 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
                 message = json.dumps(args)
                 LOG.debug('Sending ZMQ Message:{} {}'.format(topic,message))
                 self._zmq_pub_socket.send_multipart(
-                    [topic, bytes((message).encode('utf-8'))])
+                    [bytes(topic.encode('utf-8')),
+                        bytes((message).encode('utf-8'))])
             except Exception as e:
                 LOG.error('zmq message sending error: {}'.format(e))
         else:
@@ -719,7 +738,7 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
         return self._close_color
     def setColor(self, value):
         self._close_color = value
-    def resetState(self):
+    def resetColor(self):
         self._close_color = QtGui.QColor(100, 0, 0, 150)
 
     def set_send_zmg(self, data):
@@ -737,7 +756,7 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
     notify_max_messages = QtCore.pyqtProperty(int, get_max_messages, set_max_messages, reset_max_messages)
 
     catch_close_option = QtCore.pyqtProperty(bool, get_close, set_close, reset_close)
-    close_overlay_color = QtCore.pyqtProperty(QtGui.QColor, getColor, setColor)
+    close_overlay_color = QtCore.pyqtProperty(QtGui.QColor, getColor, setColor, resetColor)
 
     catch_errors_option = QtCore.pyqtProperty(bool, get_errors, set_errors, reset_errors)
     play_sounds_option = QtCore.pyqtProperty(bool, get_play_sounds, set_play_sounds, reset_play_sounds)
@@ -794,11 +813,6 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
     def reset_closeDialog(self):
         self.add_close_dialog = False
     closeDialog_option = QtCore.pyqtProperty(bool, get_closeDialog, set_closeDialog, reset_closeDialog)
-    def get_closeDialogColor(self):
-        return self._closeDialogColor
-    def set_closeDialogColor(self, value):
-        self._closeDialogColor = value
-    close_overlay_color = QtCore.pyqtProperty(QtGui.QColor, get_closeDialogColor, set_closeDialogColor)
 
     def set_entryDialog(self, data):
         self.add_entry_dialog = data
@@ -976,6 +990,14 @@ class ScreenOptions(QtWidgets.QWidget, _HalWidgetBase):
     def set_runFromLineDialogColor(self, value):
         self._runFromLineDialogColor = value
     runFromLine_overlay_color = QtCore.pyqtProperty(QtGui.QColor, get_runFromLineDialogColor, set_runFromLineDialogColor)
+
+    def getHalCompName(self):
+        return self._halBaseName
+    def setHalCompName(self, value):
+        self._halBaseName = value
+    def resetHalCompName(self):
+        self._halBaseName = ''
+    halCompBaseName = QtCore.pyqtProperty(str, getHalCompName, setHalCompName, resetHalCompName)
 
     ##############################
     # required boiler code #

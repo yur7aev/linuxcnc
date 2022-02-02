@@ -1,7 +1,8 @@
 '''
 conv_rectangle.py
 
-Copyright (C) 2020  Phillip A Carter
+Copyright (C) 2020, 2021  Phillip A Carter
+Copyright (C) 2020, 2021  Gregory D Carl
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -19,24 +20,50 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 '''
 
 import math
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QCoreApplication
 from PyQt5.QtWidgets import QLabel, QLineEdit, QPushButton, QRadioButton, QButtonGroup, QMessageBox
 from PyQt5.QtGui import QPixmap
 
-def preview(P, W):
+_translate = QCoreApplication.translate
+
+def preview(P, W, Conv):
     if P.dialogError: return
     xLB = yLR = xLT = yLL = 0
+    if W.r1Button.text().split()[0] == _translate('Conversational', 'RADIUS'):
+        r1Type = 'radius'
+    elif W.r1Button.text().split()[0] == _translate('Conversational', 'CHAMFER'):
+        r1Type = 'chamfer'
+    else:
+        r1Type = 'internal'
+    if W.r2Button.text().split()[0] == _translate('Conversational', 'RADIUS'):
+        r2Type = 'radius'
+    elif W.r2Button.text().split()[0] == _translate('Conversational', 'CHAMFER'):
+        r2Type = 'chamfer'
+    else:
+        r2Type = 'internal'
+    if W.r3Button.text().split()[0] == _translate('Conversational', 'RADIUS'):
+        r3Type = 'radius'
+    elif W.r3Button.text().split()[0] == _translate('Conversational', 'CHAMFER'):
+        r3Type = 'chamfer'
+    else:
+        r3Type = 'internal'
+    if W.r4Button.text().split()[0] == _translate('Conversational', 'RADIUS'):
+        r4Type = 'radius'
+    elif W.r4Button.text().split()[0] == _translate('Conversational', 'CHAMFER'):
+        r4Type = 'chamfer'
+    else:
+        r4Type = 'internal'
     if W.xlEntry.text() and W.ylEntry.text():
         try:
             if float(W.xlEntry.text()) <= 0 or float(W.ylEntry.text()) <= 0:
-                msg = 'A positive X LENGTH is required.\n\n' \
-                      '                    AND\n\n' \
-                      'A positive Y LENGTH is required.\n'
-                error_set(P, msg)
+                msg0 = _translate('Conversational', 'A positive X LENGTH is required')
+                msg1 = _translate('Conversational', 'AND')
+                msg2 = _translate('Conversational', 'A positive Y LENGTH is required')
+                error_set(P, '{}.\n\n{}\n\n{}.\n'.format(msg0, msg1, msg2))
                 return
         except:
-            msg = 'Invalid X LENGTH or Y LENGTH entry detected.\n'
-            error_set(P, msg)
+            msg0 = _translate('Conversational', 'Invalid X LENGTH or Y LENGTH entry detected.\n')
+            error_set(P, '{}.\n'.format(msg0))
             return
         try:
             if W.r1Entry.text():
@@ -56,28 +83,28 @@ def preview(P, W):
             else:
                 radius4 = 0.0
         except:
-            msg = 'Invalid RADIUS entry detected.\n'
-            error_set(P, msg)
+            msg0 = _translate('Conversational', 'Invalid RADIUS entry detected')
+            error_set(P, '{}.\n'.format(msg0))
             return
         if radius1 + radius2 > float(W.xlEntry.text()):
-            msg = 'Radius 1 plus Radius 2 ({})\n\n' \
-                  'cannot be greater than {}\n'.format(radius1 + radius2, float(W.xlEntry.text()))
-            error_set(P, msg)
+            msg0 = _translate('Conversational', 'Radius 1 plus Radius 2')
+            msg1 = _translate('Conversational', 'cannot be greater than')
+            error_set(P, '{} ({})\n\n{} {}\n'.format(msg0, radius1 + radius2, msg1, float(W.xlEntry.text())))
             return
         if radius1 + radius3 > float(W.ylEntry.text()):
-            msg = 'Radius 1 plus Radius 3 ({})\n\n' \
-                  'cannot be greater than {}\n'.format(radius1 + radius3, float(W.ylEntry.text()))
-            error_set(P, msg)
+            msg0 = _translate('Conversational', 'Radius 1 plus Radius 3')
+            msg1 = _translate('Conversational', 'cannot be greater than')
+            error_set(P, '{} ({})\n\n{} {}\n'.format(msg0, radius1 + radius3, msg1, float(W.ylEntry.text())))
             return
         if radius2 + radius4 > float(W.ylEntry.text()):
-            msg = 'Radius 2 plus Radius 4 ({})\n\n' \
-                  'can not be greater than {}\n'.format(radius2 + radius4, float(W.ylEntry.text()))
-            error_set(P, msg)
+            msg0 = _translate('Conversational', 'Radius 2 plus Radius 4')
+            msg1 = _translate('Conversational', 'can not be greater than')
+            error_set(P, '{} ({})\n\n{} {}\n'.format(msg0, radius2 + radius4, msg1, float(W.ylEntry.text())))
             return
         if radius3 > float(W.xlEntry.text()) / 2 or radius4 > float(W.xlEntry.text()) / 2:
-            msg = 'Neither Radius 3 nor Radius 4\n\n' \
-                  'can be greater than {}\n'.format(float(W.xlEntry.text()) / 2)
-            error_set(P, msg)
+            msg0 = _translate('Conversational', 'Neither Radius 3 nor Radius 4')
+            msg1 = _translate('Conversational', 'can be greater than')
+            error_set(P, '{}\n\n{} {}\n'.format(msg0, msg1, float(W.xlEntry.text()) /2 ))
             return
         if W.xlEntry.text():
             xLB = float(W.xlEntry.text()) - (radius3 + radius4)
@@ -96,8 +123,8 @@ def preview(P, W):
                 else:
                     angle = 0.0
             except:
-                msg = 'Invalid ANGLE entry detected.\n'
-                error_set(P, msg)
+                msg0 = _translate('Conversational', 'Invalid ANGLE entry detected')
+                error_set(P, '{}.\n'.format(msg0))
                 return
             try:
                 if W.liEntry.text():
@@ -105,8 +132,8 @@ def preview(P, W):
                 else:
                     leadInOffset = 0
             except:
-                msg = 'Invalid LEAD IN entry detected.\n'
-                error_set(P, msg)
+                msg = _translate('Conversational', 'Invalid LEAD IN entry detected')
+                error_set(P, '{}.\n'.format(msg0))
                 return
             try:
                 if W.loEntry.text():
@@ -114,8 +141,8 @@ def preview(P, W):
                 else:
                     leadOutOffset = 0
             except:
-                msg = 'Invalid LEAD OUT entry detected.\n'
-                error_set(P, msg)
+                msg = _translate('Conversational', 'Invalid LEAD OUT entry detected')
+                error_set(P, '{}.\n'.format(msg0))
                 return
             right = math.radians(0)
             up = math.radians(90)
@@ -124,11 +151,13 @@ def preview(P, W):
             try:
                 kOffset = float(W.kerf_width.value()) * W.kOffset.isChecked() / 2
             except:
-                msg = 'Invalid Kerf Width entry in material detected.\n'
-                error_set(P, msg)
+                msg = _translate('Conversational', 'Invalid Kerf Width entry in material detected.')
+                error_set(P, '{}.\n'.format(msg0))
                 return
             if not W.xsEntry.text():
                 W.xsEntry.setText('{:0.3f}'.format(P.xOrigin))
+            msg0 = _translate('Conversational', 'Invalid entry detected in')
+            msg1 = _translate('Conversational', 'ORIGIN')
             try:
                 if W.center.isChecked():
                     if W.cExt.isChecked():
@@ -141,8 +170,7 @@ def preview(P, W):
                     else:
                         xS = (float(W.xsEntry.text()) - kOffset) + (blLength * math.cos(angle + right + blAngle))
             except:
-                msg = 'Invalid X ORIGIN entry detected.\n'
-                error_set(P, msg)
+                error_set(P, '{}:\n\nX {}\n'.format(msg0, msg1))
                 return
             if not W.ysEntry.text():
                 W.ysEntry.setText('{:0.3f}'.format(P.yOrigin))
@@ -158,8 +186,7 @@ def preview(P, W):
                     else:
                         yS = (float(W.ysEntry.text()) - kOffset) + (blLength * math.sin(angle + right + blAngle))
             except:
-                msg = 'Invalid Y ORIGIN entry detected.\n'
-                error_set(P, msg)
+                error_set(P, '{}:\n\nY {}\n'.format(msg0, msg1))
                 return
             outTmp = open(P.fTmp, 'w')
             outNgc = open(P.fNgc, 'w')
@@ -171,7 +198,7 @@ def preview(P, W):
                 elif '(postamble)' in line:
                     break
                 elif 'm2' in line.lower() or 'm30' in line.lower():
-                    break
+                    continue
                 outNgc.write(line)
             outTmp.write('\n(conversational rectangle)\n')
             outTmp.write('M190 P{}\n'.format(int(W.conv_material.currentText().split(':')[0])))
@@ -195,7 +222,7 @@ def preview(P, W):
                 y1 = yS + yLR * math.sin(angle + down)
                 outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(x1, y1))
                 if radius4 > 0:
-                    if W.r4Button.text().startswith('iRADIUS'):
+                    if r4Type == 'internal':
                         xrCentre = x1 + (radius4 * math.cos(angle + down))
                         yrCentre = y1 + (radius4 * math.sin(angle + down))
                         xrEnd = xrCentre + (radius4 * math.cos(angle + left))
@@ -206,7 +233,7 @@ def preview(P, W):
                         yrCentre = y1 + (radius4 * math.sin(angle + left))
                         xrEnd = xrCentre + (radius4 * math.cos(angle + down))
                         yrEnd = yrCentre + (radius4 * math.sin(angle + down))
-                    if W.r4Button.text().startswith('RADIUS'):
+                    if r4Type == 'radius':
                         outTmp.write('g2 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xrEnd, yrEnd, xrCentre - x1, yrCentre - y1))
                     else:
                         outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(xrEnd, yrEnd))
@@ -217,7 +244,7 @@ def preview(P, W):
                     y2 = y1 + xLB * math.sin(angle + left)
                 outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(x2, y2))
                 if radius3 > 0:
-                    if W.r3Button.text().startswith('iRADIUS'):
+                    if r3Type == 'internal':
                         xrCentre = x2 + (radius3 * math.cos(angle + left))
                         yrCentre = y2 + (radius3 * math.sin(angle + left))
                         xrEnd = xrCentre + (radius3 * math.cos(angle + up))
@@ -228,7 +255,7 @@ def preview(P, W):
                         yrCentre = y2 + (radius3 * math.sin(angle + up))
                         xrEnd = xrCentre + (radius3 * math.cos(angle + left))
                         yrEnd = yrCentre + (radius3 * math.sin(angle + left))
-                    if W.r3Button.text().startswith('RADIUS'):
+                    if r3Type == 'radius':
                         outTmp.write('g2 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xrEnd, yrEnd, xrCentre - x2, yrCentre - y2))
                     else:
                         outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(xrEnd, yrEnd))
@@ -239,7 +266,7 @@ def preview(P, W):
                     y3 = y2 + yLL * math.sin(angle + up)
                 outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(x3, y3))
                 if radius1 > 0:
-                    if W.r1Button.text().startswith('iRADIUS'):
+                    if r1Type == 'internal':
                         xrCentre = x3 + (radius1 * math.cos(angle + up))
                         yrCentre = y3 + (radius1 * math.sin(angle + up))
                         xrEnd = xrCentre + (radius1 * math.cos(angle + right))
@@ -250,7 +277,7 @@ def preview(P, W):
                         yrCentre = y3 + (radius1 * math.sin(angle + right))
                         xrEnd = xrCentre + (radius1 * math.cos(angle + up))
                         yrEnd = yrCentre + (radius1 * math.sin(angle + up))
-                    if W.r1Button.text().startswith('RADIUS'):
+                    if r1Type == 'radius':
                         outTmp.write('g2 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xrEnd, yrEnd, xrCentre - x3, yrCentre - y3))
                     else:
                         outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(xrEnd, yrEnd))
@@ -261,7 +288,7 @@ def preview(P, W):
                     y4 = y3 + xLT * math.sin(angle + right)
                 outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(x4, y4))
                 if radius2 > 0:
-                    if W.r2Button.text().startswith('iRADIUS'):
+                    if r2Type == 'internal':
                         xrCentre = x4 + (radius2 * math.cos(angle + right))
                         yrCentre = y4 + (radius2 * math.sin(angle + right))
                         xrEnd = xrCentre + (radius2 * math.cos(angle + down))
@@ -272,7 +299,7 @@ def preview(P, W):
                         yrCentre = y4 + (radius2 * math.sin(angle + down))
                         xrEnd = xrCentre + (radius2 * math.cos(angle + right))
                         yrEnd = yrCentre + (radius2 * math.sin(angle + right))
-                    if W.r2Button.text().startswith('RADIUS'):
+                    if r2Type == 'radius':
                         outTmp.write('g2 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xrEnd, yrEnd, xrCentre - x4, yrCentre - y4))
                     else:
                         outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(xrEnd, yrEnd))
@@ -294,7 +321,7 @@ def preview(P, W):
                 y1 = yS + (xLT / 2) * math.sin(angle + left)
                 outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(x1, y1))
                 if radius1 > 0:
-                    if W.r1Button.text().startswith('iRADIUS'):
+                    if r1Type == 'internal':
                         xrCentre = x1 + (radius1 * math.cos(angle + left))
                         yrCentre = y1 + (radius1 * math.sin(angle + left))
                         xrEnd = xrCentre + (radius1 * math.cos(angle + down))
@@ -305,7 +332,7 @@ def preview(P, W):
                         yrCentre = y1 + (radius1 * math.sin(angle + down))
                         xrEnd = xrCentre + (radius1 * math.cos(angle + left))
                         yrEnd = yrCentre + (radius1 * math.sin(angle + left))
-                    if W.r1Button.text().startswith('RADIUS'):
+                    if r1Type == 'radius':
                         outTmp.write('g3 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xrEnd, yrEnd, xrCentre - x1, yrCentre - y1))
                     else:
                         outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(xrEnd, yrEnd))
@@ -316,7 +343,7 @@ def preview(P, W):
                     y2 = y1 + yLL * math.sin(angle + down)
                 outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(x2, y2))
                 if radius3 > 0:
-                    if W.r3Button.text().startswith('iRADIUS'):
+                    if r3Type == 'internal':
                         xrCentre = x2 + (radius3 * math.cos(angle + down))
                         yrCentre = y2 + (radius3 * math.sin(angle + down))
                         xrEnd = xrCentre + (radius3 * math.cos(angle + right))
@@ -327,7 +354,7 @@ def preview(P, W):
                         yrCentre = y2 + (radius3 * math.sin(angle + right))
                         xrEnd = xrCentre + (radius3 * math.cos(angle + down))
                         yrEnd = yrCentre + (radius3 * math.sin(angle + down))
-                    if W.r3Button.text().startswith('RADIUS'):
+                    if r3Type == 'radius':
                         outTmp.write('g3 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xrEnd, yrEnd, xrCentre - x2, yrCentre - y2))
                     else:
                         outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(xrEnd, yrEnd))
@@ -338,7 +365,7 @@ def preview(P, W):
                     y3 = y2 + xLB * math.sin(angle + right)
                 outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(x3, y3))
                 if radius4 > 0:
-                    if W.r4Button.text().startswith('iRADIUS'):
+                    if r4Type == 'internal':
                         xrCentre = x3 + (radius4 * math.cos(angle + right))
                         yrCentre = y3 + (radius4 * math.sin(angle + right))
                         xrEnd = xrCentre + (radius4 * math.cos(angle + up))
@@ -349,7 +376,7 @@ def preview(P, W):
                         yrCentre = y3 + (radius4 * math.sin(angle + up))
                         xrEnd = xrCentre + (radius4 * math.cos(angle + right))
                         yrEnd = yrCentre + (radius4 * math.sin(angle + right))
-                    if W.r4Button.text().startswith('RADIUS'):
+                    if r4Type == 'radius':
                         outTmp.write('g3 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xrEnd, yrEnd, xrCentre - x3, yrCentre - y3))
                     else:
                         outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(xrEnd, yrEnd))
@@ -360,7 +387,7 @@ def preview(P, W):
                     y4 = y3 + yLR * math.sin(angle + up)
                 outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(x4, y4))
                 if radius2 > 0:
-                    if W.r2Button.text().startswith('iRADIUS'):
+                    if r2Type == 'internal':
                         xrCentre = x4 + (radius2 * math.cos(angle + up))
                         yrCentre = y4 + (radius2 * math.sin(angle + up))
                         xrEnd = xrCentre + (radius2 * math.cos(angle + left))
@@ -371,7 +398,7 @@ def preview(P, W):
                         yrCentre = y4 + (radius2 * math.sin(angle + left))
                         xrEnd = xrCentre + (radius2 * math.cos(angle + up))
                         yrEnd = yrCentre + (radius2 * math.sin(angle + up))
-                    if W.r2Button.text().startswith('RADIUS'):
+                    if r2Type == 'radius':
                         outTmp.write('g3 x{:.6f} y{:.6f} i{:.6f} j{:.6f}\n'.format(xrEnd, yrEnd, xrCentre - x4, yrCentre - y4))
                     else:
                         outTmp.write('g1 x{:.6f} y{:.6f}\n'.format(xrEnd, yrEnd))
@@ -402,95 +429,105 @@ def preview(P, W):
             W.conv_preview.set_current_view()
             W.add.setEnabled(True)
         W.undo.setEnabled(True)
+        Conv.conv_preview_button(P, W, True)
     else:
-        msg = 'A positive X LENGTH is required.\n\n' \
-              '                    AND\n\n' \
-              'A positive Y LENGTH is required.\n'
-        error_set(P, msg)
+        msg0 = _translate('Conversational', 'A positive value is required for')
+        msg1 = _translate('Conversational', 'LENGTH')
+        error_set(P, '{0}:\n\nX {1}\nY {1}\n'.format(msg0, msg1))
 
 def error_set(P, msg):
-    P.conv_undo_shape()
     P.dialogError = True
-    P.dialog_show_ok(QMessageBox.Warning, 'Rectangle Error', msg)
+    P.dialog_show_ok(QMessageBox.Warning, _translate('Conversational', 'Rectangle Error'), msg)
 
-def rad_button_pressed(P, W, button, value):
-    if button.text()[:3] == 'RAD':
-        button.setText('CHAMFER {}'.format(value))
-    elif button.text()[:3] == 'CHA':
-        button.setText('iRADIUS {}'.format(value))
+def rad_button_pressed(P, W, Conv, button, value):
+    if button.text().split()[0] == _translate('Conversational', 'RADIUS'):
+        text = _translate('Conversational', 'CHAMFER')
+        button.setText('{} {}'.format(text, value))
+
+    elif button.text().split()[0] == _translate('Conversational', 'CHAMFER'):
+        text = _translate('Conversational', 'iRADIUS')
+        button.setText('{} {}'.format(text, value))
+
     else:
-        button.setText('RADIUS {}'.format(value))
-    auto_preview(P, W)
+        text = _translate('Conversational', 'RADIUS')
+        button.setText('{} {}'.format(text, value))
+    auto_preview(P, W, Conv)
 
-def entry_changed(P, W, widget):
-    char = P.conv_entry_changed(widget)
+def entry_changed(P, W, Conv, widget):
+    char = Conv.conv_entry_changed(P, W, widget)
+    msg = []
     try:
-        if char == "operator" or not W.liEntry.text() or float(W.liEntry.text()) == 0 \
-                    or float(W.liEntry.text()) <= float(W.kerf_width.value()) / 2:
-            W.kOffset.setEnabled(False)
-            W.kOffset.setChecked(False)
-        else:
-            W.kOffset.setEnabled(True)
+        li = float(W.liEntry.text())
     except:
-        msg = 'Invalid LEAD IN entry detected.\n'
-        error_set(P, msg)
+        msg.append(_translate('Conversational', 'LEADIN'))
+    try:
+        kw = float(W.kerf_width.value())
+    except:
+        msg.append(_translate('Conversational', 'KERF'))
+    if msg:
+        msg0 = _translate('Conversational', 'Invalid entry detected in')
+        msg1 = ''
+        for m in msg:
+            msg1 += '{}\n'.format(m)
+        error_set(P, '{}:\n\n{}'.format(msg0, msg1))
         return
+    if char == "operator" or not W.liEntry.text() or li == 0 or li <= kw / 2:
+        W.kOffset.setEnabled(False)
+        W.kOffset.setChecked(False)
+    else:
+        W.kOffset.setEnabled(True)
 
-def auto_preview(P, W):
+def auto_preview(P, W, Conv):
     if W.main_tab_widget.currentIndex() == 1 and \
        W.xlEntry.text() and W.ylEntry.text():
-        preview(P, W)
+        preview(P, W, Conv)
 
-def add_shape_to_file(P, W):
-    P.conv_add_shape_to_file()
-
-def undo_pressed(P, W):
-    P.conv_undo_shape()
-
-def widgets(P, W):
-    #widgets
-    W.ctLabel = QLabel('CUT TYPE')
-    W.ctGroup = QButtonGroup(W)
-    W.cExt = QRadioButton('EXTERNAL')
-    W.cExt.setChecked(True)
-    W.ctGroup.addButton(W.cExt)
-    W.cInt = QRadioButton('INTERNAL')
-    W.ctGroup.addButton(W.cInt)
-    W.koLabel = QLabel('KERF')
-    W.kOffset = QPushButton('OFFSET')
-    W.kOffset.setCheckable(True)
-    W.spLabel = QLabel('START')
+def widgets(P, W, Conv):
     W.spGroup = QButtonGroup(W)
-    W.center = QRadioButton('CENTER')
+    W.center = QRadioButton(_translate('Conversational', 'CENTER'))
     W.spGroup.addButton(W.center)
-    W.bLeft = QRadioButton('BTM LEFT')
+    W.bLeft = QRadioButton(_translate('Conversational', 'BTM LEFT'))
     W.spGroup.addButton(W.bLeft)
-    W.xsLabel = QLabel('X ORIGIN')
-    W.xsEntry = QLineEdit(str(P.xSaved), objectName = 'xsEntry')
-    W.ysLabel = QLabel('Y ORIGIN')
-    W.ysEntry = QLineEdit(str(P.ySaved), objectName = 'ysEntry')
-    W.liLabel = QLabel('LEAD IN')
+    W.liLabel = QLabel(_translate('Conversational', 'LEAD IN'))
     W.liEntry = QLineEdit(str(P.leadIn), objectName = 'liEntry')
-    W.loLabel = QLabel('LEAD OUT')
+    W.loLabel = QLabel(_translate('Conversational', 'LEAD OUT'))
     W.loEntry = QLineEdit(str(P.leadOut), objectName = 'loEntry')
-    W.xlLabel = QLabel('X LENGTH')
-    W.xlEntry = QLineEdit()
-    W.ylLabel = QLabel('Y LENGTH')
-    W.ylEntry = QLineEdit()
-    W.angLabel = QLabel('ANGLE')
-    W.angEntry = QLineEdit('0.0', objectName='aEntry')
-    W.r1Button = QPushButton('RADIUS 1')
-    W.r1Entry = QLineEdit()
-    W.r2Button = QPushButton('RADIUS 2')
-    W.r2Entry = QLineEdit()
-    W.r3Button = QPushButton('RADIUS 3')
-    W.r3Entry = QLineEdit()
-    W.r4Button = QPushButton('RADIUS 4')
-    W.r4Entry = QLineEdit()
-    W.preview = QPushButton('PREVIEW')
-    W.add = QPushButton('ADD')
-    W.undo = QPushButton('UNDO')
-    W.lDesc = QLabel('CREATING RECTANGLE')
+    if not P.convSettingsChanged:
+        #widgets
+        W.ctLabel = QLabel(_translate('Conversational', 'CUT TYPE'))
+        W.ctGroup = QButtonGroup(W)
+        W.cExt = QRadioButton(_translate('Conversational', 'EXTERNAL'))
+        W.cExt.setChecked(True)
+        W.ctGroup.addButton(W.cExt)
+        W.cInt = QRadioButton(_translate('Conversational', 'INTERNAL'))
+        W.ctGroup.addButton(W.cInt)
+        W.koLabel = QLabel(_translate('Conversational', 'KERF'))
+        W.kOffset = QPushButton(_translate('Conversational', 'OFFSET'))
+        W.kOffset.setCheckable(True)
+        W.spLabel = QLabel(_translate('Conversational', 'START'))
+        text = _translate('Conversational', 'ORIGIN')
+        W.xsLabel = QLabel(_translate('Conversational', 'X {}'.format(text)))
+        W.xsEntry = QLineEdit(str(P.xSaved), objectName = 'xsEntry')
+        W.ysLabel = QLabel(_translate('Conversational', 'Y {}'.format(text)))
+        W.ysEntry = QLineEdit(str(P.ySaved), objectName = 'ysEntry')
+        text = _translate('Conversational', 'LENGTH')
+        W.xlLabel = QLabel(_translate('Conversational', 'X {}'.format(text)))
+        W.xlEntry = QLineEdit()
+        W.ylLabel = QLabel(_translate('Conversational', 'Y {}'.format(text)))
+        W.ylEntry = QLineEdit()
+        W.angLabel = QLabel(_translate('Conversational', 'ANGLE'))
+        W.angEntry = QLineEdit('0.0', objectName='aEntry')
+        text = _translate('Conversational', 'RADIUS')
+        W.r1Button = QPushButton(_translate('Conversational', '{} 1'.format(text)))
+        W.r1Entry = QLineEdit()
+        W.r2Button = QPushButton(_translate('Conversational', '{} 2'.format(text)))
+        W.r2Entry = QLineEdit()
+        W.r3Button = QPushButton(_translate('Conversational', '{} 3'.format(text)))
+        W.r3Entry = QLineEdit()
+        W.r4Button = QPushButton(_translate('Conversational', '{} 4'.format(text)))
+        W.r4Entry = QLineEdit()
+    W.add = QPushButton(_translate('Conversational', 'ADD'))
+    W.lDesc = QLabel(_translate('Conversational', 'CREATING RECTANGLE'))
     W.iLabel = QLabel()
     pixmap = QPixmap('{}conv_rectangle_l.png'.format(P.IMAGES)).scaledToWidth(196)
     W.iLabel.setPixmap(pixmap)
@@ -519,7 +556,6 @@ def widgets(P, W):
         W[widget].setFixedHeight(24)
     #starting parameters
     W.add.setEnabled(False)
-    W.undo.setEnabled(False)
     if P.oSaved:
         W.center.setChecked(True)
     else:
@@ -527,24 +563,23 @@ def widgets(P, W):
     if not W.liEntry.text() or float(W.liEntry.text()) == 0:
         W.kOffset.setChecked(False)
         W.kOffset.setEnabled(False)
-    P.conv_undo_shape()
     #connections
-    W.conv_material.currentTextChanged.connect(lambda:auto_preview(P, W))
-    W.cExt.toggled.connect(lambda:auto_preview(P, W))
-    W.kOffset.toggled.connect(lambda:auto_preview(P, W))
-    W.center.toggled.connect(lambda:auto_preview(P, W))
-    W.preview.pressed.connect(lambda:preview(P, W))
-    W.add.pressed.connect(lambda:add_shape_to_file(P, W))
-    W.undo.pressed.connect(lambda:undo_pressed(P, W))
+    W.conv_material.currentTextChanged.connect(lambda:auto_preview(P, W, Conv))
+    W.cExt.toggled.connect(lambda:auto_preview(P, W, Conv))
+    W.kOffset.toggled.connect(lambda:auto_preview(P, W, Conv))
+    W.center.toggled.connect(lambda:auto_preview(P, W, Conv))
+    W.preview.pressed.connect(lambda:preview(P, W, Conv))
+    W.add.pressed.connect(lambda:Conv.conv_add_shape_to_file(P, W))
+    W.undo.pressed.connect(lambda:Conv.conv_undo_shape(P, W))
     entries = ['xsEntry', 'ysEntry', 'liEntry', 'loEntry', 'xlEntry', 'ylEntry', \
                'angEntry', 'r1Entry', 'r2Entry', 'r3Entry', 'r4Entry', ]
     for entry in entries:
-        W[entry].textChanged.connect(lambda:entry_changed(P, W, W.sender()))
-        W[entry].returnPressed.connect(lambda:preview(P, W))
-    W.r1Button.pressed.connect(lambda:rad_button_pressed(P, W, W.sender(), '1'))
-    W.r2Button.pressed.connect(lambda:rad_button_pressed(P, W, W.sender(), '2'))
-    W.r3Button.pressed.connect(lambda:rad_button_pressed(P, W, W.sender(), '3'))
-    W.r4Button.pressed.connect(lambda:rad_button_pressed(P, W, W.sender(), '4'))
+        W[entry].textChanged.connect(lambda:entry_changed(P, W, Conv, W.sender()))
+        W[entry].returnPressed.connect(lambda:preview(P, W, Conv))
+    W.r1Button.pressed.connect(lambda:rad_button_pressed(P, W, Conv, W.sender(), '1'))
+    W.r2Button.pressed.connect(lambda:rad_button_pressed(P, W, Conv, W.sender(), '2'))
+    W.r3Button.pressed.connect(lambda:rad_button_pressed(P, W, Conv, W.sender(), '3'))
+    W.r4Button.pressed.connect(lambda:rad_button_pressed(P, W, Conv, W.sender(), '4'))
     #add to layout
     if P.landscape:
         W.entries.addWidget(W.ctLabel, 0, 0)
@@ -577,9 +612,10 @@ def widgets(P, W):
         W.entries.addWidget(W.r3Entry, 10, 1)
         W.entries.addWidget(W.r4Button, 10, 2)
         W.entries.addWidget(W.r4Entry, 10, 3)
-        W.s11 = QLabel('')
-        W.s11.setFixedHeight(24)
-        W.entries.addWidget(W.s11, 11, 0)
+        for r in [11]:
+            W['s{}'.format(r)] = QLabel('')
+            W['s{}'.format(r)].setFixedHeight(24)
+            W.entries.addWidget(W['s{}'.format(r)], r, 0)
         W.entries.addWidget(W.preview, 12, 0)
         W.entries.addWidget(W.add, 12, 2)
         W.entries.addWidget(W.undo, 12, 4)
@@ -623,3 +659,4 @@ def widgets(P, W):
         W.entries.addWidget(W.lDesc, 10 , 1, 1, 3)
         W.entries.addWidget(W.iLabel, 0 , 5, 7, 3)
     W.xlEntry.setFocus()
+    P.convSettingsChanged = False

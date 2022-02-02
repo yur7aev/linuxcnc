@@ -1,16 +1,40 @@
+
+'''
+qtplasmac_sim_handler.py
+
+Copyright (C) 2020, 2021  Phillip A Carter
+Copyright (C) 2020, 2021  Gregory D Carl
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc
+51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+'''
+
+import os
 import linuxcnc
 import hal
 import time
 from subprocess import call as CALL
 from PyQt5 import QtCore
-from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtGui import QPalette, QColor, QIcon
 from PyQt5.QtWidgets import QMessageBox
 
 class HandlerClass:
 
-    def __init__(self, halcomp,widgets,paths):
+    def __init__(self, halcomp, widgets, paths):
         self.hal = halcomp
         self.w = widgets
+        self.PATHS = paths
         self.w.setWindowFlags(QtCore.Qt.CustomizeWindowHint | \
                               QtCore.Qt.WindowTitleHint | \
                               QtCore.Qt.WindowStaysOnTopHint )
@@ -20,16 +44,28 @@ class HandlerClass:
 
     def initialized__(self):
         self.w.setWindowTitle('QtPlasmaC Sim')
+        self.IMAGES = os.path.join(self.PATHS.IMAGEDIR, 'qtplasmac/images/')
+        self.w.setWindowIcon(QIcon(os.path.join(self.IMAGES, 'linuxcncicon.png')))
         self.breakPin = self.hal.newpin('sensor_breakaway', hal.HAL_BIT, hal.HAL_OUT)
         self.floatPin = self.hal.newpin('sensor_float', hal.HAL_BIT, hal.HAL_OUT)
         self.ohmicPin = self.hal.newpin('sensor_ohmic', hal.HAL_BIT, hal.HAL_OUT)
         self.torchPin = self.hal.newpin('torch_on', hal.HAL_BIT, hal.HAL_IN)
         self.statePin = self.hal.newpin('state', hal.HAL_S32, hal.HAL_IN)
         self.zPosPin = self.hal.newpin('z_position', hal.HAL_FLOAT, hal.HAL_IN)
-        CALL(['halcmd', 'net', 'plasmac:axis-position', 'qtplasmac_sim.z_position'])
+        self.arcVoltsPin = self.hal.newpin('arc_voltage_out-f', hal.HAL_FLOAT, hal.HAL_OUT)
+        simStepconf = False
+        for sig in hal.get_info_signals():
+            if sig['NAME'] == 'Zjoint-pos-fb':
+                simStepconf = True
+                break
+        if simStepconf:
+            CALL(['halcmd', 'net', 'Zjoint-pos-fb', 'qtplasmac_sim.z_position'])
+        else:
+            CALL(['halcmd', 'net', 'plasmac:axis-position', 'qtplasmac_sim.z_position'])
         CALL(['halcmd', 'net', 'plasmac:state', 'qtplasmac_sim.state'])
         self.torchPin.value_changed.connect(self.torch_changed)
         self.zPosPin.value_changed.connect(lambda v:self.z_position_changed(v))
+        self.w.arc_voltage_out.valueChanged.connect(lambda v:self.arc_volts_changed(v))
         self.w.sensor_flt.pressed.connect(self.float_pressed)
         self.w.sensor_ohm.pressed.connect(self.ohmic_pressed)
         self.w.sensor_brk.pressed.connect(self.break_pressed)
@@ -82,7 +118,7 @@ class HandlerClass:
             '* {{\n'\
             '    color: {0};\n'\
             '    background: {1};\n'\
-            '    font: 10pt Lato }}\n'\
+            '    font: 10pt DejaVuSans }}\n'\
             '\n/****** BUTTONS ************/\n'\
             'QPushButton {{\n'\
             '    color: {0};\n'\
@@ -231,19 +267,29 @@ class HandlerClass:
         if halpin:
             time.sleep(0.1)
             if hal.get_value('plasmac.mode') == 0 or hal.get_value('plasmac.mode') == 1:
-                self.w.arc_voltage_out.setValue(100.0)
-                self.w.arc_voltage_out.setMinimum(90.0)
-                self.w.arc_voltage_out.setMaximum(110.0)
+                self.w.arc_voltage_out.setValue(1000)
+                self.w.arc_voltage_out.setMinimum(900)
+                self.w.arc_voltage_out.setMaximum(1100)
+                self.w.arc_voltage_out.setSingleStep(1)
+                self.w.arc_voltage_out.setPageStep(1)
             if (hal.get_value('plasmac.mode') == 1 or hal.get_value('plasmac.mode') == 2) and not self.w.arc_ok.isChecked():
                 self.w.arc_ok.toggle()
                 self.w.arc_ok_clicked()
         else:
-            self.w.arc_voltage_out.setMinimum(0.0)
-            self.w.arc_voltage_out.setMaximum(300.0)
-            self.w.arc_voltage_out.setValue(0.0)
+            self.w.arc_voltage_out.setMinimum(0)
+            self.w.arc_voltage_out.setMaximum(3000)
+            self.w.arc_voltage_out.setValue(0)
+            self.w.arc_voltage_out.setSingleStep(10)
+            self.w.arc_voltage_out.setPageStep(100)
             if self.w.arc_ok.isChecked():
                 self.w.arc_ok.toggle()
                 self.w.arc_ok_clicked()
+
+    def arc_volts_changed(self, value):
+        if self.w.arc_voltage_out.maximum() == 3000:
+            self.arcVoltsPin.set(int(value * 0.1))
+        else:
+            self.arcVoltsPin.set(value * 0.1)
 
     def z_position_changed(self, height):
         if self.w.auto_flt.isChecked():

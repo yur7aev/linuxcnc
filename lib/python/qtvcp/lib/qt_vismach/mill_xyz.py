@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python3
 
 # Rolf Redford, Nov 2018
 # modded for qtvcp Chris Morley 2020
@@ -31,7 +31,7 @@ MODEL_SCALING = IMPERIAL
 # tells loadusr pins is ready
 # c.ready()
 
-# we are not using a component but the original code requires a varible
+# we are not using a component but the original code requires a variable
 c = None
 
 # Used for tool cylinder

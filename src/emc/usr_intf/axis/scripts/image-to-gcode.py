@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 ## image-to-gcode is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by the
@@ -16,18 +16,14 @@
 ## image-to-gcode.py is Copyright (C) 2006 Jeff Epler
 ## jepler@unpy.net
 
-from __future__ import print_function
 import sys, os
 BASE = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), ".."))
 sys.path.insert(0, os.path.join(BASE, "lib", "python"))
 
 import gettext
-if sys.version_info[0] == 3:
-    gettext.install("linuxcnc", localedir=os.path.join(BASE, "share", "locale"))
-    def cmp(a, b):
-        return (a > b) - (a < b) 
-else:
-    gettext.install("linuxcnc", localedir=os.path.join(BASE, "share", "locale"), unicode=True)
+gettext.install("linuxcnc", localedir=os.path.join(BASE, "share", "locale"))
+def cmp(a, b):
+    return (a > b) - (a < b)
 
 try:
     from PIL import Image
@@ -500,10 +496,7 @@ class ArcEntryCut:
             conv.g.set_feed(conv.feed)
 
 def ui(im, nim, im_name):
-    if sys.version_info[0] == 3:
-        import tkinter
-    else:
-        import Tkinter as tkinter
+    import tkinter
 
     try:
         from PIL import ImageTk
@@ -761,12 +754,8 @@ def main():
     if len(sys.argv) > 1:
         im_name = sys.argv[1]
     else:
-        if sys.version_info[0] == 3:
-            import tkinter
-            import tkinter.filedialog as tkFileDialog
-        else:
-            import Tkinter as tkinter
-            import tkFileDialog
+        import tkinter
+        import tkinter.filedialog as tkFileDialog
 
         im_name = tkFileDialog.askopenfilename(defaultextension=".png",
             filetypes = (

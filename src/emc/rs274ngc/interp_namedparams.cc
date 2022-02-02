@@ -17,11 +17,13 @@
 *
 * Last change: Juli 2011
 ********************************************************************/
+
+#include "config.h"
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
 
-#include "py3c/py3c.h"
 #define BOOST_PYTHON_MAX_ARITY 4
 #include "python_plugin.hh"
 #include <boost/python/dict.hpp>
@@ -210,7 +212,7 @@ int Interp::fetch_ini_param( const char *nameBuf, int *status, double *value)
 	}
 	if (!inifile.Open(iniFileName)) {
 	    *status = 0;
-	    ERS(_("cant open ini file '%s'"), iniFileName);
+	    ERS(_("can\'t open ini file '%s'"), iniFileName);
 	}
 
 	char capName[LINELEN];
@@ -369,13 +371,13 @@ int Interp::find_named_param(
 	       "named param - pycall(%s):\n%s", nameBuf,
 	       python_plugin->last_exception().c_str());
 	  CHKS(retval.ptr() == Py_None, "Python namedparams.%s returns no value", nameBuf);
-      if (PyStr_Check(retval.ptr())) {
+      if (PyUnicode_Check(retval.ptr())) {
 	      // returning a string sets the interpreter error message and aborts
 	      *status = 0;
 	      char *msg = bp::extract<char *>(retval);
 	      ERS("%s", msg);
 	  }
-      if (PyInt_Check(retval.ptr())) { // widen
+      if (PyLong_Check(retval.ptr())) { // widen
 	      *value = (double) bp::extract<int>(retval);
 	      *status = 1;
 	      return INTERP_OK;
@@ -391,7 +393,7 @@ int Interp::find_named_param(
 	  Py_XDECREF(res_str);
 	  ERS("Python call %s.%s returned '%s' - expected double, int or string, got %s",
 	      NAMEDPARAMS_MODULE, nameBuf,
-          PyStr_AsString(res_str),
+          PyUnicode_AsUTF8(res_str),
 	      retval.ptr()->ob_type->tp_name);
       } else {
 	  *value = pv->value;

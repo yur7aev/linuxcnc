@@ -47,17 +47,23 @@ class HandlerClass:
         self.w.filemanager.updateDirectoryView(self.w.filemanager.user_path)
         for i in sorted(self.paths.find_screen_dirs()):
             self.w.comboBox.addItem(i)
+        self.w.comboBox.currentIndexChanged.connect(self.selectionchange)
+        self.w.lineEdit.setText(self.w.comboBox.currentText())
 
     ########################
-    # callbacks from STATUS #
+    # callbacks            #
     ########################
+    def selectionchange(self,i):
+        self.w.lineEdit.setText(self.w.comboBox.currentText())
 
     #######################
     # callbacks from form #
     #######################
     def applyClicked(self):
+        basename = self.w.lineEdit.text()
+        if basename == '': basename = self.w.comboBox.currentText()
         path = os.path.join(self.paths.SCREENDIR, self.w.comboBox.currentText())
-        self.copyFilesWithCheck(path, self.w.filemanager.textLine.text(), self.w.comboBox.currentText() )
+        self.copyFilesWithCheck(path, self.w.filemanager.textLine.text(), basename, self.w.comboBox.currentText() )
 
     #####################
     # general functions #
@@ -67,7 +73,7 @@ class HandlerClass:
         if not os.path.exists(dest):
             os.makedirs(dest)
 
-    def copyFilesWithCheck(self, src, dest, base):
+    def copyFilesWithCheck(self, src, dest, base, origbase):
             dest = os.path.join(dest, base)
 
             if os.path.exists(dest):
@@ -77,7 +83,7 @@ class HandlerClass:
             rtn = self.w.messageDialog_.showdialog(
                     'Copy {} Screen Code?'.format(base),
                     more_info=info,
-                    details=' To Folder \n {}'.format(dest),
+                    details=' To Folder:\n {}'.format(dest),
                     display_type='YESNO',
                     icon=QMessageBox.Information, pinname=None,
                     focus_text=None,
@@ -90,14 +96,21 @@ class HandlerClass:
             else:
                 self.makedirs(dest)
 
-            # walk the folder and copy everthing
+            # walk the folder and copy everything
             for path, dirs, filenames in os.walk(src):
                 for directory in dirs:
                     destDir = path.replace(src,dest)
                     self.makedirs(os.path.join(destDir, directory))
                 for sfile in filenames:
+                    if sfile == 'resources.py': continue
+                    print (os.path.splitext(sfile)[0], origbase)
+                    if origbase in os.path.splitext(sfile)[0]:
+                        dfile = sfile.replace(origbase, base)
+                    else:
+                        dfile = sfile
+                    print (dfile)
                     srcFile = os.path.join(path, sfile)
-                    destFile = os.path.join(path.replace(src, dest), sfile)
+                    destFile = os.path.join(path.replace(src, dest), dfile)
                     shutil.copy(srcFile, destFile)
 
     #####################

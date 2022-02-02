@@ -15,6 +15,7 @@
 //    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 #include <Python.h> // must be first header
+#include "linuxcnc.h"              // LINELEN
 #include "rs274ngc.hh"
 #include "canon.hh"
 
@@ -45,7 +46,6 @@ int main() {
 // (and it needs Python.h for the definition of struct inttab)
 int _task = 0;
 char _parameter_file_name[LINELEN];
-#if PY_MAJOR_VERSION >=3
 
 extern "C" PyObject* PyInit_emctask(void);
 extern "C" PyObject* PyInit_interpreter(void);
@@ -56,18 +56,6 @@ struct _inittab builtin_modules[] = {
     { "emccanon", PyInit_emccanon },
     { NULL, NULL }
 };
-
-#else
-
-extern "C" void initinterpreter();
-extern "C" void initemccanon();
-extern "C" struct _inittab builtin_modules[];
-struct _inittab builtin_modules[] = {
-    { (char *) "interpreter", initinterpreter },
-    { (char *) "emccanon", initemccanon },
-    { NULL, NULL }
-};
-#endif
 
 // everything below here is stuff that needs a real implementation, not a dummy
 // one
@@ -155,6 +143,7 @@ void USE_TOOL_LENGTH_OFFSET(EmcPose offset) {}
 void CHANGE_TOOL(int slot) {}	
 void SELECT_TOOL(int tool) {}	
 void CHANGE_TOOL_NUMBER(int number) {}
+void RELOAD_TOOLDATA() {}
 void START_CHANGE(void) {}
 void CLAMP_AXIS(CANON_AXIS axis) {}
 void COMMENT(const char *s) { puts(s); }

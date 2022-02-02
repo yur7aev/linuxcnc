@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This file is from PyOpenGL-2.0.1.07.  That distribution's license is
 # """License :: OSI Approved :: BSD License""",
@@ -9,19 +9,17 @@
 # University of York, UK
 # 
 
-from minigl import *
+from OpenGL.GL import *
+from OpenGL.GLU import *
 import math
-import os,sys
+import os
 import _togl
 import glnav
+import itertools
 
-import sys
-if sys.version_info[0] == 3:
-    from tkinter import _default_root
-    from tkinter import *
-else:
-    from Tkinter import _default_root
-    from Tkinter import *
+from tkinter import _default_root
+from tkinter import *
+
 # Keith Junius <junius@chem.rug.nl> provided many changes to Togl
 TOGL_NORMAL = 1
 TOGL_OVERLAY = 2
@@ -125,7 +123,7 @@ class RawOpengl(Togl, Misc):
         # will call redraw recursively. 
         self.update_idletasks()
         self.tk.call(self._w, 'makecurrent')
-        _mode = glGetDoublev(GL_MATRIX_MODE)
+        _mode = glGetInteger(GL_MATRIX_MODE)
         try:
             glMatrixMode(GL_PROJECTION)
             glPushMatrix()

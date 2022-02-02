@@ -5,7 +5,8 @@ qtplasmac-setup.py
 This file is used to switch a QtPlasmaC configuration
 from RIP to Package or vice versa.
 
-Copyright (C) 2020 Phillip A Carter
+Copyright (C) 2020, 2021 Phillip A Carter
+Copyright (C) 2020, 2021  Gregory D Carl
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -128,7 +129,7 @@ class ConfSwitch(QMainWindow, object):
         buttonK = msgBox.button(QMessageBox.Ok)
         buttonK.setIcon(QIcon())
         buttonK.setText('OK')
-        msgBox.setStyleSheet('* {color: #ffee06; background: #16160e; font: 12pt Lato} \
+        msgBox.setStyleSheet('* {color: #ffee06; background: #16160e; font: 12pt DejaVuSans} \
                              QPushButton {border: 1px solid #ffee06; border-radius: 4; height: 20}' \
                          )
         ret = msgBox.exec_()

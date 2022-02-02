@@ -24,6 +24,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets, uic
 from PyQt5.QtCore import QProcess, QByteArray, QEvent
 
 from qtvcp.widgets.widget_baseclass import _HalWidgetBase
+from qtvcp.widgets.simple_widgets import PushButton
 from qtvcp.core import Status, Action, Info
 from qtvcp import logger
 # Instantiate the libraries with global reference
@@ -42,6 +43,7 @@ ICONPATH = os.path.join(INFO.IMAGE_PATH, 'probe_icons')
 class VersaProbe(QtWidgets.QWidget, _HalWidgetBase):
     def __init__(self, parent=None):
         super(VersaProbe, self).__init__(parent)
+        self.proc = None
         if INFO.MACHINE_IS_METRIC:
             self.valid = QtGui.QDoubleValidator(0.0, 999.999, 3)
         else:
@@ -53,7 +55,6 @@ class VersaProbe(QtWidgets.QWidget, _HalWidgetBase):
             self.instance = uic.loadUi(self.filename, self)
         except AttributeError as e:
             LOG.critical(e)
-        self.process_busy = False
         self.dialog_code = 'CALCULATOR'
         #create parameter dictionary
         self.send_dict = {}
@@ -100,9 +101,22 @@ class VersaProbe(QtWidgets.QWidget, _HalWidgetBase):
         return super(VersaProbe, self).eventFilter(obj, event)
 
     def _hal_init(self):
+
         def homed_on_test():
             return (STATUS.machine_is_on() and (STATUS.is_all_homed() or INFO.NO_HOME_REQUIRED))
 
+        # have to call hal_init on widgets in this widget ourselves
+        # qtvcp doesn't see them otherwise
+        oldname = self.HAL_GCOMP_.comp.getprefix()
+        self.HAL_GCOMP_.comp.setprefix('qtversaprobe')
+        self.pbtn_use_tool_measurement.setProperty('pin_name','enable')
+        self.pbtn_use_tool_measurement.hal_init()
+        self.HAL_GCOMP_.comp.setprefix(oldname)
+
+        self.allow_auto_skew.hal_init()
+        self.allow_auto_zero.hal_init()
+
+        # connect to STATUS
         STATUS.connect('state-off', lambda w: self.setEnabled(False))
         STATUS.connect('state-estop', lambda w: self.setEnabled(False))
         STATUS.connect('interp-idle', lambda w: self.setEnabled(homed_on_test()))
@@ -112,6 +126,7 @@ class VersaProbe(QtWidgets.QWidget, _HalWidgetBase):
         STATUS.connect('general',self.return_value)
 
         # install event filters on all the lineedits
+        # so we can call up a dialog when lineedit get focus
         self.input_search_vel.installEventFilter(self)
         self.input_probe_vel.installEventFilter(self)
         self.input_z_clearance.installEventFilter(self)
@@ -139,16 +154,34 @@ class VersaProbe(QtWidgets.QWidget, _HalWidgetBase):
             self.input_side_edge_length.setText(str(self.PREFS_.getpref( "ps_side_edge_length", 5.0, float, 'VERSA_PROBE_OPTIONS')) )
             self.input_tool_probe_height.setText(str(self.PREFS_.getpref( "ps_probe_height", 20.0, float, 'VERSA_PROBE_OPTIONS')) )
             self.input_tool_block_height.setText(str(self.PREFS_.getpref( "ps_block_height", 20.0, float, 'VERSA_PROBE_OPTIONS')) )
+            self.pbtn_use_tool_measurement.setChecked((self.PREFS_.getpref( "use_tool_measurement", True, bool, 'VERSA_PROBE_OPTIONS')) )
             self.input_adj_x.setText(str(self.PREFS_.getpref( "ps_offs_x", 0.0, float, 'VERSA_PROBE_OPTIONS')) )
             self.input_adj_y.setText(str(self.PREFS_.getpref( "ps_offs_y", 0.0, float, 'VERSA_PROBE_OPTIONS')) )
             self.input_adj_z.setText(str(self.PREFS_.getpref( "ps_offs_z", 0.0, float, 'VERSA_PROBE_OPTIONS')) )
             self.input_adj_angle.setText(str(self.PREFS_.getpref( "ps_offs_angle", 0.0, float, 'VERSA_PROBE_OPTIONS')) )
             self.input_rapid_vel.setText(str(self.PREFS_.getpref( "ps_probe_rapid_vel", 60.0, float, 'VERSA_PROBE_OPTIONS')) )
 
-        self.start_process()
+        # make pins available for tool measure remaps
+        oldname = self.HAL_GCOMP_.comp.getprefix()
+        self.HAL_GCOMP_.comp.setprefix('qtversaprobe')
+        self.pin_svel = self.HAL_GCOMP_.newpin("searchvel", hal.HAL_FLOAT, hal.HAL_OUT)
+        self.pin_svel.set(float(self.input_search_vel.text()))
+        self.pin_pvel = self.HAL_GCOMP_.newpin("probevel", hal.HAL_FLOAT, hal.HAL_OUT)
+        self.pin_pvel.set(float(self.input_probe_vel.text()))
+        self.pin_pheight = self.HAL_GCOMP_.newpin("probeheight", hal.HAL_FLOAT, hal.HAL_OUT)
+        self.pin_pheight.set(float(self.input_tool_probe_height.text()))
+        self.pin_bheight = self.HAL_GCOMP_.newpin("blockheight", hal.HAL_FLOAT, hal.HAL_OUT)
+        self.pin_bheight.set(float(self.input_tool_block_height.text()))
+        self.HAL_GCOMP_.comp.setprefix(oldname)
+
+        # install callbacks to update HAL pins
+        self.input_search_vel.textChanged.connect(self.update_search_vel_pin)
+        self.input_probe_vel.textChanged.connect(self.update_probe_vel_pin)
+        self.input_tool_probe_height.textChanged.connect(self.update_probe_height_pin)
+        self.input_tool_block_height.textChanged.connect(self.update_block_height_pin)
 
     # when qtvcp closes this gets called
-    def closing_cleanup__(self):
+    def _hal_cleanup(self):
         if self.PREFS_:
             LOG.debug('Saving Versa probe data to preference file.')
             self.PREFS_.putpref( "ps_searchvel", float(self.input_search_vel.text()), float, 'VERSA_PROBE_OPTIONS')
@@ -161,12 +194,12 @@ class VersaProbe(QtWidgets.QWidget, _HalWidgetBase):
             self.PREFS_.putpref( "ps_side_edge_length", float(self.input_side_edge_length.text()), float, 'VERSA_PROBE_OPTIONS')
             self.PREFS_.putpref( "ps_probe_height", float(self.input_tool_probe_height.text()), float, 'VERSA_PROBE_OPTIONS')
             self.PREFS_.putpref( "ps_block_height", float(self.input_tool_block_height.text()), float, 'VERSA_PROBE_OPTIONS')
+            self.PREFS_.putpref( "use_tool_measurement", bool(self.pbtn_use_tool_measurement.isChecked()), bool, 'VERSA_PROBE_OPTIONS')
             self.PREFS_.putpref( "ps_offs_x", float(self.input_adj_x.text()), float, 'VERSA_PROBE_OPTIONS')
             self.PREFS_.putpref( "ps_offs_y", float(self.input_adj_y.text()), float, 'VERSA_PROBE_OPTIONS')
             self.PREFS_.putpref( "ps_offs_z", float(self.input_adj_z.text()), float, 'VERSA_PROBE_OPTIONS')
             self.PREFS_.putpref( "ps_offs_angle", float(self.input_adj_angle.text()), float, 'VERSA_PROBE_OPTIONS')
             self.PREFS_.putpref( "ps_probe_rapid_vel", float(self.input_rapid_vel.text()), float, 'VERSA_PROBE_OPTIONS')
-        self.proc.terminate()
 
     # process the STATUS return message
     # set the line edit to the value if not cancelled
@@ -206,30 +239,16 @@ class VersaProbe(QtWidgets.QWidget, _HalWidgetBase):
         self.proc.readyReadStandardOutput.connect(self.read_stdout)
         self.proc.readyReadStandardError.connect(self.read_stderror)
         self.proc.finished.connect(self.process_finished)
-        string_to_send = 'PID${}\n'.format( str(os.getpid()))
-        if sys.version_info.major > 2:
-            self.proc.start('python3 {}'.format(SUBPROGRAM))
-            # send our PID so subprogram can check to see if it is still running
-            self.proc.writeData(bytes(string_to_send, 'utf-8'))     
-        else:
-            self.proc.start('python {}'.format(SUBPROGRAM))
-            # send our PID so subprogram can check to see if it is still running
-            self.proc.writeData(string_to_send)
+        self.proc.start('python3 {}'.format(SUBPROGRAM))
 
     def start_probe(self, cmd):
-        if self.process_busy is True:
-            LOG.error("Probing processor is busy")
+        if self.proc is not None:
+            LOG.info("Probe Routine processor is busy")
             return
-        # clear all previous offsets
-        ACTION.CALL_MDI("G10 L2 P0 X0 Y0 Z0")
-        self.get_parms()
+        self.start_process()
         string_to_send = cmd + '$' + json.dumps(self.send_dict) + '\n'
-        print("String to send ", string_to_send)
-        if sys.version_info.major > 2:
-            self.proc.writeData(bytes(string_to_send, 'utf-8'))
-        else:
-            self.proc.writeData(string_to_send)
-        self.process_busy = True
+#        print("String to send ", string_to_send)
+        self.proc.writeData(bytes(string_to_send, 'utf-8'))
 
     def process_started(self):
         LOG.info("Versa_Probe started with PID {}\n".format(self.proc.processId()))
@@ -238,62 +257,35 @@ class VersaProbe(QtWidgets.QWidget, _HalWidgetBase):
         qba = self.proc.readAllStandardOutput()
         line = qba.data()
         self.parse_input(line)
-        self.process_busy = False
 
     def read_stderror(self):
         qba = self.proc.readAllStandardError()
         line = qba.data()
         self.parse_input(line)
 
-    def process_finished(self):
-        print("Versa_Probe Process signals finished")
+    def process_finished(self, exitCode, exitStatus):
+        LOG.info(("Probe Process finished - exitCode {} exitStatus {}".format(exitCode, exitStatus)))
+        self.proc = None
 
     def parse_input(self, line):
-        self.process_busy = False
-        if sys.version_info.major > 2:
-            if bytes("ERROR" ,'utf-8') in line:
-                print(line)
-            elif bytes("DEBUG", 'utf-8') in line:
-                print(line)
-            elif bytes("INFO", 'utf-8') in line:
-                print(line)
-            elif bytes("COMPLETE", 'utf-8') in line:
-                LOG.info("Probing routine completed without errors")
-                return_data = line.rstrip().split('$')
-                data = json.loads(return_data[1])
-                self.show_results(data)
-            elif bytes("HISTORY", 'utf-8') in line:
-                temp = line.strip('HISTORY$')
-                STATUS.emit('update-machine-log', temp, 'TIME')
-                LOG.info("Probe history updated to machine log")
-            else:
-                LOG.error("Error parsing return data from sub_processor. Line={}".format(line))
-
+        line = line.decode("utf-8")
+        if "ERROR" in line:
+            print(line)
+        elif "DEBUG" in line:
+            print(line)
+        elif "INFO" in line:
+            print(line)
+        elif "COMPLETE" in line:
+            LOG.info("Probing routine completed without errors")
+            return_data = line.rstrip().split('$')
+            data = json.loads(return_data[1])
+            self.show_results(data)
+        elif "HISTORY" in line:
+            temp = line.strip('HISTORY$')
+            STATUS.emit('update-machine-log', temp, 'TIME')
+            LOG.info("Probe history updated to machine log")
         else:
-            if "ERROR" in line:
-                print(line)
-            elif "DEBUG" in line:
-                print(line)
-            elif "INFO" in line:
-                print(line)
-            elif "COMPLETE" in line:
-                LOG.info("Probing routine completed without errors")
-                return_data = line.rstrip().split('$')
-                data = json.loads(return_data[1])
-                self.show_results(data)
-            elif "HISTORY" in line:
-                temp = line.strip('HISTORY$')
-                STATUS.emit('update-machine-log', temp, 'TIME')
-                LOG.info("Probe history updated to machine log")
-            else:
-                LOG.error("Error parsing return data from sub_processor. Line={}".format(line))
-
-    def send_error(self, w, kind, text):
-        message ='_ErroR_ {},{} \n'.format(kind,text)
-        if sys.version_info.major > 2:
-            self.proc.writeData(bytes(message, 'utf-8'))
-        else:
-            self.proc.writeData(message)
+            LOG.error("Error parsing return data from sub_processor. Line={}".format(line))
 
 #####################################################
 # button callbacks
@@ -305,6 +297,7 @@ class VersaProbe(QtWidgets.QWidget, _HalWidgetBase):
     def probe_btn_clicked(self, button):
         cmd = button.property('probe')
         print("Button clicked ", cmd)
+        self.get_parms()
         self.start_probe(cmd)
 
     ###### set origin offset ######################
@@ -330,6 +323,29 @@ class VersaProbe(QtWidgets.QWidget, _HalWidgetBase):
         s +=  " R%.4f"% float(self.input_adj_angle.text())
         ACTION.CALL_MDI_WAIT(s, 30)
 
+#####################################################
+# Entry callbacks
+#####################################################
+    def update_search_vel_pin(self, text):
+        try:
+            self.pin_svel.set(float(text))
+        except:
+            pass
+    def update_probe_vel_pin(self, text):
+        try:
+            self.pin_pvel.set(float(text))
+        except:
+            pass
+    def update_probe_height_pin(self, text):
+        try:
+            self.pin_pheight.set(float(text))
+        except:
+            pass
+    def update_block_height_pin(self, text):
+        try:
+            self.pin_bheight.set(float(text))
+        except:
+            pass
 #####################################################
 # Helper functions
 #####################################################
@@ -364,10 +380,7 @@ class VersaProbe(QtWidgets.QWidget, _HalWidgetBase):
             file = QtCore.QFile(HELP)
             file.open(QtCore.QFile.ReadOnly)
             html = file.readAll()
-            if sys.version_info.major > 2:
-                html = str(html, encoding='utf8')
-            else:
-                html = str(html)
+            html = str(html, encoding='utf8')
             html = html.replace("../images/probe_icons/","{}/probe_icons/".format(INFO.IMAGE_PATH))
             t.setHtml(html)
         except Exception as e:

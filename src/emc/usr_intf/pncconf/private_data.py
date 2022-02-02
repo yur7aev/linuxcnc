@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
 #
 #    This is pncconf, a graphical configuration editor for LinuxCNC
@@ -44,8 +44,8 @@ class Private_Data:
                                 ['external',_('External Controls'),True,True],
                                 ['mesa0',_('Mesa Card 0'),False,True],
                                 ['mesa1',_('Mesa Card 1'),False,True],
-                                ['pport1',_('Parallel Port'),False,True],
-                                ['pport2',_('Parallel Port 2'),False,True],
+                                ['pport1',_('Parallel Port 0'),False,True],
+                                ['pport2',_('Parallel Port 1'),False,True],
                                 ['thcad',_('Mesa THCAD'),False,False],
                                 ['x_motor',_('X Motor'),True,True],
                                 ['x_axis',_('X Axis'),True,True],
@@ -115,10 +115,10 @@ class Private_Data:
              _("GPIO Input"),_("GPIO Output"),_("GPIO O Drain") ]
         (   self.SSR0,) = self.pintype_ssr = [
              _("SSR Output") ]
-        (   self.ENCA,self.ENCB,self.ENCI,self.ENCM 
+        (   self.ENCA,self.ENCB,self.ENCI,self.ENCM
         ) = self.pintype_encoder = [
             _("Quad Enc-A"),_("Quad Enc-B"),_("Quad Enc-I"),_("Quad Enc-M") ]
-        ( self. MXE0,self.MXE1,self.MXEI,self.MXEM,self.MXES 
+        ( self. MXE0,self.MXE1,self.MXEI,self.MXEM,self.MXES
         ) = self.pintype_muxencoder = [
             _("Muxed Enc 0"),_("Muxed Enc 1"),_("muxed Enc I"),_("Muxed Enc M"),_("mux select") ]
         (   self.RES0,self.RES1,self.RES2,self.RES3,self.RES4,self.RES5,self.RESU
@@ -180,7 +180,7 @@ class Private_Data:
             S.S_HALL1_OUT,S.S_HALL2_OUT,S.S_HALL3_OUT,S.S_C1_OUT,S.S_C2_OUT,S.S_C4_OUT,S.S_C8_OUT,
             S.OHMIC_ENABLE,S.SCRIBE_ARM,S.SCRIBE_ON,S.TORCH_ON,S.LASER_ON
         ) = self.hal_output_names = [
-            "unused-output", 
+            "unused-output",
             "spindle-enable", "spindle-cw", "spindle-ccw", "spindle-brake",
             "coolant-mist", "coolant-flood", "estop-out", "machine-is-enabled",
             "x-enable", "y-enable", "z-enable", "a-enable",
@@ -222,7 +222,7 @@ class Private_Data:
             S.MIN_HOME_X2,S.MIN_HOME_Y2,S.MIN_HOME_Z2,S.MIN_HOME_A2,
             S.MAX_HOME_X2,S.MAX_HOME_Y2,S.MAX_HOME_Z2,S.MAX_HOME_A2,
             S.BOTH_HOME_X2,S.BOTH_HOME_Y2,S.BOTH_HOME_Z2,S.BOTH_HOME_A2,
-            S.ARC_OK,S.OHMIC_PROBE,S.FLOAT_SWITCH,S.BREAKAWAY,S.MOVE_UP,S.MOVE_DOWN
+            S.ARC_OK,S.OHMIC_SENSE,S.FLOAT_SWITCH,S.BREAKAWAY,S.MOVE_UP,S.MOVE_DOWN
         ) = self.hal_input_names = [
             "unused-input",
             "min-x", "min-y", "min-z", "min-a",
@@ -254,7 +254,7 @@ class Private_Data:
             "min-home-x2", "min-home-y2", "min-home-z2", "min-home-a2",
             "max-home-x2", "max-home-y2", "max-home-z2", "max-home-a2",
             "both-home-x2", "both-home-y2", "both-home-z2", "both-home-a2",
-            "plasmac:arc-ok-in", "plasmac:ohmic-probe", "plasmac:float-switch",
+            "plasmac:arc-ok-in", "plasmac:ohmic-sense-in", "plasmac:float-switch",
             "plasmac:breakaway", "plasmac:move-up", "plasmac:move-down"]
 
         (   S.UNUSED_PWM,
@@ -266,7 +266,7 @@ class Private_Data:
         ) = self.hal_pwm_output_names = [
             "unused-pwm",
             "x-pwm-pulse", "x-pwm-dir", "x-pwm-enable", "y-pwm-pulse", "y-pwm-dir", "y-pwm-enable",
-            "z-pwm-pulse", "z-pwm-dir", "z-pwm-enable", "a-pwm-pulse", "a-pwm-dir", "a-pwm-enable", 
+            "z-pwm-pulse", "z-pwm-dir", "z-pwm-enable", "a-pwm-pulse", "a-pwm-dir", "a-pwm-enable",
             "s-pwm-pulse", "s-pwm-dir", "s-pwm-enable",
             "x2-pwm-pulse", "x2-pwm-dir", "x2-pwm-enable", "y2-pwm-pulse", "y2-pwm-dir", "y2-pwm-enable",
             "z2-pwm-pulse", "z2-pwm-dir", "z2-pwm-enable", "a2-pwm-pulse", "a2-pwm-dir", "a2-pwm-enable"]
@@ -291,7 +291,7 @@ class Private_Data:
              "unused-encoder",
             "x-encoder-a", "x-encoder-b", "x-encoder-i", "x-encoder-m",
             "y-encoder-a", "y-encoder-b", "y-encoder-i", "y-encoder-m",
-            "z-encoder-a", "z-encoder-b", "z-encoder-i", "z-encoder-m", 
+            "z-encoder-a", "z-encoder-b", "z-encoder-i", "z-encoder-m",
             "a-encoder-a", "a-encoder-b", "a-encoder-i", "a-encoder-m",
             "s-encoder-a","s-encoder-b","s-encoder-i", "s-encoder-m",
             "x-mpg-a","x-mpg-b", "x-mpg-i", "x-mpg-m", "y-mpg-a", "y-mpg-b", "y-mpg-i", "y-mpg-m",
@@ -303,7 +303,8 @@ class Private_Data:
             "y2-encoder-a", "y2-encoder-b", "y2-encoder-i", "y2-encoder-m",
             "z2-encoder-a", "z2-encoder-b", "z2-encoder-i", "z2-encoder-m",
             "a2-encoder-a", "a2-encoder-b", "a2-encoder-i", "a2-encoder-m",
-            "arc-volt-enc-a", "arc-volt-enc-b", "arc-volt-enc-i", "arc-volt-enc-m"]
+            "arc-volt-enc-a", "arc-volt-enc-b", "arc-volt-enc-i", "arc-volt-enc-m",
+            ]
 
         (   S.USED_RESOLVER,S.X_RESOLVER,S.Y_RESOLVER,
                 S.Z_RESOLVER,S.A_RESOLVER,S.S_RESOLVER
@@ -337,7 +338,7 @@ class Private_Data:
             S.CHARGE_PUMP_STEP,S.CHARGE_PUMP_DIR,S.CHARGE_PUMP_PHC,
             S.CHARGE_PUMP_PHD,S.CHARGE_PUMP_PHE,S.CHARGE_PUMP_PHF
         ) = self.hal_stepper_names =[
-            "unused-stepgen", 
+            "unused-stepgen",
             "x-stepgen-step", "x-stepgen-dir", "x-stepgen-phase-c",
             "x-stepgen-phase-d", "x-stepgen-phase-e", "x-stepgen-phase-f",
             "y-stepgen-step", "y-stepgen-dir", "y-stepgen-phase-c",
@@ -382,7 +383,7 @@ class Private_Data:
 
         (   S.UNUSED_SSERIAL, S.A8I20_T, S.A8I20_R, S.A8I20_E,
             S.I7I64_T, S.I7I64_R, S.I7I64_E, S.I7I69_T, S.I7I69_R, S.I7I69_E,
-            S.I7I70_T, S.I7I70_R, S.I7I70_E, S.I7I71_T, S.I7I71_R, S.I7I71_E, 
+            S.I7I70_T, S.I7I70_R, S.I7I70_E, S.I7I71_T, S.I7I71_R, S.I7I71_E,
             S.I7I76_M0_T, S.I7I76_M0_R, S.I7I76_M0_E, S.I7I76_M2_T, S.I7I76_M2_R, S.I7I76_M2_E,
             S.I7I77_M0_T, S.I7I77_M0_R, S.I7I77_M0_E, S.I7I77_M3_T, S.I7I77_M3_R, S.I7I77_M3_E,
             S.I7I73_M1_T, S.I7I73_M1_R, S.I7I73_M1_E, S.I7I84_M0_T, S.I7I84_M0_R, S.I7I84_M0_E,
@@ -408,14 +409,14 @@ class Private_Data:
             [_("Y Minimum Limit + Home"),S.MIN_HOME_Y ], [_("Z Minimum Limit + Home"),S.MIN_HOME_Z ],
             [_("A Minimum Limit + Home"),S.MIN_HOME_A ],[_("X Maximum Limit + Home"),S.MAX_HOME_X ],
             [_("Y Maximum Limit + Home"),S.MAX_HOME_Y ], [_("Z Maximum Limit + Home"),S.MAX_HOME_Z ],
-            [_("A Maximum Limit + Home"),S.MAX_HOME_A ],[_("X Both Limit + Home"),S.BOTH_HOME_X ], 
+            [_("A Maximum Limit + Home"),S.MAX_HOME_A ],[_("X Both Limit + Home"),S.BOTH_HOME_X ],
             [_("Y Both Limit + Home"),S.BOTH_HOME_Y ], [_("Z Both Limit + Home"),S.BOTH_HOME_Z ],
             [_("A Both Limit + Home"),S.BOTH_HOME_A ], [_("All Limits + Home"),S.ALL_LIMIT_HOME ] ]
         home_limits_shared2 = [[_("X2 Minimum Limit + Home"),S.MIN_HOME_X2 ],
             [_("Y2 Minimum Limit + Home"),S.MIN_HOME_Y2 ], [_("Z2 Minimum Limit + Home"),S.MIN_HOME_Z2 ],
             [_("A2 Minimum Limit + Home"),S.MIN_HOME_A2 ],[_("X2 Maximum Limit + Home"),S.MAX_HOME_X2 ],
             [_("Y2 Maximum Limit + Home"),S.MAX_HOME_Y2 ], [_("Z2 Maximum Limit + Home"),S.MAX_HOME_Z2 ],
-            [_("A2 Maximum Limit + Home"),S.MAX_HOME_A2 ],[_("X2 Both Limit + Home"),S.BOTH_HOME_X2 ], 
+            [_("A2 Maximum Limit + Home"),S.MAX_HOME_A2 ],[_("X2 Both Limit + Home"),S.BOTH_HOME_X2 ],
             [_("Y2 Both Limit + Home"),S.BOTH_HOME_Y2 ], [_("Z2 Both Limit + Home"),S.BOTH_HOME_Z2 ],
             [_("A2 Both Limit + Home"),S.BOTH_HOME_A2 ], ]
 
@@ -457,11 +458,11 @@ class Private_Data:
         blimits = [[_("Main Axis"),limit],[_("Tandem Axis"),limit2]]
         bhome = [[_("Main Axis"),home],[_("Tandem Axis"),home2]]
         bshared = [[_("Main Axis"),home_limits_shared],[_("Tandem Axis"),home_limits_shared2]]
-        plasma_in = [[_("Arc OK"),S.ARC_OK ], [_("Ohmic Probe"),S.OHMIC_PROBE ], [_("Float Switch"),S.FLOAT_SWITCH ],
+        plasma_in = [[_("Arc OK"),S.ARC_OK ], [_("Ohmic Contact"),S.OHMIC_SENSE ], [_("Float Switch"),S.FLOAT_SWITCH ],
                      [_("Breakaway"),S.BREAKAWAY ], [_("Move Up"),S.MOVE_UP ], [_("Move Down"),S.MOVE_DOWN ] ]
 
         self.human_input_names = [ [_("Unused Input"),S.UNUSED_INPUT],[_("Limits"),blimits],
-            [_("home"),bhome],[_("Limts/Home Shared"),bshared],
+            [_("home"),bhome],[_("Limits/Home Shared"),bshared],
             [_("Digital"),digital],[_("Axis Selection"),axis_select],[_("Overrides"),override],
             [_("Spindle"),spindle],[_("Operation"),operation],[_("External Control"),control],
             [_("Axis rapid"),rapid],[_("X BLDC Control"),xmotor_control],
@@ -489,7 +490,7 @@ class Private_Data:
             [_("Charge Pump StepGen"), S.CHARGE_PUMP_STEP], [_("Spindle StepGen"), S.SPINDLE_STEPGEN_STEP],
             [_("Custom Signals"),[]] ]
         #
-        axis = [[_("X Encoder"), S.X_ENCODER_A], [_("Y Encoder"), S.Y_ENCODER_A], 
+        axis = [[_("X Encoder"), S.X_ENCODER_A], [_("Y Encoder"), S.Y_ENCODER_A],
                 [_("Z Encoder"), S.Z_ENCODER_A], [_("A Encoder"), S.A_ENCODER_A],
                 ]
         taxis = [[_("X2 Tandem Encoder"), S.X2_ENCODER_A], [_("Y2 Tandem Encoder"), S.Y2_ENCODER_A],
@@ -574,8 +575,8 @@ class Private_Data:
 # max smart serial, number of channels,
 # discovered sserial devices,
 # spare,spare,spare,spare,spare,spare,spare,
-# has watchdog, max GPIOI, 
-# low frequency rate , hi frequency rate, 
+# has watchdog, max GPIOI,
+# low frequency rate , hi frequency rate,
 # available connector numbers,  then list of component type and logical number
         self.MESA_INTERNAL_FIRMWAREDATA = [
     # 5i25 ####################
@@ -624,7 +625,7 @@ class Private_Data:
         [S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],],
 
     ['5i25-Internal Data', '5i25', '7i77x2', '5i25', 'hm2_pci',
-        12,3, 0,0, 0,3, 0,0, 0,2, 1,6, [],0,0,0,0,0,0,0, 1, 34, 33, 200, [3, 2], 
+        12,3, 0,0, 0,3, 0,0, 0,2, 1,6, [],0,0,0,0,0,0,0, 1, 34, 33, 200, [3, 2],
         # TAB 3
         [S.TXEN2, 0],[S.TXDATA2, 0],[S.RXDATA2, 0],[S.SS7I77M1, 0],[S.RXDATA1, 0],[S.SS7I77M0, 0],[S.RXDATA0, 0],[S.MXES, 0],[S.MXE0, 0],[S.MXE1, 0],
         [S.MXEI, 0],[S.MXE0, 1],[S.MXE1, 1],[S.MXEI, 1],[S.MXE0, 2],[S.MXE1, 2],[S.MXEI, 2],
@@ -798,7 +799,7 @@ class Private_Data:
         [S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],],
 
     ['7i92-Internal Data', '7i92', '7i77x2 with on 7i77', '7i92', 'hm2_eth',
-        6,3, 0,0, 0,3, 0,0, 0,2, 1,3, [],0,0,0,0,0,0,0, 1, 34, 33, 200, [2, 1], 
+        6,3, 0,0, 0,3, 0,0, 0,2, 1,3, [],0,0,0,0,0,0,0, 1, 34, 33, 200, [2, 1],
         # TAB 2
         [S.TXEN2, 0],[S.TXDATA2, 0],[S.RXDATA2, 0],[S.SS7I77M1, 0],[S.RXDATA1, 0],[S.SS7I77M0, 0],[S.RXDATA0, 0],[S.MXES, 0],[S.MXE0, 0],[S.MXE1, 0],
         [S.MXEI, 0],[S.MXE0, 1],[S.MXE1, 1],[S.MXEI, 1],[S.MXE0, 2],[S.MXE1, 2],[S.MXEI, 2],
@@ -809,7 +810,7 @@ class Private_Data:
         [S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],[S.NUSED,0],],
 
     ['7i92-Internal Data', '7i92', '7i77x2', '7i92', 'hm2_eth',
-        12,3, 0,0, 0,3, 0,0, 0,2, 1,6, [],0,0,0,0,0,0,0, 1, 34, 33, 200, [2, 1], 
+        12,3, 0,0, 0,3, 0,0, 0,2, 1,6, [],0,0,0,0,0,0,0, 1, 34, 33, 200, [2, 1],
         # TAB 2
         [S.TXEN2, 0],[S.TXDATA2, 0],[S.RXDATA2, 0],[S.SS7I77M1, 0],[S.RXDATA1, 0],[S.SS7I77M0, 0],[S.RXDATA0, 0],[S.MXES, 0],[S.MXE0, 0],[S.MXE1, 0],
         [S.MXEI, 0],[S.MXE0, 1],[S.MXE1, 1],[S.MXEI, 1],[S.MXE0, 2],[S.MXE1, 2],[S.MXEI, 2],
@@ -1094,7 +1095,7 @@ class Private_Data:
         '7i80hd':{'DRIVER':'hm2_eth','PINS_PER_CONNECTOR':24,'TOTAL_CONNECTORS':3,'TAB_NUMS':[1,2,3],'TAB_NAMES':['P1','P2','P3']},
         '7i80db':{'DRIVER':'hm2_eth','PINS_PER_CONNECTOR':17,'TOTAL_CONNECTORS':4,'TAB_NUMS':[1,2,3,4],'TAB_NAMES':['P1','P2','P3','P4']},
         '7i90':{'DRIVER':'hm2_7i90','PINS_PER_CONNECTOR':24,'TOTAL_CONNECTORS':3,'TAB_NUMS':[1,2,3],'TAB_NAMES':['P1','P2','P3']},
-        '7i92':{'DRIVER':'hm2_eth','PINS_PER_CONNECTOR':17,'TOTAL_CONNECTORS':2},
+        '7i92':{'DRIVER':'hm2_eth','PINS_PER_CONNECTOR':17,'TOTAL_CONNECTORS':2,'TAB_NUMS':[1,2],'TAB_NAMES':['P1','P2']},
         '7i93':{'DRIVER':'hm2_eth','PINS_PER_CONNECTOR':24,'TOTAL_CONNECTORS':2},
         '7i96':{'DRIVER':'hm2_eth','PINS_PER_CONNECTOR':17,'TOTAL_CONNECTORS':3,'TAB_NUMS':[1,2,3],'TAB_NAMES':['TB3','TB1/TB2','P1']},
         '7i98':{'DRIVER':'hm2_eth','PINS_PER_CONNECTOR':17,'TOTAL_CONNECTORS':3},
@@ -1113,7 +1114,7 @@ class Private_Data:
         self.MESS_NO_REALTIME = _("You are using a simulated-realtime version of LinuxCNC, so testing / tuning of hardware is unavailable.")
         self.MESS_KERNEL_WRONG = _("You are using a realtime version of LinuxCNC but didn't load a realtime kernel so testing / tuning of hardware is\
                  unavailable.\nThis is possibly because you updated the OS and it doesn't automatically load the RTAI kernel anymore.\n"+
-            "You are using the  %(actual)s  kernel.\nYou need to use kernel:")% {'actual':os.uname()[2]}
+            "You are using the {} kernel.\nYou need to use kernel:".format(os.uname()[2]))
         self.MESS_REPLACE_RC_FILE = _("Ok to replace AXIS's .axisrc file?\n\
  If you haven't added custom commands to this hidden file, outside of pncconf, then this should be fine.\n\
 Choosing no will mean AXIS options such as size/position and force maximum might not be as requested \n")

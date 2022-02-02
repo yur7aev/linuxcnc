@@ -66,6 +66,7 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
     def _hal_init(self):
         self.delay = 0
         STATUS.connect('all-homed', lambda w: self.setEnabled(True))
+        STATUS.connect('not-all-homed', lambda w, axis: self.setEnabled(False))
         STATUS.connect('interp-idle', lambda w: self.setEnabled(STATUS.machine_is_on()
                                                     and (STATUS.is_all_homed()
                                                          or INFO.NO_HOME_REQUIRED)))
@@ -96,7 +97,7 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
             self.tablemodel.layoutChanged.emit()
 
     # when qtvcp closes this gets called
-    def closing_cleanup__(self):
+    def _hal_cleanup(self):
         if self.PREFS_:
             LOG.debug('Saving {} data to file.'.format(self.HAL_NAME_))
             self.PREFS_.putpref(self.HAL_NAME_+'-G54', self.tabledata[4][9], str, 'ORIGINOFFSET_SYSTEM_NAMES')
@@ -172,10 +173,14 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
         # display in title bar for convenience
         self.setWindowTitle(sf)
         # row 0 is not editable (absolute position)
+        # row has limited entries (rotational)
         # column 9 is the descritive text column
         if item.column() == 9:
             self.callTextDialog(text,item)
-        elif item.column() <9 and item.row() > 0:
+        elif item.row() == 1:
+            if item.column() == 2:
+                self.callDialog(text,item)
+        elif item.row() > 1:
             self.callDialog(text,item)
 
     # alphanumerical
@@ -207,6 +212,7 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
         item = message.get('ITEM')
         if code and (name or name2) and num is not None:
             self.tablemodel.setData(item, num, None)
+            self.tablemodel.layoutChanged.emit()
 
     # This function uses the color name (string); setProperty
     # expects a QColor object
@@ -319,11 +325,12 @@ class OriginOffsetView(QTableView, _HalWidgetBase):
         col = new.column()
         data = self.tabledata[row][col]
 
+        if row == 0: return
         # Hack to not edit any rotational offset but Z axis
         if row == 1 and not col == 2: return
 
         # dont evaluate text column
-        if col ==9 :return
+        if col == 9 :return
 
         # make sure we switch to correct units for machine and rotational, row 2, does not get converted
         try:
@@ -460,6 +467,8 @@ class MyTableModel(QAbstractTableModel):
         # print(">>> flags() index.column() = ", index.column())
         if index.column() == 9 and index.row() in(0, 1, 2, 3):
             return Qt.ItemIsEnabled
+        elif index.row() == 0:
+            return Qt.ItemIsEnabled
         elif index.row() == 1 and not index.column() == 2:
             return Qt.NoItemFlags
         else:
@@ -471,6 +480,7 @@ class MyTableModel(QAbstractTableModel):
         LOG.debug(self.arraydata[index.row()][index.column()])
         LOG.debug(">>> setData() role = {}".format(role))
         LOG.debug(">>> setData() index.column() = {}".format(index.column()))
+        if index.row() == 0: return False
         try:
             if index.column() == 9:
                 v = str(value)

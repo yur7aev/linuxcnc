@@ -206,13 +206,9 @@ int main(int argc, char **argv)
 
     /* import the python module and get references for needed function */
     PyObject *pModule, *pFunc, *pPeriodicFunc, *pClass;
-    char name[] = "panelui";
-    #if PY_MAJOR_VERSION >=3    
-        wchar_t *wname = Py_DecodeLocale(name, NULL);
-        Py_SetProgramName(wname);
-    #else
-        Py_SetProgramName(name);
-    #endif
+    char name[] = "panelui"; 
+    wchar_t *wname = Py_DecodeLocale(name, NULL);
+    Py_SetProgramName(wname);
     Py_Initialize();
     PyRun_SimpleString("import pyui\n"
                      "pyui.instance = pyui.master.keyboard()\n"
@@ -362,7 +358,7 @@ skip:
             if (PyErr_Occurred()) PyErr_Print();
         }
     }
-    /* run was succesfull */
+    /* run was successful */
     exitval = 0;
 
 out:
@@ -371,7 +367,7 @@ out:
     if ( comp_id >= 0 ) {
         hal_exit(comp_id);
     }
-    PyRun_SimpleString("print '''Exiting panelui's python module '''");
+    PyRun_SimpleString("print ('''Exiting panelui's python module ''')");
     pValue = PyObject_CallObject(pExit, NULL);
     if (PyErr_Occurred()) {
         PyErr_Print();

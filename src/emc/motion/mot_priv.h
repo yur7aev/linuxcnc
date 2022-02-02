@@ -82,7 +82,7 @@ typedef struct {
     hal_float_t *motor_offset;	/* RPI: motor offset, for checking homing stability */
     hal_float_t *motor_pos_cmd;	/* WPI: commanded position, with comp */
     hal_float_t *motor_pos_fb;	/* RPI: position feedback, with comp */
-    hal_float_t *joint_pos_cmd;	/* WPI: commanded position w/o comp, mot ofs */
+    hal_float_t *joint_pos_cmd;	/* WPI: commanded position w/o comp, not ofs */
     hal_float_t *joint_pos_fb;	/* RPI: position feedback, w/o comp */
     hal_float_t *f_error;	/* RPI: following error */
     hal_float_t *f_error_lim;	/* RPI: following error limit */
@@ -151,6 +151,8 @@ typedef struct {
     hal_bit_t *feed_hold;	/* RPI: set TRUE to stop motion maskable with g53 P1*/
     hal_bit_t *feed_inhibit;	/* RPI: set TRUE to stop motion (non maskable)*/
     hal_bit_t *homing_inhibit;	/* RPI: set TRUE to inhibit homing*/
+    hal_bit_t *jog_inhibit;	/* RPI: set TRUE to inhibit jogging*/
+    hal_bit_t *jog_is_active;	/* RPI: TRUE if active jogging*/
     hal_bit_t *tp_reverse;	/* Set true if trajectory planner is running in reverse*/
     hal_bit_t *motion_enabled;	/* RPI: motion enable for all joints */
     hal_bit_t *in_position;	/* RPI: all joints are in position */
@@ -178,6 +180,7 @@ typedef struct {
     hal_bit_t *synch_di[EMCMOT_MAX_DIO]; /* RPI array: input pins for motion synched IO */
     hal_float_t *analog_input[EMCMOT_MAX_AIO]; /* RPI array: input pins for analog Inputs */
     hal_float_t *analog_output[EMCMOT_MAX_AIO]; /* RPI array: output pins for analog Inputs */
+    hal_bit_t *misc_error[EMCMOT_MAX_MISC_ERROR]; /* RPI array: output pins for misc error Inputs */
 
     // FIXME - debug only, remove later
     hal_float_t traj_pos_out;	/* RPA: traj internals, for debugging */

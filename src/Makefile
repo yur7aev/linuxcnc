@@ -144,6 +144,7 @@ SUBDIRS := \
     hal/user_comps/devices hal/user_comps/mb2hal \
     hal/user_comps hal/user_comps/vismach hal/user_comps/vfs11_vfd hal/classicladder hal/utils hal \
     hal/user_comps/vfdb_vfd hal/user_comps/wj200_vfd \
+    hal/user_comps/pi500_vfd \
     hal/user_comps/huanyang-vfd \
 	hal/user_comps/xhc-whb04b-6 \
     \
@@ -154,6 +155,7 @@ SUBDIRS := \
     emc/motion emc/ini emc/rs274ngc emc/sai emc emc/pythonplugin \
     emc/motion-logger \
     emc/tooldata \
+    emc \
     \
     module_helper \
     \
@@ -216,7 +218,7 @@ endif
 
 # Each directory in $(INCLUDES) is passed as a -I directory when compiling.
 INCLUDE := $(patsubst %,-I%, $(INCLUDES)) -I$(RTDIR)/include
-INCLUDE += -I$(INCLUDEPY)
+INCLUDE += $(PYTHON_CPPFLAGS)
 INCLUDE += $(LIBTIRPC_CFLAGS)
 
 # Compilation options.	Perhaps some of these should come from Makefile.inc? (CXXFLAGS now does)
@@ -283,7 +285,6 @@ config.h: config.h.in config.status
 
 INFILES = \
         ../scripts/linuxcnc ../scripts/realtime \
-	../scripts/linuxcnc-python \
 	../scripts/linuxcnc_info \
 	../scripts/haltcl ../scripts/rtapi.conf Makefile.inc Makefile.modinc \
 	../tcl/linuxcnc.tcl ../scripts/halrun ../scripts/rip-environment \
@@ -309,10 +310,11 @@ default: $(INFILES)
 # files in the source tree are the ones used when building linuxcnc.  The copy
 # in ../include is used when building external components of linuxcnc.
 HEADERS := \
-    config.h \
+    emc/linuxcnc.h \
     emc/ini/emcIniFile.hh \
     emc/ini/iniaxis.hh \
     emc/ini/inijoint.hh \
+    emc/ini/inispindle.hh \
     emc/ini/initraj.hh \
     emc/ini/inihal.hh \
     emc/kinematics/cubic.h \
@@ -490,6 +492,7 @@ userspace: $(TARGETS)
 pythonclean:
 	rm -f $(PYTARGETS)
 	find ../lib/python -name '*.so' -exec rm {} +
+	find . -name __pycache__ | xargs -r rm -r
 python: $(PYTARGETS)
 userspace: python
 clean: docclean pythonclean cscopeclean
@@ -528,21 +531,19 @@ clean: depclean modclean
 	-rm -f hal/components/conv_*.comp
 
 pycheck-python-files:
-	@echo 'Checking *.py files for python2 and python3 compatibility...'
+	@echo 'Checking *.py files for python3 compatibility...'
 	@for d in ./hal; do \
 		filelist=$(shell mktemp) && \
 		find $$d -name '*.py' -type f > $$filelist && \
-		cat $$filelist | xargs /usr/bin/env python2 -m py_compile && \
 		cat $$filelist | xargs /usr/bin/env python3 -m py_compile && \
 		rm -f $$filelist; \
 	done
 
 pycheck-python-script:
-	@echo 'Checking "text/x-python" (by MIME type) files for python2 and python3 compatibility...'
+	@echo 'Checking "text/x-python" and "text/x-script.python" (by MIME type) files python3 compatibility...'
 	@for d in ../tests; do \
 		filelist=$(shell mktemp) && \
-		find $$d -type f -exec file -F ':' -i {} \; | grep 'text/x-python' | awk -F ':' '{print $$1}' > $$filelist && \
-		cat $$filelist | xargs /usr/bin/env python2 -m py_compile && \
+		find $$d -type f -exec file -F ':' -i {} \; | grep -e 'text/x-python' -e 'text/x-script.python' | awk -F ':' '{print $$1}' > $$filelist && \
 		cat $$filelist | xargs /usr/bin/env python3 -m py_compile && \
 		rm -f $$filelist; \
 	done
@@ -573,12 +574,13 @@ $(patsubst %,../include/%,$(wildcard *.h)): ../include/%.h: %.h
 $(patsubst %,../include/%,$(wildcard *.hh)): ../include/%.hh: %.hh
 	$(Q)-cp $^ $@
 
-DIR=install -d -m 0755 -o root
-FILE=install -m 0644 -o root
+INSTALL=install -o root
+DIR=$(INSTALL) -d -m 0755
+FILE=$(INSTALL) -m 0644
 TREE=cp -dR
-CONFIGFILE=install -m 0644
-EXE=install -m 0755 -o root
-SETUID=install -m 4755 -o root
+CONFIGFILE=$(INSTALL) -m 0644
+EXE=$(INSTALL) -m 0755
+SETUID=$(INSTALL) -m 4755
 GLOB=$(wildcard $(1))
 
 ifeq ($(RUN_IN_PLACE),yes)
@@ -600,7 +602,7 @@ install-menus install-menu: $(MENUS)
 	cp $< $(HOME)/.config/menus/applications-merged
 else
 
-DOCS=README AUTHORS
+DOCS=README.adoc AUTHORS
 
 DOCS_HELP=$(call GLOB,../docs/help/*)
 NC_FILES=$(filter-out %/butterfly.ngc,$(call GLOB,../nc_files/*))
@@ -611,9 +613,9 @@ install: install-kernel-dep install-kernel-indep
 	$(ECHO) "Installed in DESTDIR='$(DESTDIR)' with prefix $(prefix)"
 
 install-dirs:
-	$(DIR) $(DESTDIR)$(initd_dir) $(DESTDIR)$(EMC2_RTLIB_DIR) \
-		$(DESTDIR)$(sysconfdir)/linuxcnc $(DESTDIR)$(bindir) \
-		$(DESTDIR)$(libdir) $(DESTDIR)$(includedir)/linuxcnc \
+	$(DIR) $(DESTDIR)$(EMC2_RTLIB_DIR) \
+		$(DESTDIR)$(sysconfdir)/linuxcnc $(DESTDIR)$(bindir) $(DESTDIR)$(libdir) \
+		$(DESTDIR)/lib/linuxcnc $(DESTDIR)$(includedir)/linuxcnc \
 		$(DESTDIR)$(docsdir) $(DESTDIR)$(ncfilesdir) \
 		$(DESTDIR)/etc/X11/app-defaults $(DESTDIR)$(tcldir)/bin \
 		$(DESTDIR)$(tcldir)/scripts \
@@ -645,11 +647,10 @@ install-kernel-indep: install-dirs
 	$(FILE) $(filter-out %/skeleton.3rtapi, $(wildcard ../docs/man/man3/*.3rtapi)) $(DESTDIR)$(mandir)/man3
 	$(FILE) $(filter-out %/skeleton.9, $(wildcard ../docs/man/man9/*.9)) $(DESTDIR)$(mandir)/man9
 	$(FILE) objects/*.msg $(DESTDIR)$(tcldir)/msgs
-	$(EXE) ../scripts/realtime $(DESTDIR)$(initd_dir)
+	$(EXE) ../scripts/realtime $(DESTDIR)$(prefix)/lib/linuxcnc
 	$(EXE) ../scripts/halrun $(DESTDIR)$(bindir)
 	$(EXE) ../scripts/halcmd_twopass $(DESTDIR)$(bindir)
 	$(EXE) ../scripts/haltcl $(DESTDIR)$(bindir)
-	$(EXE) ../scripts/linuxcnc-python $(DESTDIR)$(bindir)
 	$(EXE) ../scripts/simulate_probe $(DESTDIR)$(bindir)
 	$(EXE) ../scripts/sim_pin $(DESTDIR)$(bindir)
 	$(FILE) ../*.png ../*.gif $(DESTDIR)$(datadir)/linuxcnc
@@ -717,10 +718,7 @@ install-python: install-dirs
 	$(DIR) $(DESTDIR)$(SITEPY)/touchy
 	$(DIR) $(DESTDIR)$(SITEPY)/gscreen
 	$(DIR) $(DESTDIR)$(SITEPY)/qtvcp
-	$(DIR) $(DESTDIR)$(SITEPY)/qtvcp/designer/x86_64/qt5.5
-	$(DIR) $(DESTDIR)$(SITEPY)/qtvcp/designer/x86_64/qt5.7
-	$(DIR) $(DESTDIR)$(SITEPY)/qtvcp/designer/x86_64/qt5.9
-	$(DIR) $(DESTDIR)$(SITEPY)/qtvcp/designer/x86_64/qt5.11
+	$(DIR) $(DESTDIR)$(SITEPY)/qtvcp/designer/
 	$(DIR) $(DESTDIR)$(SITEPY)/qtvcp/lib
 	$(DIR) $(DESTDIR)$(SITEPY)/qtvcp/lib/writer
 	$(DIR) $(DESTDIR)$(SITEPY)/qtvcp/lib/writer/ext
@@ -741,10 +739,6 @@ install-python: install-dirs
 	$(FILE) ../lib/python/gscreen/*.py $(DESTDIR)$(SITEPY)/gscreen
 	$(FILE) ../lib/python/qtvcp/*.py ../lib/python/qtvcp/*.ui ../lib/python/qtvcp/*.txt $(DESTDIR)$(SITEPY)/qtvcp
 	$(FILE) ../lib/python/qtvcp/designer/*.txt $(DESTDIR)$(SITEPY)/qtvcp/designer
-	$(FILE) ../lib/python/qtvcp/designer/x86_64/qt5.5/*.gz $(DESTDIR)$(SITEPY)/qtvcp/designer/x86_64/qt5.5
-	$(FILE) ../lib/python/qtvcp/designer/x86_64/qt5.7/*.gz $(DESTDIR)$(SITEPY)/qtvcp/designer/x86_64/qt5.7
-	$(FILE) ../lib/python/qtvcp/designer/x86_64/qt5.9/*.gz $(DESTDIR)$(SITEPY)/qtvcp/designer/x86_64/qt5.9
-	$(FILE) ../lib/python/qtvcp/designer/x86_64/qt5.11/*.gz $(DESTDIR)$(SITEPY)/qtvcp/designer/x86_64/qt5.11
 	$(FILE) ../lib/python/qtvcp/widgets/*.py $(DESTDIR)$(SITEPY)/qtvcp/widgets
 	$(FILE) ../lib/python/qtvcp/widgets/widget_icons/*.png ../lib/python/qtvcp/widgets/widget_icons/*.gif $(DESTDIR)$(SITEPY)/qtvcp/widgets/widget_icons
 	$(FILE) ../lib/python/qtvcp/plugins/*.py $(DESTDIR)$(SITEPY)/qtvcp/plugins
@@ -778,7 +772,7 @@ install-python: install-dirs
 	$(EXE) ../bin/touchy $(DESTDIR)$(bindir)
 	$(EXE) ../bin/gscreen $(DESTDIR)$(bindir)
 	$(EXE) ../bin/qtvcp $(DESTDIR)$(bindir)
-	$(EXE) ../lib/python/qtvcp/designer/install_script $(DESTDIR)$(SITEPY)/qtvcp/designer
+	$(EXE) ../lib/python/qtvcp/designer/install_script $(DESTDIR)$(SITEPY)/qtvcp/designer/
 	$(EXE) ../bin/qtplasmac-setup $(DESTDIR)$(bindir)
 	$(EXE) ../bin/qtplasmac-materials $(DESTDIR)$(bindir)
 	$(EXE) ../bin/qtplasmac-plasmac2qt $(DESTDIR)$(bindir)
@@ -849,10 +843,6 @@ endif
 endif
 EXTRA_CFLAGS += -fno-builtin-sin -fno-builtin-cos -fno-builtin-sincos
 
-ifeq "$(USE_STUBS)" "1"
-MATHSTUB := rtapi/mathstubs.o
-endif
-
 ifdef SEQUENTIAL_SUPPORT
 EXTRA_CFLAGS += -DSEQUENTIAL_SUPPORT
 endif
@@ -910,12 +900,6 @@ obj-$(CONFIG_WATCHDOG) += watchdog.o
 watchdog-objs := hal/components/watchdog.o $(MATHSTUB)
 obj-$(CONFIG_MODMATH) += modmath.o
 modmath-objs := hal/components/modmath.o $(MATHSTUB)
-obj-$(CONFIG_TON) += t_on.o
-t_on-objs := hal/components/t_on.o $(MATHSTUB)
-obj-$(CONFIG_TOFF) += t_off.o
-t_off-objs := hal/components/t_off.o $(MATHSTUB)
-obj-$(CONFIG_TP) += t_p.o
-t_p-objs := hal/components/t_p.o $(MATHSTUB)
 obj-$(CONFIG_STREAMER) += streamer.o
 streamer-objs := hal/components/streamer.o $(MATHSTUB)
 obj-$(CONFIG_SAMPLER) += sampler.o

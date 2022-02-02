@@ -16,6 +16,7 @@
  */
 
 #include "config.h"
+#include "linuxcnc.h"
 
 #ifdef __linux__
 #include <sys/fsuid.h>
@@ -52,8 +53,6 @@
 #include <pthread_np.h>
 #endif
 
-#include "config.h"
-
 #include "rtapi.h"
 #include "hal.h"
 #include "hal/hal_priv.h"
@@ -82,9 +81,6 @@ WithRoot::~WithRoot() {
 #endif
     }
 }
-
-extern "C"
-int rtapi_is_realtime();
 
 namespace
 {
@@ -615,8 +611,9 @@ struct Posix : RtapiApp
 {
     Posix(int policy = SCHED_FIFO) : RtapiApp(policy), do_thread_lock(policy != SCHED_FIFO) {
         pthread_once(&key_once, init_key);
-        if(do_thread_lock)
-            pthread_mutex_init(&thread_lock, 0);
+        if(do_thread_lock) {
+            pthread_once(&lock_once, init_lock);
+        }
     }
     int task_delete(int id);
     int task_start(int task_id, unsigned long period_nsec);
@@ -634,12 +631,17 @@ struct Posix : RtapiApp
     int run_threads(int fd, int (*callback)(int fd));
     static void *wrapper(void *arg);
     bool do_thread_lock;
-    pthread_mutex_t thread_lock;
 
     static pthread_once_t key_once;
     static pthread_key_t key;
     static void init_key(void) {
         pthread_key_create(&key, NULL);
+    }
+
+    static pthread_once_t lock_once;
+    static pthread_mutex_t thread_lock;
+    static void init_lock(void) {
+        pthread_mutex_init(&thread_lock, NULL);
     }
 
     long long do_get_time(void) {
@@ -725,8 +727,8 @@ static int harden_rt()
     if (iopl(3) < 0) {
         rtapi_print_msg(RTAPI_MSG_ERR,
                         "cannot gain I/O privileges - "
-                        "forgot 'sudo make setuid'?\n");
-        return -EPERM;
+                        "forgot 'sudo make setuid' or using secure boot? -"
+                        "parallel port access is not allow\n");
     }
 #endif
 
@@ -744,7 +746,7 @@ static int harden_rt()
     // enable core dumps
     if (setrlimit(RLIMIT_CORE, &unlimited) < 0)
 	rtapi_print_msg(RTAPI_MSG_WARN,
-		  "setrlimit: %s - core dumps may be truncated or non-existant\n",
+		  "setrlimit: %s - core dumps may be truncated or non-existent\n",
 		  strerror(errno));
 
     // even when setuid root
@@ -1039,7 +1041,9 @@ int Posix::task_start(int task_id, unsigned long int period_nsec)
 #define RTAPI_CLOCK (CLOCK_MONOTONIC)
 
 pthread_once_t Posix::key_once = PTHREAD_ONCE_INIT;
+pthread_once_t Posix::lock_once = PTHREAD_ONCE_INIT;
 pthread_key_t Posix::key;
+pthread_mutex_t Posix::thread_lock;
 
 void *Posix::wrapper(void *arg)
 {

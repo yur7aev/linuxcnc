@@ -16,7 +16,9 @@
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from rs274 import Translated, ArcsToSegmentsMixin, OpenGLTk
-from minigl import *
+from OpenGL.GL import *
+from OpenGL.GLU import *
+import itertools
 import math
 import glnav
 import hershey
@@ -525,14 +527,17 @@ class GlCanonDraw:
             glCallList(self.dlist('select_norapids', gen=self.make_selection_list))
 
             try:
-                buffer = list(glRenderMode(GL_RENDER))
+                buffer = glRenderMode(GL_RENDER)
             except OverflowError:
                 self.select_buffer_size *= 2
                 continue
             break
 
         if buffer:
-            min_depth, max_depth, names = min(buffer)
+            min_depth, max_depth, names = (buffer[0].near, buffer[0].far, buffer[0].names)
+            for x in buffer:
+                if min_depth < x.near:
+                    min_depth, max_depth, names = (x.near, x.far, x.names)
             self.set_highlight_line(names[0])
         else:
             self.set_highlight_line(None)
@@ -1108,10 +1113,7 @@ class GlCanonDraw:
         if icon is limiticon:
             if idx in self.show_icon_limit_list: return
             self.show_icon_limit_list.append(idx)
-        if sys.version_info[0] == 3:
-            glBitmap(13, 16, 0, 3, 17, 0, icon.tobytes())
-        else:
-            glBitmap(13, 16, 0, 3, 17, 0, icon.tostring())
+        glBitmap(13, 16, 0, 3, 17, 0, icon.tobytes())
 
     def redraw(self):
         s = self.stat
@@ -1503,6 +1505,7 @@ class GlCanonDraw:
         s = self.stat
         limit = list(s.limit[:])
         homed = list(s.homed[:])
+        spd = self.to_internal_linear_unit(s.current_vel)
 
         if not self.get_joints_mode() or self.no_joint_display:
             if self.get_show_commanded():
@@ -1542,7 +1545,6 @@ class GlCanonDraw:
             g92_offset = self.to_internal_units(s.g92_offset)
             tlo_offset = self.to_internal_units(s.tool_offset)
             dtg = self.to_internal_linear_unit(s.distance_to_go)
-            spd = self.to_internal_linear_unit(s.current_vel)
 
             if self.get_show_metric():
                 positions = self.from_internal_units(positions, 1)
@@ -1553,17 +1555,21 @@ class GlCanonDraw:
                 dtg *= 25.4
                 spd = spd * 25.4
             spd = spd * 60
-
-            # Note: hal_gremlin overrides dro_format() for different dro behavior
-            limit, homed, posstrs, droposstrs = self.dro_format(self.stat,spd,dtg,limit,homed,positions,axisdtg,g5x_offset,g92_offset,tlo_offset)
+            return self.dro_format(self.stat,spd,dtg,limit,homed,positions,
+                    axisdtg,g5x_offset,g92_offset,tlo_offset)
         else:
-            # N.B. no conversion here because joint positions are unitless
-            #      joint_mode and display_joint
-            posstrs = ["  %s:% 9.4f" % i for i in
-                zip(list(range(self.get_num_joints())), s.joint_actual_position)]
-            droposstrs = posstrs
+            return self.joint_dro_format(s,spd,self.get_num_joints(),limit, homed)
+
+    # N.B. no conversion here because joint positions are unitless
+    #      joint_mode and display_joint
+    # Note: this is overriden in other guis (then AXIS) for different dro behavior
+    def joint_dro_format(self,s,spd,num_of_joints,limit, homed):
+        posstrs = ["  %s:% 9.4f" % i for i in
+            zip(list(range(num_of_joints)), s.joint_actual_position)]
+        droposstrs = posstrs
         return limit, homed, posstrs, droposstrs
 
+    # Note: this is overriden in other guis (then AXIS) for different dro behavior
     def dro_format(self,s,spd,dtg,limit,homed,positions,axisdtg,g5x_offset,g92_offset,tlo_offset):
             if self.get_show_metric():
                 format = "% 6s:" + self.dro_mm

@@ -159,11 +159,19 @@ class mdi:
                 if len(self.words.get(i)) > 0:
                     m += i + self.words.get(i)
         ACTION.CALL_MDI(m)
+        try:
+            fp = os.path.expanduser(INFO.MDI_HISTORY_PATH)
+            fp = open(fp, 'a')
+            fp.write(m + "\n")
+            fp.close()
+        except:
+            pass
+        STATUS.emit('mdi-history-changed')
 
 class MDITouchy(QtWidgets.QWidget, _HalWidgetBase):
     def __init__(self, parent=None):
         super(MDITouchy, self).__init__(parent)
-        self.setMinimumSize(600, 420)
+        self.setMinimumSize(265, 325)
         # Load the widgets UI file:
         self.filename = os.path.join(INFO.LIB_PATH,'widgets_ui', 'mdi_touchy.ui')
         try:

@@ -16,7 +16,6 @@
 //    along with this program; if not, write to the Free Software
 //    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-#include "py3c/py3c.h"
 #include <Python.h>
 #include <structmember.h>
 #include <string>
@@ -28,12 +27,6 @@ using namespace std;
 #include <rtapi_mutex.h>
 #include "hal.h"
 #include "hal_priv.h"
-
-#if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
-typedef int Py_ssize_t;
-#define PY_SSIZE_T_MAX INT_MAX
-#define PY_SSIZE_T_MIN INT_MIN
-#endif
 
 #define EXCEPTION_IF_NOT_LIVE(retval) do { \
     if(self->hal_id <= 0) { \
@@ -47,12 +40,12 @@ PyObject *to_python(bool b) {
 }
 
 PyObject *to_python(unsigned u) {
-    if(u < LONG_MAX) return PyInt_FromLong(u);
+    if(u < LONG_MAX) return PyLong_FromLong(u);
     return PyLong_FromUnsignedLong(u);
 }
 
 PyObject *to_python(int u) {
-    return PyInt_FromLong(u);
+    return PyLong_FromLong(u);
 }
 
 PyObject *to_python(double d) {
@@ -63,14 +56,9 @@ bool from_python(PyObject *o, double *d) {
     if(PyFloat_Check(o)) {
         *d = PyFloat_AsDouble(o);
         return true;
-    } else if(PyInt_Check(o)) {
-        #if PY_MAJOR_VERSION >= 3
+    } else if(PyLong_Check(o)) {
         *d = PyLong_AsDouble(o);
         return !PyErr_Occurred();
-        #else
-        *d = PyInt_AsLong(o);
-        #endif
-        return true;
     } else if(PyLong_Check(o)) {
         *d = PyLong_AsDouble(o);
         return !PyErr_Occurred();
@@ -90,22 +78,11 @@ bool from_python(PyObject *o, double *d) {
 bool from_python(PyObject *o, uint32_t *u) {
     PyObject *tmp = 0;
     long long l;
-#if !IS_PY3
-    if(PyInt_Check(o)) {
-        l = PyInt_AsLong(o);
-        goto got_value;
-    }
-#endif
-
     tmp = PyLong_Check(o) ? o : PyNumber_Long(o);
     if(!tmp) goto fail;
 
     l = PyLong_AsLongLong(tmp);
     if(PyErr_Occurred()) goto fail;
-
-#if !IS_PY3
-got_value:
-#endif
     if(l < 0 || l != (uint32_t)l) {
         PyErr_Format(PyExc_OverflowError, "Value %lld out of range", l);
         goto fail;
@@ -122,22 +99,11 @@ fail:
 bool from_python(PyObject *o, int32_t *i) {
     PyObject *tmp = 0;
     long long l;
-#if !IS_PY3
-    if(PyInt_Check(o)) {
-        l = PyInt_AsLong(o);
-        goto got_value;
-    }
-#endif
-
     tmp = PyLong_Check(o) ? o : PyNumber_Long(o);
     if(!tmp) goto fail;
 
     l = PyLong_AsLongLong(tmp);
     if(PyErr_Occurred()) goto fail;
-
-#if !IS_PY3
-got_value:
-#endif
     if(l != (int32_t)l) {
         PyErr_Format(PyExc_OverflowError, "Value %lld out of range", l);
         goto fail;
@@ -472,6 +438,23 @@ static PyObject *pyhal_get_pin(PyObject *_self, PyObject *o) {
     return pyhal_pin_new(pin, name);
 }
 
+
+static PyObject *pyhal_get_pins(PyObject *_self, PyObject *o) {
+  char *name;
+  halobject *self = (halobject *)_self;
+
+  EXCEPTION_IF_NOT_LIVE(NULL);
+
+  PyObject *d = PyDict_New();
+  for(itemmap::iterator i = self->items->begin(); i != self->items->end(); i++) {
+    halitem * pin = &(i->second);
+    name = strdup(i->first.c_str());
+    PyDict_SetItemString(d, name, pyhal_read_common(pin));
+  }
+  return d;
+}
+
+
 static PyObject *pyhal_ready(PyObject *_self, PyObject *o) {
     // hal_ready did not exist in EMC 2.0.x, make it a no-op
     halobject *self = (halobject *)_self;
@@ -489,7 +472,7 @@ static PyObject *pyhal_exit(PyObject *_self, PyObject *o) {
 
 static PyObject *pyhal_repr(PyObject *_self) {
     halobject *self = (halobject *)_self;
-    return PyStr_FromFormat("<hal component %s(%d) with %d pins and params>",
+    return PyUnicode_FromFormat("<hal component %s(%d) with %d pins and params>",
             self->name, self->hal_id, (int)self->items->size());
 }
 
@@ -502,13 +485,13 @@ static PyObject *pyhal_getattro(PyObject *_self, PyObject *attro)  {
     if(result) return result;
 
     PyErr_Clear();
-    return pyhal_read_common(find_item(self, PyStr_AsString(attro)));
+    return pyhal_read_common(find_item(self, PyUnicode_AsUTF8(attro)));
 }
 
 static int pyhal_setattro(PyObject *_self, PyObject *attro, PyObject *v) {
     halobject *self = (halobject *)_self;
     EXCEPTION_IF_NOT_LIVE(-1);
-    return pyhal_write_common(find_item(self, PyStr_AsString(attro)), v);
+    return pyhal_write_common(find_item(self, PyUnicode_AsUTF8(attro)), v);
 }
 
 static Py_ssize_t pyhal_len(PyObject *_self) {
@@ -525,7 +508,7 @@ static PyObject *pyhal_get_prefix(PyObject *_self, PyObject *args) {
     if(!self->prefix)
 	Py_RETURN_NONE;
 
-    return PyStr_FromString(self->prefix);
+    return PyUnicode_FromString(self->prefix);
 }
 
 
@@ -558,6 +541,8 @@ static PyMethodDef hal_methods[] = {
         "Create a new pin"},
     {"getitem", pyhal_get_pin, METH_VARARGS,
         "Get existing pin object"},
+    {"getpins", pyhal_get_pins, METH_VARARGS,
+            "Get all pins and values of component"},
     {"exit", pyhal_exit, METH_NOARGS,
         "Call hal_exit"},
     {"ready", pyhal_ready, METH_NOARGS,
@@ -650,9 +635,9 @@ static PyObject *pyhalpin_repr(PyObject *_self) {
     if (pyself->name) name = pyself->name;
 
     if (!self->is_pin)
-	return PyStr_FromFormat("<hal param \"%s\" %s-%s>", name,
+	return PyUnicode_FromFormat("<hal param \"%s\" %s-%s>", name,
 	    pin_type2name(self->type), param_dir2name(self->dir.paramdir));
-    return PyStr_FromFormat("<hal pin \"%s\" %s-%s>", name,
+    return PyUnicode_FromFormat("<hal pin \"%s\" %s-%s>", name,
             pin_type2name(self->type), pin_dir2name(self->dir.pindir));
 }
 
@@ -684,15 +669,15 @@ static PyObject * pyhal_pin_get(PyObject * _self, PyObject *) {
 
 static PyObject * pyhal_pin_get_type(PyObject * _self, PyObject *) {
     pyhalitem * self = (pyhalitem *) _self;
-    return PyInt_FromLong(self->pin.type);
+    return PyLong_FromLong(self->pin.type);
 }
 
 static PyObject * pyhal_pin_get_dir(PyObject * _self, PyObject *) {
     pyhalitem * self = (pyhalitem *) _self;
     if (self->pin.is_pin)
-	return PyInt_FromLong(self->pin.dir.pindir);
+	return PyLong_FromLong(self->pin.dir.pindir);
     else
-	return PyInt_FromLong(self->pin.dir.paramdir);
+	return PyLong_FromLong(self->pin.dir.paramdir);
 }
 
 static PyObject * pyhal_pin_is_pin(PyObject * _self, PyObject *) {
@@ -704,7 +689,7 @@ static PyObject * pyhal_pin_get_name(PyObject * _self, PyObject *) {
     pyhalitem * self = (pyhalitem *) _self;
     if (!self->name)
 	Py_RETURN_NONE;
-    return PyStr_FromString(self->name);
+    return PyUnicode_FromString(self->name);
 }
 
 static PyMethodDef halpin_methods[] = {
@@ -819,7 +804,9 @@ PyObject *component_is_ready(PyObject *self, PyObject *args) {
 	return NULL;
     }
 
-    return PyBool_FromLong(halpr_find_comp_by_name(name)->ready != 0);
+    // Bad form to assume comp name exists - stop crashing!
+    hal_comp_t *thecomp = halpr_find_comp_by_name(name);
+    return PyBool_FromLong((thecomp) && (thecomp->ready != 0));
 }
 
 PyObject *new_sig(PyObject *self, PyObject *args) {
@@ -936,7 +923,7 @@ PyObject *set_p(PyObject *self, PyObject *args) {
 		"Cannot call before creating component");
 	return NULL;
     }
-    //printf("INFO HALMODULE -- settting pin / param - name:%s value:%s\n",name,value);
+    //printf("INFO HALMODULE -- setting pin / param - name:%s value:%s\n",name,value);
     // get mutex before accessing shared data 
     rtapi_mutex_get(&(hal_data->mutex));
     // search param list for name 
@@ -1335,11 +1322,9 @@ static void pyshm_delete(PyObject *_self) {
 	rtapi_shmem_delete(self->shm_id, self->comp->hal_id);
     Py_XDECREF(self->comp);
 }
-#if PY_MAJOR_VERSION >=3
-static int
-shm_buffer_getbuffer(PyObject *obj, Py_buffer *view, int flags)
-{
-if (view == NULL) {
+
+static int shm_buffer_getbuffer(PyObject *obj, Py_buffer *view, int flags) {
+  if (view == NULL) {
     PyErr_SetString(PyExc_ValueError, "NULL view in getbuffer");
     return -1;
   }
@@ -1351,23 +1336,10 @@ if (view == NULL) {
   Py_INCREF(self);  // need to increase the reference count
   return 0;
 }
-#else
 
-static Py_ssize_t shm_buffer(PyObject *_self, Py_ssize_t segment, void **ptrptr){
-    shmobject *self = (shmobject *)_self;
-    if(ptrptr) *ptrptr = self->buf;
-    return self->size;
-}
-static Py_ssize_t shm_segcount(PyObject *_self, Py_ssize_t *lenp) {
-    shmobject *self = (shmobject *)_self;
-    if(lenp) *lenp = self->size;
-    return 1;
-}
-
-#endif
 static PyObject *pyshm_repr(PyObject *_self) {
     shmobject *self = (shmobject *)_self;
-    return PyStr_FromFormat("<shared memory buffer key=%08x id=%d size=%ld>",
+    return PyUnicode_FromFormat("<shared memory buffer key=%08x id=%d size=%ld>",
 	    self->key, self->shm_id, (unsigned long)self->size);
 }
 
@@ -1393,28 +1365,13 @@ static PyObject *set_msg_level(PyObject *_self, PyObject *args) {
 }
 
 static PyObject *get_msg_level(PyObject *_self, PyObject *args) {
-    return PyInt_FromLong(rtapi_get_msg_level());
+    return PyLong_FromLong(rtapi_get_msg_level());
 }
-
-
-#if PY_MAJOR_VERSION >=3
 
 static PyBufferProcs shmbuffer_procs = {
     (getbufferproc)shm_buffer_getbuffer,         /* bf_getbuffer */
     (releasebufferproc)NULL, //(releasebufferproc)shm_buffer_releasebuffer, /* bf_releasebuffer */
 };
-
-#else
-
-static
-PyBufferProcs shmbuffer_procs = {
-    shm_buffer,
-    shm_buffer,
-    shm_segcount,
-    NULL
-};
-
-#endif
 
 static PyMethodDef shm_methods[] = {
     {"getbuffer", shm_getbuffer, METH_NOARGS, 
@@ -1655,7 +1612,7 @@ static void pystream_delete(PyObject *_self) {
 
 static PyObject *pystream_repr(PyObject *_self) {
     streamobj *self = reinterpret_cast<streamobj*>(_self);
-    return PyStr_FromFormat("<stream 0x%x%s>", self->key,
+    return PyUnicode_FromFormat("<stream 0x%x%s>", self->key,
         self->creator ? " creator" : "");
 }
 
@@ -1706,23 +1663,23 @@ PyTypeObject stream_type = {
 
 PyMethodDef module_methods[] = {
     {"pin_has_writer", pin_has_writer, METH_VARARGS,
-	"Return a FALSE value if a pin has no writers and TRUE if it does"},
+	".pin_has_writer('pin_name'): Return a FALSE value if a pin has no writers and TRUE if it does"},
     {"component_exists", component_exists, METH_VARARGS,
-	"Return a TRUE value if the named component exists"},
+	".component_exists('component_name'): Return a TRUE value if the named component exists"},
     {"component_is_ready", component_is_ready, METH_VARARGS,
-	"Return a TRUE value if the named component is ready"},
+	".component_is_ready('component_name'): Return a TRUE value if the named component is ready"},
     {"set_msg_level", set_msg_level, METH_VARARGS,
-	"Set the RTAPI message level"},
+	".set_msg_level(level): Set the RTAPI message level"},
     {"get_msg_level", get_msg_level, METH_NOARGS,
-	"Get the RTAPI message level"},
+	".get_msg_level(): Get the RTAPI message level"},
     {"new_sig", new_sig, METH_VARARGS,
 	".new_sig('signal_name', type): Create a new signal with the specified name.  'type' is one of HAL_BIT, HAL_FLOAT, HAL_S32, or HAL_U32."},
     {"connect", connect, METH_VARARGS,
 	".connect('pin_name', 'signal_name'): Connect the named pin to the named signal."},
     {"set_p", set_p, METH_VARARGS,
-	"set pin value"},
+	".set_p('name', 'value'): Set the pin or param value"},
     {"get_value", get_value, METH_VARARGS,
-	".get_value('name'}: Gets the pin, param or signal value"},
+	".get_value('name'): Gets the pin, param or signal value"},
     {"get_info_pins", get_info_pins, METH_VARARGS,
 	".get_info_pins(): Get a list of dicts for all the pins; {NAME:, VALUE:, DIRECTION:}"},
     {"get_info_signals", get_info_signals, METH_VARARGS,
@@ -1766,7 +1723,8 @@ static struct PyModuleDef hal_moduledef = {
     module_methods            /* m_methods */
 };
 
-MODULE_INIT_FUNC(_hal)
+PyMODINIT_FUNC PyInit__hal(void);
+PyMODINIT_FUNC PyInit__hal(void)
 {
     PyObject *m = PyModule_Create(&hal_moduledef);
 
@@ -1811,6 +1769,8 @@ MODULE_INIT_FUNC(_hal)
 
 #ifdef RTAPI_KERNEL_VERSION
     PyModule_AddStringConstant(m, "kernel_version", RTAPI_KERNEL_VERSION);
+#else
+    PyModule_AddStringConstant(m, "kernel_version", (char*)"Not Available");
 #endif
 
     PyRun_SimpleString(

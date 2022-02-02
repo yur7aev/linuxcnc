@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #############################################################################
 ##
 ## Copyright (C) 2010 Hans-Peter Jansen <hpj@urpla.net>.
@@ -38,7 +38,6 @@
 ## $QT_END_LICENSE$
 ##
 ###########################################################################
-from __future__ import print_function
 
 import os
 import sys

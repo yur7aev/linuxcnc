@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Usage:
     python teach.py nmlfile outputfile
 If outputfile is not specified, writes to standard output.
@@ -24,10 +24,7 @@ run-in-place.
 
 import linuxcnc
 import sys
-if sys.version_info[0] == 3:
-    import tkinter
-else:
-    import Tkinter as tkinter
+import tkinter
 
 linenumber = 1;
 

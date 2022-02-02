@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import sys, time
 import os
 import subprocess
@@ -95,7 +95,7 @@ class XEmbeddable(QWidget, _HalWidgetBase):
         LOG.debug( 'XID: {}'.format(sid))
         return int(sid)
 
-    def closing_cleanup__(self):
+    def _hal_cleanup(self):
         try:
             self.ob.terminate()
         except Exception as e:

@@ -18,12 +18,10 @@ import sys
 import os
 import time
 import json
-import linuxcnc
 
 from PyQt5.QtCore import QObject
 from qtvcp.core import Status, Action, Info
 from qtvcp import logger
-
 from qtvcp.widgets.probe_routines import ProbeRoutines
 
 # Instantiate the libraries with global reference
@@ -41,7 +39,6 @@ class ProbeSubprog(QObject, ProbeRoutines):
         ProbeRoutines.__init__(self)
         self.send_dict = {}
         self.error_status = None
-        self.PID = None
         # list of parameters received from main probe program
         # excluding booleans, these are handled separately
         self.parm_list = ['probe_diam',
@@ -129,7 +126,7 @@ class ProbeSubprog(QObject, ProbeRoutines):
                 line = None
                 try:
                     error = self.process_command(cmd)
-    # a successfully completed command will return 1 - None means ignore - anything else is an error
+                    # error = 1 means success, error = None means ignore, anything else is an error
                     if error is not None:
                         if error != 1:
                             sys.stdout.write("ERROR Probe routine returned with error\n")
@@ -145,19 +142,13 @@ class ProbeSubprog(QObject, ProbeRoutines):
                 except Exception as e:
                     sys.stdout.write("ERROR Command Error: {}\n".format(e))
                     sys.stdout.flush()
-            if self.PID is not None:
-                if not self.check_pid(self.PID):
-#                    sys.exit(0)
-                    self.terminate()
-    # check for an error message was sent to us or
+                break
+
     # check that the command is actually a method in our class else
     # this message isn't for us - ignore it
     def process_command(self, cmd):
         cmd = cmd.rstrip().split('$')
-        if cmd[0] == '_ErroR_':
-            self.process_error(cmd[1])
-            return None
-        elif cmd[0] in dir(self):
+        if cmd[0] in dir(self):
             if not STATUS.is_on_and_idle(): return None
             parms = json.loads(cmd[1])
             self.update_data(parms)
@@ -165,24 +156,8 @@ class ProbeSubprog(QObject, ProbeRoutines):
             if error != 1 and STATUS.is_on_and_idle():
                 ACTION.CALL_MDI("G90")
             return error
-        elif cmd[0] == 'PID':
-            self.PID = int(cmd[1])
-            return None
         else:
             return 0
-
-    def check_pid(self, pid):        
-        try:
-            os.kill(pid, 0)
-        except OSError:
-            return False
-        else:
-            return True
-
-    # This is not actually used anywhere right now
-    def process_error(self, cmd):
-        args = cmd.split(',')
-        self.error_status = args
 
     def update_data(self, parms):
         for key in parms:

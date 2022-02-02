@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #    This is a component of emc
 #    Copyright 2007 Anders Wallin <anders.wallin@helsinki.fi>
 #    
@@ -34,7 +34,6 @@
     -g option allows setting of the initial size and/or position of the panel
 """
 
-from __future__ import print_function
 import sys, os
 BASE = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), ".."))
 sys.path.insert(0, os.path.join(BASE, "lib", "python"))
@@ -42,11 +41,8 @@ sys.path.insert(0, os.path.join(BASE, "lib", "python"))
 import vcpparse
 import hal
 
-if sys.version_info[0] == 3:
-    import tkinter as Tkinter
-    from tkinter import Tk
-else:
-    from Tkinter import Tk
+import tkinter as Tkinter
+from tkinter import Tk
 import getopt
 
 def usage():

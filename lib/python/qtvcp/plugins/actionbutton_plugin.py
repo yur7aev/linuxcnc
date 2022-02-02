@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sip
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -50,7 +50,7 @@ class ActionButtonPlugin(QPyDesignerCustomWidgetPlugin):
     # This factory method creates new instances of our custom widget
     def createWidget(self, parent):
         a = ActionButton(parent)
-        a._designer_running = True
+        a._designer_init()
         return a
 
     # This method returns the name of the custom widget class

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # QTVcp Widget
 #
 # Copyright (c) 2017 Chris Morley
@@ -232,7 +232,7 @@ class StatusLabel(ScaledLabel, _HalWidgetBase):
         self._set_max_velocity(STATUS.get_max_velocity())
 
     def _tool_info(self, data, field):
-        if data.id is not -1:
+        if data.id != -1:
             if field == 'diameter':
                 data = self.conversion(data.diameter)
                 self._tool_dia = data
@@ -278,7 +278,7 @@ class StatusLabel(ScaledLabel, _HalWidgetBase):
            self._set_text(data)
 
     def _ss_tool_diam(self, data):
-        if data.id is not -1:
+        if data.id != -1:
             self._diameter = data.diameter
         else:
             self._diameter = 1
@@ -387,7 +387,13 @@ class StatusLabel(ScaledLabel, _HalWidgetBase):
         self._alt_textTemplate = data
         try:
             self._set_text(200.0)
-        except:
+        except TypeError:
+            try:
+                self.setText(data)
+            except ValueError:
+                raise
+        except Exception as e:
+            LOG.error("altTextTemplate: {}, Data: {}".format(self._textTemplate, data), exc_info=e)
             self.setText('Error 2')
     def get_alt_textTemplate(self):
         return self._alt_textTemplate
