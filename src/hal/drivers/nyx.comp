@@ -369,6 +369,8 @@ RTAPI_MP_INT(mon, "Duplicate YIO pins for monitoring connection");
 static int debug;
 RTAPI_MP_INT(debug, "Enable debugging messages");
 
+static int encres;
+RTAPI_MP_INT(encres, "Encoder resolution override");
 
 //
 //
@@ -1734,7 +1736,7 @@ void yssc2_process(YSSC2 *y)
 		switch (fb->state & Y_TYPE) {
 		case Y_TYPE_ORIGIN:
 			if (y->amp[a].fbres == 0) {
-				y->amp[a].fbres = fb->fbres;
+				y->amp[a].fbres = encres ? encres : fb->fbres;
 				y->amp[a].cyc0 = fb->cyc0;
 				y->amp[a].abs0 = fb->abs0;
 				//rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d fbres=%d cyc=%d abs=%d", a, y->amp[a].fbres, y->amp[a].cyc0, y->amp[a].abs0);

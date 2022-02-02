@@ -962,7 +962,45 @@ proc ::tooledit::bye {} {
   set ::tooledit::finis 1 ;# for standalone usage
 } ;# bye
 
+package require Linuxcnc
+
 proc ::tooledit::sendaxis {cmd} {
+  # return 1==>ok
+  switch $cmd {
+    ping {
+      if ![catch {eval emc_init -quick}] { 
+         return 1; 
+      }
+    }
+    tool_table_filename {
+        return 1 ;# ok
+    }
+    check_for_reload {
+      if {[emc_machine] == "on"} {
+         return 1
+      }
+      # use same test as axis for disabling:
+#      if [send axis {expr "$::task_state"   == "$::STATE_ON"\			# emc_machine == "on"
+#                       && "$::interp_state" == "$::INTERP_IDLE"}] {
+#        return 1 ;# ok
+#      }
+    }
+    reload_tool_table {
+      if ![sendaxis check_for_reload] {
+        showerr [list "[_ "Must be On and Idle to reload tool table"]"]
+        return 0 ;# fail
+      }
+      ::tooledit::writefile $::te(filename)
+      emc_load_tool_table $::te(filename)
+      return 1 ;# ok
+    }
+    default {return -code error "::tooledit::sendaxis: unknown cmd <$cmd>"}
+  }
+
+  return 0 ;# fail
+} ;# sendaxis
+
+proc ::tooledit::sendaxis1 {cmd} {
   # return 1==>ok
   switch $cmd {
     ping {
