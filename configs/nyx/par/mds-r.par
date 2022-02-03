@@ -7,7 +7,7 @@
 ; 2020, http://yurtaev.com
 ;
 
-;	0	1	
+;	0	1
 SV001	1	1	; PC1	motor side gear		1-32767
 SV002	1	1	; PC2	machine side gear	1-32767
 SV003	33	33	; PGN1	position loop gain 1	0-200 rad/s
@@ -88,4 +88,4 @@ SV077	-	-	;
 SV078	-	-	;
 SV079	0	0	; abs home offset hi
 SV080	0	0	; abs home offset low
-                        
+
