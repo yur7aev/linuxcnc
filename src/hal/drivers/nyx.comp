@@ -3,7 +3,7 @@
  *
  * License: GPL Version 2
  *
- * (c) 2016-2021 dmitry@yurtaev.com
+ * (c) 2016-2022 http://yurtaev.com
  */
 
 component nyx "YxxxxP servo interface card driver";
@@ -133,15 +133,11 @@ include "nyx3.h";
 
 // per-amplifier data
 typedef struct yssc2_amp {	// data collected during initialization
-	char fw[16];		// firmware version: 'B26W200B3   '
-	uint16_t param[256];	// parameters value, live
-	uint32_t fbres;		// feedback pulse number, as set in param No.6
+	uint32_t fbres;		// feedback resolution
 	uint32_t cyc0;		// 1-rev motor position, in fb_res units
 	uint32_t abs0;		// absolute rev counter
-	uint32_t type;
 	int index_req_pos;	// z-index homing
-	int zsm;			// z-index state machine
-	uint32_t prev_status;
+	int zsm;		// z-index state machine
 } YSSC2_amp;
 
 #define ZSM_IDLE		0
@@ -253,6 +249,8 @@ int yssc2_orienting(YSSC2 *y, int a)	{ return (FB(a).state & YF_ORIENTING) && 1;
 int yssc2_di(YSSC2 *y, int a, int n)	{ return (FB(a).state & (YF_DI1 << n)) && 1; }
 int yssc2_torque_clamped(YSSC2 *y, int a) { return (FB(a).state & YF_TORQUE_LIM) && 1; }
 int yssc2_z_passed(YSSC2 *y, int a)	{ return (FB(a).state & YF_Z_PASSED) && 1; }
+int yssc2_in_lcoil(YSSC2 *y, int a)	{ return (FB(a).state & YF_LCOIL) && 1; }
+int yssc2_in_coil_ch(YSSC2 *y, int a)	{ return (FB(a).state & YF_COIL_CH) && 1; }
 
 int yssc2_droop(YSSC2 *y, int a)	{ return FB(a).droop; }
 int yssc2_pos_fb(YSSC2 *y, int a)	{ return FB(a).pos; }
@@ -261,16 +259,17 @@ int yssc2_trq_fb(YSSC2 *y, int a)	{ return FB(a).trq; }
 int yssc2_alarm_code(YSSC2 *y, int a)	{ return FB(a).alarm; }
 unsigned yssc2_flags(YSSC2 *y, int a)   { return FB(a).state; }
 
-void yssc2_pos_cmd(YSSC2 *y, int a, int p) { CMD(a).pos = p; }
-void yssc2_vel_cmd(YSSC2 *y, int a, int p) { CMD(a).vel = p; }
-void yssc2_vel_ctl(YSSC2 *y, int a, int e)      { if (e) CMD(a).flags |= YC_VEL_CTL;    else CMD(a).flags &= ~YC_VEL_CTL; }
-void yssc2_power(YSSC2 *y, int a, int e)        { if (e) CMD(a).flags |= YC_POWER;      else CMD(a).flags &= ~YC_POWER; }
-void yssc2_enable(YSSC2 *y, int a, int e)       { if (e) CMD(a).flags |= YC_ENABLE;     else CMD(a).flags &= ~YC_ENABLE; }
-void yssc2_reset_alarm(YSSC2 *y, int a, int e)  { if (e) CMD(a).flags |= YC_RST_ALARM;  else CMD(a).flags &= ~YC_RST_ALARM; }
-void yssc2_limit_torque(YSSC2 *y, int a, int e) { if (e) CMD(a).flags |= YC_LIM_TORQUE; else CMD(a).flags &= ~YC_LIM_TORQUE; }
-void yssc2_fwd(YSSC2 *y, int a, int e)          { if (e) CMD(a).flags |= YC_FWD;        else CMD(a).flags &= ~YC_FWD; }
-void yssc2_rev(YSSC2 *y, int a, int e)          { if (e) CMD(a).flags |= YC_REV;        else CMD(a).flags &= ~YC_REV; }
-void yssc2_orient(YSSC2 *y, int a, int e)       { if (e) CMD(a).flags |= YC_ORIENT;     else CMD(a).flags &= ~YC_ORIENT; }
+void yssc2_pos_cmd(YSSC2 *y, int a, int p)	{ CMD(a).pos = p; }
+void yssc2_vel_cmd(YSSC2 *y, int a, int p)	{ CMD(a).vel = p; }
+void yssc2_vel_ctl(YSSC2 *y, int a, int e)	{ if (e) CMD(a).flags |= YC_VEL_CTL;    else CMD(a).flags &= ~YC_VEL_CTL; }
+void yssc2_power(YSSC2 *y, int a, int e)	{ if (e) CMD(a).flags |= YC_POWER;      else CMD(a).flags &= ~YC_POWER; }
+void yssc2_enable(YSSC2 *y, int a, int e)	{ if (e) CMD(a).flags |= YC_ENABLE;     else CMD(a).flags &= ~YC_ENABLE; }
+void yssc2_reset_alarm(YSSC2 *y, int a, int e)	{ if (e) CMD(a).flags |= YC_RST_ALARM;  else CMD(a).flags &= ~YC_RST_ALARM; }
+void yssc2_limit_torque(YSSC2 *y, int a, int e)	{ if (e) CMD(a).flags |= YC_LIM_TORQUE; else CMD(a).flags &= ~YC_LIM_TORQUE; }
+void yssc2_fwd(YSSC2 *y, int a, int e)		{ if (e) CMD(a).flags |= YC_FWD;        else CMD(a).flags &= ~YC_FWD; }
+void yssc2_rev(YSSC2 *y, int a, int e)		{ if (e) CMD(a).flags |= YC_REV;        else CMD(a).flags &= ~YC_REV; }
+void yssc2_orient(YSSC2 *y, int a, int e)	{ if (e) CMD(a).flags |= YC_ORIENT;     else CMD(a).flags &= ~YC_ORIENT; }
+void yssc2_lcoil(YSSC2 *y, int a, int e)	{ if (e) CMD(a).flags |= YC_LCOIL;      else CMD(a).flags &= ~YC_LCOIL; }
 void yssc2_forward_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 0x4000) t = 0x4000; CMD(a).fwd_trq = t; }
 void yssc2_reverse_torque(YSSC2 *y, int a, short t) { if (t < 1) t = 1; if (t > 0x4000) t = 0x4000; CMD(a).rev_trq = t; }
 void yssc2_reset_z(YSSC2 *y, int a, int e)      { if (e) CMD(a).flags |= YC_RST_Z;      else CMD(a).flags &= ~YC_RST_Z; }
@@ -369,8 +368,8 @@ RTAPI_MP_INT(mon, "Duplicate YIO pins for monitoring connection");
 static int debug;
 RTAPI_MP_INT(debug, "Enable debugging messages");
 
-static int encres;
-RTAPI_MP_INT(encres, "Encoder resolution override");
+static int encres[NYX_AXES] = {0,};
+RTAPI_MP_ARRAY_INT(encres, NYX_AXES, "Encoder resolution override");
 
 //
 //
@@ -614,11 +613,11 @@ FUNCTION(rd)
 #define MAX_ERRORS 5
 
 	if (freq(y, !insync) == 0) y->errors_shown = 0;	// reset message inhibit
-	if (y->initial_delay < 1000000) ++y->initial_delay;
+	if (y->initial_delay < 3000000) ++y->initial_delay;
 
 	if (insync) {
 		if (!ready) {
-			if(y->initial_delay > 1000000000 / period * 5) {
+			if(y->initial_delay > 3000000000 / period * 5) {
 				if (++y->errors_shown < MAX_ERRORS) {
 					rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: sync glitch, %d ticks\n", y->no, glitch_len);
 				} else if (y->errors_shown == MAX_ERRORS) {
@@ -638,7 +637,7 @@ FUNCTION(rd)
 	}
 
 	{
-		if (!ready && glitch_len == 1000000000 / period * 5 && y->errors_shown < MAX_ERRORS) {
+		if (!ready && glitch_len == 3000000000 / period * 5 && y->errors_shown < MAX_ERRORS) {
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: board firmware NOT READY\n", y->no);
 			++y->errors_shown;
 		}
@@ -716,6 +715,8 @@ FUNCTION(rd)
 					servo_at_speed(a) = yssc2_at_speed(y, a);
 					servo_spindle_oriented(a) = yssc2_oriented(y, a);
 					servo_spindle_orienting(a) = yssc2_orienting(y, a);
+					servo_spindle_in_lcoil(a) = yssc2_in_lcoil(y, a);
+					servo_spindle_in_coil_change(a) = yssc2_in_coil_ch(y, a);
 
 //					if (!yssc2_zero_speed(y, a) && servo_undroop(a)) fb += yssc2_droop(y, a);
 					if (servo_undroop(a)) fb += yssc2_droop(y, a);
@@ -772,6 +773,7 @@ FUNCTION(rd)
 		if (min_spd < 0.001) min_spd = 0.001;
 
 		c = yssc2_enc(y, a);
+		if (!encoder_x4_mode(a)) c = (c + 2) / 4;
 		if (enc_changed[a] >= 0) {
 			if (c != encoder_counts(a)) {
 				int d = c - encoder_counts(a);
@@ -927,6 +929,7 @@ FUNCTION(wr)
 			yssc2_fwd(y, a, servo_spindle_fwd(a));
 			yssc2_rev(y, a, servo_spindle_rev(a));
 			yssc2_orient(y, a, servo_spindle_orient(a));
+			yssc2_lcoil(y, a, servo_spindle_lcoil(a));
 
 			yssc2_do(y, a, 0, servo_out_00(a));     // J3 DO# pins
 			yssc2_do(y, a, 1, servo_out_01(a));
@@ -1736,7 +1739,7 @@ void yssc2_process(YSSC2 *y)
 		switch (fb->state & Y_TYPE) {
 		case Y_TYPE_ORIGIN:
 			if (y->amp[a].fbres == 0) {
-				y->amp[a].fbres = encres ? encres : fb->fbres;
+				y->amp[a].fbres = encres[a] ? encres[a] : fb->fbres;
 				y->amp[a].cyc0 = fb->cyc0;
 				y->amp[a].abs0 = fb->abs0;
 				//rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d fbres=%d cyc=%d abs=%d", a, y->amp[a].fbres, y->amp[a].cyc0, y->amp[a].abs0);

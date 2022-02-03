@@ -2,10 +2,11 @@
  *  N Y X 2
  *
  *  YxxxxP servo interface adapter board firmware
- *
  *  DPRAM definition
  *
- *  (c) 2016-2021, http://yurtaev.com
+ *  License: GPL Version 2
+ *
+ *  (c) 2016-2022, http://yurtaev.com
  */
 
 #define RELEASE
@@ -21,10 +22,10 @@
 
 #define NYX_VER_MAJ 3
 #define NYX_VER_MIN 0
-#define NYX_VER_REV 2
+#define NYX_VER_REV 9
 
 #ifndef NYX_AXES
-#define NYX_AXES 10
+#define NYX_AXES 18
 #endif
 
 #define MAX_AXES 18
@@ -152,7 +153,7 @@ typedef struct nyx_param_req {
 	uint16_t param[10];
 } _P nyx_param_req;	// 8 dwords
 
-// ask the nyx driver for up to 6 defined params
+// ask the nyx driver for up to 6 next defined params, skipping empty ones
 
 typedef struct nyx_param1_req {
 	uint32_t flags;			// Y_TYPE_PARAM1
@@ -178,12 +179,10 @@ typedef struct nyx_servo_fb {
 #ifdef __BIG_ENDIAN__
 	int16_t trq;
 	uint16_t alarm;		// 4
-//	uint16_t pno, pval;	// 6
 	int16_t mon1, mon2;	// 6
 #else
 	uint16_t alarm;
 	int16_t trq;
-//	uint16_t pval, pno;
 	int16_t mon2, mon1;	// 6
 #endif
 	union {
@@ -198,12 +197,14 @@ typedef struct nyx_servo_fb {
 		struct {		// Y_TYPE_FB
 			int32_t droop;	// 6
 			int32_t smth2;	// 7
-//#ifdef __BIG_ENDIAN__
-//			int16_t mon3, mon4;	// 6
-//#else
-//			int16_t mon4, mon3;	// 6
-//#endif
-			int32_t rxtime;	// 8 !!!DEBUG!!!
+			union {
+#ifdef __BIG_ENDIAN__
+				struct { int16_t mon3, mon4; };	// 6
+#else
+				struct { int16_t mon4, mon3; };	// 6
+#endif
+				int32_t rxtime;	// 8 !!!DEBUG!!!
+			};
 		};
 	};
 } _P nyx_servo_fb;	// 8 dwords 32 bytes
@@ -297,6 +298,26 @@ typedef struct nyx_servo_fb {
 #define ERR_UNAVAIL	7	/* unavailable (yet) */
 #define ERR_TIMEOUT	8	/* param read timeout */
 
+
+//
+// debug print output buffer
+//
+
+struct nyx_ring {
+#ifdef __BIG_ENDIAN__
+	volatile uint8_t head;
+	volatile uint8_t tail;
+	uint8_t size;
+	uint8_t mask;
+#else
+	uint8_t mask;
+	uint8_t size;
+	volatile uint8_t tail;
+	volatile uint8_t head;
+#endif
+	char buf[0];
+} _P;
+
 struct nyx_req {
 	volatile uint32_t code;		// 10
 	uint32_t arg1;			// 14
@@ -306,10 +327,18 @@ struct nyx_req {
 		uint32_t len;
 	};
 	union {
-		uint8_t byte[4*120];	// 20
-		uint16_t word[2*120];
-		uint32_t dword[1*120];
+		uint8_t byte[4*64];	// 20
+		uint16_t word[2*64];
+		uint32_t dword[1*64];		// 480-256=224
 	};
+
+#define TTYOUT_SIZE 128
+	struct nyx_ring ttyout;
+	char ttyout_buf[TTYOUT_SIZE];			// 208-128=80
+#define TTYIN_SIZE 64
+	struct nyx_ring ttyin;
+	char ttyin_buf[TTYIN_SIZE];				// 80-64=16
+//	char unused[224-TTYOUT_SIZE-TTYIN_SIZE-16];
 } _P;
 
 struct nyx_req_param {
@@ -385,13 +414,13 @@ typedef struct nyx3_dp_fb {
 	int32_t irq_time;
 	uint32_t valid;		// servo_fb valid bitmap
 	uint32_t gpi[(NUM_GPI)/32+1];
-	uint32_t enc[NUM_ENC];
-	uint32_t yi[NUM_YIO*2];
+	uint32_t enc[NUM_ENC];			// ..10
+	uint32_t yi[NUM_YIO*2];			// ..26
 #if NUM_DBG > 0
-	uint32_t dbg[NUM_DBG];
+	uint32_t dbg[NUM_DBG];			// .. 28
 #endif
-	nyx_servo_fb servo_fb[MAX_AXES];	// 8*18 = 144 dw
-} _P nyx3_dp_fb;
+	nyx_servo_fb servo_fb[MAX_AXES];	// 8*18 = 144 dw -> 172
+} _P nyx3_dp_fb;				// 20 dw left
 
 typedef struct nyx3_dp_cmd {
 	uint32_t seq;
@@ -411,10 +440,7 @@ typedef struct nyx3_dp_cmd {
 #define YIO_TYPE_I32O16		12
 #define YIO_TYPE_I32O16A	15
 
-// nyx_servo_cmd servo_cmd[MAX_AXES];
-
-
-// controller status
+// board status
 #define STATUS_REALTIME		0x01
 #define STATUS_READY		0x02
 #define STATUS_REQ_COMPLETE	0x04

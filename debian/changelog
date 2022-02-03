@@ -1,5 +1,7 @@
 linuxcnc (1:2.9.0nyx33~pre0) UNRELEASED; urgency=medium
 
+  * ssc3h comm cycle time
+  * 16 axes support
   * nyx3
   * multiple board support in userspace
   * encoder zero speed fix, signed velocity
