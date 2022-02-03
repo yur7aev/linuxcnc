@@ -1,8 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # nyxq - YxxxxP control utility
 #
-# 2018-2020, dmitry@yurtaev.com
+# License: GPL Version 2
+#
+# 2018-2022, dmitry@yurtaev.com
 #
 
 from glob import glob
@@ -14,6 +16,8 @@ import sys
 import re
 import string
 
+
+VER = "nyxq v3.0.9"
 
 class nyx_dpram_hdr(Structure):
 	_fields_ = [
@@ -55,13 +59,13 @@ except:
 	exit(1)
 
 if len(boards) == 0 or not 'mem' in globals():
-	print "can't find any YxxxnP card"
+	print("can't find any YxxxnP card")
 	exit(1)
 
 if instance < 0 and i > 1:
-	print "multiple boards found:"
-	print '\n'.join(boards)
-	print "specify instance with -0, -1..."
+	print("multiple boards found:")
+	print('\n'.join(boards))
+	print("specify instance with -0, -1...")
 	exit(1)
 
 dph = nyx_dpram_hdr.from_buffer(mem, 0x800)
@@ -69,6 +73,8 @@ magic = dph.magic & 0xffffff00;
 
 num_axes = dph.config & 0xff
 num_yio = (dph.config>>8) & 0xff
+
+#print("firmware %x %x %x %x" % (magic, dph.config, dph.status, dph.config2))
 
 if magic == 0x55c20200:		# fw version 2.x.x
 	num_gpi = 12+17
@@ -85,7 +91,7 @@ elif magic == 0x4e590300:	# fw version 3.x.x
 	num_dac = (dph.config>>24) & 0xff
 	num_dbg = (dph.config2>>16) & 0xff
 else:
-	print "unsupported firmware %x %x %x %x" % (magic, dph.config, dph.status, dph.config2)
+	print("unsupported firmware %x %x %x %x" % (magic, dph.config, dph.status, dph.config2))
 	exit(1)
 
 # ------------------------------
@@ -210,12 +216,12 @@ def read_bitfile(filename):
 			l = ulong.unpack(bitfile.read(4))[0]
 			d = bitfile.read(l)
 			bitfile.close()
-			print "size: %d/%x" % (len(d), len(d))
+			print("size: %d/%x" % (len(d), len(d)))
 			return d
 		elif k in KEYNAMES:
 			l = short.unpack(bitfile.read(2))[0]
 			d = bitfile.read(l)
-			print KEYNAMES[k], d
+			print(KEYNAMES[k], d)
 		else:
 			print("unexpected key: %s" % k)
 			l = short.unpack(bitfile.read(2))[0]
@@ -272,15 +278,15 @@ def bin(a, l):
 	return s
 
 def io_info():
-        for i in range(0,6):
+        for i in range(num_enc):
             print "ENC%d: %d" % (i, dp.rly.enc[i])
-	print "DAC0: %d" % dp.cmd.dac[0]
-	print "DAC1: %d" % dp.cmd.dac[1]
+        for i in range(num_dac):
+            print "DAC%d: %d" % (i, dp.cmd.dac[i])
 	print "------- fedcba9876543210fedcba9876543210"
 	print "GPI:    " + bin(dp.rly.gpi[0], 29)
 	print "GPO:    " + bin(dp.cmd.gpo[0], 8)
 
-	for i in range(0, num_yio):
+	for i in range(num_yio):
 		yi = dp.rly.yi[i*2]
 		yi2 = dp.rly.yi[i*2+1]
                 yo = dp.cmd.yo[i*2]
@@ -317,10 +323,11 @@ def servo_info():
 	req(0x00030001)
 	print cstr(dp.buf.byte)
 	# dump(dp.buf.byte)
-	for a in range(8):
+	for a in range(num_axes):
 		s = dp.rly.fb[a].state
 		if s & 0x10:	# YC_ONLINE
 			print "%d: [%02x] pos=%11d vel=%.1f trq=%.1f" % (a, dp.rly.fb[a].alarm, dp.rly.fb[a].pos, dp.rly.fb[a].vel/10, dp.rly.fb[a].trq/10),
+			if s & 0x00010: print "on",
 			if s & 0x00080: print "rdy",
 			if s & 0x00100: print "svon",
 			if s & 0x00200: print "inp",
@@ -341,7 +348,7 @@ def servo_info():
 			print
 
 def servo_cmd():
-	for a in range(8):
+	for a in range(num_axes):
 		s = dp.cmd.axis[a].flags
 		print "%d: pos=%11d flim=%.1f rlim=%.1f" % (a, dp.cmd.axis[a].cmd, dp.cmd.axis[a].flim/10, dp.cmd.axis[a].rlim/10),
 		if s & 0x00040: print "rdy",
@@ -353,17 +360,26 @@ def servo_cmd():
 		print
 
 def servo_fw():
-	for a in range(8):
+	for a in range(num_axes):
 		try:
 			req(0x00030007, a)
                         s = bytearray(dp.buf.byte)
-                        print "%d:" % a, s[16:0].replace('\0', ' ')
+                        print "%d:" % a, s[0:63].replace('\0', ' ')
+		except:
+			pass
+
+def servo_alarm():
+	for a in range(num_axes):
+		try:
+			req(0x00030008, a)
+                        s = bytearray(dp.buf.byte)
+                        print "%d:" % a, s[0:63].replace('\0', ' ')
 		except:
 			pass
 
 def servo_mon():
 	print "seq=%d %x config2=%x" % (dp.rly.seq, dp.cmd.seq, dp.config2)
-	for a in range(7):
+	for a in range(num_axes):
 		r = dp.rly.fb[a]
 		c = dp.cmd.axis[a]
 		if r.state & 0x80000000: # YR_VALID
@@ -410,7 +426,7 @@ def servo_pr(l):
 			ax = axrange(r.group(1))
 			p = param2no(r.group(2))
 			for a in ax:
-				if a >= 0 and a < 16:
+				if a >= 0 and a < 16 and a < num_axes:
 					m = 1<<a
 					if second & m:
 						sys.exit('more than 2 params for axis %d in %s' % (a, s))
@@ -477,7 +493,7 @@ def servo_abs(l):
 		if r:
 			ax = axrange(r.group(1))
 			for a in ax:
-				if a >= 0 and a < 16:
+				if a >= 0 and a < num_axes:
 					m = 1<<a
 					first |= m
 				else:
@@ -610,8 +626,12 @@ def config(cfg):
 		req(0x00040021) # read
 		print "excfg: %x" % dp.buf.dword[1]
                 print "pll: %d %d %d %d %d" % (dp.buf.dword[2], dp.buf.dword[3], dp.buf.dword[4], dp.buf.dword[5], dp.buf.dword[6])
+                print "cyc: %d" % (dp.buf.dword[7])
         else:
 		req(0x00040023, int(cfg, 16))    # write
+
+def servo_config(cycle):
+	req(0x000a0000, int(cycle))	# SVCFG
 
 # ==============================
 
@@ -620,7 +640,7 @@ def arg(n, m=None, d=None):
 	if len(sys.argv) <= n:
 		if d != None: return d
 		if m == None: return None
-		print "nyxq v3.0.0"
+		print VER
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n]
@@ -628,7 +648,7 @@ def arg(n, m=None, d=None):
 def args(n, m):
 	n += first_arg
 	if len(sys.argv) <= n:
-		print "nyxq v3.0.0"
+		print VER
 		print "usage: nyxq " + m
 		exit(1)
 	return sys.argv[n:]
@@ -639,10 +659,11 @@ try:
 	if cmd == 'info':
 		info()
 	elif cmd == 'servo':
-		subcmd = arg(2, "servo [info||mon|fw|cmd|pr|pw|pwnv] ...")
+		subcmd = arg(2, "servo [info|mon|fw|alarm|cmd|pr|pw|pwnv|config] ...")
 		if   subcmd == 'info':		servo_info()
 		elif subcmd == 'mon':		servo_mon()
 		elif subcmd == 'fw':		servo_fw()
+		elif subcmd == 'alarm':		servo_alarm()
 		elif subcmd == 'cmd':		servo_cmd()
 		elif subcmd == 'pr':
 			p = args(3, "servo pr <axis>:<param> ...")
@@ -656,6 +677,9 @@ try:
 		elif subcmd == 'abs':
 			p = args(3, "servo abs <axis> ...")
 			servo_abs(p)
+		elif subcmd == 'config':
+			p = arg(3, "servo config <cycle>")
+			servo_config(p)
 		else:
 			print "error: nyxq servo ?"
 	elif cmd == 'reboot':

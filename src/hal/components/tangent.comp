@@ -24,6 +24,7 @@ pin  in float x;
 pin  in float y;
 pin  in   bit follow;
 pin out float a;
+pin out float a360;
 pin  in   bit homed;
 pin  in   bit enable;
 
@@ -61,4 +62,5 @@ FUNCTION(_) {
 		xo = x;
 		yo = y;
 	}
+	a360 = a % 360;
 }
