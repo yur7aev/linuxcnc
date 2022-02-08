@@ -30,7 +30,8 @@ pin out      bit servo-##.z-passed[16 : personality];
 
 pin out   signed servo-##.counts[16 : personality];
 pin out   signed servo-##.counts-cmd[16 : personality];
-pin out   signed servo-##.z-offs[16 : personality] "set during z-index pass";
+pin out   signed servo-##.z-offs[16 : personality] "set with z-index passed";
+pin  in   signed servo-##.z-offs-delay[16 : personality];
 
 pin  in      bit servo-##.power[16 : personality]	"turn on power relay";
 pin  in      bit servo-##.enable[16 : personality]	"turn on servo";
@@ -140,11 +141,11 @@ typedef struct yssc2_amp {	// data collected during initialization
 	int zsm;		// z-index state machine
 } YSSC2_amp;
 
-#define ZSM_IDLE		0
+#define ZSM_IDLE	0
 #define ZSM_INDEX_REQ	1
 #define ZSM_WAIT_Z	2
 #define ZSM_WAIT_OFFS	3
-#define ZSM_SET_OFFS	40
+#define ZSM_SET_OFFS	43	/* MR-J4-B updates z-offset position with a delay... */
 
 struct freq_data {
 	int b[16];
@@ -682,7 +683,10 @@ FUNCTION(rd)
 						case ZSM_WAIT_Z:
 							if (servo_index_enable(a)) {
 								if (yssc2_z_passed(y, a)) {
-									state = ZSM_WAIT_OFFS;
+									int delay = servo_z_offs_delay(a);
+									if (delay < 0) delay = 0;
+									if (delay > ZSM_SET_OFFS - ZSM_WAIT_OFFS) delay = ZSM_SET_OFFS - ZSM_WAIT_OFFS;
+									state = ZSM_SET_OFFS - delay;
 								}
 							} else
 								goto idle;
@@ -697,12 +701,12 @@ FUNCTION(rd)
 						default: state++; break;
 						}
 						y->amp[a].zsm = state;
-						servo_dbg(a) = state;
+//						servo_dbg(a) = state;
 					}
 
 					int32_t fb = (servo_counts(a) = yssc2_pos_fb(y, a)) - servo_origin(a);
 
-					servo_dbg(a) = yssc2_rx_time(y, a);
+					servo_dbg(a) = yssc2_rx_time(y, a);	// feedback packet rx time
 					servo_online(a) = 1;
 					servo_offline(a) = 0;
 					servo_ready(a) = yssc2_ready(y, a);
@@ -719,7 +723,8 @@ FUNCTION(rd)
 					servo_spindle_in_coil_change(a) = yssc2_in_coil_ch(y, a);
 
 //					if (!yssc2_zero_speed(y, a) && servo_undroop(a)) fb += yssc2_droop(y, a);
-					if (servo_undroop(a)) fb += yssc2_droop(y, a);
+//					if (servo_undroop(a)) fb += yssc2_droop(y, a);
+					if (servo_undroop(a)) fb = CMD(a).pos - servo_origin(a);
 
 					servo_pos_fb(a) = (fb) * servo_pos_scale(a) / yssc2_feedback_res(y, a);
 					servo_vel_fb(a) = yssc2_vel_fb(y, a) / servo_vel_scale(a);
