@@ -95,6 +95,7 @@ pin  io      bit encoder-##.index-enable[6];
 pin out    float encoder-##.pos[6];
 param rw   float encoder-##.cpr[6] = 10000;
 pin out    float encoder-##.velocity[6];
+pin out    float encoder-##.velocity-rps[6];
 param rw   float encoder-##.min-speed-estimate[6] = 1.0;
 pin out   signed encoder-##.counts[6];
 param rw     bit encoder-##.x4-mode[6] = 1;
@@ -324,6 +325,7 @@ struct yao2 {
 	hal_float_t *pos;
 	hal_float_t cpr;
 	hal_float_t *velocity;
+	hal_float_t *velocity_rps;
 	hal_float_t min_speed_estimate;
 	hal_s32_t *counts;
 	hal_bit_t *in_00;
@@ -451,6 +453,8 @@ static int export_io(char *prefix, int inst_num)
 				rc = hal_pin_float_newf(HAL_OUT,  &(io->ao2[i][j].pos), comp_id, "%s.yio-%02d.encoder-%02d.pos", prefix, i, j);
 				if(rc != 0) return rc;
 				rc = hal_pin_float_newf(HAL_OUT,  &(io->ao2[i][j].velocity), comp_id, "%s.yio-%02d.encoder-%02d.velocity", prefix, i, j);
+				if(rc != 0) return rc;
+				rc = hal_pin_float_newf(HAL_OUT,  &(io->ao2[i][j].velocity_rps), comp_id, "%s.yio-%02d.encoder-%02d.velocity-rps", prefix, i, j);
 				if(rc != 0) return rc;
 				rc = hal_param_float_newf(HAL_RW, &(io->ao2[i][j].cpr), comp_id, "%s.yio-%02d.encoder-%02d.cpr", prefix, i, j);
 				if(rc != 0) return rc;
@@ -786,17 +790,21 @@ FUNCTION(rd)
 					double v = d * 60 / fperiod / cpr / (enc_changed[a] + 1); // rpm
 					if (fabs(v) < min_spd) v = 0.0;
 					encoder_velocity(a) = v;
+					encoder_velocity_rps(a) = v / 60;
 				}
 				enc_changed[a] = 0;
 			} else {
-				if (enc_changed[a] > fabs(60 / fperiod / cpr / min_spd) - 1)
+				if (enc_changed[a] > fabs(60 / fperiod / cpr / min_spd) - 1) {
 					encoder_velocity(a) = 0.0;
+					encoder_velocity_rps(a) = 0.0;
+				}
 				if (enc_changed[a] < MAXI)
 					enc_changed[a]++;
 			}
 		} else {
 			enc_changed[a] = 0;
 			encoder_velocity(a) = 0.0;
+			encoder_velocity_rps(a) = 0.0;
 		}
 		encoder_counts(a) = c;
 		encoder_pos(a) = c / (double)cpr;
@@ -871,11 +879,14 @@ FUNCTION(rd)
 							double v = d * 60 / fperiod / cpr / (*enc_chg + 1); // rpm or mm/min
 							if (fabs(v) < min_spd) v = 0.0;
 							yio_pin_ao2(a, n, velocity) = v;
+							yio_pin_ao2(a, n, velocity_rps) = v / 60;
 						}
 						*enc_chg = 0;
 					} else {
-						if (*enc_chg > fabs(60 / fperiod / cpr / min_spd) - 1)
+						if (*enc_chg > fabs(60 / fperiod / cpr / min_spd) - 1) {
 							yio_pin_ao2(a, n, velocity) = 0.0;
+							yio_pin_ao2(a, n, velocity_rps) = 0.0;
+						}
 						if (*enc_chg < MAXI)
 							++*enc_chg;
 					}
