@@ -336,6 +336,7 @@ struct yao2 {
 	int64_t count;
 	int index_request;
 	int enc_chg;
+	double velocity_filter[4];
 	hal_s32_t *delta;
 };
 
@@ -852,6 +853,7 @@ FUNCTION(rd)
 				uint16_t c = (int16_t)(yssc2_yi2(y, a) >> (n * 16));
 				int64_t o = yio_param_ao2(a, n, count);	// old counter
 				int64_t d = c - (uint16_t)o;
+
 				if (d > 32767) o -= 0x10000;
 				else if(d < -32768) o += 0x10000;
 				int64_t nc = (o & ~0xffff) + c;	// expand 16bit counter to 64 bits
@@ -873,11 +875,22 @@ FUNCTION(rd)
 				if (min_spd < 0.001) min_spd = 0.001;
 
 				if (*enc_chg >= 0) {
-					d = c - (uint16_t)o;
+					d = nc - yio_param_ao2(a, n, count);
 					if (d) {
 						if (d > -MAXI && d < MAXI) {      // just ignore integer overflow
 							double v = d * 60 / fperiod / cpr / (*enc_chg + 1); // rpm or mm/min
 							if (fabs(v) < min_spd) v = 0.0;
+
+							yio_param_ao2(a, n, velocity_filter[3]) = yio_param_ao2(a, n, velocity_filter[2]);
+							yio_param_ao2(a, n, velocity_filter[2]) = yio_param_ao2(a, n, velocity_filter[1]);
+							yio_param_ao2(a, n, velocity_filter[1]) = yio_param_ao2(a, n, velocity_filter[0]);
+							yio_param_ao2(a, n, velocity_filter[0]) = v;
+
+							v = (	yio_param_ao2(a, n, velocity_filter[0]) +
+								yio_param_ao2(a, n, velocity_filter[1]) +
+								yio_param_ao2(a, n, velocity_filter[2]) +
+								yio_param_ao2(a, n, velocity_filter[3])) / 4;
+
 							yio_pin_ao2(a, n, velocity) = v;
 							yio_pin_ao2(a, n, velocity_rps) = v / 60;
 						}
