@@ -1,3 +1,9 @@
+linuxcnc (1:2.8.2nyx34) buster; urgency=low
+
+  * increased HAL_SIZE from 85 to 200 in hal_priv.h
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Fri, 22 Jul 2022 00:03:15 +0300
+
 linuxcnc (1:2.8.2nyx33) buster; urgency=low
 
   * initial support for mds3 MDS-D/E
