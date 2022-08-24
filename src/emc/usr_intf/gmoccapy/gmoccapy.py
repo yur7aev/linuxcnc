@@ -210,6 +210,7 @@ class gmoccapy(object):
         self.gcodeerror = ""   # we need this to avoid multiple messages of the same error
 
         self.file_changed = False
+        self.widgets.hal_action_saveas.connect("saved-as", self.saved_as)
 
         self.lathe_mode = None # we need this to check if we have a lathe config
         self.backtool_lathe = False
@@ -611,10 +612,14 @@ class gmoccapy(object):
             # lets find out, how many axis we got
             dic = self.axis_list
             name_prefix = "axis"
+            name_prefix_sg = _("axis")
+            name_prefix_pl = _("axes")
         else:
             # lets find out, how many joints we got
             dic = self.joint_axis_dic
             name_prefix = "joint"
+            name_prefix_sg = _("joint")
+            name_prefix_pl = _("joints")
         num_elements = len(dic)
         
         # as long as the number of axis is less 6 we can use the standard layout
@@ -629,7 +634,7 @@ class gmoccapy(object):
         filepath = os.path.join(IMAGEDIR, file)
         print("Filepath = ", filepath)
         btn = self._get_button_with_image("ref_all", filepath, None)
-        btn.set_property("tooltip-text", _("Press to home all {0}".format(name_prefix)))
+        btn.set_property("tooltip-text", _("Press to home all {0}").format(name_prefix_pl))
         btn.connect("clicked", self._on_btn_home_clicked)
         # we use pack_start, so the widgets will be moved from right to left
         # and are displayed the way we want
@@ -656,7 +661,7 @@ class gmoccapy(object):
 
             name = "home_{0}_{1}".format(name_prefix, elem)
             btn = self._get_button_with_image(name, filepath, None)
-            btn.set_property("tooltip-text", _("Press to home {0} {1}".format(name_prefix, elem)))
+            btn.set_property("tooltip-text", _("Press to home {0} {1}").format(name_prefix_sg, elem.upper()))
             btn.connect("clicked", self._on_btn_home_clicked)
 
             self.widgets.hbtb_ref.pack_start(btn)
@@ -684,7 +689,7 @@ class gmoccapy(object):
         print("Filepath = ", filepath)
         name = "unref_all"
         btn = self._get_button_with_image(name, filepath, None)
-        btn.set_property("tooltip-text", _("Press to unhome all {0}".format(name_prefix)))
+        btn.set_property("tooltip-text", _("Press to unhome all {0}").format(name_prefix_pl))
         btn.connect("clicked", self._on_btn_unhome_clicked)
         self.widgets.hbtb_ref.pack_start(btn)
         
@@ -899,7 +904,7 @@ class gmoccapy(object):
             filepath = os.path.join(IMAGEDIR, file)
             name = "touch_{0}".format(elem)
             btn = self._get_button_with_image(name, filepath, None)
-            btn.set_property("tooltip-text", _("Press to set touch off value for axis {0}".format(elem.upper())))
+            btn.set_property("tooltip-text", _("Press to set touch off value for axis {0}").format(elem.upper()))
             btn.connect("clicked", self._on_btn_set_value_clicked)
 
             #print("Touch button Name = ",name)
@@ -1152,7 +1157,7 @@ class gmoccapy(object):
                 btn.set_property("name", name)
                 btn.connect("pressed", self._on_btn_jog_pressed, name)
                 btn.connect("released", self._on_btn_jog_released, name)
-                btn.set_property("tooltip-text", _("Press to jog axis {0}".format(axis)))
+                btn.set_property("tooltip-text", _("Press to jog axis {0}").format(axis))
                 btn.modify_bg(gtk.STATE_ACTIVE, gtk.gdk.color_parse("#FFFF00"))
                 btn.set_size_request(48,48)
 
@@ -1171,7 +1176,7 @@ class gmoccapy(object):
                 btn.set_property("name", name)
                 btn.connect("pressed", self._on_btn_jog_pressed, name)
                 btn.connect("released", self._on_btn_jog_released, name)
-                btn.set_property("tooltip-text", _("Press to jog joint {0}".format(joint)))
+                btn.set_property("tooltip-text", _("Press to jog joint {0}").format(joint))
                 btn.modify_bg(gtk.STATE_ACTIVE, gtk.gdk.color_parse("#FFFF00"))
                 btn.set_size_request(48,48)
 
@@ -1221,7 +1226,7 @@ class gmoccapy(object):
                     lbl = lbl[0:10] + "\n" + lbl[11:20]
                 btn = gtk.Button(lbl, None, False)
                 btn.set_property("name","macro_{0}".format(pos))
-            btn.set_property("tooltip-text", _("Press to run macro {0}".format(name)))
+            btn.set_property("tooltip-text", _("Press to run macro {0}").format(name))
             btn.connect("clicked", self._on_btn_macro_pressed, name)
             btn.position = pos
             btn.show()
@@ -2674,7 +2679,8 @@ class gmoccapy(object):
             state = True
         if self.stat.task_state != linuxcnc.STATE_ON:
             state = False
-        self._sensitize_widgets(widgetlist, state)
+        if not self.widgets.tbtn_setup.get_active():
+            self._sensitize_widgets(widgetlist, state)
 
     def on_hal_status_metric_mode_changed(self, widget, metric_units):
         print("hal status metric mode changed")
@@ -3983,7 +3989,7 @@ class gmoccapy(object):
     def on_btn_back_clicked(self, widget, data=None):
         if self.widgets.ntb_button.get_current_page() == _BB_EDIT:  # edit mode, go back to auto_buttons
             if self.file_changed:
-                message = "Do you want to exit without saving the changes?"
+                message = _("Exit and discard changes?")
                 result = self.dialogs.yesno_dialog(self, message, _("Attention!!"))
                 if not result: # user says no, he want to save
                     return
@@ -4679,9 +4685,10 @@ class gmoccapy(object):
         self.gcodeerror = ""
         self.file_changed = False
 
-    def on_gcode_view_changed(self, state):
-        print("gcode view changed")
-        self.file_changed = True
+    def on_gcode_view_changed(self, widget):
+        buf_modified = self.widgets.gcode_view.buf.get_modified()
+        print("gcode view changed (modified: {})".format(buf_modified))
+        self.file_changed = buf_modified
 
     # Search and replace handling in edit mode
     # undo changes while in edit mode
@@ -4759,6 +4766,9 @@ class gmoccapy(object):
             # self.command.program_open(tempfilename)
         self.widgets.gcode_view.grab_focus()
         self.widgets.btn_save.set_sensitive(False)
+
+    def saved_as(self, widget):
+        self.widgets.btn_save.set_sensitive(True)
 
     def on_tbtn_optional_blocks_toggled(self, widget, data=None):
         opt_blocks = widget.get_active()
