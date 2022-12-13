@@ -546,10 +546,6 @@ class gmoccapy(object):
         self.scale_feed_override = self.prefs.getpref("scale_feed_override", 1, float)
         self.scale_rapid_override = self.prefs.getpref("scale_rapid_override", 1, float)
 
-        # holds the max velocity value and is needed to be able to jog at
-        # at max velocity if <SHIFT> is hold during jogging
-        self.max_velocity = self.stat.max_velocity
-
         # the velocity settings
         self.min_spindle_rev = self.prefs.getpref("spindle_bar_min", 0.0, float)
         self.max_spindle_rev = self.prefs.getpref("spindle_bar_max", 6000.0, float)
@@ -661,7 +657,7 @@ class gmoccapy(object):
 
             name = "home_{0}_{1}".format(name_prefix, elem)
             btn = self._get_button_with_image(name, filepath, None)
-            btn.set_property("tooltip-text", _("Press to home {0} {1}").format(name_prefix_sg, elem.upper()))
+            btn.set_property("tooltip-text", _("Press to home {0} {1}").format(name_prefix_sg, str(elem).upper()))
             btn.connect("clicked", self._on_btn_home_clicked)
 
             self.widgets.hbtb_ref.pack_start(btn)
@@ -904,7 +900,7 @@ class gmoccapy(object):
             filepath = os.path.join(IMAGEDIR, file)
             name = "touch_{0}".format(elem)
             btn = self._get_button_with_image(name, filepath, None)
-            btn.set_property("tooltip-text", _("Press to set touch off value for axis {0}").format(elem.upper()))
+            btn.set_property("tooltip-text", _("Press to set touch off value for axis {0}").format(str(elem).upper()))
             btn.connect("clicked", self._on_btn_set_value_clicked)
 
             #print("Touch button Name = ",name)
@@ -1069,7 +1065,7 @@ class gmoccapy(object):
             if button_name[0] in "abc":
                 value = self.widgets.spc_ang_jog_vel.get_property("max") / 60
             else:
-                value = self.stat.max_velocity
+                value = self.jog_rate_max
         else:
             if button_name[0] in "abc":
                 value = self.widgets.spc_ang_jog_vel.get_value() / 60
@@ -3737,7 +3733,7 @@ class gmoccapy(object):
         else:
             speed = self.stat.spindle[0]['speed']
         self.widgets.active_speed_label.set_label("{0:.0f}".format(abs(speed)))
-        self.widgets.lbl_spindle_act.set_text("S {0}".format(int(speed * self.spindle_override)))
+        self.widgets.lbl_spindle_act.set_text("S {0}".format(int(round(speed * self.spindle_override))))
 
     def _update_vc(self):
         if self.stat.spindle[0]['direction'] != 0:
@@ -3864,11 +3860,11 @@ class gmoccapy(object):
                 speed = abs(self.stat.spindle[0]['speed'])
             spindle_override = value / 100
             real_spindle_speed = speed * spindle_override
-            if real_spindle_speed > self.max_spindle_rev:
-                value_to_set = value / (real_spindle_speed / self.max_spindle_rev)
+            if abs(real_spindle_speed) > self.max_spindle_rev:
+                value_to_set = value / (abs(real_spindle_speed) / self.max_spindle_rev)
                 real_spindle_speed = self.max_spindle_rev
-            elif real_spindle_speed < self.min_spindle_rev:
-                value_to_set = value / (real_spindle_speed / self.min_spindle_rev)
+            elif abs(real_spindle_speed) < self.min_spindle_rev:
+                value_to_set = value / (abs(real_spindle_speed) / self.min_spindle_rev)
                 real_spindle_speed = self.min_spindle_rev
             else:
                 value_to_set = spindle_override * 100
