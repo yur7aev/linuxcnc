@@ -11,6 +11,15 @@ pin in  bit    spindle-oriented-in;
 pin out float revs;
 pin io  bit index-request;
 
+pin in float speed-in;
+param rw float maxv = 3000;
+pin out float speed-out-abs;
+pin in  bit at-speed-in;
+pin out bit at-speed-out;
+pin out bit fwd;
+pin out bit rev;
+variable float speed;
+
 variable int64_t counter;
 variable int64_t offset;
 variable int was_oriented;
@@ -20,6 +29,17 @@ variable int64_t next_index;
 
 function _;
 ;;
+
+#include "rtapi_math.h"
+
+float delta = speed_in - speed;
+if (delta > maxv * fperiod) delta = maxv * fperiod;
+if (delta < -maxv * fperiod) delta = -maxv * fperiod;
+speed += delta;
+speed_out_abs = fabs(speed);
+fwd = speed > 1;
+rev = speed < -1;
+at_speed_out = fabs(speed_in - speed) < 1 && at_speed_in;
 
 // expand position counter to 64 bits
 int64_t d = (int64_t)(uint32_t)spindle_counts_in - (uint32_t)counter;

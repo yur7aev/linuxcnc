@@ -880,7 +880,7 @@ FUNCTION(rd)
 						if (d > -MAXI && d < MAXI) {      // just ignore integer overflow
 							double v = d * 60 / fperiod / cpr / (*enc_chg + 1); // rpm or mm/min
 							if (fabs(v) < min_spd) v = 0.0;
-/*
+
 							yio_param_ao2(a, n, velocity_filter[3]) = yio_param_ao2(a, n, velocity_filter[2]);
 							yio_param_ao2(a, n, velocity_filter[2]) = yio_param_ao2(a, n, velocity_filter[1]);
 							yio_param_ao2(a, n, velocity_filter[1]) = yio_param_ao2(a, n, velocity_filter[0]);
@@ -890,7 +890,7 @@ FUNCTION(rd)
 								yio_param_ao2(a, n, velocity_filter[1]) +
 								yio_param_ao2(a, n, velocity_filter[2]) +
 								yio_param_ao2(a, n, velocity_filter[3])) / 4;
-*/
+
 							yio_pin_ao2(a, n, velocity) = v;
 							yio_pin_ao2(a, n, velocity_rps) = v / 60;
 						}
