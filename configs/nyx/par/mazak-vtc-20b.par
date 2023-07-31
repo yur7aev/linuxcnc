@@ -24,7 +24,6 @@ SV013	500	500 	500 	; ILMT	current limit		0-500%
 SV014	0	0	0	; ILMTsp current limit special	0-500%
 SV015	100	100	100	; FFC	acc rate ff gain	0-999%
 SV016	50	15	0	; LMC1	lost motion comp	-1-200%
-
 SV017	0x0000	0x0000	0x0000	; SPEC	abs=0x80 anymot=0x800
 SV018	10	10  	10  	; PIT	ballscrew pitch		1..32767
 SV019	100	100 	100 	; RNG1	position detector res	4,8,16,25,100
@@ -41,7 +40,6 @@ SV029	0	0	0	;
 SV030	0	0	0	; IVC	J2 volt dead time comp	0-200%
 SV031	0   	0   	0   	; OVS1	J2 overshoot comp 1	-1-100%
 SV032	0   	0   	-47 	; TOF	unbalance torque offs	-100-100%
-
 SV033	0x0000	0x0000	0x0000	; SSF2	filters
 SV034	0x0000	0x0000	0x0000	; SSF3	analog monitor
 SV035	0x0000	0x0000	0x0000	; SSF4	collision det
@@ -58,7 +56,6 @@ SV045	0   	0   	0   	; TRUB	frictional torque	0-100%
 SV046	0   	0   	0   	;
 SV047	100	100	100 	; EC	induct volage comp gain	0-200%
 SV048	0   	0	0	; EMGrt	v axis droop prevention	0-2000ms
-
 SV049	15	15  	15  	; PGN1sp			0-200rad/s
 SV050	0	0	0	; PGN2sp			0-9999rad/s
 SV051	0	0	0	;
@@ -75,27 +72,26 @@ SV061	0	0	0	; DA1NO	 D/A ch1 data num	0-102
 SV062	0	0	0	; DA2NO	 D/A ch1 data num	0-102
 SV063	0	0	0   	; DA1MPY D/A ch1 scale		-32768+32767 (1/256)
 SV064	0	0	0	; MA2MPY
-
 SV065	0   	0   	0   	;
 SV066	0	0	0	;
-SV067	2	2   	2   	; cmd unit
-SV068	0x0404	0x0404	0x0404	; 0x0404 - 3.55ms cycle
-SV069	0	0	0   	;
-SV070	20000	20000	20000	; rapid
-SV071	0	0	0   	;
-SV072	10000	10000	10000	; clamp
-SV073	0	0	0   	;
-SV074	0   	0	0	;
-SV075	0	0	0	;
-SV076	0	0	0	;
-SV077	0	0	0	;
-SV078	0	0	0	;
-SV079	0	0	0	; abs home offset hi
-SV080	0	0	0	; abs home offset low
+SV067	2	2	2	; cmd unit 1/2 um
+SV068	0x0404	0x0404	0x0404	; 3.55ms cycle
+SV069	0	0	0	; rapid hi
+SV070	20000	20000	20000	; rapid low
+SV071	0	0	0	; clamp hi
+SV072	10000	10000	10000	; clamp low
+SV073	-	-	-	;
+SV074	-	-	-	;
+SV075	-	-	-	;
+SV076	-	-	-	;
+SV077	-	-	-	;
+SV078	-	-	-	; origin abs
+SV079	-	-	-	; origin hi
+SV080	-	-	-	; origin low
 
 AXIS 3
 
-;   Spindle
+;	SP
 SP001	100	; PGM	100	Motor built-in encoder orient position loop gain	1/10s-1
 SP002	100	; PGE	100	Encoder orient position loop gain	0-360
 SP003	15	; PGC	15
@@ -112,7 +108,6 @@ SP013	0	;
 SP014	0	;
 SP015	0	;
 SP016	0	;
-
 SP017	8000	; TSP	8000	Motor max. speed (rpm)
 SP018	25	; ZSP	25	Motor zero speed (rpm)
 SP019	30	; CSN1	30	Speed command accel/decel time constant	(10ms)
@@ -129,7 +124,6 @@ SP029	1	; GRB1	1	Motor shaft side No. of gear teeth 1
 SP030	1	; GRB2	1
 SP031	1	; GRB3	1
 SP032	1	; GRB4	1
-
 SP033	0x0000	; SFNC1	0x0000
 SP034	0x0001	; SFNC2	0x0000 [mtsl] special motor
 SP035	0x0000	; SFNC3	0x0000
@@ -146,7 +140,6 @@ SP045	0	;
 SP046	25	; CSN2	0
 SP047	30	; SDTR	30
 SP048	15	; SUT	15
-
 SP049	20	; TLM2	20
 SP050	30	; TLM3	30
 SP051	40	; TLM4	40
@@ -163,7 +156,6 @@ SP061	75	; MKIL	75
 SP062	0	;
 SP063	60	; OLT	60
 SP064	110	; OLL	110
-
 SP065	100	; VCGN1	100
 SP066	0	; VCSN1	0
 SP067	5000	; VIGWA	0
@@ -180,7 +172,6 @@ SP077	14	; TDSL	14
 SP078	0	;
 SP079	0	;
 SP080	0	;
-
 SP081	0	;
 SP082	0	;
 SP083	0	;
@@ -197,7 +188,6 @@ SP093	0	;
 SP094	0	; LMAV	0
 SP095	0	;
 SP096	0	; EGAR	0
-
 SP097	0x0000	; SPECO	0x0000
 SP098	63	; VGOP	63
 SP099	60	; VGOI	60
@@ -214,7 +204,6 @@ SP109	0	; CSP4	0
 SP110	0	;
 SP111	0	;
 SP112	0	;
-
 SP113	0	;
 SP114	0	; OPER	0
 SP115	0	;
@@ -231,7 +220,6 @@ SP125	384	; MGD2	384
 SP126	0	;
 SP127	0	;
 SP128	0	;
-
 SP129	0x0000	; SPECC	0x0000
 SP130	15	; PGC1	15
 SP131	15	; PGC2	15
@@ -248,7 +236,6 @@ SP141	60  	; VGCI2	60
 SP142	15  	; VGCD2	15
 SP143	63  	; VGCP3	63
 SP144	60  	; VGCI3	60
-
 SP145	15  	; VGCD3	15
 SP146	63  	; VGCP4	63
 SP147	60  	; VGCI4	60
@@ -265,7 +252,6 @@ SP157	0	;
 SP158	0	;
 SP159	50	; CPYC	50
 SP160	100	; CPYX	100
-
 SP161	100	; IQGC0	100
 SP162	100	; IDGC0	100
 SP163	100	; IQGC1	100
@@ -282,7 +268,6 @@ SP173	0	;
 SP174	0	;
 SP175	0	;
 SP176	0	;
-
 SP177	0x0000	; SPECS	0x0000
 SP178	63  	; VGSP	63
 SP179	60	; VGS1	60
@@ -299,7 +284,6 @@ SP189	0	; PG2S	0
 SP190	0	; PG3S	0
 SP191	0	;
 SP192	0	;
-
 SP193	0x4011	; SPECT	0x0000
 SP194	63	; VGTP	63
 SP195	60	; VGT1	60
@@ -316,7 +300,6 @@ SP205	0	;
 SP206	0	;
 SP207	0	;
 SP208	0	;
-
 SP209	0	;
 SP210	0	;
 SP211	0	;
@@ -333,7 +316,6 @@ SP221	0	; PG2T	0
 SP222	0	; PG3T	0
 SP223	0	;
 SP224	0	;
-
 SP225	1	; GRA5	1
 SP226	1	; GRA6	1
 SP227	1	; GRA7	1
@@ -350,7 +332,6 @@ SP237	0	;
 SP238	0	;
 SP239	0	;
 SP240	0	;
-
 SP241	0	;
 SP242	0	;
 SP243	0	;
@@ -367,7 +348,6 @@ SP253	0	; DA1NO	0
 SP254	0	; DA2NO	0
 SP255	0	; DA1MPY
 SP256	0	; DA2MPY
-
 SP257	0x0001	; RPM	H winding: speed unit
 SP258	0x1F40	; NR	.. max, speed
 SP259	0x1482	; NP	.. constant output speed
@@ -384,7 +364,6 @@ SP269	0x0000	; PYLT	.. Ids current min value
 SP270	0x0041  ; KDP	.. Ids propotional gain
 SP271	0x03D5	; KDI	.. Ids integral gain
 SP272	0x00CD  ; KQP	.. Iqs proportional gain
-
 SP273	0x0C1F	; KQI	.. Iqs integral gain
 SP274	0x0266	; IDSM	.. field current at 100%
 SP275	0x079B  ; IQSM	.. torque current at 100%
@@ -401,7 +380,6 @@ SP285	0x0777	; M2	.. M2 for M saturation
 SP286	0x0BF2	; FLUX	.. FLUX1 for M saturation
 SP287	0x0054  ; KR2	.. R2 for ,2 F/B calculation
 SP288	0x0000  ; LR2	.. phs2 F/B clamp value
-
 SP289	0x0EEA  ; ICT	.. CT setting cunent
 SP290	0x04E6	; KI1	.. current F/B compensation
 SP291	0x0000  ; TI	.. current loop sampling Ts
@@ -418,7 +396,6 @@ SP301	0x0000  ; NPM
 SP302	0x0000  ;
 SP303	0x0000  ;
 SP304	0x0000  ;
-
 SP305	0x0000  ;
 SP306	0x0000  ;
 SP307	0x0000  ;
@@ -435,7 +412,6 @@ SP317	0x0000	;
 SP318	0x0000	;
 SP319	0x0000	;
 SP320	0x0000	; BSD
-
 SP321	0x0000	; ====== L winding --- RPML
 SP322	0x0000	;
 SP323	0x0000	;
@@ -452,7 +428,6 @@ SP333	0x0000	;
 SP334	0x0000	;
 SP335	0x0000	;
 SP336	0x0000	;
-
 SP337	0x0000	;
 SP338	0x0000	;
 SP339	0x0000	;
@@ -469,7 +444,6 @@ SP349	0x0000	;
 SP350	0x0000	;
 SP351	0x0000	;
 SP352	0x0000	;
-
 SP353	0x0000	;
 SP354	0x0000	;
 SP355	0x0000	;
@@ -486,7 +460,6 @@ SP365	0x0000	;
 SP366	0x0000	;
 SP367	0x0000	;
 SP368	0x0000	;
-
 SP369	0x0000  ;
 SP370	0x0000  ;
 SP371	0x0000  ;

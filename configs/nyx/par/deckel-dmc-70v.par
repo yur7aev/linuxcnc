@@ -11,89 +11,89 @@
 ; 2021, http://yurtaev.com
 ;
 ;	X	Y	Z
-SV001	1	1	2
-SV002	2	2	3
-SV003	47	47	47
-SV004	125	125	125
-SV005	600	300	300		; 500 speed loop gain
-SV006	0	0	0
-SV007	0	0	0
-SV008	1900	1900	1900
-SV009	2048	2048	2048
-SV010	2048	2048	2048
-SV011	256	256	256
-SV012	512	512	512
-SV013	500	500	500
-SV014	0	0	0
-SV015	100	100	100
-SV016	0	0	0
-SV017	0x0000	0x0000	0x0000		; 0x0010
-SV018	20	20	10
-SV019	100	100	100		; 20 20 10
-SV020	100	100	100
-SV021	60	60	60
-SV022	150	150	150
-SV023	10	10	10
-SV024	50	50	50
-SV025	0x0082	0x0082	0x0082		; 0x8082
-SV026	1	1	1
-SV027	0x4201	0x4201	0x4201
-SV028	0	0	0
-SV029	0	0	0
-SV030	0	0	0
-SV031	0	0	0
-SV032	0	0	-32
-SV033	0x0000	0x0000	0x0000
-SV034	0x0000	0x0000	0x0000
-SV035	0x0000	0x0000	0x0000
-SV036	0x0000	0x0000	0x0000
-SV037	0	0	0
-SV038	0	800	0
-SV039	0	0	0
-SV040	0	0	0
-SV041	0	0	0
-SV042	0	0	0
-SV043	0	0	0
-SV044	0	0	0
-SV045	0	0	0
-SV046	0	0	0
-SV047	100	100	100
-SV048	0	0	0
-SV049	10	10	15
-SV050	0	0	0
-SV051	0	0	0
-SV052	0	0	0
-SV053	0	0	0
-SV054	0	0	0
-SV055	0	0	0
-SV056	0	0	0
-SV057	281	281	281
-SV058	0	0	0
-SV059	0	0	0
-SV060	0	0	0
-SV061	65535	65535	65535
-SV062	65535	65535	65535
-SV063	0	0	0
-SV064	0	0	0
-SV065	4	4	0
-SV066	0	0	0
-SV067	2	2	2		; 0
-SV068	0x0404	0x0404	0x0404		; 0
-SV069	0	0	0
-SV070	30000	30000	20000
-SV071	0	0	0
-SV072	10000	10000	10000
-SV073	0	0	0
-SV074	0	0	0
-SV075	0	0	0
-SV076	0	0	0
-SV077	0	0	0
-SV078	0	0	0
-SV079	0	0	0
-SV080	0	0	0
+SV001	1	1	2	; PC1	motor gear ratio		1-32768
+SV002	2	2	3	; PC2	machine gear ratio  		1-32768
+SV003	47	47	47      ; PGN1	position loop gain 1		0-200 1/sec
+SV004	125	125	125     ; PGN2	position loop gain 2		0-999 1/sec
+SV005	600	300	300	; VGN1	speed loop gain 1		1-999
+SV006	0	0	0       ; VGN2	speed loop gain 2		-1000-1000
+SV007	0	0	0       ; VIL	speed loop delay compensation	0-32768
+SV008	1900	1900	1900    ; VIA	speed loop leading comp		1-9999
+SV009	2048	2048	2048    ; IQA	cur loop q axis lead comp	1-20480
+SV010	2048	2048	2048    ; IDA	cur loop d axis lead comp	1-20480
+SV011	256	256	256     ; IQG	cur loop q axis gain		1-4096
+SV012	512	512	512     ; IDG	cur loop d axis gain		1¬4096
+SV013	500	500	500     ; ILMT1	current limit value 1		0-999%
+SV014	0	0	0       ; ILMT2 current limit value 2   	0-999%
+SV015	100	100	100     ; FFC	acceleration feed forward gain 	0-999
+SV016	0	0	0       ; LMC1	lost motion comp gain 1		-1-200%
+SV017	0x0000	0x0000	0x0000	; SPEC	servo specifications
+SV018	20	20	10      ; PIT	ballscrew pitch			1-32768 mm
+SV019	100	100	100	; RNG1	position sensor res		1-9999 kp/r
+SV020	100	100	100     ; RNG2	speed sensor res		1-9999 kp/r
+SV021	60	60	60      ; OLT	overload time const		1-300sec
+SV022	150	150	150     ; OLL	overload detect level		1-500%
+SV023	10	10	10      ; OD1	excessive error width 1 at svon	0-32767mm
+SV024	50	50	50      ; INP	in position width		0-32767um
+SV025	0x0082	0x0082	0x0082	; MTYP	motor type
+SV026	1	1	1       ; OD2	excessive err width 2 at svoff	0-32767mm
+SV027	0x4201	0x4201	0x4201  ; SSF1	servo function 1
+SV028	0	0	0       ; MSFT	linear motor pole shift		-30000-30000um
+SV029	0	0	0       ; VCS	speed loop gain, chg start	0-9999 mm/s
+SV030	0	0	0       ; IVC	current/voltage compensation	-32768-32767
+SV031	0	0	0       ; OVS1	overshooting compensation	-1-100%
+SV032	0	0	-32     ; TOF	torque offset comp gain		-100-100%
+SV033	0x0000	0x0000	0x0000  ; SSF2	servo function 2
+SV034	0x0000	0x0000	0x0000  ; SSF3	servo function 3
+SV035	0x0000	0x0000	0x0000  ; SSF4	servo function 4
+SV036	0x0000	0x0000	0x0000  ; PTYP	power supply type
+SV037	0	0	0       ; JL	linear motor movable mass	0-5000kg
+SV038	0	800	0       ; FHzq	machine resonance supp filter	0-9000Hz
+SV039	0	0	0       ; LMCD	lost motion comp timing		0-2000ms
+SV040	0	0	0       ; LMCT	lost motion comp non-sens band	-32768-32767um
+SV041	0	0	0       ; LMC2	lost mot comp gain 2		-1-200%
+SV042	0	0	0       ; OVS2	overshoot comp 2		-1-100%
+SV043	0	0	0       ; OBS1	observer 1			0-1000rad
+SV044	0	0	0       ; OBS2	observer 2			0-500%
+SV045	0	0	0       ; TRUB	friction force			-32768-32767%
+SV046	0	0	0       ; FHz2	filter 2 freq			0-9000Hz
+SV047	100	100	100     ; EC	induct volage comp gain		0-200%
+SV048	0	0	0       ; EMGrt	v axis droop prevention		0-2000 ms
+SV049	10	10	15      ; PGN1sp spindle sync pos loop gain 1	1-200 1/sec
+SV050	0	0	0       ; PGN2sp spindle sync pos loop gain 2	0-999 1/sec
+SV051	0	0	0       ; DFBT					0-9999ms
+SV052	0	0	0       ; DFBN					0-9999us
+SV053	0	0	0       ; OD3	excessive error width 3		0-32767mm
+SV054	0	0	0       ; ORE	CN3 conn, overrun detection	-1-32767mm
+SV055	0	0	0       ; EMGx	emg stop max delay time		0-2000ms
+SV056	0	0	0       ; EMGt	dec time const im emg		0-2000 ms
+SV057	281	281	281     ; SHGC	High gain control constant	0-1200 rad/s
+SV058	0	0	0       ; SHGCsp spindle sync high gain const	0-1200 rad/s
+SV059	0	0	0       ; TCNV	estimated thrust gain		0-32767
+SV060	0	0	0       ; TLMT	G0 collision detection level	0-500%
+SV061	65535	65535	65535   ; DA1NO	D/A output ch1 data num		-32768-32767
+SV062	65535	65535	65535   ; DA2NO
+SV063	0	0	0       ; DA1MPY D/A output ch1 multiplying factor 	-32768-32767
+SV064	0	0	0       ; DA2MPY
+SV065	4	4	0       ;
+SV066	0	0	0       ;
+SV067	2	2	2	; cmd unit 1/2 um                                                                         ; cmd unit 1/2 um
+SV068	0x0404	0x0404	0x0404	; 3.55ms cycle                                                                            ; 3.55ms cycle
+SV069	0	0	0	; rapid hi                                                                                ; rapid hi
+SV070	30000	30000	20000	; rapid low                                                                               ; rapid low
+SV071	0	0	0	; clamp hi                                                                                ; clamp hi
+SV072	10000	10000	10000	; clamp low                                                                               ; clamp low
+SV073	-	-	-	;                                                                                         ;
+SV074	-	-	-	;                                                                                         ;
+SV075	-	-	-	;                                                                                         ;
+SV076	-	-	-	;                                                                                         ;
+SV077	-	-	-	;                                                                                         ;
+SV078	-	-	-	; origin abs                                                                              ; origin abs
+SV079	-	-	-	; origin hi                                                                               ; origin hi
+SV080	-	-	-	; origin low                                                                              ; origin low
 
 AXIS 5
-;
+;	SP
 SP001	150
 SP002	100
 SP003	15

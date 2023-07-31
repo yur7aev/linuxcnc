@@ -77,18 +77,18 @@ SV063	0	0	0	0
 SV064	0	0	0	0
 SV065	-	-	-	-	;
 SV066	-	-	-	-	;
-SV067	2	2	2	2	; cmd unit 0.5um
+SV067	2	2	2	2	; cmd unit 1/2 um
 SV068	0x0404	0x0404	0x0404	0x0404	; 3.55ms cycle
 SV069	0	0	0	0	; rapid hi
-SV070	48000	48000	48000	21600	; rapid lo
+SV070	48000	48000	48000	21600	; rapid low
 SV071	0	0	0	0	; clamp hi
-SV072	12000	12000	12000	21600	; clamp lo
+SV072	12000	12000	12000	21600	; clamp low
 SV073	-	-	-	-	;
 SV074	-	-	-	-	;
 SV075	-	-	-	-	;
 SV076	-	-	-	-	;
 SV077	-	-	-	-	;
-SV078	-	-	-	-	;
+SV078	-	-	-	-	; origin abs
 SV079	0	0	0	0	; origin hi
 SV080	0	0	0	0	; origin low
 
