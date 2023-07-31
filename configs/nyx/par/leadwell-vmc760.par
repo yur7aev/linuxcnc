@@ -1,0 +1,498 @@
+;
+; LEADWELL VMC760
+; originally MELDAS 500M - 520AMR
+;
+; 0: X  MDS-A-SVJ-20 HA-100NC-S E30 - 2kw 2000rpm encoder 25000p/rev
+; 1: Y  MDS-A-SVJ-20 HA-100NC-S E30 - 2kw 2000rpm encoder 25000p/rev
+; 2: Z  MDS-A-SVJ-20 HA-100NC-S E30 - 2kw 2000rpm encoder 25000p/rev
+; 3: SP MDS-A-SP-220 SJ-11KW8 6000RPM
+;       NDS-A-CV-100
+;
+; 2023, http://yurtaev.com / Madoxen
+;
+
+;	0:X	1:Y	2:Z
+SV001	1	1	1	; PC1	motor gear ratio		1-30
+SV002	1	1	1	; PC2	machine gear ratio  		1-30
+SV003	33	33	33	; PGN1	position loop gain 1		0-200 1/sec
+SV004	0	0	0	; PGN2	position loop gain 2		0-200 1/sec
+SV005	150	150	150	; VGN1	speed loop gain 1		1-500
+SV006	-	-	-	;
+SV007	-	-	-	;
+SV008	1364	1364	1364	; VIA	speed loop advance comp		16-16384 0.0687rad/s
+SV009	2048	2048	2048	; IQA	cur loop q axis lead comp	1-7680
+SV010	2048	2048	2048	; IDA	cur loop d axis lead comp	1-32767
+SV011	256	256	256	; IQG	cur loop q axis gain		1-32767
+SV012	512	512	512	; IDG	cur loop d axis gain		1¬5000
+SV013	500	500	500	; ILMT1	current limit value 1		1-500%
+SV014	500	500	500	; ILMT2 current limit value 2   	0-500%
+SV015	0	0	0	; FFC	acceleration feed forward gain 	0-1000
+SV016	0	0	0	; LMC1	lost motion comp gain 1		0-100%
+SV017	0x0000  0x0000	0x0000	; SPEC	servo specifications		0x0000 
+SV018	10	10	10	; PIT	ballscrew pitch			1-50 mm
+SV019	25	25	25	; RNG1	position sensor res		1-1000 kp/r
+SV020	25	25	25	; RNG2	speed sensor res		1-1000 kp/r
+SV021	60	60	60	; OLT	overload time const		1-1800sec
+SV022	150	150	150	; OLL	overload detect level		1-500%
+SV023	16	16	11	; OD1	excessive error width 1 at svon	1-32767mm
+SV024	50	50	50	; INP	in position width		0-32767um
+SV025	0x0002	0x0002	0x0002	; MTYP	motor type
+SV026	16	16	11	; OD2	excessive err width 2 at svoff	0-32767mm
+SV027	0x4000	0x4000	0x4000	; SSF1	servo function 1
+SV028	-	-	-	;
+SV029	-	-	-	;
+SV030	-	-	-	;
+SV031	-	-	-	;
+SV032	0	0	0	; TOF	torque offset comp gain			-32768-32767%
+SV033	0x0000	0x0000	0x0000	; SSF2	servo function 2  in hex
+SV034	0x0000	0x0000	0x0000	; SSF3	servo function 3  not used set 0
+SV035	0x0000	0x0000	0x0000	; SSF4	servo function 4  not used set 0
+SV036	0x1200	0x1200	0x1200	; PTYP	power supply type			0000-ffff
+SV037	-	-	-	;
+SV038	0	0	0	; FHZ	freq of machine resonance supp filter	0-3000 Hz
+SV039	-	-	-	; 
+SV040	0	0	0	; 
+SV041	0	0	0	; LMC2	lost mot comp gain 2			0-100%
+SV042	-	-	-	;
+SV043	-	-	-	; 
+SV044	-	-	-	; 
+SV045	-	-	-	; 
+SV046	-	-	-	;
+SV047	0	0	0	; EC	induct volage comp gain			0-200%
+SV048	0	0	0	; EMGrt	v axis droop prevention			0-2000 ms
+SV049	15	15	15	; PGN1sp spindle sync pos loop gain 1		1-200 1/sec
+SV050	0	0	0	; PGN2sp spindle sync pos loop gain 2		0-999 1/sec
+SV051	-	-	-	;
+SV052	-	-	-	;
+SV053	0	0	0	; OD3	excessive error width 3			0-32767mm
+SV054	-	-	-	;
+SV055	0	0	0	; EMGdt						0-5000   
+SV056	0	0	0	; EMGt	dec time const im emg			0-5000 ms
+SV057	0	0	0	; SHGC	High gain control constant		0-999 1/sec
+SV058	0	0	0	; SHGCSP spindle sync high gain constant	0-999 1/sec
+SV059	-	-	-	;
+SV060	-	-	-	;
+SV061	0	0	0	; DA1NO	D/A output ch1 data num			-32768-32767
+SV062	-	-	-	;
+SV063	0	0	0	; DA1MPY D/A output ch1 multiplying factor 	-32768-32767 
+SV064	-	-	-	;
+SV065	-	-	-	;
+SV066	-	-	-	;
+SV067	2	2	2	; cmd unit 1/2 um
+SV068	0x0404	0x0404	0x0404	; 3.55ms cycle
+SV069	0	0	0	; rapid hi
+SV070	15000	15000	15000	; rapid low
+SV071	0	0	0	; clamp hi
+SV072	10000	10000	10000	; clamp low
+SV073	-	-	-	;
+SV074	-	-	-	;
+SV075	-	-	-	;
+SV076	-	-	-	;
+SV077	-	-	-	;
+SV078	-	-	-	; origin abs
+SV079	-	-	-	; origin hi
+SV080	-	-	-	; origin low
+
+AXIS 3
+
+;	3:SP
+SP001	100	; PGM	mag sensor and motor built in encoder orientation 0-360 1/10s-1
+SP002	100	; PGE   encoder orientation mode position loop gain 	0-360 1/10s-1
+SP003	15	; PGCO	C-axis non cutting position loop gain 1-100s-1
+SP004	16	; OINP	oriented internal position width 1-2880 b1/16 degree
+SP005	300	; OSP	orientation mode switch speed limit 0-32767 rpm
+SP006	20	; CSP	orientation mode reduction rate 1-1000
+SP007	0	; OPST	position shift amount for orientation -1 motor built in encoder / 2 mag sensor- 1 0-4095 / 2 -512-512
+SP008	0	; not used
+SP009	15	; PGT	synchronous tap pos loop gain 1-100 s-1
+SP010	15	; PGS	spindle sync pos loop gain 1-100 s-1
+SP011	0	; not used
+SP012	0	; not used
+SP013	0	; not used
+SP014	0	; not used
+SP015	0	; not used
+SP016	0	; not used 
+SP017	6000	; TSP	max motor speed 1-32767 rpm
+SP018	10	; ZSP	motor zero speed 1-1000 rpm
+SP019	50	; CNS1	speed cmd accel/decel constant 1-32767 10 ms
+SP020	600	; SDTS	speed detection set val 1-32767 rpm
+SP021	10	; TLM1	torque limit 1 1-120 %
+SP022	63	; VGNP1	speed loop gain proportional term under speed control 1-1000 rad/s
+SP023	60	; VGNI1	speed loop gain integral term under speed control 1-1000 1/10rad/s
+SP024	0	; not used
+SP025	1	; GRA1	spindle gear teeth count 1 1-32767
+SP026	1	; GRA2	spindle gear teeth count 2 1-32767
+SP027	1	; GRA3	spindle gear teeth count 3 1-32767
+SP028	1	; GRA4	spindle gear teeth count 4 1-32767
+SP029	1	; GRB1	motor axis gear teeth count 1
+SP030	1	; GRB2	motor axis gear teeth count 2
+SP031	1	; GRB3	motor axis gear teeth count 3
+SP032	1	; GRB4	motor axis gear teeth count 4
+SP033	0x0000	; SFNC1	spindle function 1 
+SP034	0x0001	; SFNC2	spindle function 2
+SP035	0x0000	; SFNC3	spindle function 3
+SP036	0x0000	; SFNC4	spindle function 4
+SP037	0x0002	; SFNC5	spindle function 5
+SP038	0x0000	; SFNC6	spindle function 6
+SP039	0x000a	; Not used specify 0-params show 000A so leaving as this-
+SP040	0x0000	; MTYP	motor type 0x0000-0xffff
+SP041	0x1011	; PTYP	power supply type see table in book
+SP042	0	; CRNG	c axis sensor type 0-7
+SP043	0	; TRNG	synchronous tap,spindle sync sensor range 0-7
+SP044	0x0404	; TRANS	nc communication freq 0-32767
+SP045	0	; not used
+SP046	0	; CSN2	speef cmd dual cushion 0-1000
+SP047	30	; SDTR	speed detect reset val 0-1000 rpm
+SP048	15	; SUT	speed reach range 0-100%
+SP049	20	; TLM2	torque limit 2 0-120%
+SP050	30	; TLM3	torque limit 3 0-120%
+SP051	40	; TLM4	torque limit 4 0-120%
+SP052	50	; TLM5	torque limit 5 0-120%
+SP053	60	; TLM6	torque limit 6 0-120%
+SP054	70	; TLM7	torque limit 7 0-120%
+SP055	12	; SETM	exessive speed deviation timer 0-60 sec
+SP056	50	; PYVR	variable excitation 0-100%
+SP057	0	; not used
+SP058	6000	; HSPT	max speed at s analog high-speed tapping 1-32767
+SP059	500	; MKT	winding changeover base shut-off timer 50-10000 ms
+SP060	500	; MKT2	current limit timer after winding changeover 1-10000 ms
+SP061	75	; MKIL	current limit value after winding changeover 0-120%
+SP062	0	; not used
+SP063	60	; OLT	overload alarm detection time 1-1000 sec
+SP064	110	; OLL	overload alarm detection lvl 0-200%
+SP065	100	; VCGN1	target val of variable speed loop proportional gain 0-100%
+SP066	0	; VCSN1	change start speed of variable speed loop proportional gain 0-32767 rpm
+SP067	0	; VIGWA	change start speed of variable current loop gain 0-32767
+SP068	0	; VIGWB	change ending speed of variable current loop gain 0-32767
+SP069	0	; VIGN	target variable current loop gain 0-32767
+SP070	0	; not used
+SP071	0	; not used
+SP072	0	; not used
+SP073	0	; not used
+SP074	0	; not used
+SP075	0	; not used
+SP076	0	; not used
+SP077	14	; TDSL	14 -book says not used but parm is set to 14-
+SP078	0	; not used
+SP079	0	; not used
+SP080	0	; not used
+SP081	0	; not used
+SP082	0	; not used
+SP083	0	; not used
+SP084	0	; not used
+SP085	0	; not used
+SP086	0	; not used
+SP087	75	; DIQM	target val of vari torque limit multiplying factor at deceleration 0-150%
+SP088	3000	; DIQN	change starting speed of vari torque limit multiplying factor at deceleration 0-32767 rpm
+SP089	63	; VGHP	speed loop gain proportional term at S analog high speed tapping 1-1000 rad/s
+SP090	60	; VGHI	speed loop gain integral term at S analog high speed tapping 1-1000 1/10rad/s
+SP091	0	; not used
+SP092	0	; not used
+SP093	0	; not used
+SP094	0	; LMAV	load meter output filter 0-32767 2ms
+SP095	0	; not used
+SP096	0	; EGAR	encoder gear ratio 0-4
+SP097	0x0000	; SPECO	orientation spec 0x0000
+SP098	63	; VGOP	speed loop gain proportional term in orientation mode 1-1000 rad/s
+SP099	60	; VGOI	orientation mode speed loop gain integral term 1-1000 1/10rad/s
+SP100	15	; VGOD	orientation mode speed loop gain delay advance term 1-1000 1/10rad/s
+SP101	16	; DINP	orientation dummy in-position width 1-2880 1/16 degree
+SP102	32767	; OODR	excessive error val at orientation 1-32767 1/4pulses
+SP103	200	; FTM	positioning completion turn-off timer 1-10000 ms
+SP104	100	; TLOR	torque limit val for orientation servo locking 1-120%
+SP105	100	; IQGO	current loop gain multiplying factor 1 at orientaion 1-1000%
+SP106	100	; IDGO	current loop gain multiplying factor 2 at orientation 1-1000%
+SP107	0	; CSP2	orientation reduction factor 1-1000
+SP108	0	; CSP3	orientation reduction factor 1-1000
+SP109	0	; CSP4	orientation reduction factor 1-1000
+SP110	0	; not used 
+SP111	0	; not used 
+SP112	0	; not used 
+SP113	0	; not used 
+SP114	0	; not used 
+SP115	0	; not used 
+SP116	0	; not used 
+SP117	0	; not used 
+SP118	0	; not used 
+SP119	0	; not used 
+SP120	0	; not used 
+SP121	0	; not used 
+SP122	0	; not used 
+SP123	542	; MGDO	mag sensor outpt peak value 1-10000
+SP124	768	; MGD1	mag sensor linear zone width 1-10000
+SP125	384	; MGD2	mag sensor switching point 1-10000
+SP126	0	; not used 
+SP127	0	; not used 
+SP128	0	; not used 
+SP129	0x0000	; SPECC	C-axis spec 0x0000
+SP130	15	; PGC1	first position loop gain for cutting on C axis 1-100 s-1
+SP131	15	; PGC2	second position loop gain for cutting on C axis 1-100 s-115
+SP132	15	; PGC3	third position loop gain for cutting on C axis 1-100 s-115
+SP133	15	; PGC4	fourth position loop gain for cutting on C axis 1-100 s-115
+SP134	63	; VGCP0	C-axis non-cutting speed loop gain proportional term 1-5000 rad/s
+SP135	60	; VGCI0	C-axis non-cutting speed loop gain integral term 1-5000 1/10rad/s
+SP136	15	; VGCD0	C-axis non-cutting speed loop gain  1-5000 1/10rad/s
+SP137	63	; VGCP1	First speed loop gain proportional term for cutting on C axis 1-5000 rad/s 
+SP138	60	; VGCI1	First speed loop gain integral term for cutting on C axis 1-5000 1/10rad/s 
+SP139	0	; VGCD1	First speed loop gain delay/advance term for C axis 1-5000 1/10rad/s 
+SP140	0	; VGCP2	second speed loop gain proportional term for cutting on C axis 1-5000 rad/s 
+SP141	0	; VGCI2	second speed loop gain integral term for cutting on C axis 1-5000 1/10rad/s 
+SP142	0	; VGCD2	second speed loop gain delay/advance term for C axis 1-5000 1/10rad/s 
+SP143	63	; VGCP3	third speed loop gain proportional term for cutting on C axis 1-5000 rad/s 
+SP144	60	; VGCI3	third speed loop gain integral term for cutting on C axis 1-5000 1/10rad/s 
+SP145	15	; VGCD3	third speed loop gain delay/advance term for cutting on C axis 1-5000 1/10rad/s 
+SP146	63	; VGCP4	speed loop gain proportional term for stop of cutting on C axis 1-5000 rad/s 
+SP147	60	; VGCI4	speed loop gain integral term for stop of cutting on C axis 1-5000 1/10rad/s 
+SP148	15	; VGCD4	speed loop gain delay/advance term for stop of cutting on C axis 1-5000 1/10rad/s 
+SP149	50	; CZRN 	C-axis origin return speed 1-1000 rpm
+SP150	1	; CPDT	C-axis origin return deceleration point 1-10000
+SP151	0x0000	; CPSTL	C-axis origin return shift amount low byte 0x00000000-ffffffff 1/1000 degree
+SP152	0x0000	; CPSTH	C-axis origin return shift amount high byte 0x00000000-ffffffff 1/1000 degree
+SP153	0x03e8	; CINP	C-axis in position width 0x0000-ffff
+SP154	0xd4c0	; CODRL	excessive error width on C-axis low byte 00000000-ffffffff pulse=1/1000degree
+SP155	0x0001	; CODRH	excessive error width on C-axis high byte 00000000-ffffffff pulse=1/1000degree0x0001
+SP156	0	; not used
+SP157	0	; not used
+SP158	0	; not used
+SP159	50	; CPYC	C-axis non cutting variable excitation ratio 0-100%
+SP160	100	; CPYX	C-axis cutting variable excitation ratio 0-100%
+SP161	100	; IQGC0	current loop gain multiplying factor 1 for non-cutting on C-axis 0-100%
+SP162	100	; IDGC0	current loop gain multiplying factor 2 for non-cutting on C-axis 0-100%
+SP163	100	; IQGC1	current loop gain multiplying factor 1 for cutting on C-axis 0-1000%
+SP164	100	; IDGC1	current loop gain multiplying factor 2 for cutting on C-axis 0-1000%
+SP165	0	; PG2C	C-axis position loop gain 2 0-999 s-1
+SP166	0	; PG3C	C-axis position loop gain 3 0-999 s-1
+SP167	0	; not used
+SP168	0	; not used
+SP169	0	; not used
+SP170	0	; not used
+SP171	0	; not used
+SP172	0	; not used
+SP173	0	; not used
+SP174	0	; not used
+SP175	0	; not used
+SP176	0	; not used
+SP177	0x0000	; SPECS	spindle synchronous spec 0x0000
+SP178	63	; VGSP	Spindle sync speed loop gain proportional term 1-1000 rad/s
+SP179	60	; VGS1	Spindle sync speed loop gain integral term 1-1000 1/10rad/s
+SP180	15	; VGSD	Spindle sync speed loop gain delay advance term 1-1000 1/10rad/s
+SP181	100	; VCGS	target val of variable speed loop proportional gain at spindle synchronization 0-1000%
+SP182	0	; VCSS	Change starting speed or vari speed loop proportional gain at spindle sync 0-32767 rpm
+SP183	20	; SYNV	sync matching speed at spindle sync 1-1000 rpm
+SP184	0	; not used
+SP185	16	; SINP	Spindle sync in-position width 1-2880 1/16degree
+SP186	32767	; SODR	Excessive error width at spindle sync 1-32767
+SP187	100	; IQGS	current loop gain multiplying factor 1 at spindle sync 1-1000%
+SP188	100	; IDGS	current loop gain multiplying factor 2 at spindle sync 1-1000%
+SP189	0	; PG2S	position loop gain 2 at spindle sync 0-999 s-1
+SP190	0	; PG3S	position loop gain 3 at spindle sync 0-999 s-1
+SP191	0	; not used
+SP192	0	; not used
+SP193	0x0011	; SPECT	sync tap spec  0x0000
+SP194	63	; VGTP	sync tap speed loop gain proportional term 1-1000 rad/s
+SP195	60	; VGT1	sync tap speed loop gain integral term 1-1000 rad/s
+SP196	15	; VGTD	sync tap speed loop gain delay/advance 1-1000 1/10rad/s
+SP197	0	; not used
+SP198	100	; VCGT	target val of vari speed loop proportional gain at sync tapping 0-100%
+SP199	0	; VCST	change starting speed of vari speed loop proportional gain at sync tapping 0-32767rpm
+SP200	0	; FFC1	sync tapping accel feed forward gain gear 1 0-1000%
+SP201	0	; FFC2	sync tapping accel feed forward gain gear 2 0-1000%
+SP202	0	; FFC3	sync tapping accel feed forward gain gear 3 0-1000%
+SP203	0	; FFC4	sync tapping accel feed forward gain gear 4 0-1000%
+SP204	0	; not used
+SP205	0	; not used
+SP206	0	; not used
+SP207	0	; not used
+SP208	0	; not used
+SP209	0	; not used
+SP210	0	; not used
+SP211	0	; not used
+SP212	0	; not used
+SP213	0	; not used
+SP214	50	; TZRN	sync tap origin return speed 1-500rpm
+SP215	1	; TPDT	sync tap origin return decel point 1-10000
+SP216	1	; TPST	sync tap origin return shift amount 0-4095
+SP217	16	; TINP	sync tap in-position width 1-2880 1/16 degree
+SP218	32767	; TODR	excessive error width at sync tapping 1-32767 pulses 1pulse=0.088degree
+SP219	100	; IQGT	current loop gain multiplying factor 1 at sync tapping 1-1000%
+SP220	100	; IDGT	current loop gain multiplying factor 2 at sync tapping 1-1000%
+SP221	0	; PG2T	position loop gain 2 at sync tapping 0-999s-1
+SP222	0	; PG3T	position loop gain 3 at sync tapping 0-999s-1
+SP223	0	; not used
+SP224	0	; not used
+SP225	1	; GRA5	spindle gear teeth count 5 1-32767
+SP226	1	; GRA6	spindle gear teeth count 6 1-32767
+SP227	1	; GRA7	spindle gear teeth count 7 1-32767
+SP228	1	; GRA8	spindle gear teeth count 8 1-32767
+SP229	1	; GRB5	motor axis gear teeth count 5 1-32767
+SP230	1	; GRB6	motor axis gear teeth count 6 1-32767
+SP231	1	; GRB7	motor axis gear teeth count 7 1-32767
+SP232	1	; GRB8	motor axis gear teeth count 8 1-32767
+SP233	0	; not used
+SP234	0	; not used
+SP235	0	; not used
+SP236	0	; not used
+SP237	0	; not used
+SP238	0	; not used
+SP239	0	; not used
+SP240	0	; not used
+SP241	0	; not used
+SP242	0	; not used
+SP243	0	; not used
+SP244	0	; not used
+SP245	0	; not used
+SP246	0	; not used
+SP247	0	; not used
+SP248	0	; not used
+SP249	0	; not used
+SP250	0	; not used
+SP251	0	; not used
+SP252	0	; not used
+SP253	0	; DA1NO	DA output channel-1 data number 0-32767
+SP254	0	; DA2NO	DA output channel-2 data number 0-32767
+SP255	0	; DA1MPY	DA output channel-1 multiplying factor 0-327670 x1/x256
+SP256	0	; DA2MPY	DA output channel-2 multiplying factor 0-327670 x1/x256
+SP257	1	; RPM	H, speed unit
+SP258	6000	; NR	H, max speed
+SP259	6000	; NP	H, constant output speed
+SP260	750	; NB	H, basic speed
+SP261	1200	; NF	H, magnatic flux rpm
+SP262	2	; PM	H, pair of magnetic poles
+SP263	1024	; PLG	H, PLG pulse number (x4)
+SP264	794	; KVP	H, speed propotional gain
+SP265	1806	; KVI	H, speed integral gain
+SP266	44	; KVF	H, speed delay advance gain
+SP267	2836	; KFP	H, magnetic control P gain
+SP268	1613	; KFI	H, magnatic control I gain
+SP269	0	; PYLT	H, Ids current min. value
+SP270	84	; KDP	H, Ids propotional gain
+SP271	1276	; KDI	H, Ids integral gain
+SP272	244	; KQP	H, Iqs proportional gain
+SP273	3702	; KQI	H, Iqs integral gain
+SP274	934	; IDSM	H, field current at 100%
+SP275	2718	; IQSM	H, torque current at 100%
+SP276	287	; KVDS	H, q-d interface ratio
+SP277	108	; KVQS	H, d-q interface ratio
+SP278	0x0c00	; TMLR	H, decel current limit (75%)
+SP279	0x1333	; TMLD	H, accel current limit (120%)
+SP280	0x1800	; TMLS	H, constant current limit (150%)
+SP281	119	; KWS	H, Kws at power running
+SP282	148	; KWSR	H, Kws at regeneration
+SP283	2793	; IQ1	H, Iqs 100% for calculation
+SP284	3092	; M0	H, M0 for M saturation
+SP285	1861	; M2	H, M2 for M saturation
+SP286	2845	; FLUX	H, FLUX1 for M saturation
+SP287	66	; KR2	H, R2 for ,2 f/b calculation
+SP288	0	; LR2	H, ?phs2? f/b clamp value
+SP289	6647	; ICT	H, CT setting cunent
+SP290	1055	; KI1	H, current f/b compensation
+SP291	0	; TI	H, current loop sampling Ts
+SP292	2500	; VPWM	H, PWM triangle resolution
+SP293	0	; IDLM	H, flux f/b clamp (min)
+SP294	-	;
+SP295	-	;
+SP296	-	;
+SP297	-	;
+SP298	-	;
+SP299	-	;
+SP300	-	;
+SP301	-	;
+SP302	-	;
+SP303	-	;
+SP304	-	;
+SP305	-	;
+SP306	-	;
+SP307	-	;
+SP308	-	;
+SP309	-	;
+SP310	-	;
+SP311	-	;
+SP312	-	;
+SP313	-	;
+SP314	-	;
+SP315	-	;
+SP316	-	;
+SP317	-	;
+SP318	-	;
+SP319	-	;
+SP320	0	; RPM to BSD motor constant H winding 0x0000-ffff
+SP321	0	;
+SP322	0	;
+SP323	0	;
+SP324	0	;
+SP325	0	;
+SP326	0	;
+SP327	0	;
+SP328	0	;
+SP329	0	;
+SP330	0	;
+SP331	0	;
+SP332	0	;
+SP333	0	;
+SP334	0	;
+SP335	0	;
+SP336	0	;
+SP337	0	;
+SP338	0	;
+SP339	0	;
+SP340	0	;
+SP341	0	;
+SP342	0	;
+SP343	0	;
+SP344	0	;
+SP345	0	;
+SP346	0	;
+SP347	0	;
+SP348	0	;
+SP349	0	;
+SP350	0	;
+SP351	0	;
+SP352	0	;
+SP353	0	;
+SP354	0	;
+SP355	0	;
+SP356	0	;
+SP357	0	;
+SP358	0	;
+SP359	0	;
+SP360	0	;
+SP361	0	;
+SP362	0	;
+SP363	0	;
+SP364	0	;
+SP365	0	;
+SP366	0	;
+SP367	0	;
+SP368	0	;
+SP369	0	;
+SP370	0	;
+SP371	0	;
+SP372	0	;
+SP373	0	;
+SP374	0	;
+SP375	0	;
+SP376	0	;
+SP377	0	;
+SP378	0	;
+SP379	0	;
+SP380	0	;
+SP381	0	;
+SP382	0	;
+SP383	0	;
+SP384	0	; RPML to BSDL motor constant Lwinding 0x0000-ffff
+SP385	-	;
+SP386	-	;
+SP387	-	;
+SP388	-	;
+SP389	-	;
+SP390	-	;
+SP391	-	;
+SP392	-	;
+SP393	-	;
+SP394	-	;
+SP395	-	;
+SP396	-	;
+SP397	-	;
+SP398	-	;
+SP399	-	;
+SP400	-	;
