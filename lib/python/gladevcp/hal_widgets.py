@@ -13,12 +13,15 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-import gobject
-import gtk
+import gi
+gi.require_version("Gtk","3.0")
+gi.require_version("Gdk","3.0")
+from gi.repository import Gtk, Gdk
+from gi.repository import GObject
 
 import hal
 
-hal_pin_changed_signal = ('hal-pin-changed', (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_OBJECT,)))
+hal_pin_changed_signal = ('hal-pin-changed', (GObject.SignalFlags.RUN_FIRST, GObject.TYPE_NONE, (GObject.TYPE_OBJECT,)))
 
 """ Set of base classes """
 class _HalWidgetBase:
@@ -118,15 +121,15 @@ class _HalSpeedControlBase(_HalWidgetBase):
         self.hal_pin.set(self.get_value())
 """ Real widgets """
 
-class HAL_HBox(gtk.HBox, _HalSensitiveBase):
+class HAL_HBox(Gtk.Box, _HalSensitiveBase):
     __gtype_name__ = "HAL_HBox"
     __gsignals__ = dict([hal_pin_changed_signal])
 
-class HAL_Table(gtk.Table, _HalSensitiveBase):
+class HAL_Table(Gtk.Grid, _HalSensitiveBase):
     __gtype_name__ = "HAL_Table"
     __gsignals__ = dict([hal_pin_changed_signal])
 
-class HAL_HideTable(gtk.Table, _HalWidgetBase):
+class HAL_HideTable(Gtk.Grid, _HalWidgetBase):
     __gtype_name__ = "HAL_HideTable"
     __gsignals__ = dict([hal_pin_changed_signal])
 
@@ -141,11 +144,11 @@ class HAL_HideTable(gtk.Table, _HalWidgetBase):
         else:
             self.show()
 
-class HAL_ComboBox(gtk.ComboBox, _HalWidgetBase):
+class HAL_ComboBox(Gtk.ComboBox, _HalWidgetBase):
     __gtype_name__ = "HAL_ComboBox"
     __gproperties__ = {
-        'column'  : ( gobject.TYPE_INT, 'Column', '-1:return value of index, other: column index of value in ListStore',
-                -1, 100, -1, gobject.PARAM_READWRITE|gobject.PARAM_CONSTRUCT),
+        'column'  : ( GObject.TYPE_INT, 'Column', '-1:return value of index, other: column index of value in ListStore',
+                -1, 100, -1, GObject.ParamFlags.READWRITE|GObject.ParamFlags.CONSTRUCT),
     }
 
     def do_get_property(self, property):
@@ -177,7 +180,7 @@ class HAL_ComboBox(gtk.ComboBox, _HalWidgetBase):
         self.hal_pin_s.set(int(v))
         self.hal_pin_f.set(float(v))
 
-class HAL_Button(gtk.Button, _HalWidgetBase):
+class HAL_Button(Gtk.Button, _HalWidgetBase):
     __gtype_name__ = "HAL_Button"
 
     def _hal_init(self):
@@ -188,7 +191,7 @@ class HAL_Button(gtk.Button, _HalWidgetBase):
         self.connect("released", _f, False)
         self.emit("released")
 
-class HALIO_Button(gtk.ToggleButton, _HalWidgetBase):
+class HALIO_Button(Gtk.ToggleButton, _HalWidgetBase):
     __gtype_name__ = "HALIO_Button"
 
     def _hal_init(self):
@@ -204,58 +207,58 @@ class HALIO_Button(gtk.ToggleButton, _HalWidgetBase):
         active = bool(self.hal_pin.get())
         self.set_active(active)
 
-class HAL_CheckButton(gtk.CheckButton, _HalToggleBase):
+class HAL_CheckButton(Gtk.CheckButton, _HalToggleBase):
     __gtype_name__ = "HAL_CheckButton"
 
-class HAL_SpinButton(gtk.SpinButton, _HalWidgetBase):
+class HAL_SpinButton(Gtk.SpinButton, _HalWidgetBase):
     __gtype_name__ = "HAL_SpinButton"
 
     def hal_update(self, *a):
         data = self.get_value()
         self.hal_pin_f.set(float(data))
         self.hal_pin_s.set(int(data))
-        
+
     def _hal_init(self):
         self.hal_pin_f = self.hal.newpin(self.hal_name+"-f", hal.HAL_FLOAT, hal.HAL_OUT)
         self.hal_pin_s = self.hal.newpin(self.hal_name+"-s", hal.HAL_S32, hal.HAL_OUT)
         self.connect("value-changed", self.hal_update)
         self.emit("value-changed")
 
-class HAL_RadioButton(gtk.RadioButton, _HalToggleBase):
+class HAL_RadioButton(Gtk.RadioButton, _HalToggleBase):
     __gtype_name__ = "HAL_RadioButton"
 
-class HAL_ToggleButton(gtk.ToggleButton, _HalToggleBase):
+class HAL_ToggleButton(Gtk.ToggleButton, _HalToggleBase):
     __gtype_name__ = "HAL_ToggleButton"
 
-class HAL_HScale(gtk.HScale, _HalScaleBase):
+class HAL_HScale(Gtk.Scale, _HalScaleBase):
     __gtype_name__ = "HAL_HScale"
 
 
-class HALIO_HScale(gtk.HScale, _HalIOScaleBase):
+class HALIO_HScale(Gtk.Scale, _HalIOScaleBase):
     __gtype_name__ = "HALIO_HScale"
     __gsignals__ = dict([hal_pin_changed_signal])
 
-class HAL_VScale(gtk.VScale, _HalScaleBase):
+class HAL_VScale(Gtk.Scale, _HalScaleBase):
     __gtype_name__ = "HAL_VScale"
 
-class HAL_ProgressBar(gtk.ProgressBar, _HalWidgetBase):
+class HAL_ProgressBar(Gtk.ProgressBar, _HalWidgetBase):
     __gtype_name__ = "HAL_ProgressBar"
     __gproperties__ = {
-        'scale' :    ( gobject.TYPE_FLOAT, 'Value Scale',
+        'scale' :    ( GObject.TYPE_FLOAT, 'Value Scale',
                 'Set maximum absolute value of input', -2**24, 2**24, 0,
-                gobject.PARAM_READWRITE | gobject.PARAM_CONSTRUCT),
-        'green_limit'  : ( gobject.TYPE_FLOAT, 'green zone limit',
+                GObject.ParamFlags.READWRITE | GObject.ParamFlags.CONSTRUCT),
+        'green_limit'  : ( GObject.TYPE_FLOAT, 'green zone limit',
                 'lower limit of green zone', 0, 1, 0,
-                gobject.PARAM_READWRITE | gobject.PARAM_CONSTRUCT),
-        'yellow_limit' : ( gobject.TYPE_FLOAT, 'yellow zone limit',
+                GObject.ParamFlags.READWRITE | GObject.ParamFlags.CONSTRUCT),
+        'yellow_limit' : ( GObject.TYPE_FLOAT, 'yellow zone limit',
                 'lower limit of yellow zone', 0, 1, 0,
-                gobject.PARAM_READWRITE | gobject.PARAM_CONSTRUCT),
-        'red_limit' :    ( gobject.TYPE_FLOAT, 'red zone limit',
+                GObject.ParamFlags.READWRITE | GObject.ParamFlags.CONSTRUCT),
+        'red_limit' :    ( GObject.TYPE_FLOAT, 'red zone limit',
                 'lower limit of red zone', 0, 1, 0,
-                gobject.PARAM_READWRITE | gobject.PARAM_CONSTRUCT),
-        'text_template' : ( gobject.TYPE_STRING, 'text template',
+                GObject.ParamFlags.READWRITE | GObject.ParamFlags.CONSTRUCT),
+        'text_template' : ( GObject.TYPE_STRING, 'text template',
                 'Text template to display. Python formatting may be used for dict {"value":value}',
-                "", gobject.PARAM_READWRITE | gobject.PARAM_CONSTRUCT),
+                "", GObject.ParamFlags.READWRITE | GObject.ParamFlags.CONSTRUCT),
     }
     __gproperties = __gproperties__
 
@@ -279,7 +282,7 @@ class HAL_ProgressBar(gtk.ProgressBar, _HalWidgetBase):
         self.hal_pin_scale = self.hal.newpin(self.hal_name+".scale", hal.HAL_FLOAT, hal.HAL_IN)
         if self.yellow_limit or self.red_limit:
             self.set_fraction(0)
-            self.modify_bg(gtk.STATE_PRELIGHT, gtk.gdk.Color('#0f0'))
+            self.modify_bg(Gtk.STATE_PRELIGHT, Gdk.Color.parse('#0f0')[1])
         if self.text_template:
             self.set_text(self.text_template % {'value':0})
 
@@ -317,17 +320,17 @@ class HAL_ProgressBar(gtk.ProgressBar, _HalWidgetBase):
                 break
 
         if color:
-            self.modify_bg(gtk.STATE_PRELIGHT, gtk.gdk.color_parse(color))
+            self.modify_bg(Gtk.STATE_PRELIGHT, Gdk.color_parse(color))
 
-class HAL_Label(gtk.Label, _HalWidgetBase):
+class HAL_Label(Gtk.Label, _HalWidgetBase):
     __gtype_name__ = "HAL_Label"
     __gsignals__ = dict([hal_pin_changed_signal])
     __gproperties__ = {
-        'label_pin_type'  : ( gobject.TYPE_INT, 'HAL pin type', '0:S32 1:Float 2:U32',
-                0, 2, 0, gobject.PARAM_READWRITE|gobject.PARAM_CONSTRUCT),
-        'text_template' : ( gobject.TYPE_STRING, 'text template',
+        'label_pin_type'  : ( GObject.TYPE_INT, 'HAL pin type', '0:S32 1:Float 2:U32',
+                0, 2, 0, GObject.ParamFlags.READWRITE|GObject.ParamFlags.CONSTRUCT),
+        'text_template' : ( GObject.TYPE_STRING, 'text template',
                 'Text template to display. Python formatting may be used for one variable',
-                "%s", gobject.PARAM_READWRITE|gobject.PARAM_CONSTRUCT),
+                "%s", GObject.ParamFlags.READWRITE|GObject.ParamFlags.CONSTRUCT),
     }
 
     def do_get_property(self, property):

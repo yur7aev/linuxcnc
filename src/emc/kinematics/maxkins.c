@@ -10,6 +10,13 @@
 * Copyright (c) 2007 Chris Radek
 ********************************************************************/
 
+/********************************************************************
+* Note: The direction of the B axis is the opposite of the 
+* conventional axis direction. See 
+* https://linuxcnc.org/docs/html/gcode/machining-center.html
+********************************************************************/
+
+
 #include "kinematics.h"		/* these decls */
 #include "posemath.h"
 #include "hal.h"
@@ -101,6 +108,7 @@ KINEMATICS_TYPE kinematicsType()
 #include "rtapi.h"		/* RTAPI realtime OS API */
 #include "rtapi_app.h"		/* RTAPI realtime module decls */
 
+KINS_NOT_SWITCHABLE
 EXPORT_SYMBOL(kinematicsType);
 EXPORT_SYMBOL(kinematicsInverse);
 EXPORT_SYMBOL(kinematicsForward);

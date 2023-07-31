@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # QTVcp Logging Module
 # Provides a consistent and easy to use logging facility.  Log messages printed
@@ -25,12 +25,28 @@ from linuxcnc import ini
 # logging to set the log level within other modules.
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 
+# add a new verbose level
+VERBOSE = 5
+logging.VERBOSE = 5
+logging.addLevelName(logging.VERBOSE, "VERBOSE")
+
+
+# add a custom log level function
+def verbose(self, message, *args, **kws):
+    if self.isEnabledFor(VERBOSE):
+        # Yes, logger takes its '*args' as 'args'.
+        self._log(logging.VERBOSE, message, args, **kws)
+
+# add the custom log level to the library (class patch)
+logging.Logger.verbose = verbose
+
 # Our custom colorizing formatter for the terminal handler
-from lib.colored_formatter import ColoredFormatter
+from .lib.colored_formatter import ColoredFormatter
 
 
 # Global name of the base logger
 BASE_LOGGER_NAME = None
+BASE_LOGGER_FILE = None
 
 # Define the log message formats
 TERM_FORMAT = '[%(name)s][%(levelname)s]  %(message)s (%(filename)s:%(lineno)d)'
@@ -40,7 +56,7 @@ FILE_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 # Get logger for module based on module.__name__
 def getLogger(name):
     if BASE_LOGGER_NAME is None:
-        initBaseLogger('QtDesigner')
+        initBaseLogger('DEFAULT')
     name = '{0}.{1}'.format(BASE_LOGGER_NAME, name.upper())
     return logging.getLogger(name)
 
@@ -49,7 +65,6 @@ def getLogger(name):
 def setGlobalLevel(level):
     base_log = logging.getLogger(BASE_LOGGER_NAME)
     base_log.setLevel(level)
-    base_log.info('Base log level set to {}'.format(level))
 
 
 # Initialize the base logger
@@ -61,6 +76,9 @@ def initBaseLogger(name, log_file=None, log_level=DEBUG):
     if not log_file:
         log_file = getLogFile(name)
 
+    global BASE_LOGGER_FILE
+    BASE_LOGGER_FILE = log_file
+
     # Clear the previous sessions log file
     with open(log_file, 'w') as fh:
         pass
@@ -71,7 +89,7 @@ def initBaseLogger(name, log_file=None, log_level=DEBUG):
 
     # Add console handler
     ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+    ch.setLevel(logging.VERBOSE)
     cf = ColoredFormatter(TERM_FORMAT)
     ch.setFormatter(cf)
     base_log.addHandler(ch)
@@ -85,7 +103,7 @@ def initBaseLogger(name, log_file=None, log_level=DEBUG):
 
     # Get logger for logger
     log = getLogger(__name__)
-    base_log.info('Logging to "{}"'.format(log_file))
+    base_log.info('Logging to: yellow<{}>'.format(log_file))
 
     return base_log
 

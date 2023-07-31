@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # QTVcp Widget - MDI edit line widget
 # Copyright (c) 2017 Chris Morley
@@ -76,28 +76,19 @@ class MachineLog(QTextEdit, _HalWidgetBase):
         file = QFile(self.machineLogPath)
         file.open(QFile.ReadOnly)
         logText = file.readAll()
-        try:
-            # Python v2.
-            logText = unicode(logText, encoding='utf8')
-        except NameError:
-            # Python v3.
-            logText = str(logText, encoding='utf8')
         file.close()
-        self.setPlainText(logText)
+        self.setPlainText(str(logText, encoding='utf8'))
+        # scroll down to show last entry
+        self.verticalScrollBar().setSliderPosition(self.verticalScrollBar().maximum())
 
     def loadIntegratorLog(self):
         file = QFile(self.integratorPath)
         file.open(QFile.ReadOnly)
         logText = file.readAll()
-        try:
-            # Python v2.
-            logText = unicode(logText, encoding='utf8')
-        except NameError:
-            # Python v3.
-            logText = str(logText, encoding='utf8')
         file.close()
-        self.setPlainText(logText)
-
+        self.setPlainText(str(logText, encoding='utf8'))
+        # scroll down to show last entry
+        self.verticalScrollBar().setSliderPosition(self.verticalScrollBar().maximum())
 
 ################## properties ###################
 

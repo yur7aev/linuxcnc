@@ -4,8 +4,8 @@
 *   An auto-generated file to handle the update functions and
 *   routing of messages to the correct buffer/processes.
 *
-*   NOTICE:  this file has been manually edited for EMC2, the
-*   Java CodeGen utility should _NOT_ be used for EMC2, it will
+*   NOTICE:  this file has been manually edited for LinuxCNC, the
+*   Java CodeGen utility should _NOT_ be used for LinuxCNC, it will
 *   overwrite this file!!
 *
 * Author:
@@ -904,11 +904,15 @@ void EMC_TOOL_STAT::update(CMS * cms)
 {
 
     EMC_TOOL_STAT_MSG::update(cms);
-    cms->update(pocketPrepped);
+    cms->update(pocketPrepped); // idx
     cms->update(toolInSpindle);
+    cms->update(toolFromPocket);
+#ifdef TOOL_NML //{
     for (int i_toolTable = 0; i_toolTable < CANON_POCKETS_MAX; i_toolTable++)
 	CANON_TOOL_TABLE_update(cms, &(toolTable[i_toolTable]));
-
+#else //}{
+    // noop
+#endif //}
 }
 
 /*
@@ -981,6 +985,7 @@ void EMC_JOG_ABS::update(CMS * cms)
     EMC_JOG_CMD_MSG::update(cms);
     cms->update(pos);
     cms->update(vel);
+    cms->update(jjogmode);
 
 }
 
@@ -991,6 +996,7 @@ void EMC_JOG_STOP::update(CMS * cms)
 {
 
     EMC_JOG_CMD_MSG::update(cms);
+    cms->update(jjogmode);
 
 }
 
@@ -1315,6 +1321,7 @@ void EMC_JOG_CONT::update(CMS * cms)
 
     EMC_JOG_CMD_MSG::update(cms);
     cms->update(vel);
+    cms->update(jjogmode);
 
 }
 
@@ -1532,7 +1539,7 @@ void EMC_TRAJ_LINEAR_MOVE::update(CMS * cms)
     cms->update(ini_maxvel);
     cms->update(acc);
     cms->update(feed_mode);
-    cms->update(indexrotary);
+    cms->update(indexer_jnum);
 }
 
 /*
@@ -1969,6 +1976,7 @@ void EMC_TASK_STAT::update(CMS * cms)
     cms->update(readLine);
     cms->update(file, 256);
     cms->update(command, 256);
+    cms->update(ini_filename, 256);
     EmcPose_update(cms, &g5x_offset);
     EmcPose_update(cms, &g92_offset);
     EmcPose_update(cms, &toolOffset);
@@ -2117,6 +2125,7 @@ void EMC_JOG_INCR::update(CMS * cms)
     EMC_JOG_CMD_MSG::update(cms);
     cms->update(incr);
     cms->update(vel);
+    cms->update(jjogmode);
 
 }
 
@@ -2372,7 +2381,6 @@ void EMC_TRAJ_STAT::update(CMS * cms)
     cms->update(linearUnits);
     cms->update(angularUnits);
     cms->update(cycleTime);
-    cms->update(deprecated_axes);
     cms->update(axis_mask);
     cms->update((int *) &mode, 1);
     cms->update(enabled);

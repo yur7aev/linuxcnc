@@ -36,9 +36,10 @@ and
 .B halsampler
 are used together to sample HAL data in real time and store it in a file.
 .B sampler
-is a realtime HAL component that exports HAL pins and creates a FIFO in shared memory.  It then begins sampling data from the HAL and storing it to the FIFO.
+is a realtime HAL component that exports HAL pins and creates a FIFO in shared memory.
+It then begins sampling data from the HAL and storing it to the FIFO.
 .B halsampler
-is a user space program that copies data from the FIFO to stdout, where it can
+is a non-realtime program that copies data from the FIFO to stdout, where it can
 be redirected to a file or piped to some other program.
 
 .SH OPTIONS
@@ -78,7 +79,7 @@ with
 .B halcmd loadrt
 or a
 .B loadrt
-command in a .hal file.  Then
+command in a HAL file.  Then
 .B halsampler
 can be invoked to begin printing data from the FIFO to stdout.
 .P
@@ -145,16 +146,12 @@ is not specified, it will always return failure when terminated.
 .BR streamer (9)
 .BR halstreamer (1)
 
-.SH HISTORY
-
-.SH BUGS
-
 .SH AUTHOR
 Original version by John Kasunich, as part of the LinuxCNC
 project.  Improvements by several other members of
 the LinuxCNC development team.
 .SH REPORTING BUGS
-Report bugs to jmkasunich AT users DOT sourceforge DOT net
+Report bugs at https://github.com/LinuxCNC/linuxcnc/issues
 .SH COPYRIGHT
 Copyright \(co 2006 John Kasunich.
 .br
