@@ -123,7 +123,7 @@ function wr;
 
 license "GPL";
 
-include "nyx3.h";
+include <nyx3.h>;
 
 ;;
 
@@ -1348,7 +1348,9 @@ int params_load(servo_params *params, const char *filename)
 		buf = malloc(st.st_size + 1);
 		if (buf) {
 			int ln = 1;
-			read(f, buf, st.st_size);	// gulp the file
+			int n = read(f, buf, st.st_size);	// gulp the file
+			if (n != st.st_size)
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_load short read %d != %d", n, st.st_size);
 			buf[st.st_size] = 0;
 
 			s = buf;

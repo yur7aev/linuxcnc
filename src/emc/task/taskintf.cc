@@ -1728,7 +1728,6 @@ int emcPositionSave() {
     FILE *f = fopen(posfile, "w");
     if(!f) return -1;
     for(int i=0; i<EMCMOT_MAX_JOINTS; i++) {
-	int r = 0;
 	char jointString[16];
 	int absolute = 0;
 
@@ -1738,7 +1737,7 @@ int emcPositionSave() {
 	} catch (IniFile::Exception e) {
         }
 
-	r = fprintf(f, "%.17f\n", absolute ?
+	fprintf(f, "%.17f\n", absolute ?
 		-emcmotStatus.joint_status[i].motor_offset :
 		emcmotStatus.joint_status[i].pos_fb);
     }

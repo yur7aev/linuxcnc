@@ -395,7 +395,7 @@ SRCHEADERS := \
     hal/hal.h \
     hal/hal_parport.h \
     hal/drivers/mesa-hostmot2/hostmot2-serial.h \
-    hal/drivers/nyx3.h \
+    hal/drivers/nyx/nyx3.h \
     libnml/buffer/locmem.hh \
     libnml/buffer/memsem.hh \
     libnml/buffer/phantom.hh \
@@ -615,6 +615,7 @@ endif
 # of each file that contains headers.
 $(patsubst %,../include/%,$(wildcard *.h)): ../include/%.h: %.h
 	$(Q)-cp $^ $@
+	echo XXX $(Q)-cp $^ $@
 $(patsubst %,../include/%,$(wildcard *.hh)): ../include/%.hh: %.hh
 	$(Q)-cp $^ $@
 
@@ -961,8 +962,6 @@ obj-$(CONFIG_STREAMER) += streamer.o
 streamer-objs := hal/components/streamer.o $(MATHSTUB)
 obj-$(CONFIG_SAMPLER) += sampler.o
 sampler-objs := hal/components/sampler.o $(MATHSTUB)
-obj-$(CONFIG_ZMAP) += zmap.o
-zmap-objs := hal/components/zmap.o $(MATHSTUB)
 
 # Subdirectory: hal/drivers
 obj-$(CONFIG_HAL_PARPORT) += hal_parport.o

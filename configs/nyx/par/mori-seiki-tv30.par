@@ -12,7 +12,7 @@
 ; 2022, http://yurtaev.com
 ;
 
-;	0:X	1:Y	2:Z	3:C	
+;	0:X	1:Y	2:Z	3:C
 SV001	1	1	1	1	; PC1	motor side gear		1-32767
 SV002	1	1	1	1	; PC2	machine side gear	1-32767
 SV003	33	33	33	33	; PGN1	position loop gain 1	0-200 rad/s

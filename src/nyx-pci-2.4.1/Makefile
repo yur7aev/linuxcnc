@@ -1,8 +1,9 @@
+
 obj-m += nyx.o
 LM=/lib/modules/$(shell uname -r)
 
-nyx.ko: nyx.c nyx2.h
-	make -C $(LM)/build M=$(PWD) modules
+nyx.ko: nyx.c ../hal/drivers/nyx3.h
+	make -C $(LM)/build M=$(PWD) modules CFLAGS_nyx.o=-I$(PWD)/../hal/drivers
 
 clean:
 	make -C $(LM)/build M=$(PWD) clean

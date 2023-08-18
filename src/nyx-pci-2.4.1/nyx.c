@@ -16,7 +16,7 @@
 #include <linux/interrupt.h>
 //#include <asm/cacheflush.h>
 
-#include "nyx2.h"
+#include "nyx3.h"
 
 #define DEVICE_NAME "nyx"
 #define CLASS_NAME "servo"
@@ -221,7 +221,7 @@ static int nyx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	pci_read_config_word(pdev, PCI_VENDOR_ID, &vendor);
 	pci_read_config_word(pdev, PCI_DEVICE_ID, &device);
 
-	printk(KERN_INFO "%s.%d: found %02x:%02x.%02x %04x:%04x\n", DEVICE_NAME, minor, 
+	printk(KERN_INFO "%s.%d: found %02x:%02x.%02x %04x:%04x\n", DEVICE_NAME, minor,
 		pdev->bus->number, PCI_SLOT(pdev->devfn), PCI_FUNC(pdev->devfn),
 		vendor, device);
 
@@ -313,7 +313,7 @@ static int nyx_open(struct inode *inode, struct file *filp)
 		return -EINVAL;
 
 	f = kzalloc(sizeof(struct nyx_fpriv), GFP_KERNEL);
-	if (!f) 
+	if (!f)
 		return -EFAULT;
 
 	f->y = nyx_priv[minor];

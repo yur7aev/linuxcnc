@@ -39,3 +39,5 @@ modules:                                                         \
     hal/drivers/pluto_step_rbf.h
 endif
 
+$(patsubst ./hal/drivers/%,../include/%,$(wildcard ./hal/drivers/*.h)): ../include/%.h: ./hal/drivers/%.h
+	cp $^ $@
