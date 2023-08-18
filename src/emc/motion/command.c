@@ -1395,7 +1395,7 @@ void emcmotCommandHandler_locked(void *arg, long servo_period)
 	    rtapi_print_msg(RTAPI_MSG_DBG, "JOINT_SET_HOMED");
 	    rtapi_print_msg(RTAPI_MSG_DBG, " %d", joint_num);
 	    if (joint) {
-		SET_JOINT_HOMED_FLAG(joint, 1);
+	        set_homed(joint_num,emcmotStatus->motion_state);
 	    }
 	    break;
 

@@ -2787,14 +2787,14 @@ class TclCommands(nf.TclCommands):
         if not manual_ok(): return
         if joints_mode(): return
 
-	system = vars.touch_off_system.get().split()[0]
+        system = vars.touch_off_system.get().split()[0]
         a = vars.ja_rbutton.get()
         offset_command = "G10 L20 %s %c[#<_%c> / 2]" % (system, a, a)
 
         doit = prompt_areyousure(_("Confirm center"), _("Center %c axis in system %s?\n%s") % (a, system, offset_command))
 
         if doit:
-	    ensure_mode(linuxcnc.MODE_MDI)
+            ensure_mode(linuxcnc.MODE_MDI)
             s.poll()
             c.mdi(offset_command)
             c.wait_complete()

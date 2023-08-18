@@ -56,6 +56,7 @@ void do_home_joint(int jno);
 // per-joint controls
 void do_cancel_homing(int jno);
 void set_unhomed(int jno,motion_state_t motstate);
+void set_homed(int jno,motion_state_t motstate);
 
 //---------------------------------------------------------------------
 // QUERIES

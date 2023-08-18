@@ -565,7 +565,7 @@ static void base_do_cancel_homing(int jno) {
     }
 }
 
-static void base_set_unhomed(int jno, motion_state_t motstate) {
+static void base_set_unhomed(int jno, motion_state_t motstate, int homed) {
     // Note: negative jno ==> unhome multiple joints
     emcmot_joint_t *joint;
     if (jno < 0) { set_all_unhomed(jno,motstate); return; }
@@ -595,7 +595,7 @@ static void base_set_unhomed(int jno, motion_state_t motstate) {
                  _("Cannot unhome while moving, joint %d\n"), jno);
             return;
         }
-        H[jno].homed = 0;
+        H[jno].homed = homed;
     } else {
         rtapi_print_msg(RTAPI_MSG_ERR,
              _("Cannot unhome inactive joint %d\n"), jno);
@@ -1439,7 +1439,8 @@ bool get_index_enable(int jno)                { return base_get_index_enable(jno
 void read_homing_in_pins(int njoints)              { base_read_homing_in_pins(njoints); }
 void do_home_joint(int jno)                        { base_do_home_joint(jno); }
 void do_cancel_homing(int jno)                     { base_do_cancel_homing(jno); }
-void set_unhomed(int jno, motion_state_t motstate) { base_set_unhomed(jno,motstate); }
+void set_unhomed(int jno, motion_state_t motstate) { base_set_unhomed(jno,motstate,0); }
+void set_homed(int jno, motion_state_t motstate) { base_set_unhomed(jno,motstate,1); }
 void set_joint_homing_params(int    jno,
                              double offset,
                              double home,
@@ -1492,6 +1493,7 @@ EXPORT_SYMBOL(get_index_enable);
 EXPORT_SYMBOL(read_homing_in_pins);
 EXPORT_SYMBOL(do_home_joint);
 EXPORT_SYMBOL(do_cancel_homing);
+EXPORT_SYMBOL(set_homed);
 EXPORT_SYMBOL(set_unhomed);
 EXPORT_SYMBOL(set_joint_homing_params);
 EXPORT_SYMBOL(update_joint_homing_params);
