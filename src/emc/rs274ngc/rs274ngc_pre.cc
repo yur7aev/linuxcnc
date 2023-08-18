@@ -130,9 +130,9 @@ Interp::Interp()
     : log_file(stderr),
     _setup{}
 {
-    _setup.init_once = 1;  
+    _setup.init_once = 1;
   init_named_parameters();  // need this before Python init.
- 
+
   if (!PythonPlugin::instantiate(builtin_modules)) {  // factory
     Error("Interp ctor: can\'t instantiate Python plugin");
     return;
@@ -244,8 +244,8 @@ int Interp::close()
     logOword("Interp::close()");
     // be "lazy" only if we're not aborting a call in progress
     // in which case we need to reset() the call stack
-    // this does not reset the filename properly 
-    if(_setup.use_lazy_close) //  && (_setup.call_level == 0)) 
+    // this does not reset the filename properly
+    if(_setup.use_lazy_close) //  && (_setup.call_level == 0))
     {
       _setup.lazy_closing = 1;
       return INTERP_OK;
@@ -260,7 +260,7 @@ int Interp::close()
 
   return INTERP_OK;
 }
- 
+
 
 /***********************************************************************/
 
@@ -298,7 +298,7 @@ int Interp::_execute(const char *command)
     MDImode = 1;
     status = read(command);
     if (status != INTERP_OK) {
-	// if (status > INTERP_MIN_ERROR) 
+	// if (status > INTERP_MIN_ERROR)
 	//     _setup.remap_level = 0;
 	return status;
     }
@@ -308,22 +308,22 @@ int Interp::_execute(const char *command)
 	   command ? "command" : "line",
 	   command ? command : _setup.linetext,
 	    _setup.mdi_interrupt, o_ops[eblock->o_type], eblock->o_name,
-	   _setup.call_level,_setup.remap_level, 
-	   eblock->call_type < 0 ? "*unset*" : call_typenames[eblock->call_type], 
+	   _setup.call_level,_setup.remap_level,
+	   eblock->call_type < 0 ? "*unset*" : call_typenames[eblock->call_type],
 	   call_statenames[_setup.call_state]);
 
   // process control functions -- will skip if skipping
   if ((eblock->o_name != 0) || _setup.mdi_interrupt)  {
       status = convert_control_functions(eblock, &_setup);
       CHP(status); // relinquish control if INTERP_EXECUTE_FINISH, INTERP_ERROR etc
-      
+
       // let MDI code call subroutines.
       // !!!KL not clear what happens if last execution failed while in
       // !!!KL a subroutine
 
       // NOTE: the last executed file will still be open, because "close"
       // is really a lazy close.
-    
+
       // we had an INTERP_OK, so no need to set up another call to finish after sync()
       if (_setup.mdi_interrupt) {
 	  _setup.mdi_interrupt = false;
@@ -430,7 +430,7 @@ int Interp::_execute(const char *command)
 	  // this also sets cblock->executing_remap
 	  status = execute_block(cblock, &_setup);
 #if 0
-	  // this is too naive a test and needs improving (aka: not segfault). 
+	  // this is too naive a test and needs improving (aka: not segfault).
 	  // It needs to kick in only for  new codes, not remapped ones, for which
 	  // recursion just means 'use builtin semantics'
 	  // add some kind of 'is_remapped_builtin()' macro or test method
@@ -462,7 +462,7 @@ int Interp::_execute(const char *command)
 		  // need to trigger execution of parsed _setup.block1 here
 		  // replicate MDI oword execution code here
 		  if ((eblock->o_name != 0) ||
-		      (_setup.mdi_interrupt)) { 
+		      (_setup.mdi_interrupt)) {
 
 		      status = convert_control_functions(eblock, &_setup);
 		      CHP(status);
@@ -474,7 +474,7 @@ int Interp::_execute(const char *command)
 		      while(MDImode && _setup.call_level) { // we are still in a subroutine
 			  CHP(read(0));  // reads from current file and calls parse
 			  status = execute();  // special handling for mdi errors
-			  if (status == INTERP_EXECUTE_FINISH) 
+			  if (status == INTERP_EXECUTE_FINISH)
 			      _setup.mdi_interrupt = true;
 			  CHP(status);
 		      }
@@ -682,12 +682,12 @@ int Interp::find_remappings(block_pointer block, setup_pointer settings)
     // call the remap procedure if it the code in that group is remapped unless:
     // it's an M6 or M61 and a remap is in progress
     // (recursion case)
-    if (IS_USER_MCODE(block,settings,6) &&  
+    if (IS_USER_MCODE(block,settings,6) &&
 	!(((block->m_modes[6] == 6) && remap_in_progress("M6")) ||
-	  ((block->m_modes[6] == 61) && remap_in_progress("M61")))) {  
+	  ((block->m_modes[6] == 61) && remap_in_progress("M61")))) {
 	block->remappings.insert(STEP_M_6); // then call the remap procedure
     } // else we get the builtin behaviour
-    
+
     // User defined M-Codes in group 7
     if (IS_USER_MCODE(block,settings,7))
 	block->remappings.insert(STEP_M_7);
@@ -709,9 +709,9 @@ int Interp::find_remappings(block_pointer block, setup_pointer settings)
     int mode = block->g_modes[GM_MOTION];
     if ((mode != -1) && IS_USER_GCODE(mode))
 	block->remappings.insert(STEP_MOTION);
-    
+
     // this makes it possible to call remapped codes like cycles:
-    // G84.2 x1 y2 
+    // G84.2 x1 y2
     // x3
     // will execute 'G84.2 x1 y2', then 'G84.2 x3 y2'
     // provided the remap function explicitly sets motion_mode like so:
@@ -1020,7 +1020,7 @@ int Interp::init()
 		  Error("Python plugin configure() failed, status = %d", status);
 	      }
 	  }
- 
+
 	  int n = 1;
 	  int lineno = -1;
 	  _setup.g_remapped.clear();
@@ -1508,7 +1508,7 @@ int Interp::_read(const char *command)  //!< may be NULL or a string to read
   int read_status;
 
   // this input reading code is in the wrong place. It should be executed
-  // in sync(), not here. This would make correct parameter values available 
+  // in sync(), not here. This would make correct parameter values available
   // without doing a read() (e.g. from Python).
   // Unfortunately synch() isn't called in preview (gcodemodule)
 
@@ -1550,37 +1550,37 @@ int Interp::_read(const char *command)  //!< may be NULL or a string to read
   // times in a row until it finally returns INTERP_OK, the reason being that all Python
   // procedures might 'yield INTERP_EXECUTE_FINISH' or execute a queue buster an arbitrary number
   // of times. So they need to be called again post-sync and post-read-input possibly several times.
-  // 
+  //
   // the task readahead logic assumes a block execution may result in a single INTERP_EXECUTE_FINISH
   // and readahead is started thereafter immediately. Modifying the readahead logic would be a massive
   // change. Therefore we use the trick to suppress reading the next block as required, which means
   // we will get several calls to execute() in a row which are used to finish the handlers. This is
   // needed for remapped codes which might involve up to three Python handlers, and Python oword subs.
   // Note this is not an issue for NGC oword procedures. The call/return logic will set _setup.call_state to
-  // CS_REEXEC_PROLOG, CS_REEXEC_PYBODY, CS_REEXEC_EPILOG or CS_REEXEC_PYOSUB before returning, which 
+  // CS_REEXEC_PROLOG, CS_REEXEC_PYBODY, CS_REEXEC_EPILOG or CS_REEXEC_PYOSUB before returning, which
   // also indicates the point which handler needs to be restarted
-  // 
-  // We use the following conditions to 'skip reading the next block and stay on the same block' 
+  //
+  // We use the following conditions to 'skip reading the next block and stay on the same block'
   // until done as follows:
-  // 
+  //
   // 1. block.o_type = O_call and
   //    block.call_type in {CT_PYTHON_OWORD_SUB, CT_REMAP} and
   //    _setup.call_state > CS_NORMAL
-  // 
+  //
   // 2. block.o_type in {O_endsub, O_return} and
   //    block.call_type in {CT_PYTHON_OWORD_SUB, CT_REMAP} and
   //    _setup.call_state > CS_NORMAL
-  // 
+  //
   // handlers eventually return INTERP_OK, which sets _setup.call_state to CS_NORMAL. Then
   // normal readahead continues.
   // A call frame is tagged with the eblock->call_type since this potentially needs to persist across
   // several blocks. Inside the execute_call()/execute_return() logic we use the frame call type
   // to decide what to do.
   // The handler reexec code will call read_inputs() just before continuation.
-   
+
   block_pointer eblock = &EXECUTING_BLOCK(_setup);
 
-  if ((_setup.call_state > CS_NORMAL) && 
+  if ((_setup.call_state > CS_NORMAL) &&
       (eblock->call_type != CT_NGC_OWORD_SUB)  &&
       (eblock->call_type != CT_NGC_M98_SUB)  &&
       (eblock->call_type != CT_NONE)  &&
@@ -1636,11 +1636,11 @@ int Interp::_read(const char *command)  //!< may be NULL or a string to read
 
     else // Blank line (zero length)
     {
-          /* RUM - this case reached when the block delete '/' character 
+          /* RUM - this case reached when the block delete '/' character
              is used, or READ_FULL_COMMENT is false and a comment is the
-             only content of a line. 
-             If a block o-type is in effect, block->o_number needs to be 
-             incremented to allow o-extensions to work. 
+             only content of a line.
+             If a block o-type is in effect, block->o_number needs to be
+             incremented to allow o-extensions to work.
              Note that the the block is 'refreshed' by init_block(),
              not created new, so this is a legal operation on block1. */
 
@@ -1660,7 +1660,7 @@ int Interp::_read(const char *command)  //!< may be NULL or a string to read
   return read_status;
 }
 
-int Interp::read(const char *command) 
+int Interp::read(const char *command)
 {
     int status;
     if ((status = _read(command)) > INTERP_MIN_ERROR) {
@@ -1712,7 +1712,7 @@ int Interp::unwind_call(int status, const char *file, int line, const char *func
 		_setup.sequence_number,_setup.call_level);
     }
     // call_level == 0 here.
- 
+
     if(_setup.sub_name) {
 	logDebug("unwind_call: exiting current sub '%s'\n", _setup.sub_name);
 	_setup.sub_name = 0;
@@ -1776,10 +1776,10 @@ int Interp::reset()
     _setup.linetext[0] = 0;
     _setup.blocktext[0] = 0;
     _setup.line_length = 0;
-    
+
     // drop any queued points in canon
     ON_RESET();
-    
+
     unwind_call(INTERP_OK, __FILE__,__LINE__,__FUNCTION__);
     return INTERP_OK;
 }
@@ -1819,7 +1819,7 @@ sets of origin offsets. Any parameter not given a value in the file
 has its value set to zero.
 
 */
-int Interp::restore_parameters(const char *filename)   //!< name of parameter file to read  
+int Interp::restore_parameters(const char *filename)   //!< name of parameter file to read
 {
   FORCE_LC_NUMERIC_C;
   FILE *infile;
@@ -1913,7 +1913,7 @@ complain, but does write it in the output file.
 
 */
 int Interp::save_parameters(const char *filename,      //!< name of file to write
-                             const double parameters[]) //!< parameters to save   
+                             const double parameters[]) //!< parameters to save
 {
   FORCE_LC_NUMERIC_C;
   FILE *infile;
@@ -2292,7 +2292,7 @@ max_size.
 */
 
 char * Interp::error_text(int error_code,        //!< code number of error
-                         char *error_text,      //!< char array to copy error text into  
+                         char *error_text,      //!< char array to copy error text into
                          size_t max_size)  //!< maximum number of characters to copy
 {
     if(error_code == INTERP_ERROR)
@@ -2516,21 +2516,29 @@ int Interp::ini_load(const char *filename)
 int Interp::init_tool_parameters()
 {
   if (_setup.random_toolchanger) {
-     // random_toolchanger: tool at startup expected
-    _setup.parameters[5400] = _setup.tool_table[0].toolno;
-    _setup.parameters[5401] = _setup.tool_table[0].offset.tran.x;
-    _setup.parameters[5402] = _setup.tool_table[0].offset.tran.y;
-    _setup.parameters[5403] = _setup.tool_table[0].offset.tran.z;
-    _setup.parameters[5404] = _setup.tool_table[0].offset.a;
-    _setup.parameters[5405] = _setup.tool_table[0].offset.b;
-    _setup.parameters[5406] = _setup.tool_table[0].offset.c;
-    _setup.parameters[5407] = _setup.tool_table[0].offset.u;
-    _setup.parameters[5408] = _setup.tool_table[0].offset.v;
-    _setup.parameters[5409] = _setup.tool_table[0].offset.w;
-    _setup.parameters[5410] = _setup.tool_table[0].diameter;
-    _setup.parameters[5411] = _setup.tool_table[0].frontangle;
-    _setup.parameters[5412] = _setup.tool_table[0].backangle;
-    _setup.parameters[5413] = _setup.tool_table[0].orientation;
+    // random_toolchanger: tool at startup expected
+    // find tool with pocket == 0 othervise set to tool with index 0
+    int n = 0;
+	for ( ; n < CANON_POCKETS_MAX; n++) {
+		if(_setup.tool_table[n].pocketno == 0) {
+			break;
+		}
+	}
+
+    _setup.parameters[5400] = _setup.tool_table[n].toolno;
+    _setup.parameters[5401] = _setup.tool_table[n].offset.tran.x;
+    _setup.parameters[5402] = _setup.tool_table[n].offset.tran.y;
+    _setup.parameters[5403] = _setup.tool_table[n].offset.tran.z;
+    _setup.parameters[5404] = _setup.tool_table[n].offset.a;
+    _setup.parameters[5405] = _setup.tool_table[n].offset.b;
+    _setup.parameters[5406] = _setup.tool_table[n].offset.c;
+    _setup.parameters[5407] = _setup.tool_table[n].offset.u;
+    _setup.parameters[5408] = _setup.tool_table[n].offset.v;
+    _setup.parameters[5409] = _setup.tool_table[n].offset.w;
+    _setup.parameters[5410] = _setup.tool_table[n].diameter;
+    _setup.parameters[5411] = _setup.tool_table[n].frontangle;
+    _setup.parameters[5412] = _setup.tool_table[n].backangle;
+    _setup.parameters[5413] = _setup.tool_table[n].orientation;
   } else {
     // non random_toolchanger: no tool at startup, one-time init
     if (_setup.tool_table[0].toolno == -1) {
@@ -2563,25 +2571,35 @@ int Interp::set_tool_parameters()
 {
   // invoke to set tool parameters for current tool (pocket==0)
   // when a tool is absent, set default (zero offset) tool parameters
-
   if ((! _setup.random_toolchanger) && (_setup.tool_table[0].toolno <= 0)) {
     default_tool_parameters();
     return 0;
   }
-  _setup.parameters[5400] = _setup.tool_table[0].toolno;
-  _setup.parameters[5401] = _setup.tool_table[0].offset.tran.x;
-  _setup.parameters[5402] = _setup.tool_table[0].offset.tran.y;
-  _setup.parameters[5403] = _setup.tool_table[0].offset.tran.z;
-  _setup.parameters[5404] = _setup.tool_table[0].offset.a;
-  _setup.parameters[5405] = _setup.tool_table[0].offset.b;
-  _setup.parameters[5406] = _setup.tool_table[0].offset.c;
-  _setup.parameters[5407] = _setup.tool_table[0].offset.u;
-  _setup.parameters[5408] = _setup.tool_table[0].offset.v;
-  _setup.parameters[5409] = _setup.tool_table[0].offset.w;
-  _setup.parameters[5410] = _setup.tool_table[0].diameter;
-  _setup.parameters[5411] = _setup.tool_table[0].frontangle;
-  _setup.parameters[5412] = _setup.tool_table[0].backangle;
-  _setup.parameters[5413] = _setup.tool_table[0].orientation;
+
+  int n = 0;
+  //tool in spindle have pocket == 0 for random toolchanger
+  if(_setup.random_toolchanger) {
+	for (; n < CANON_POCKETS_MAX; n++) {
+		if(_setup.tool_table[n].pocketno == 0) {
+			break;
+		}
+	}
+  }
+
+  _setup.parameters[5400] = _setup.tool_table[n].toolno;
+  _setup.parameters[5401] = _setup.tool_table[n].offset.tran.x;
+  _setup.parameters[5402] = _setup.tool_table[n].offset.tran.y;
+  _setup.parameters[5403] = _setup.tool_table[n].offset.tran.z;
+  _setup.parameters[5404] = _setup.tool_table[n].offset.a;
+  _setup.parameters[5405] = _setup.tool_table[n].offset.b;
+  _setup.parameters[5406] = _setup.tool_table[n].offset.c;
+  _setup.parameters[5407] = _setup.tool_table[n].offset.u;
+  _setup.parameters[5408] = _setup.tool_table[n].offset.v;
+  _setup.parameters[5409] = _setup.tool_table[n].offset.w;
+  _setup.parameters[5410] = _setup.tool_table[n].diameter;
+  _setup.parameters[5411] = _setup.tool_table[n].frontangle;
+  _setup.parameters[5412] = _setup.tool_table[n].backangle;
+  _setup.parameters[5413] = _setup.tool_table[n].orientation;
 
   return 0;
 }
@@ -2693,7 +2711,7 @@ FILE *Interp::find_ngc_file(setup_pointer settings,const char *basename, char *f
             newFP = fopen(newFileName, "r");
         }
     }
-    
+
     // #3 then look in the list of subroutines prefixes
     if (!newFP) {
         for (dct = 0; dct < MAX_SUB_DIRS; dct++) {
@@ -2720,7 +2738,7 @@ FILE *Interp::find_ngc_file(setup_pointer settings,const char *basename, char *f
     if (!newFP) {
         int ret;
 
-        // walks the directory hierarchy ? 
+        // walks the directory hierarchy ?
         ret = findFile(settings->wizard_root, tmpFileName, foundPlace);
 
         if (INTERP_OK == ret) {
@@ -2736,7 +2754,7 @@ FILE *Interp::find_ngc_file(setup_pointer settings,const char *basename, char *f
     }
 
     // pass what we found
-    if (foundhere && (newFP != NULL)) 
+    if (foundhere && (newFP != NULL))
         strcpy(foundhere, newFileName);
 
     // Not sure this is needed but the internet told me

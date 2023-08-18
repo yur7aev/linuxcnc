@@ -67,7 +67,7 @@ void tooldata_add_init(int nonrandom_start_idx)
 } // tooldata_add_init()
 
 int tooldata_read_entry(const char *input_line,
-                        char *ttcomments[])
+                        char *ttcomments[], int index)
 {
     char work_line[CANON_TOOL_ENTRY_LEN];
     const char *token;
@@ -192,15 +192,16 @@ int tooldata_read_entry(const char *input_line,
     } // while token
 
     if (valid) {
+
         CANON_TOOL_TABLE tdata = tooldata_entry_init();
         // verify no prior tool in pocket
-        if (tooldata_get(&tdata,idx) != IDX_OK) { UNEXPECTED_MSG; }
+        /*if (tooldata_get(&tdata,idx) != IDX_OK) { UNEXPECTED_MSG; }
         if (is_random_toolchanger && tdata.toolno != -1) {
             fprintf(stderr,"WARNING: Attempt to assign multiple toolno.s to pocket %d\n",realpocket);
             fprintf(stderr,"         %s %s()\n",__FILE__,__FUNCTION__);
             fprintf(stderr,"    WAS: pocket=%3d toolno=%3d\n",tdata.pocketno,tdata.toolno);
             fprintf(stderr,"     IS: pocket=%3d toolno=%3d\n",realpocket,toolno);
-        }
+        }*/
         tdata.toolno      = toolno;
         tdata.pocketno    = realpocket;
         tdata.offset      = offset;
@@ -208,11 +209,22 @@ int tooldata_read_entry(const char *input_line,
         tdata.frontangle  = frontangle;
         tdata.backangle   = backangle;
         tdata.orientation = orientation;
-        if (tooldata_put(tdata,idx) == IDX_FAIL) {
-            UNEXPECTED_MSG;
+        if (is_random_toolchanger)
+		{
+				if (tooldata_put(tdata,tdata.toolno) == IDX_FAIL)
+				{
+					UNEXPECTED_MSG;
+				}
         }
+        else
+        {
+			if (tooldata_put(tdata,idx) == IDX_FAIL) {
+				UNEXPECTED_MSG;
+			}
+        }
+
         if (ttcomments && comment) {
-             strcpy(ttcomments[idx], comment);
+             strcpy(ttcomments[index], comment);
         }
     } else {
          return -1;
@@ -230,7 +242,8 @@ void tooldata_format_toolline (int idx,
     char tmp[CANON_TOOL_ENTRY_LEN-1] = {0};
     snprintf(tmp,sizeof(tmp),"T%-3d P%-3d"
             ,tdata.toolno
-            ,is_random_toolchanger ? idx : tdata.pocketno);
+            //,is_random_toolchanger ? idx : tdata.pocketno);
+            ,tdata.pocketno);
     strncat(formatted_line,tmp,CANON_TOOL_ENTRY_LEN-1);
 // format zero float values as %.0f for brevity
 #define F_ITEM(item,letter) if (!ignore_zero_values || tdata.item) { \
@@ -309,6 +322,8 @@ int tooldata_load(const char *filename,
     const int nonrandom_start_idx = 1; // when reading file start at 0
     tooldata_add_init(nonrandom_start_idx);
 
+	int index = 0;
+
     while (!feof(fp)) {
         // for nonrandom machines, just read the tools into pockets 1..n
         // no matter their tool numbers.  NB leave the spindle pocket 0
@@ -316,10 +331,13 @@ int tooldata_load(const char *filename,
         if (NULL == fgets(input_line, CANON_TOOL_ENTRY_LEN, fp)) {
             break;
         }
+
+        //printf(input_line);
+
         strcpy(orig_line, input_line);
 
         // parse and store one line from tool table file
-        int entry_idx = tooldata_read_entry(input_line, ttcomments);
+        int entry_idx = tooldata_read_entry(input_line, ttcomments, index++);
         if (entry_idx <0) {
             printf("File: %s Unrecognized line skipped:\n    %s",filename, orig_line);
             continue;
@@ -384,6 +402,7 @@ int tooldata_save(const char *filename,
     // open tool table file
     if (NULL == (fp = fopen(filename, "w"))) {
         // can't open file
+        fprintf(stderr,"Tool Data Save -> can't open file\n");
         return -1;
     }
 

@@ -73,6 +73,8 @@
 #include <rtapi_string.h>
 #include "tooldata.hh"
 
+//#define DEBUG_RANDOM_TOOL_CHANGE
+
 static bool io_debug = 0;
 #define UNEXPECTED_MSG fprintf(stderr,"UNEXPECTED %s %d\n",__FILE__,__LINE__);
 
@@ -491,38 +493,51 @@ static void hal_init_pins(void)
     }
 }
 
-void load_tool(int idx) {
+void load_tool(int idx) { //idx = tool number specified by user
     CANON_TOOL_TABLE tdata;
     if(random_toolchanger) {
-        char *comment_temp;
-        // swap the tools between the desired pocket and the spindle pocket
 
-        CANON_TOOL_TABLE tzero,tpocket;
-        if (   tooldata_get(&tzero,0    ) != IDX_OK
-            || tooldata_get(&tpocket,idx) != IDX_OK) {
+        // swap the tools between the desired pocket and the spindle pocket
+        CANON_TOOL_TABLE tspindle,ttool;
+
+        int spindleIndex = tooldata_find_index_for_tool(emcioStatus.tool.toolInSpindle);
+        int toolIndex = tooldata_find_index_for_tool(idx);
+
+
+        if (   tooldata_get(&tspindle,spindleIndex) != IDX_OK
+            || tooldata_get(&ttool,toolIndex) != IDX_OK) {
             UNEXPECTED_MSG; return;
         }
+
+#ifdef DEBUG_RANDOM_TOOL_CHANGE
+        fprintf(stderr, "M6 load_tool -> change actual tool to tool number: %i\n",idx);
+        fprintf(stderr, "emcioStatus.tool.toolInSpindle is %i\n", emcioStatus.tool.toolInSpindle);
+        fprintf(stderr, "Tool in spindle %i with pocket number %i\n", tspindle.toolno, tspindle.pocketno);
+        fprintf(stderr, "Change to tool number %i pocket number %i\n", ttool.toolno, ttool.pocketno);
+#endif
         // spindle-->pocket (specified by idx)
-        tooldata_db_notify(SPINDLE_UNLOAD,tzero.toolno,idx,tzero);
-        tzero.pocketno = tpocket.pocketno;
-        if (tooldata_put(tzero,  idx) == IDX_FAIL) {
+        tooldata_db_notify(SPINDLE_UNLOAD,tspindle.toolno,idx,tspindle);
+        tspindle.pocketno = ttool.pocketno;
+        if (tooldata_put(tspindle,tspindle.toolno) == IDX_FAIL) {
             UNEXPECTED_MSG;
         }
 
         // pocket-->spindle (idx==0)
-        tooldata_db_notify(SPINDLE_LOAD,tpocket.toolno,0,tpocket);
-        tpocket.pocketno = 0;
-        if (tooldata_put(tpocket,0  ) == IDX_FAIL) {
+        tooldata_db_notify(SPINDLE_LOAD,ttool.toolno,0,ttool);
+        ttool.pocketno = 0;
+        if (tooldata_put(ttool,ttool.toolno) == IDX_FAIL) {
             UNEXPECTED_MSG;
         }
 
-        comment_temp = ttcomments[0];
-        ttcomments[0] = ttcomments[idx];
-        ttcomments[idx] = comment_temp;
-
+#ifdef DEBUG_RANDOM_TOOL_CHANGE
+		tooldata_print(ttcomments);
+#endif
         if (0 != tooldata_save(io_tool_table_file,ttcomments)) {
             emcioStatus.status = RCS_ERROR;
         }
+#ifdef DEBUG_RANDOM_TOOL_CHANGE
+		fprintf(stderr, "New tool is -> %i\n",ttool.toolno);
+#endif
     } else if(idx == 0) {
             // magic T0 = pocket 0 = no tool
         tdata = tooldata_entry_init();
@@ -673,13 +688,26 @@ static int read_inputs(void)
     }
 
     if (*iocontrol_data->tool_prepare) {
+
+#ifdef DEBUG_RANDOM_TOOL_CHANGE
+				fprintf(stderr, "*iocontrol_data->tool_prepare\n");
+#endif
+
         if (*iocontrol_data->tool_prepared) {
             emcioStatus.tool.pocketPrepped = *(iocontrol_data->tool_prep_index); //check if tool has been prepared
             *(iocontrol_data->tool_prepare) = 0;
             *(iocontrol_data->state) = ST_IDLE; // normal prepare completion
             retval |= TI_PREPARE_COMPLETE;
+
+#ifdef DEBUG_RANDOM_TOOL_CHANGE
+				fprintf(stderr, "TI_PREPARE_COMPLETE");
+#endif
         } else {
             *(iocontrol_data->state) = ST_PREPARING;
+
+#ifdef DEBUG_RANDOM_TOOL_CHANGE
+				fprintf(stderr, "TI_PREPARING");
+#endif
             retval |= TI_PREPARING;
         }
     }
@@ -717,13 +745,20 @@ static int read_inputs(void)
                 // the tool now in the spindle is the one that was prepared
                 CANON_TOOL_TABLE tdata;
                 if (tooldata_get(&tdata,emcioStatus.tool.pocketPrepped) != IDX_OK) {
+
+#ifdef DEBUG_RANDOM_TOOL_CHANGE
+				fprintf(stderr, "UNEXPECTED_MSG");
+#endif
+
                     UNEXPECTED_MSG; return -1;
                 }
-                emcioStatus.tool.toolInSpindle = tdata.toolno;
+                //emcioStatus.tool.toolInSpindle = tdata.toolno;
             }
-            *(iocontrol_data->tool_number) = emcioStatus.tool.toolInSpindle; // likewise in HAL
-            load_tool(emcioStatus.tool.pocketPrepped);
+
+            load_tool(*(iocontrol_data->tool_prep_number));
+            emcioStatus.tool.toolInSpindle = *(iocontrol_data->tool_prep_number);
             emcioStatus.tool.pocketPrepped = -1; // reset the tool prepped number, -1 to permit tool 0 to be loaded
+            *(iocontrol_data->tool_number) = emcioStatus.tool.toolInSpindle; // likewise in HAL
             *(iocontrol_data->tool_prep_number) = 0; // likewise in HAL
             *(iocontrol_data->tool_prep_pocket) = 0; // likewise in HAL
             *(iocontrol_data->tool_prep_index)  = 0; // likewise in HAL
@@ -894,11 +929,16 @@ int main(int argc, char *argv[])
     emcioStatus.aux.estop = 1; // estop=1 means to emc that ESTOP condition is met
     emcioStatus.tool.pocketPrepped = -1;
     if (random_toolchanger) {
-        CANON_TOOL_TABLE tdata;
-        if (tooldata_get(&tdata,0) != IDX_OK) {
-            UNEXPECTED_MSG; return -1;
-        }
-        emcioStatus.tool.toolInSpindle = tdata.toolno;
+
+		int spindleTool = tooldata_get_tool_in_spindle();
+
+		if(spindleTool > -1) emcioStatus.tool.toolInSpindle = spindleTool;
+		else emcioStatus.tool.toolInSpindle = 0;
+
+#ifdef DEBUG_RANDOM_TOOL_CHANGE
+		fprintf(stderr,"Init tool is %i\n",emcioStatus.tool.toolInSpindle);
+#endif
+
     } else {
         emcioStatus.tool.toolInSpindle = 0;
     }
@@ -1031,30 +1071,46 @@ int main(int argc, char *argv[])
         {
             int idx = 0;
             int toolno = ((EMC_TOOL_PREPARE*)emcioCommand)->tool;
+
             CANON_TOOL_TABLE tdata;
-            idx = tooldata_find_index_for_tool(toolno);
+            if (!random_toolchanger)
+				idx = tooldata_find_index_for_tool(toolno);
+			else
+				idx = toolno;
 #ifdef TOOL_NML
             if (!random_toolchanger && toolno == 0) { idx = 0; }
 #endif
             rtapi_print_msg(RTAPI_MSG_DBG, "EMC_TOOL_PREPARE tool=%d pocket=%d\n", toolno, idx);
 
             // it doesn't make sense to prep the spindle pocket
-            if (random_toolchanger && idx == 0) {
+            if (random_toolchanger && idx == emcioStatus.tool.toolInSpindle) {
+#ifdef DEBUG_RANDOM_TOOL_CHANGE
+				fprintf(stderr, "Tool %i is in spindle -> break prepare tool\n",toolno);
+#endif
                 break;
             }
-            *(iocontrol_data->tool_prep_index) = idx;
-            if (idx == -1) { // not found
+
+            *(iocontrol_data->tool_prep_index) = tooldata_find_index_for_tool(toolno);
+            if (*(iocontrol_data->tool_prep_index) == -1) { // not found
+#ifdef DEBUG_RANDOM_TOOL_CHANGE
+				fprintf(stderr, "New tool %i not found in tool table\n",toolno);
+#endif
                 emcioStatus.tool.pocketPrepped = 0;
             } else {
-                if (tooldata_get(&tdata,idx) != IDX_OK) {
-                     UNEXPECTED_MSG;
+
+				if(random_toolchanger)
+				{
+                     if (tooldata_get(&tdata,*(iocontrol_data->tool_prep_index)) != IDX_OK) UNEXPECTED_MSG;
                 }
-                /* set tool number first */
-                *(iocontrol_data->tool_prep_pocket) = random_toolchanger? idx: tdata.pocketno;
+                else if (tooldata_get(&tdata,idx) != IDX_OK) UNEXPECTED_MSG;
+
+                *(iocontrol_data->tool_prep_pocket) = tdata.pocketno;
+
                 if (!random_toolchanger && idx == 0) {
                     *(iocontrol_data->tool_prep_number) = 0;
                     *(iocontrol_data->tool_prep_pocket) = 0;
                 } else {
+
                     *(iocontrol_data->tool_prep_number) = tdata.toolno;
                     if (tdata.toolno != toolno) // sanity check
                         rtapi_print_msg(RTAPI_MSG_DBG, "EMC_TOOL_PREPARE: mismatch: tooltable[%d]=%d, got %d\n",
@@ -1069,6 +1125,10 @@ int main(int argc, char *argv[])
                 *(iocontrol_data->tool_prepare) = 1;
                 *(iocontrol_data->state) = ST_PREPARING;
 
+#ifdef DEBUG_RANDOM_TOOL_CHANGE
+                fprintf(stderr, "Start preparing tool %i\n",tdata.toolno);
+#endif
+
                 // delay fetching the next message until prepare done
                 if (!(input_status & TI_PREPARE_COMPLETE)) {
                     emcioStatus.status = RCS_EXEC;
@@ -1081,16 +1141,16 @@ int main(int argc, char *argv[])
         {
             rtapi_print_msg(RTAPI_MSG_DBG, "EMC_TOOL_LOAD loaded=%d prepped=%d\n", emcioStatus.tool.toolInSpindle, emcioStatus.tool.pocketPrepped);
 
-            // it doesn't make sense to load a tool from the spindle pocket
-            if (random_toolchanger && emcioStatus.tool.pocketPrepped == 0) {
-            break;
-            }
-
-            // it's not necessary to load the tool already in the spindle
         CANON_TOOL_TABLE tdata;
         if (tooldata_get(&tdata, emcioStatus.tool.pocketPrepped) != IDX_OK) {
             UNEXPECTED_MSG;
         }
+
+        // it's not necessary to load the tool already in the spindle
+        if (random_toolchanger && emcioStatus.tool.toolInSpindle == tdata.toolno) {
+			UNEXPECTED_MSG;
+        }
+
         if (!random_toolchanger && (emcioStatus.tool.pocketPrepped > 0) &&
             (emcioStatus.tool.toolInSpindle == tdata.toolno) ) {
             break;
@@ -1195,11 +1255,16 @@ int main(int argc, char *argv[])
             }
             load_tool(idx);
 
-            idx=0; // update spindle (fix legacy behavior)
-            if (tooldata_get(&tdata,idx) != IDX_OK) {
-                UNEXPECTED_MSG;
+            if(random_toolchanger) {
+                fprintf(stderr,"Tool %i is in spindle\n",idx);
+		//emcioStatus.tool.toolInSpindle = idx;
+            } else {
+                idx=0; // update spindle (fix legacy behavior)
+                if (tooldata_get(&tdata,idx) != IDX_OK) {
+                    UNEXPECTED_MSG;
+                }
+                emcioStatus.tool.toolInSpindle = tdata.toolno;
             }
-            emcioStatus.tool.toolInSpindle = tdata.toolno;
             rtapi_print_msg(RTAPI_MSG_DBG,
                  "EMC_TOOL_SET_NUMBER idx=%d old_loaded=%d new_number=%d\n",
                  idx, emcioStatus.tool.toolInSpindle, tdata.toolno);

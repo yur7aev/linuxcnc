@@ -234,9 +234,9 @@ int tooldata_last_index_get(void)
     }
 } // tooldata_last_index_get()
 
-toolidx_t tooldata_put(struct CANON_TOOL_TABLE tdata,int idx)
+toolidx_t tooldata_put(struct CANON_TOOL_TABLE tdata,int idx) //idx = tool number
 {
-    toolidx_t ret;
+	    toolidx_t ret;
     if (!tool_mmap_base) {
         fprintf(stderr,"%5d tooldata_put() no tool_mmap_base\n",getpid());
         return IDX_FAIL;
@@ -246,26 +246,67 @@ toolidx_t tooldata_put(struct CANON_TOOL_TABLE tdata,int idx)
         UNEXPECTED_MSG;
         return IDX_FAIL;
     }
-    if (tool_mmap_mutex_get()) {
-        fprintf(stderr,"!!!%5d PROBLEM: tooldata_put(): mutex get fail\n",getpid());
-        fprintf(stderr,"!!!continuing without mutex\n");
-        return IDX_FAIL;
-    }
 
-    tooldata_header_t *hptr = HPTR();
-    if (idx > (int)(hptr->last_index) ) {  // extend known indices
-        hptr->last_index = idx;
-        ret = IDX_NEW;
-    } else {
-        ret = IDX_OK;
-    }
-    CANON_TOOL_TABLE *tptr = TPTR(idx);
-    *tptr = tdata;
+    if (tool_mmap_is_random_toolchanger())
+    {
+			int index=tooldata_find_index_for_tool(idx);
+            if(index >= 0)
+            {
+                CANON_TOOL_TABLE *tptr = TPTR(index);
+                if (tool_mmap_mutex_get()) {
+					fprintf(stderr,"!!!%5d PROBLEM: tooldata_put(): mutex get fail\n",getpid());
+					fprintf(stderr,"!!!continuing without mutex\n");
+					return IDX_FAIL;
+				}
+				//fprintf(stderr,"Change tool %i\n", idx);
+                *tptr = tdata;
+                tool_mmap_mutex_give();
+                return IDX_OK;
+            }
+            else //new tool add into table
+            {
+				//fprintf(stderr,"Add new tool %i\n", idx);
+				tool_mmap_mutex_get();
+				for (int i = 0; i<CANON_POCKETS_MAX; i++)
+				{
+					CANON_TOOL_TABLE *tptr = TPTR(i);
+					if (tptr->toolno == -1)
+					{
+						*tptr = tdata;
+						tool_mmap_mutex_give();
+						return IDX_OK;
+					}
+				}
+				tool_mmap_mutex_give();
+				return IDX_FAIL;
+            }
+     }
+     else
+     {
+		 if (tool_mmap_mutex_get()) {
+			fprintf(stderr,"!!!%5d PROBLEM: tooldata_put(): mutex get fail\n",getpid());
+			fprintf(stderr,"!!!continuing without mutex\n");
+			return IDX_FAIL;
+		}
 
-    if (idx==0 && toolstat) { //note sai does not use toolTableCurrent
-       *(struct CANON_TOOL_TABLE*)(&toolstat->toolTableCurrent) = tdata;
-    }
-    tool_mmap_mutex_give(); return ret;
+		 tooldata_header_t *hptr = HPTR();
+		 if (idx > (int)(hptr->last_index) ) {  // extend known indices
+         hptr->last_index = idx;
+         ret = IDX_NEW;
+         CANON_TOOL_TABLE *tptr = TPTR(idx);
+         *tptr = tdata;
+		 } else {
+         ret = IDX_OK;
+         int indexret=idx;
+         CANON_TOOL_TABLE *tptr = TPTR(indexret);
+         *tptr = tdata;
+         }
+
+		 if (idx==0 && toolstat) { //note sai does not use toolTableCurrent
+			*(struct CANON_TOOL_TABLE*)(&toolstat->toolTableCurrent) = tdata;
+		 }
+		 tool_mmap_mutex_give(); return ret;
+	 }
 } // tooldata_put()
 
 void tooldata_reset()
@@ -280,8 +321,9 @@ void tooldata_reset()
     tool_mmap_mutex_give(); return;
 } // tooldata_reset()
 
-toolidx_t tooldata_get(CANON_TOOL_TABLE* pdata, int idx)
+toolidx_t tooldata_get(CANON_TOOL_TABLE* pdata, int idx) //idx = idx
 {
+
     if (!tool_mmap_base) {
         fprintf(stderr,"%5d tooldata_get() not mmapped BYE\n", getpid() );
         exit(EXIT_FAILURE);
@@ -295,8 +337,8 @@ toolidx_t tooldata_get(CANON_TOOL_TABLE* pdata, int idx)
         UNEXPECTED_MSG;
         fprintf(stderr,"!!!continuing without mutex\n");
     }
-    *pdata = *TPTR(idx);
 
+    *pdata = *TPTR(idx);
     tool_mmap_mutex_give(); return IDX_OK;
 } // tooldata_get()
 
@@ -313,7 +355,7 @@ int tooldata_find_index_for_tool(int toolno)
     }
 
     int foundidx = -1;
-    for (idx = 0; idx <= (int)hptr->last_index; idx++) { //note <=
+    for (idx = 0; idx<CANON_POCKETS_MAX; idx++) {
         CANON_TOOL_TABLE *tptr = TPTR(idx);
         if (tptr->toolno == toolno) {
             foundidx = idx;
@@ -324,3 +366,36 @@ int tooldata_find_index_for_tool(int toolno)
     tool_mmap_mutex_give();
     return foundidx;
 } // tooldata_find_index_for_tool()
+
+int tooldata_get_tool_in_spindle(void)
+{
+    int ret = -1;
+    tool_mmap_mutex_get();
+
+    for (int i = 0; i<CANON_POCKETS_MAX; i++)
+    {
+        CANON_TOOL_TABLE *tptr = TPTR(i);
+        if (tptr->toolno >= 0  && tptr->pocketno == 0) {
+            ret = tptr->toolno;
+            break;
+        }
+    }
+
+    tool_mmap_mutex_give();
+    return ret;
+} // tooldata_get_tool_in_spindle()
+
+void tooldata_print(char *ttcomments[])
+{
+    tool_mmap_mutex_get();
+    fprintf(stderr,"Actual tool table\n");
+    fprintf(stderr,"-----------------\n");
+    for (int i = 0; i<CANON_POCKETS_MAX; i++)
+    {
+        CANON_TOOL_TABLE *tptr = TPTR(i);
+        if (tptr->toolno >= 0) {
+			fprintf(stderr,"Tool %i Pocket %i Comment %s\n", tptr->toolno, tptr->pocketno, ttcomments[i]);
+        }
+    }
+    tool_mmap_mutex_give();
+} // tooldata_print()

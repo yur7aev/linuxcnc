@@ -58,6 +58,8 @@ void   tooldata_reset(void);
 void   tooldata_last_index_set(int idx);
 int    tooldata_last_index_get(void);
 int    tooldata_find_index_for_tool(int toolno);
+int    tooldata_get_tool_in_spindle(void);
+void   tooldata_print(char *ttcomments[]);
 
 // ignore_zero_values:1 for file writes
 //                   :0 for use with tooldata_db_notify()
@@ -70,7 +72,8 @@ void   tooldata_format_toolline (int idx,
 
 void   tooldata_add_init(int nonrandom_start_idx);
 int    tooldata_read_entry(const char *input_line,
-                           char *ttcomments[]);
+                           char *ttcomments[],
+                           int index);
 
 void   tooldata_set_db(tooldb_t mode);
 

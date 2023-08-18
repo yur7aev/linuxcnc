@@ -223,7 +223,7 @@ int tooldata_db_getall() {
         }
         char **ttcomments = NULL; //not used with db
 
-        int foundidx = tooldata_read_entry(reply,ttcomments);
+        int foundidx = -1;
         ct++;
         if (foundidx < 0) {
             fprintf(stderr,"!!!tooldata_db_getall %s\n",reply);

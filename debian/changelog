@@ -1,6 +1,6 @@
-linuxcnc (1:2.9.0nyx37) UNRELEASED; urgency=medium
+linuxcnc (1:2.9.0nyx37rtc) UNRELEASED; urgency=medium
 
-  * initial merge
+  * 2.9 merge, random tc patch from forrestg
 
  -- Dmitry Yurtaev <dmitry@yurtaev.com>  Mon, 31 Jul 2023 13:34:01 +0300
 
