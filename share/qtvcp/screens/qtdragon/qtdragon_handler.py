@@ -97,11 +97,13 @@ class HandlerClass:
                               "search_vel", "probe_vel", "max_probe", "eoffset_count"]
         self.onoff_list = ["frame_program", "frame_tool", "frame_dro", "frame_override", "frame_status"]
         self.auto_list = ["chk_eoffsets", "cmb_gcode_history","lineEdit_eoffset_count"]
-        self.axis_a_list = ["label_axis_a", "dro_axis_a", "action_zero_a", "axistoolbutton_a",
-                            "dro_button_stack_a", "widget_jog_angular", "widget_increments_angular",
-                            "a_plus_jogbutton", "a_minus_jogbutton"]
+        self.axis_4_list = ["label_axis_4", "dro_axis_4", "action_zero_4", "axistoolbutton_4",
+                            "dro_button_stack_4", "plus_jogbutton_4", "minus_jogbutton_4"]
+        self.axis_5_list = ["label_axis_5", "dro_axis_5", "action_zero_5", "axistoolbutton_5",
+                            "dro_button_stack_5",
+                            "plus_jogbutton_5", "minus_jogbutton_5"]
         self.button_response_list = ["btn_start", "btn_home_all", "btn_home_x", "btn_home_y",
-                            "btn_home_z", "action_home_a", "btn_reload_file", "macrobutton0", "macrobutton1",
+                            "btn_home_z", "action_home_4","action_home_5", "btn_reload_file", "macrobutton0", "macrobutton1",
                             "macrobutton2", "macrobutton3", "macrobutton4", "macrobutton5", "macrobutton6",
                             "macrobutton7", "macrobutton8", "macrobutton9"]
         self.statusbar_reset_time = 10000 # ten seconds
@@ -147,7 +149,6 @@ class HandlerClass:
 """ %(  os.path.expanduser('~/linuxcnc'),
         os.path.join(paths.IMAGEDIR,'lcnc_swoop.png'))
 
-
     def class_patch__(self):
         # override file manager load button
         self.old_fman = FM.load
@@ -170,11 +171,33 @@ class HandlerClass:
         self.w.page_buttonGroup.buttonClicked.connect(self.main_tab_changed)
         self.w.filemanager_usb.showMediaDir(quiet = True)
 
-    # hide widgets for A axis if not present
-        if "A" not in INFO.AVAILABLE_AXES:
-            for i in self.axis_a_list:
+    # hide or initiate 4th/5th AXIS dro/jog
+        flag = False
+        flag4 = True
+        num = 4
+        for temp in ('A','B','C','U','V','W'):
+            if temp in INFO.AVAILABLE_AXES:
+                if temp in ('A','B','C'):
+                    flag = True
+                self.initiate_axis_dro(num,temp)
+                num +=1
+                if num ==6:
+                    break
+        # no 5th axis
+        if num < 6:
+            for i in self.axis_5_list:
                 self.w[i].hide()
-            self.w.lbl_increments_linear.setText("INCREMENTS")
+        # no 4th axis
+        if num < 5 :
+            for i in self.axis_4_list:
+                self.w[i].hide()
+        # angular increment controls
+        if flag:
+           self.w.lbl_increments_linear.setText("INCREMENTS")
+        else:
+            self.w.widget_jog_angular.hide()
+            self.w.widget_increments_angular.hide()
+
     # set validators for lineEdit widgets
         for val in self.lineedit_list:
             self.w['lineEdit_' + val].setValidator(self.valid)
@@ -182,7 +205,7 @@ class HandlerClass:
     # check for default setup html file
         try:
             # web view widget for SETUP page
-            if self.w.web_view:
+            if self.w.webwidget:
                 self.toolBar = QtWidgets.QToolBar(self.w)
                 self.w.tabWidget_setup.setCornerWidget(self.toolBar)
 
@@ -224,12 +247,11 @@ class HandlerClass:
                 self.writeBtn.clicked.connect(self.writer)
                 self.toolBar.addWidget(self.writeBtn)
 
-                self.w.layout_HTML.addWidget(self.w.web_view)
                 if os.path.exists(self.default_setup):
-                    self.w.web_view.load(QtCore.QUrl.fromLocalFile(self.default_setup))
+                    self.w.webwidget.load(QtCore.QUrl.fromLocalFile(self.default_setup))
                 else:
-                    self.w.web_view.setHtml(self.html)
-                self.w.web_view.page().urlChanged.connect(self.onLoadFinished)
+                    self.w.webwidget.setHtml(self.html)
+                self.w.webwidget.page().urlChanged.connect(self.onLoadFinished)
 
         except Exception as e:
             print("No default setup file found - {}".format(e))
@@ -990,10 +1012,10 @@ class HandlerClass:
             fname = filename+'.html'
             try:
                 if os.path.exists(fname):
-                    self.w.web_view.load(QtCore.QUrl.fromLocalFile(fname))
+                    self.w.webwidget.loadFile(fname)
                     self.add_status("Loaded HTML file : {}".format(fname), CRITICAL)
                 else:
-                    self.w.web_view.setHtml(self.html)
+                    self.w.webwidget.setHtml(self.html)
             except Exception as e:
                 self.add_status("Error loading HTML file {} : {}".format(fname,e))
             # look for PDF setup files
@@ -1011,10 +1033,11 @@ class HandlerClass:
 
         if file_extension == ".html":
             try:
-                self.w.web_view.load(QtCore.QUrl.fromLocalFile(fname))
+                self.w.webwidget.loadFile(fname)
                 self.add_status("Loaded HTML file : {}".format(fname))
                 self.w.stackedWidget_mainTab.setCurrentIndex(TAB_SETUP)
                 self.w.stackedWidget.setCurrentIndex(0)
+                self.w.tabWidget_setup.setCurrentIndex(1)
                 self.w.btn_setup.setChecked(True)
                 self.w.jogging_frame.hide()
             except Exception as e:
@@ -1023,6 +1046,11 @@ class HandlerClass:
             if os.path.exists(fname):
                 self.PDFView.loadView(fname)
                 self.add_status("Loaded PDF file : {}".format(fname))
+                self.w.stackedWidget_mainTab.setCurrentIndex(TAB_SETUP)
+                self.w.stackedWidget.setCurrentIndex(0)
+                self.w.tabWidget_setup.setCurrentIndex(1)
+                self.w.btn_setup.setChecked(True)
+                self.w.jogging_frame.hide()
 
     # NGCGui library overridden function
     # adds an error message to status
@@ -1220,9 +1248,9 @@ class HandlerClass:
     def zoomWeb(self):
         # webview
         try:
-            f = self.w.web_view.zoomFactor() +.5
+            f = self.w.webwidget.zoomFactor() +.5
             if f > 2:f = 1
-            self.w.web_view.setZoomFactor(f)
+            self.w.webwidget.setZoomFactor(f)
         except:
             pass
 
@@ -1238,21 +1266,21 @@ class HandlerClass:
     def homeWeb(self):
         try:
             if os.path.exists(self.default_setup):
-                self.w.web_view.load(QtCore.QUrl.fromLocalFile(self.default_setup))
+                self.w.webwidget.load(QtCore.QUrl.fromLocalFile(self.default_setup))
             else:
-                self.w.web_view.setHtml(self.html)
+                self.w.webwidget.setHtml(self.html)
         except:
             pass
     # setup tab's web page back button
     def back(self):
         try:
             try:
-                self.w.web_view.page().triggerAction(QWebEnginePage.Back)
+                self.w.webwidget.page().triggerAction(QWebEnginePage.Back)
             except:
                 if os.path.exists(self.default_setup):
-                    self.w.web_view.load(QtCore.QUrl.fromLocalFile(self.default_setup))
+                    self.w.webwidget.load(QtCore.QUrl.fromLocalFile(self.default_setup))
                 else:
-                    self.w.web_view.setHtml(self.html)
+                    self.w.webwidget.setHtml(self.html)
         except:
             pass
 
@@ -1260,21 +1288,21 @@ class HandlerClass:
     def forward(self):
         try:
             try:
-                self.w.web_view.page().triggerAction(QWebEnginePage.Forward)
+                self.w.webwidget.page().triggerAction(QWebEnginePage.Forward)
             except:
-                self.w.web_view.load(QtCore.QUrl.fromLocalFile(self.docs))
+                self.w.webwidget.load(QtCore.QUrl.fromLocalFile(self.docs))
         except:
             pass
 
     # setup tab's web page - enable/disable buttons
     def onLoadFinished(self):
         try:
-            if self.w.web_view.history().canGoBack():
+            if self.w.webwidget.history().canGoBack():
                 self.backBtn.setEnabled(True)
             else:
                 self.backBtn.setEnabled(False)
 
-            if self.w.web_view.history().canGoForward():
+            if self.w.webwidget.history().canGoForward():
                 self.forBtn.setEnabled(True)
             else:
                 self.forBtn.setEnabled(False)
@@ -1403,8 +1431,11 @@ class HandlerClass:
             num = 1
         else:
             num = 0
-        for i in INFO.AVAILABLE_AXES:
-            self.w['dro_button_stack_%s'%i.lower()].setCurrentIndex(num)
+        for n,i in enumerate(INFO.AVAILABLE_AXES):
+            if n >2:
+                self.w['dro_button_stack_%s'%(n+1)].setCurrentIndex(num)
+            else:
+                self.w['dro_button_stack_%s'%i.lower()].setCurrentIndex(num)
 
         # user tabs button cycles between all user tabs
         main_current = self.w.stackedWidget_mainTab.currentIndex()
@@ -1464,6 +1495,39 @@ class HandlerClass:
                 self.w.splitter_h.restoreState(QtCore.QByteArray(splitterSetting))
             except Exception as e:
                 print(e)
+
+    # set axis 4/5 dro widgets to the proper axis
+    # TODO do this with all the axes for more flexibility
+    def initiate_axis_dro(self, num, axis):
+        self.w['label_axis_{}'.format(num)].setText(axis)
+        jnum = INFO.GET_JOG_FROM_NAME.get(axis)
+        # DRO uses axis index
+        index = "XYZABCUVW".index(axis)
+        self.w['dro_axis_{}'.format(num)].setProperty('Qjoint_number',index)
+        self.w['action_zero_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['axistoolbutton_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['axistoolbutton_{}'.format(num)].setText('REF {}'.format(axis))
+        self.w['action_home_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['action_home_{}'.format(num)].setProperty('joint_number_status',jnum)
+        self.w['action_home_{}'.format(num)].setProperty('joint',index)
+        self.w['offsettoolbutton_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['plus_jogbutton_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['plus_jogbutton_{}'.format(num)].setProperty('joint_number',jnum)
+        a = axis.lower()
+        try:
+            icn = QtGui.QIcon(QtGui.QPixmap(':/buttons/images/{}_plus_jog_button.png'.format(a)))
+            if icn.isNull(): raise Exception
+            self.w['plus_jogbutton_{}'.format(num)].setIcon(icn)
+        except Exception as e:
+            self.w['plus_jogbutton_{}'.format(num)].setProperty('text','{}+'.format(axis))
+        self.w['minus_jogbutton_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['minus_jogbutton_{}'.format(num)].setProperty('joint_number',jnum)
+        try:
+            icn = QtGui.QIcon(QtGui.QPixmap(':/buttons/images/{}_minus_jog_button.png'.format(a)))
+            if icn.isNull(): raise Exception
+            self.w['minus_jogbutton_{}'.format(num)].setIcon(icn)
+        except Exception as e:
+            self.w['minus_jogbutton_{}'.format(num)].setProperty('text','{}-'.format(axis))
 
     #####################
     # KEY BINDING CALLS #

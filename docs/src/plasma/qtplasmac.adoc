@@ -3136,6 +3136,59 @@ USER_COMMAND_FILE = my_custom_code.py
 A user periodic file must be named user_periodic.py and must be loaded in the machines config directory.
 This file is processed every cycle (usually 100 ms) and is used for functions that require regular updating.
 
+=== Custom G-code Filter
+
+All incoming G-code is parsed by a G-code filter to ensure it is suitable for QtPlasmaC.
+It is possible to extend this filter with custom python code executed from a file in the configuration directory to aid in converting different flavours of G-code to a format suitable for QtPlasmaC.
+
+The name of this file is custom_filter.py and it will be automatically used if it exists.
+
+There are three preset methods available for use:
+
+[cols="1,4",options="header"]
+|===
+|Name | Function
+|custom_pre_process |this does basic processing of each line before any processing is done in the filter
+|custom_pre_parse |this parses any G-code from a line *before* any parsing done in the filter
+|custom_post_parse |this parses any G-code from a line *after* any parsing done in the filter
+|===
+
+These methods are applied by the following procedure:
+
+- define the method with an argument for the incoming data
+- add any required code to manipulate the data
+- return the resultant data
+- attach the new method
+
+For example to remove any code beginning with 'G71' and change 'M2' to 'M5 $0' and 'M2':
+
+[source,python]
+----
+def custom_pre_parse(data):
+    if data[:3] == 'G71':
+        return(None)
+    if data == 'M2':
+        return(f'M5 $0\n\n{data}')
+    return(data)
+self.custom_pre_parse = custom_pre_parse
+----
+
+In addition to these it is also possible to override any existing method in the filter the same way.
+This requires defining the same number of arguments as the existing method, noting that 'self' in the original does not constitute an argument.
+
+[source,python]
+----
+def new_method_name(data):
+    if data[:3] == 'G71':
+        return(None)
+    return(data)
+self.old_method_name = new_method_name
+----
+
+[NOTE]
+The existing filter code may be observed in the file /bin/qtplasmac_gcode +
+The file sim/qtplasmac/custom_filter.py has example skeleton code for custom filtering
+
 == QtPlasmaC Advanced Topics
 
 [[plasma:custom-user-buttons]]
@@ -3641,6 +3694,7 @@ The following HAL bit pins are always created. The HAL pin has the identical beh
 |Abort the loaded G-code program m|qtplasmac.ext_abort |CYCLE STOP
 |Touchoff X & Y axes to zero m|qtplasmac.ext_touchoff |X0Y0
 |Use a laser to set an origin with or without rotation m|qtplasmac.ext_laser_touchoff |LASER
+|Toggle qtplasmac.laser_on pin m|qtplasmac.ext_laser_toggle |N/A
 |Run/Pause/Resume the loaded G-code program m|qtplasmac.ext_run_pause |CYCLE START, CYCLE PAUSE, CYCLE RESUME in sequence
 |Torch height override plus m|qtplasmac.ext_height_ovr_plus |OVERRIDE + 
 |Torch height override minus m|qtplasmac.ext_height_ovr_minus |OVERRIDE -

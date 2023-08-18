@@ -671,7 +671,7 @@ If you press and hold the button a pop up menu will show allowing one to:
 You must have selected an entry dialog that corresponds to the dialog_code_string,
 usually this is selected from the screenOptions widget.
 
-You can select the property `halpin_option', it will then set a HAL pin true when the axis is selected.
+You can select the property 'halpin_option', it will then set a HAL pin true when the axis is selected.
 The property 'joint_number' should be set to the appropriate joint number.
 The property 'axis_letter' should be set to the appropriate axis letter.
 
@@ -843,11 +843,23 @@ image::images/qtvcp_gcodeGraphics.png["QtVCP GcodeGraphics: G-code Graphic Backp
 This *displays the current G-code in a graphical form*.
 
 .Stylesheets Properties
+*`dro-font/dro-large-font`* _(string)_::
+  Sets the small and large DRO font properties +
+  Here we reference with the widget base name; GCodeGraphics
+[source,{css}]
+----
+GCodeGraphics{
+    qproperty-dro_font:"monospace  bold 12";
+}
+GCodeGraphics{
+    qproperty-dro_large_font:"Times 25";
+}
+----
 
 *`_view`* _(string)_::
   Sets the _default view orientation_ on GUI load. +
   Valid choices for a lathe are p, y, y2. For other screens, valid choices are p, x, y, z, z2. +
-  The following shows an example of how to set this property:
+  The following shows an example of how to set this property (referenced using the widget user selected name):
 +
 [source,{css}]
 ----
@@ -1086,6 +1098,8 @@ The `ACTION` library can control the G-code graphics widget.
   * `Y2`
   * `Z`
   * `Z2`
+  * 'set-large-dro'
+  * 'set-small-dro'
 *`ACTION.ADJUST_PAN(_X,Y_)`*::
   Directly set the relative pan of view in x and y direction.
 *`ACTION.ADJUST_ROTATE(_X,Y_)`*::
@@ -2707,6 +2721,12 @@ The above properties could be set in:
 self.w.joypadename.setProperty('true_color','green')
 self.w.joypadename.setProperty('false_color','red')
 ----
+
+=== 'WebWidget'
+This widget will create a html/pdf viewing page using the QtWebKit or 
+QtWebEngine libraries. The newer QtWebEngine is preferred if both are on the system. +
+If the QtWebEngine library is used with the QtDesigner editor, a placeholder QWidget will show in Qesigner.
+This will be replaced with thw QtWebEngine widget at run time.
 
 [[sec:qtvcp:widgets:baseclass-mixin]]
 == BaseClass/Mixin Widgets

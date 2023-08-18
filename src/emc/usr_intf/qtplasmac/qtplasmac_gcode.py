@@ -142,6 +142,12 @@ class Filter():
         self.warnChar = []
         # create a dict of material numbers and kerf widths
         self.get_materials()
+        # setup for custom filtering
+        self.cfFile = os.path.join(DIR, 'custom_filter.py')
+        if not os.path.isfile(self.cfFile):
+            self.cfFile = None
+        if self.cfFile:
+            exec(open(self.cfFile).read())
         # process the g-code file line by line
         self.process_file()
         # for pierce only mode
@@ -169,6 +175,11 @@ class Filter():
             for line in inLines:
                 self.lineNum += 1
                 self.lineNumOrg += 1
+                # allow custom processing before standard processing
+                if self.cfFile:
+                    line = self.custom_pre_process(line)
+                    if not line:
+                        continue
                 # if original is already filtered there is no need to process again
                 if self.filtered:
                     if not ';qtplasmac filtered G-code file' in line:
@@ -221,7 +232,10 @@ class Filter():
                             continue
                         code = self.parse_code(both[0])
                         cmnt = both[1]
-                        line = f'{code} {tag}{cmnt}'
+                        if code:
+                            line = f'{code} {tag}{cmnt}'
+                        else:
+                            line = f'{tag}{cmnt}'
                 # code only - parse the code
                 else:
                     line = self.parse_code(line)
@@ -238,14 +252,28 @@ class Filter():
                     self.gcodeList.append(line)
 
     def parse_code(self, data):
+        # allow custom parsing before standard code parsing
+        if self.cfFile:
+            data = self.custom_pre_parse(data)
+            if not data:
+                return(None)
         # set the current g-code
         self.lastG = self.set_last_gcode(data, self.lastG)
         # if data starts with axis then preface with last g-code
         if data[0] in 'XYZAB':
             data = f'G{self.lastG} {data}'
         # add leading 0's to G & M codes < 10
-        if data[0] in 'GM' and (len(data) < 3 or not data[2].isdigit()):
-            data = data[0] + '0' + data[1:]
+        tmp = ''
+        while data:
+            tmp += data[0]
+            if data[0] in 'GM' and data[1].isdigit():
+                if len(data) == 2:
+                    tmp += '0'
+                elif len(data) > 2:
+                    if not data[2].isdigit():
+                        tmp += '0'
+            data = data[1:]
+        data = tmp
         # if incremental distance mode fix overburn coordinates
         if data[:3] in ['G00', 'G01'] and self.distMode == 91 and (self.oBurnX or self.oBurnY):
             data = self.fix_overburn_incremental_coordinates(data)
@@ -339,7 +367,27 @@ class Filter():
         # if program end
         elif data[:3] in ['M02', 'M30'] or data[0] == '%':
             data = self.program_end(data)
+        # allow custom parsing after standard code parsing
+        if self.cfFile:
+            data = self.custom_post_parse(data)
+            if not data:
+                return(None)
         return data
+
+    def custom_pre_process(self, line):
+        ''' placeholder function for custom processing
+            before standard processing '''
+        return(line)
+
+    def custom_pre_parse(self, data):
+        ''' placeholder function for custom parsing
+            before standard code parsing '''
+        return(data)
+
+    def custom_post_parse(self, data):
+        ''' placeholder function for custom parsing
+            after standard code parsing '''
+        return(data)
 
     def write_gcode(self):
         with open(self.filteredBkp, 'w') as outFile:
@@ -386,7 +434,7 @@ class Filter():
         '''
         tmp1 = data.split(axis)[1]
         if tmp1.startswith('[') or tmp1.startswith('#'):
-            self.codeError = True
+            self.set_code_error()
             if self.lineNum not in self.errorMath:
                 self.errorMath.append(self.lineNum)
                 self.errorLines.append(self.lineNumOrg)
@@ -423,14 +471,18 @@ class Filter():
             if not '=' in code:
                 err = 5
             else:
-                # left = parameter, right = value (we don't process right side yet)
-                left, right = code.split('=')
-                # named parameter is missing a chevron
-                if left[0] == '<' and not '>' in left:
-                    err = 6
-                # numbered parameter is not a number
-                elif left[0] != '<' and not left.isdigit():
-                    err =7
+                try:
+                    # left = parameter, right = value (we don't process right side yet)
+                    left, right = code.split('=')
+                    # named parameter is missing a chevron
+                    if left[0] == '<' and not '>' in left:
+                        err = 6
+                    # numbered parameter is not a number
+                    elif left[0] != '<' and not left.isdigit():
+                        err = 7
+                except:
+                    # parameter has no value
+                    err = 8
         if err:
             errs= [None]
             errs.append('single character line with invalid character')
@@ -440,10 +492,11 @@ class Filter():
             errs.append('parameter is missing equals sign')
             errs.append('named parameter is missing a chevron')
             errs.append('numbered parameter is not a number')
+            errs.append('parameter has no value')
             self.codeWarn = True
             self.warnChar.append(self.lineNum)
             self.errorLines.append(self.lineNumOrg)
-            self.gcodeList.append(f';{errs[err]} in: {data}')
+            self.gcodeList.append(f';{data} |{errs[err]}')
         return err
 
     def remove_line_numbers(self, data):
@@ -504,7 +557,7 @@ class Filter():
             self.zSetup = True
 
     def set_no_first_move(self):
-        self.codeError = True
+        self.set_code_error()
         self.errorFirstMove.append(self.lineNum)
         self.errorLines.append(self.lineNumOrg)
 
@@ -617,11 +670,12 @@ class Filter():
 
     def check_f_word(self, data):
         begin, inFeed = data.split('F', 1)
+        inFeed = inFeed.replace(' ','')
         # if feed rate from material file
         if inFeed.startswith('#<_hal[plasmac.cut-feed-rate]>'):
             # change feed rate if g-code file not in same units as machine units
             if self.unitMultiplier != 1:
-                data = f'{begin}F[#<_hal[plasmac.cut-feed-rate]> * {self.unitMultiplier}]\n'
+                data = f'{begin}F[#<_hal[plasmac.cut-feed-rate]> * {self.unitMultiplier}]'
             return data
         # if explicit feed rate
         rawFeed = ''
@@ -870,7 +924,7 @@ class Filter():
         code = data.replace('M190', '').strip()
         # check for missing p or material
         if not len(code) or code[0] != 'P' or code == 'P':
-            self.codeError = True
+            self.set_code_error()
             self.errorNoMat.append(self.lineNum)
             self.errorLines.append(self.lineNumOrg)
             return
@@ -880,7 +934,7 @@ class Filter():
         except:
             num = -2
         if num < -1:
-            self.codeError = True
+            self.set_code_error()
             self.errorBadMat.append(self.lineNum)
             self.errorLines.append(self.lineNumOrg)
             return
@@ -888,7 +942,7 @@ class Filter():
         self.currentMaterial[1] = True
         # check if material exists in dict
         if self.currentMaterial[0] not in self.materialDict and self.currentMaterial[0] < 1000000 and self.currentMaterial[0] != -1:
-            self.codeError = True
+            self.set_code_error()
             self.errorMissMat.append(self.lineNum)
             self.errorLines.append(self.lineNumOrg)
             return
@@ -898,7 +952,7 @@ class Filter():
 
     def material_change_wait(self):
         if self.offsetG4x:
-            self.codeError = True
+            self.set_code_error()
             self.errorCompMat.append(self.lineNum)
             self.errorLines.append(self.lineNumOrg)
 
@@ -973,17 +1027,17 @@ class Filter():
                     if newMaterial[0] == 0:
                         self.set_temporary_material(newMaterial)
                     elif nu in self.materialDict and newMaterial[0] == 1:
-                        self.codeError = True
+                        self.set_code_error()
                         self.errorNewMat.append(self.lineNum)
                         self.errorLines.append(self.lineNumOrg)
                     else:
                         self.rewrite_material_file(data, newMaterial)
                 else:
-                    self.codeError = True
+                    self.set_code_error()
                     self.errorEditMat.append(self.lineNum)
                     self.errorLines.append(self.lineNumOrg)
         except:
-            self.codeError = True
+            self.set_code_error()
             self.errorLines.append(self.lineNumOrg)
 
     def set_temporary_material(self, data):
@@ -1066,7 +1120,7 @@ class Filter():
             file.write(f'CUT_MODE           = {mat[15]}\n')
             file.write('\n')
         except:
-            self.codeError = True
+            self.set_code_error()
             err.append(self.lineNum)
             self.errorLines.append(self.lineNumOrg)
 
@@ -1104,7 +1158,7 @@ class Filter():
                     elif data.startswith('KERF_WIDTH'):
                         kWidth = float(data.split('=')[1].strip())
         except:
-            self.codeError = True
+            self.set_code_error()
             self.errorReadMat.append(self.lineNum)
             self.errorLines.append(self.lineNumOrg)
 
@@ -1112,6 +1166,11 @@ class Filter():
 ##############################################################################
 # ERROR AND WARNING MESSAGING
 ##############################################################################
+
+    def set_code_error(self):
+        if not self.codeError:
+            self.lineNum -= 1
+        self.codeError = True
 
     def write_errors(self):
         errorText = ''
