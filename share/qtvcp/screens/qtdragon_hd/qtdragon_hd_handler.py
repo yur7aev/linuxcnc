@@ -101,9 +101,12 @@ class HandlerClass:
                               "sensor_x", "sensor_y", "camera_x", "camera_y",
                               "search_vel", "probe_vel", "max_probe", "eoffset_count"]
         self.onoff_list = ["frame_program", "frame_tool", "frame_offsets", "frame_dro", "frame_override"]
-        self.axis_a_list = ["label_axis_a", "dro_axis_a", "action_zero_a", "axistoolbutton_a",
-                            "dro_button_stack_a", "widget_jog_angular", "widget_increments_angular",
-                            "a_plus_jogbutton", "a_minus_jogbutton"]
+        self.axis_4_list = ["label_axis_4", "dro_axis_4", "action_zero_4", "axistoolbutton_4",
+                            "dro_button_stack_4",  "plus_jogbutton_4", "minus_jogbutton_4",
+                            "widget_home_4"]
+        self.axis_5_list = ["label_axis_5", "dro_axis_5", "action_zero_5", "axistoolbutton_5",
+                            "dro_button_stack_5","plus_jogbutton_5", "minus_jogbutton_5",
+                            "widget_home_5"]
         self.statusbar_reset_time = 10000 # ten seconds
 
         STATUS.connect('general', self.dialog_return)
@@ -169,11 +172,32 @@ class HandlerClass:
         self.w.page_buttonGroup.buttonClicked.connect(self.main_tab_changed)
         self.w.filemanager_usb.showMediaDir(quiet = True)
 
-    # hide widgets for A axis if not present
-        if "A" not in INFO.AVAILABLE_AXES:
-            for i in self.axis_a_list:
+    # hide or initiate 4th/5th AXIS dro/jog
+        flag = False
+        flag4 = True
+        num = 4
+        for temp in ('A','B','C','U','V','W'):
+            if temp in INFO.AVAILABLE_AXES:
+                if temp in ('A','B','C'):
+                    flag = True
+                self.initiate_axis_dro(num,temp)
+                num +=1
+                if num ==6:
+                    break
+        # no 5th axis
+        if num < 6:
+            for i in self.axis_5_list:
                 self.w[i].hide()
-            self.w.lbl_increments_linear.setText("INCREMENTS")
+        # no 4th axis
+        if num < 5 :
+            for i in self.axis_4_list:
+                self.w[i].hide()
+        # angular increment controls
+        if flag:
+           self.w.lbl_increments_linear.setText("INCREMENTS")
+        else:
+            self.w.widget_jog_angular.hide()
+            self.w.widget_increments_angular.hide()
     # set validators for lineEdit widgets
         for val in self.lineedit_list:
             self.w['lineEdit_' + val].setValidator(self.valid)
@@ -218,13 +242,20 @@ class HandlerClass:
         # spindle control pins
         pin = QHAL.newpin("spindle-amps", QHAL.HAL_FLOAT, QHAL.HAL_IN)
         pin.value_changed.connect(self.spindle_pwr_changed)
+
         pin = QHAL.newpin("spindle-volts", QHAL.HAL_FLOAT, QHAL.HAL_IN)
         pin.value_changed.connect(self.spindle_pwr_changed)
-        pin = QHAL.newpin("spindle-fault", QHAL.HAL_U32, QHAL.HAL_IN)
+
+        pin = QHAL.newpin("spindle-fault-u32", QHAL.HAL_U32, QHAL.HAL_IN)
         pin.value_changed.connect(self.spindle_fault_changed)
-#        QHAL.newpin("spindle_at_speed", QHAL.HAL_BIT, QHAL.HAL_IN)
-        pin = QHAL.newpin("spindle-modbus-errors", QHAL.HAL_U32, QHAL.HAL_IN)
+        pin = QHAL.newpin("spindle-fault", QHAL.HAL_S32, QHAL.HAL_IN)
+        pin.value_changed.connect(self.spindle_fault_changed)
+
+        pin = QHAL.newpin("spindle-modbus-errors-u32", QHAL.HAL_U32, QHAL.HAL_IN)
         pin.value_changed.connect(self.mb_errors_changed)
+        pin = QHAL.newpin("spindle-modbus-errors", QHAL.HAL_S32, QHAL.HAL_IN)
+        pin.value_changed.connect(self.mb_errors_changed)
+
         QHAL.newpin("spindle-inhibit", QHAL.HAL_BIT, QHAL.HAL_OUT)
         pin = QHAL.newpin("spindle-modbus-connection", QHAL.HAL_BIT, QHAL.HAL_IN)
         pin.value_changed.connect(self.mb_connection_changed)
@@ -426,6 +457,13 @@ class HandlerClass:
         self.hole_circle = Hole_Circle()
         self.w.layout_hole_circle.addWidget(self.hole_circle)
 
+        try:
+            from qtvcp.lib.gcode_utility.hole_enlarge import Hole_Enlarge
+            self.hole_enlarge = Hole_Enlarge()
+            ACTION.ADD_WIDGET_TO_TAB(self.w.tabWidget_utilities,self.hole_enlarge, 'Hole Enlarge')
+        except Exception as e:
+            LOG.info("Utility hole enlarge unavailable: {}".format(e))
+
         LOG.info("Using NGCGUI utility")
         self.ngcgui = NgcGui()
         self.w.layout_ngcgui.addWidget(self.ngcgui)
@@ -526,12 +564,11 @@ class HandlerClass:
             self.w.spindle_power.setValue(0)
 
     def spindle_fault_changed(self, data):
-        fault = hex(self.h['spindle-fault'])
+        fault = hex(data)
         self.w.lbl_spindle_fault.setText(fault)
 
     def mb_errors_changed(self, data):
-        errors = self.h['spindle-modbus-errors']
-        self.w.lbl_mb_errors.setText(str(errors))
+        self.w.lbl_mb_errors.setText(str(data))
 
     def mb_connection_changed(self, data):
         if data:
@@ -1035,6 +1072,9 @@ class HandlerClass:
         if self.h['eoffset-clear'] != True:
             self.h['eoffset-spindle-count'] = int(fval)
 
+    def btn_pause_clicked(self):
+        pass
+
     #####################
     # GENERAL FUNCTIONS #
     #####################
@@ -1426,8 +1466,11 @@ class HandlerClass:
             num = 1
         else:
             num = 0
-        for i in INFO.AVAILABLE_AXES:
-            self.w['dro_button_stack_%s'%i.lower()].setCurrentIndex(num)
+        for n,i in enumerate(INFO.AVAILABLE_AXES):
+            if n >2:
+                self.w['dro_button_stack_%s'%(n+1)].setCurrentIndex(num)
+            else:
+                self.w['dro_button_stack_%s'%i.lower()].setCurrentIndex(num)
 
         # adjust the stacked widget
         if stacked_index > PAGE_UNCHANGED:
@@ -1462,6 +1505,40 @@ class HandlerClass:
         move_dist = sqrt((dest_x - pos_cur[0]) ** 2 + (dest_y - pos_cur[1]) ** 2)
         return ceil(move_dist / move_speed) + wait_buffer_secs
 
+    # set axis 4/5 dro widgets to the proper axis
+    # TODO do this with all the axes for more flexibility
+    def initiate_axis_dro(self, num, axis):
+        self.w['label_axis_{}'.format(num)].setText(axis)
+        self.w['label_home_{}'.format(num)].setText('HOME {}'.format(axis))
+        jnum = INFO.GET_JOG_FROM_NAME.get(axis)
+        # DRO uses axis index
+        index = "XYZABCUVW".index(axis)
+        self.w['dro_axis_{}'.format(num)].setProperty('Qjoint_number',index)
+        self.w['action_zero_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['axistoolbutton_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['axistoolbutton_{}'.format(num)].setText('REF {}'.format(axis))
+        self.w['btn_home_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['btn_home_{}'.format(num)].setProperty('joint_number_status',jnum)
+        self.w['btn_home_{}'.format(num)].setProperty('joint',index)
+        self.w['offsettoolbutton_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['plus_jogbutton_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['plus_jogbutton_{}'.format(num)].setProperty('joint_number',jnum)
+        self.w['hal_led_home_{}'.format(num)].setProperty('joint_number_status',jnum)
+        a = axis.lower()
+        try:
+            icn = QtGui.QIcon(QtGui.QPixmap(':/buttons/images/{}_plus_jog_button.png'.format(a)))
+            if icn.isNull(): raise Exception
+            self.w['plus_jogbutton_{}'.format(num)].setIcon(icn)
+        except Exception as e:
+            self.w['plus_jogbutton_{}'.format(num)].setProperty('text','{}+'.format(axis))
+        self.w['minus_jogbutton_{}'.format(num)].setProperty('axis_letter',axis)
+        self.w['minus_jogbutton_{}'.format(num)].setProperty('joint_number',jnum)
+        try:
+            icn = QtGui.QIcon(QtGui.QPixmap(':/buttons/images/{}_minus_jog_button.png'.format(a)))
+            if icn.isNull(): raise Exception
+            self.w['minus_jogbutton_{}'.format(num)].setIcon(icn)
+        except Exception as e:
+            self.w['minus_jogbutton_{}'.format(num)].setProperty('text','{}-'.format(axis))
 
     #####################
     # KEY BINDING CALLS #
