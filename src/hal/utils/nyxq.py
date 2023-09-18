@@ -182,7 +182,7 @@ def flip32(data):
 	b = ''.join(map(chr, data))
 	d = bytearray(len(data))
 	for offset in range(0, len(data), 4):
-		 sb.pack_into(d, offset, sl.unpack_from(b, offset)[0])
+		 sb.pack_into(d, offset, sl.unpack_from(bytes(data), offset)[0])
 	return d
 
 def read_bitfile(filename):
@@ -200,7 +200,7 @@ def read_bitfile(filename):
 
 	l = short.unpack(bitfile.read(2))[0]
 	d = bitfile.read(l)
-	print("design: %s" % d)
+	print("design: %s" % d.decode('ascii'))
 
 	if b"PARTIAL=TRUE" in d: raise Exception("partial bitstream unsupported")
 
@@ -221,7 +221,7 @@ def read_bitfile(filename):
 		elif k in KEYNAMES:
 			l = short.unpack(bitfile.read(2))[0]
 			d = bitfile.read(l)
-			print(KEYNAMES[k], d)
+			print(KEYNAMES[k], d.decode('ascii'))
 		else:
 			print("unexpected key: %s" % k)
 			l = short.unpack(bitfile.read(2))[0]
@@ -535,15 +535,15 @@ def reboot():
 	dp.code = 0x00060000
 	print("rebooting...")
 	time.sleep(2)
-	res = subprocess.check_output(['/usr/bin/setpci', '-s', pcidev, '10.l='+conf[0], '4.w='+conf[1], 'latency_timer='+conf[2]])
-	print(res)
+	res = subprocess.check_output(['/usr/bin/setpci', '-s', pcidev, '10.l='+conf[0].decode('ascii'), '4.w='+conf[1].decode('ascii'), 'latency_timer='+conf[2].decode('ascii')])
+	print(res.decode('ascii'))
 
 def flash_read(a):
 	while True:
 		req(0x00050021, 0xdeadbeef, a, 256)
 		d = flip32(dp.buf.byte[0:256])
 		dump(d, a)
-		if raw_input("next? ") in ['q', "n", 'x']:
+		if input("next? ") in ['q', "n", 'x']:
 			break
 		a += 256
 
@@ -589,7 +589,7 @@ def flash_program(f, a=0x80000, verify_only=0):
 	if not verify_only:
 		print("erasing ", end="")
 		for o in range(a, a + l, 0x10000):
-			print(o/0x10000, endl="")
+			print(int(o/0x10000), end=" ")
 			sys.stdout.flush()
 			req(0x00050022, 0xdeadbeef, o)
 		print()
@@ -609,7 +609,7 @@ def flash_program(f, a=0x80000, verify_only=0):
 	for o in range(0, l, 0x100):
 		s = min(256, l - o)
 		req(0x00050021, 0xdeadbeef, a+o, s)
-		if flip32(dp.buf.byte[0:s]) != d[o:o+s]:
+		if flip32(bytes(dp.buf.byte[0:s])) != d[o:o+s]:
 			sys.stdout.write("E")
 			errcnt += 1
 		else:
