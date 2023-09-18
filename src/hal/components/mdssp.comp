@@ -5,20 +5,29 @@ description """
 author "Dmitry Yurtaev dmitry@yurtaev.com";
 license "GPL";
 
-param r signed cpr = 23040000;
-pin in  signed spindle-counts-in;
+param r signed cpr = 23040000 "command/feedback resolution";
+pin in  signed spindle-counts-in "raw 32-bit feedback position";
 pin in  bit    spindle-oriented-in;
-pin out float revs;
+pin out float revs "spindle position output, in revolution";
 pin io  bit index-request;
 
-pin in float speed-in;
-param rw float maxv = 3000;
+pin in float speed-in "from spindle.X.speed-out";
+param rw float maxv = 1000;
 pin out float speed-out-abs;
 pin in  bit at-speed-in;
 pin out bit at-speed-out;
 pin out bit fwd;
 pin out bit rev;
-variable float speed;
+
+pin in float pos-fb-in;
+pin out float pos-cmd-out;
+pin in float master-pos-cmd-in;
+pin in bit servo-on-in;
+pin out bit servo-on-out;
+pin in bit slave-on-in;
+pin out bit mode4;
+
+variable float speed;	// ramped speed
 
 variable int64_t counter;
 variable int64_t offset;
@@ -37,9 +46,20 @@ if (delta > maxv * fperiod) delta = maxv * fperiod;
 if (delta < -maxv * fperiod) delta = -maxv * fperiod;
 speed += delta;
 speed_out_abs = fabs(speed);
-fwd = speed > 1;
-rev = speed < -1;
-at_speed_out = fabs(speed_in - speed) < 1 && at_speed_in;
+fwd = speed > 0.01;
+rev = speed < -0.01;
+at_speed_out = fabs(speed_in - speed) < 1 && (at_speed_in || servo_on_out || fabs(speed_in) < 0.1);
+
+if (slave_on_in) {
+	pos_cmd_out = -master_pos_cmd_in;
+} else if (servo_on_in && (fwd || rev)) {
+	pos_cmd_out += speed / 60 * fperiod;
+} else {
+	pos_cmd_out = pos_fb_in;
+}
+
+mode4 = servo_on_out = (slave_on_in || servo_on_in) ? 1 : 0;
+
 
 // expand position counter to 64 bits
 int64_t d = (int64_t)(uint32_t)spindle_counts_in - (uint32_t)counter;
