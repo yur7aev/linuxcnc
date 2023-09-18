@@ -62,13 +62,14 @@ pin in   bit   orient-locked-in;
 pin out  bit   overspeed-out;
 
 pin out float speed;		// ramped speed
+pin out s32 orient_stage;
+
 variable double offset;		// index offset for revs-out pin
 variable double prev_index;
 variable double next_index;
 variable int waiting_index;
-pin out s32 orient_stage;
-variable min-dist-to-stop;
-variable nearest-target;
+variable double min_dist_to_stop;
+variable double nearest_target;
 
 function _;
 ;;
