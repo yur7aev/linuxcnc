@@ -1,4 +1,13 @@
-linuxcnc (1:2.9.0nyx37rtc) UNRELEASED; urgency=medium
+linuxcnc (1:2.9.0nyx38rtc) UNRELEASED; urgency=medium
+
+  * YI32/YO32 support
+  * MDS3 64-bit positions
+  * mdssp speed ramp
+  * mds3sp comp
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Mon, 18 Sep 2023 13:24:21 +0300
+
+linuxcnc (1:2.9.0nyx37) UNRELEASED; urgency=medium
 
   * 2.9 merge, random tc patch from forrestg
 

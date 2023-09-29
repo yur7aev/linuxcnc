@@ -62,6 +62,8 @@ usr/bin/monitor-xhc-hb04
 usr/bin/motion-logger
 usr/bin/moveoff_gui
 usr/bin/ngcgui
+usr/bin/nnyxflash
+usr/bin/nyxq
 usr/bin/panelui
 usr/bin/pi500_vfd
 usr/bin/pmx485

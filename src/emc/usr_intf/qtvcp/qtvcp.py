@@ -247,7 +247,7 @@ Pressing cancel will close linuxcnc.""" % target)
         global HAL
         HAL = self.halcomp
         # initialize the window
-        window = qt_makegui.VCPWindow(self.hal, self.PATH)
+        self.w = window = qt_makegui.VCPWindow(self.hal, self.PATH)
 
         # give reference to user command line options
         if opts.useropts:
@@ -301,8 +301,11 @@ Pressing cancel will close linuxcnc.""" % target)
             # TODO: what about embedded panels override files?
             # TODO: could listed them like this: for i in reversed(window._VCPWindowList):
             window.handler_instance.call_user_command_(window.handler_instance, self.INFO.USER_COMMAND_FILE)
+            if "after_override__" in dir(window.handler_instance):
+                LOG.debug('''Calling the handler file's after_override__ function''')
+                window.handler_instance.after_override__()
 
-        # All Widgets should be added now - synch them to linuxcnc
+        # All Widgets should be added now - sync them to linuxcnc
         self.STATUS.forced_update()
 
         # call a HAL file after widgets built
@@ -443,6 +446,21 @@ Pressing cancel will close linuxcnc.""" % target)
     # This can be called by control c or an early error.
     # close out HAL pins
     def shutdown(self,signum=None,stack_frame=None):
+
+        from qtvcp.core import Status
+        s = Status()
+        LOG.debug('Status shutdown')
+        s.shutdown()
+
+        try:
+            self.w.sync_qsettings()
+        except:
+            pass
+        try:
+            self.w.panel_.shutdown()
+        except:
+            pass
+
         LOG.debug('Exiting HAL')
         HAL.exit()
 

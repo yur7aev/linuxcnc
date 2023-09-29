@@ -29,8 +29,11 @@ pin out      bit servo-##.abs-ok[16 : personality];
 pin out      bit servo-##.z-passed[16 : personality];
 
 pin out   signed servo-##.counts[16 : personality];
+pin out   signed servo-##.counts-hi[16 : personality];
 pin out   signed servo-##.counts-cmd[16 : personality];
+pin out   signed servo-##.counts-cmd-hi[16 : personality];
 pin out   signed servo-##.z-offs[16 : personality] "set with z-index passed";
+pin out    float servo-##.z-revs[16 : personality];
 pin  in   signed servo-##.z-offs-delay[16 : personality];
 
 pin  in      bit servo-##.power[16 : personality]	"turn on power relay";
@@ -50,6 +53,9 @@ pin  in    float servo-##.vel-cmd[16 : personality];
 pin out    float servo-##.vel-fb[16 : personality];
 pin out    float servo-##.trq-fb[16 : personality];
 pin out   signed servo-##.droop[16 : personality];
+pin out   signed servo-##.mon1[16 : personality];
+pin out   signed servo-##.mon2[16 : personality];
+pin  in unsigned servo-##.mon[16 : personality];
 
 pin out   signed servo-##.error-cnt[16 : personality] "drive feedback error count";
 
@@ -138,7 +144,7 @@ typedef struct yssc2_amp {	// data collected during initialization
 	uint32_t fbres;		// feedback resolution
 	uint32_t cyc0;		// 1-rev motor position, in fb_res units
 	uint32_t abs0;		// absolute rev counter
-	int index_req_pos;	// z-index homing
+	int64_t index_req_pos;	// z-index homing
 	int zsm;		// z-index state machine
 } YSSC2_amp;
 
@@ -224,7 +230,6 @@ int yssc2_axes(YSSC2 *y)		{ return y->num_axes; }
 int yssc2_fb_seq(YSSC2 *y)		{ return y->dpram->fb.seq; }
 double yssc2_irq_time_us(YSSC2 *y)	{ return y->dpram->fb.irq_time / 45.0; }
 ///double yssc2_debug(YSSC2 *y, int n)	{ return 0; } ///y->dpram->dbg[n]; }
-double   yssc2_state(YSSC2 *y, int n)	{ return FB(n).state; }
 double yssc2_rx_time(YSSC2 *y, int n)	{ return FB(n).rxtime; }
 int yssc2_z_offs(YSSC2 *y, int n)       { return FB(n).smth2; }
 
@@ -234,7 +239,6 @@ int yssc2_feedback_res(YSSC2 *y, int a)	{ return  y->amp[a].fbres; }
 int yssc2_cyc0(YSSC2 *y, int a)		{ return  y->amp[a].cyc0; }
 int yssc2_abs0(YSSC2 *y, int a)		{ return  y->amp[a].abs0; }
 
-int yssc2_flag(YSSC2 *y, int a, uint32_t f)	{ return (FB(a).state & f) && 1; }
 int yssc2_online(YSSC2 *y, int a)	{ return (FB(a).state & YF_ONLINE) && 1; }
 int yssc2_ready(YSSC2 *y, int a)	{ return (FB(a).state & YF_READY) && 1; }
 int yssc2_enabled(YSSC2 *y, int a)	{ return (FB(a).state & YF_ENABLED) && 1; }
@@ -255,14 +259,20 @@ int yssc2_in_lcoil(YSSC2 *y, int a)	{ return (FB(a).state & YF_LCOIL) && 1; }
 int yssc2_in_coil_ch(YSSC2 *y, int a)	{ return (FB(a).state & YF_COIL_CH) && 1; }
 
 int yssc2_droop(YSSC2 *y, int a)	{ return FB(a).droop; }
-int yssc2_pos_fb(YSSC2 *y, int a)	{ return FB(a).pos; }
+int64_t yssc2_pos_fb(YSSC2 *y, int a)	{ return (FB(a).state & Y_TYPE) == Y_TYPE_FB64
+						? ((int64_t)(FB(a).pos64)<<32) + (uint32_t)(FB(a).pos)
+						: FB(a).pos;
+					}
 int yssc2_vel_fb(YSSC2 *y, int a)	{ return FB(a).vel; }
 int yssc2_trq_fb(YSSC2 *y, int a)	{ return FB(a).trq; }
 int yssc2_alarm_code(YSSC2 *y, int a)	{ return FB(a).alarm; }
-unsigned yssc2_flags(YSSC2 *y, int a)   { return FB(a).state; }
+uint32_t yssc2_state(YSSC2 *y, int a)   { return FB(a).state; }
+int yssc2_mon1(YSSC2 *y, int a)		{ return FB(a).mon1; }
+int yssc2_mon2(YSSC2 *y, int a)		{ return FB(a).mon2; }
 
-void yssc2_pos_cmd(YSSC2 *y, int a, int p)	{ CMD(a).pos = p; }
-void yssc2_vel_cmd(YSSC2 *y, int a, int p)	{ CMD(a).vel = p; }
+void yssc2_mon(YSSC2 *y, int a, uint32_t m)	{ CMD(a).mon = m; }
+void yssc2_pos_cmd(YSSC2 *y, int a, int64_t p)	{ CMD(a).pos = p; CMD(a).pos64 = (p>>32); }
+void yssc2_vel_cmd(YSSC2 *y, int a, int64_t p)	{ CMD(a).vel = p; }
 void yssc2_vel_ctl(YSSC2 *y, int a, int e)	{ if (e) CMD(a).flags |= YC_VEL_CTL;    else CMD(a).flags &= ~YC_VEL_CTL; }
 void yssc2_power(YSSC2 *y, int a, int e)	{ if (e) CMD(a).flags |= YC_POWER;      else CMD(a).flags &= ~YC_POWER; }
 void yssc2_enable(YSSC2 *y, int a, int e)	{ if (e) CMD(a).flags |= YC_ENABLE;     else CMD(a).flags &= ~YC_ENABLE; }
@@ -340,6 +350,17 @@ struct yao2 {
 	hal_s32_t *delta;
 };
 
+struct yo32 {
+	hal_float_t *i[32];
+	hal_float_t *v[32];
+	hal_float_t *vb1;
+	hal_float_t *vb2;
+	hal_float_t *t1;
+	hal_float_t *t2;
+	hal_s32_t *raw;
+	hal_bit_t *pulldown;
+};
+
 struct io_pins {
 	hal_bit_t *in[16][16];
 	hal_bit_t *in_not[16][16];
@@ -351,7 +372,14 @@ struct io_pins {
 //	hal_bit_t x4[16];
 	uint32_t yi16, yo16, yao2;	// set bit indicates corresponding slave is present
 
+	hal_bit_t *in2[16][32];
+	hal_bit_t *in2_not[16][32];
+	hal_bit_t *out2[16][32];
+	hal_bit_t *mon2[16][32];		// mirrors either input or outpus pins for monitoring
+	uint32_t yi32, yo32;		// set bit indicates corresponding slave is present
+
 	struct yao2 ao2[16][2];
+	struct yo32 o32[16];
 };
 
 static int nodma;
@@ -392,7 +420,7 @@ static int export_io(char *prefix, int inst_num)
 	for (i = 0; i < y->num_yio; i++) {
 		uint32_t iotype = yssc2_yi(y, i) >> 24;
 
-		if (iotype == 1 || iotype == 2 || iotype == 5) {	// known YIO module
+		if (iotype == 1 || iotype == 2 || iotype == 5 || iotype == 0x11 || iotype == 0x12) {	// known YIO module
 			rc = hal_pin_bit_newf(HAL_OUT, &(io->alarm[i]), comp_id,
 					"%s.yio-%02d.alarm", prefix, i);
 			if(rc != 0) return rc;
@@ -418,6 +446,22 @@ static int export_io(char *prefix, int inst_num)
 					if(rc != 0) return rc;
 				}
 			}
+		} else if (iotype == 0x11) {		// YI32
+			io->yi32 |= 1<<i;
+			for (j = 0; j < 32; j++) {
+				rc = hal_pin_bit_newf(HAL_OUT, &(io->in2[i][j]), comp_id,
+					            "%s.yio-%02d.in-%02x", prefix, i, j);
+				if(rc != 0) return rc;
+				rc = hal_pin_bit_newf(HAL_OUT, &(io->in2_not[i][j]), comp_id,
+					            "%s.yio-%02d.in-%02x-not", prefix, i, j);
+				if(rc != 0) return rc;
+
+				if (mon) {
+					rc = hal_pin_bit_newf(HAL_OUT, &(io->mon2[i][j]), comp_id,
+						"%s.yio-%02d.mon-%02x", prefix, i, j);
+					if(rc != 0) return rc;
+				}
+			}
 		} else if (iotype == 2) {	// YO16
 			io->yo16 |= 1<<i;
 			for (j = 0; j < 16; j++) {
@@ -430,6 +474,27 @@ static int export_io(char *prefix, int inst_num)
 					if(rc != 0) return rc;
 				}
 			}
+		} else if (iotype == 0x12) {	// YO32
+			io->yo32 |= 1<<i;
+			for (j = 0; j < 32; j++) {
+				rc = hal_pin_bit_newf(HAL_IN, &(io->out2[i][j]), comp_id,
+					            "%s.yio-%02d.out-%02x", prefix, i, j);
+				if(rc != 0) return rc;
+				if (mon) {
+					rc = hal_pin_bit_newf(HAL_OUT, &(io->mon2[i][j]), comp_id,
+						            "%s.yio-%02d.mon-%02x", prefix, i, j);
+					if(rc != 0) return rc;
+				}
+				rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].i[j]), comp_id, "%s.yio-%02d.i-%02x", prefix, i, j);
+				rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].v[j]), comp_id, "%s.yio-%02d.v-%02x", prefix, i, j);
+			}
+			rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].vb1), comp_id, "%s.yio-%02d.vb1", prefix, i);
+			rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].vb2), comp_id, "%s.yio-%02d.vb2", prefix, i);
+			rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].t1), comp_id, "%s.yio-%02d.t1", prefix, i);
+			rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].t2), comp_id, "%s.yio-%02d.t2", prefix, i);
+			rc = hal_pin_s32_newf(HAL_IN,  &(io->o32[i].raw), comp_id, "%s.yio-%02d.raw", prefix, i);
+			rc = hal_pin_bit_newf(HAL_IN,  &(io->o32[i].pulldown), comp_id, "%s.yio-%02d.pull-down", prefix, i);
+			if(rc != 0) return rc;
 /*		} else if (iotype == 3) {	// incremental encoder
 			io->yenc |= 1<<i;
 			rc = hal_pin_s32_newf(HAL_OUT, &(io->enc[i]), comp_id, "%s.encoder-%02d.counts", prefix, i);
@@ -488,13 +553,19 @@ static int export_io(char *prefix, int inst_num)
 
 #define yio_pin_in(a,b) (*(y->io->in[a][b]))
 #define yio_pin_in_not(a,b) (*(y->io->in_not[a][b]))
+#define yio_pin_in2(a,b) (*(y->io->in2[a][b]))
+#define yio_pin_in2_not(a,b) (*(y->io->in2_not[a][b]))
 #define yio_pin_out(a,b) (*(y->io->out[a][b]))
 #define yio_pin_mon(a,b) (*(y->io->mon[a][b]))
+#define yio_pin_out2(a,b) (*(y->io->out2[a][b]))
+#define yio_pin_mon2(a,b) (*(y->io->mon2[a][b]))
 #define yio_pin_alarm(a) (*(y->io->alarm[a]))
 #define yio_pin_error_cnt(a) (*(y->io->yio_error_cnt[a]))
 #define yio_pin_enc(a) (*(y->io->enc[a]))
 #define yio_yi16(a) (y->io->yi16 & (1<<a))
 #define yio_yo16(a) (y->io->yo16 & (1<<a))
+#define yio_yi32(a) (y->io->yi32 & (1<<a))
+#define yio_yo32(a) (y->io->yo32 & (1<<a))
 //#define yio_yenc(a) (y->io->yenc & (1<<a))
 #define yio_yao2(a) (y->io->yao2 & (1<<a))
 
@@ -709,7 +780,10 @@ FUNCTION(rd)
 //						servo_dbg(a) = state;
 					}
 
-					int32_t fb = (servo_counts(a) = yssc2_pos_fb(y, a)) - servo_origin(a);
+					int64_t fb = yssc2_pos_fb(y, a);
+					servo_counts(a) = fb;
+					servo_counts_hi(a) = fb>>32;
+					fb -= servo_origin(a);
 
 					servo_dbg(a) = yssc2_rx_time(y, a);	// feedback packet rx time
 					servo_online(a) = 1;
@@ -729,7 +803,7 @@ FUNCTION(rd)
 
 //					if (!yssc2_zero_speed(y, a) && servo_undroop(a)) fb += yssc2_droop(y, a);
 //					if (servo_undroop(a)) fb += yssc2_droop(y, a);
-					if (servo_undroop(a)) fb = CMD(a).pos - servo_origin(a);
+					if (servo_undroop(a)) fb = ((int64_t)(CMD(a).pos64)<<32) + CMD(a).pos - servo_origin(a);
 
 					servo_pos_fb(a) = (fb) * servo_pos_scale(a) / yssc2_feedback_res(y, a);
 					servo_vel_fb(a) = yssc2_vel_fb(y, a) / servo_vel_scale(a);
@@ -746,7 +820,10 @@ FUNCTION(rd)
 
 					servo_z_passed(a) = yssc2_z_passed(y, a);
 					servo_z_offs(a) = yssc2_z_offs(y, a);
+					servo_z_revs(a) = yssc2_z_offs(y, a) / (double)yssc2_feedback_res(y, a);
 
+					servo_mon1(a) = yssc2_mon1(y, a);
+					servo_mon2(a) = yssc2_mon2(y, a);
 				} else {
 					servo_dbg(a) = 0;
 					++servo_error_cnt(a);
@@ -768,7 +845,7 @@ FUNCTION(rd)
 		}
 	}
 
-#define MAXI 2000000000
+#define MAXI 1500000000
 
 	for (a = 0; a < y->num_enc; a++) {
 		int c;
@@ -833,6 +910,17 @@ FUNCTION(rd)
 			}
 			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
 			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
+		}
+
+		if (yio_yi32(a)) {
+			i = yssc2_yi2(y, a);
+			for (n = 0; n < 32; n++) {
+				yio_pin_in2_not(a, n) = !(yio_pin_in2(a, n) = (i & (1<<n)) ? 1 : 0);
+				if (mon) yio_pin_mon2(a, n) = yio_pin_in2(a, n);
+			}
+			yio_pin_error_cnt(a) = (yssc2_yi(y,a) & 0x00ff0000) >> 16;
+			yio_pin_alarm(a) = (yio_pin_error_cnt(a) > 10) ||
+					    (yssc2_yi(y,a) & 0xc0);
 		}
 
 /*
@@ -924,6 +1012,42 @@ FUNCTION(rd)
 			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
 			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
 		}
+
+		if (yio_yo32(a)) {	// output board - input pins
+			i = yssc2_yi(y, a);
+			uint32_t i2 = yssc2_yi2(y, a);
+			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
+			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;	// TODO
+
+#define yio_pin_o32(a,f) (*(y->io->o32[a].f))
+#define yio_pin_o32n(a,f,n) (*(y->io->o32[a].f[n]))
+
+			uint16_t v0 = (i2&0x03ff);
+			uint16_t c0 = (i2&0xf800)>>11;
+			uint16_t v1 = (i2&0x03ff0000)>>16;
+			uint16_t c1 = (i2&0xf8000000)>>27;
+
+			double f = 1;
+			switch (i & 7) {
+			case 7:
+				yio_pin_o32(a, t1) = (774 - v0) / 2.22;
+				yio_pin_o32(a, t2) = (774 - v1) / 2.22;
+				break;
+			case 5:
+				yio_pin_o32(a, vb1) = 40.32e-3 * v0;
+				yio_pin_o32(a, vb2) = 40.32e-3 * v1;
+				break;
+			case 1:
+				f = yio_pin_o32(a, raw) ? 1 : 182.92e-3;
+				if (v0 < 1023) yio_pin_o32n(a, i, c0) = f * v0;
+				if (v1 < 1023) yio_pin_o32n(a, i, c1) = f * v1;
+				break;
+			case 3:
+				yio_pin_o32n(a, v, c0) = 40.32e-3 * v0;
+				yio_pin_o32n(a, v, c1) = 40.32e-3 * v1;
+				break;
+			}
+		}
 	}
 }
 
@@ -947,9 +1071,10 @@ FUNCTION(wr)
 			yssc2_vel_cmd(y, a, servo_vel_cmd(a) * servo_vel_scale(a));
 			{
 				int64_t cmd = servo_pos_cmd(a) * yssc2_feedback_res(y, a) / servo_pos_scale(a) + servo_origin(a);
-				cmd &= 0xffffffff;
+				//cmd &= 0xffffffff;
 				yssc2_pos_cmd(y, a, cmd);
 				servo_counts_cmd(a) = cmd;
+				servo_counts_cmd_hi(a) = cmd>>32;
 			}
 			yssc2_reset_alarm(y, a, servo_reset_alarm(a));
 			yssc2_limit_torque(y, a, servo_limit_torque(a));
@@ -963,6 +1088,8 @@ FUNCTION(wr)
 			yssc2_do(y, a, 0, servo_out_00(a));     // J3 DO# pins
 			yssc2_do(y, a, 1, servo_out_01(a));
 			yssc2_do(y, a, 2, servo_out_02(a));
+
+			yssc2_mon(y, a, servo_mon(a));
 		}
 	}
 
@@ -995,6 +1122,16 @@ FUNCTION(wr)
 				o >>= 1;
 			}
 			yssc2_yo(y, a, o);
+		}
+
+		if (yio_yo32(a)) {	// output board - input pins
+			for (o = n = 0; n < 32; n++) {
+				o >>= 1;
+				if (yio_pin_out2(a, n)) o |= 0x80000000;
+				if (mon) yio_pin_mon2(a, n) = yio_pin_out2(a, n);
+			}
+			yssc2_yo(y, a, o);
+			yssc2_yo2(y, a, yio_pin_o32(a, pulldown));
 		}
 
 		if (yio_yao2(a)) {	//
@@ -1348,9 +1485,7 @@ int params_load(servo_params *params, const char *filename)
 		buf = malloc(st.st_size + 1);
 		if (buf) {
 			int ln = 1;
-			int n = read(f, buf, st.st_size);	// gulp the file
-			if (n != st.st_size)
-				rtapi_print_msg(RTAPI_MSG_ERR, "nyx: params_load short read %d != %d", n, st.st_size);
+			read(f, buf, st.st_size);	// gulp the file
 			buf[st.st_size] = 0;
 
 			s = buf;
