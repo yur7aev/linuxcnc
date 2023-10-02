@@ -305,6 +305,8 @@ def io_info():
 				print("YO16  " + bin(yo, 16), end="")
 			elif typ == 0x12:
 				print("YO32  " + bin(yo, 32), end="")
+				if (yi & 0x40): print( " uv", end="")
+				if (yi & 0x80): print( " oc", end="")
 			elif typ == 3:
 				print("YENC  " + "%d" % (yi & 0xffff), end="")
 			elif typ == 5:
