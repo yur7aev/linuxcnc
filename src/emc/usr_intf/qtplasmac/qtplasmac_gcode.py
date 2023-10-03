@@ -211,6 +211,8 @@ class Filter():
                         self.gcodeList.append(line)
                         self.gcodeList.append(f'M190 P{self.tmpMatNum}')
                         self.gcodeList.append('M66 P3 L3 Q1')
+                        if not self.firstMaterial:
+                            self.firstMaterial = self.tmpMatNum
                         self.tmpMatNum += 1
                     else:
                         self.gcodeList.append(line)
@@ -252,6 +254,8 @@ class Filter():
                     self.gcodeList.append(line)
 
     def parse_code(self, data):
+        #set g and m codes to upper case
+        data = self.set_to_upper_case(data)
         # allow custom parsing before standard code parsing
         if self.cfFile:
             data = self.custom_pre_parse(data)
@@ -287,7 +291,7 @@ class Filter():
         if 'G40' in data or 'G41' in data or 'G42' in data:
             data = self.set_g4x_offsets(data)
         # if z motion is to be kept
-        if data.startswith('#<keep-z-motion>='):
+        if data.replace(' ','').startswith('#<keep-z-motion>='):
             self.set_keep_z_motion(data)
         # remove any existing z max moves
         if '[#<_ini[axis_z]max_limit>' in data:# and self.zSetup:
@@ -310,7 +314,7 @@ class Filter():
         if data.startswith('M03 $1 S'):
             self.set_scribing()
         # test for pierce only mode
-        elif data.startswith('#<pierce-only>=1') or (self.cutType == 1 and not self.pierceOnly):
+        elif data.replace(' ','').startswith('#<pierce-only>=1') or self.cutType == 1:
             self.set_pierce_mode()
         # set overcut length
         elif data.startswith('#<oclength>'):
@@ -330,7 +334,7 @@ class Filter():
             return data
         # change material
         if data[:4] == 'M190':
-            self.do_material_change(data.upper())
+            self.do_material_change(data)
         # wait for material change
         if 'M66' in data:
             self.material_change_wait()
@@ -396,6 +400,23 @@ class Filter():
                 outFile.write(f'{data}\n')
             print(';qtplasmac filtered G-code file')
             outFile.write(';qtplasmac filtered G-code file')
+
+    def set_to_upper_case(self, data):
+        tmp = ''
+        keep = False
+        for d in data:
+            if d in '#':
+                keep = True
+                tmp += d
+            elif d in '>':
+                keep = False
+                tmp += d
+            else:
+                if keep:
+                    tmp += d
+                else:
+                    tmp += d.upper()
+        return tmp
 
     def get_axis_value(self, data, axis):
         tmp1 = data.split(axis)[1].replace(' ','')
@@ -580,12 +601,16 @@ class Filter():
             self.codeWarn = True
             self.warnPierceScribe.append(self.lineNum)
             self.errorLines.append(self.lineNumOrg)
-        else:
+        elif not self.pierceOnly:
             self.pierceOnly = True
             self.pierces = 0
             self.rapidLine = ''
 
     def do_pierce_only(self, data):
+            if 'Z' in data \
+                and data.split('Z')[1][0] in '0123456789.- [' \
+            and not '[axis_z]max_limit' in data:
+                data = self.comment_z_commands(data)
             # Don't pierce spotting operations
             if data[:6] == 'M03 $2':
                 self.spotting = True
@@ -625,7 +650,7 @@ class Filter():
             return None
 
     def set_keep_z_motion(self, data):
-        if data.split('=')[1] == '1':
+        if data.split('=')[1].strip() == '1':
             self.zBypass = True
         else:
             self.zBypass = False
@@ -767,10 +792,12 @@ class Filter():
         return(data)
 
     def set_overcut_length(self, data):
+        if not '=' in data: return
         self.ocLength = float(data.split('=')[1])
         self.customLen = True
 
     def set_hole_type(self, data):
+        if not '=' in data: return
         hT = int(data.split('=')[1])
         hE = [None, True, True, True, True, False]
         aE = [None, False, False, True, True, False]
@@ -780,6 +807,7 @@ class Filter():
         self.overCut = oC[hT]
 
     def set_hole_diameter(self, data):
+        if not '=' in data: return
         self.minDiameter = float(data.split('=')[1])
         self.customDia = True
         # m_diameter and i_diameter are kept for legacy purposes, they may be removed in future
@@ -789,6 +817,7 @@ class Filter():
             self.errorLines.append(self.lineNumOrg)
 
     def set_hole_velocity(self, data):
+        if not '=' in data: return
         self.holeVelocity = float(data.split('=')[1])
 
     def check_if_hole(self, data):
@@ -946,7 +975,6 @@ class Filter():
             self.errorMissMat.append(self.lineNum)
             self.errorLines.append(self.lineNumOrg)
             return
-        RUN(['halcmd', 'setp', self.matNumPin, str(self.currentMaterial[0])])
         if not self.firstMaterial:
             self.firstMaterial = self.currentMaterial[0]
 

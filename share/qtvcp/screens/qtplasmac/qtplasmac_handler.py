@@ -1,4 +1,4 @@
-VERSION = '1.236.284'
+VERSION = '1.236.291'
 
 '''
 qtplasmac_handler.py
@@ -144,6 +144,7 @@ class HandlerClass:
         else:
             self.PREFS = None
         self.updateIni = []
+        self.updateData = []
         self.update_check()
         self.PREFS = Access(self.prefsFile)
         self.MATS = Access(self.materialFile)
@@ -276,6 +277,8 @@ class HandlerClass:
         self.extLaserButton = False
         self.virtualMachine = False
         self.realTimeDelay = False
+        self.preSingleCutMaterial = None
+        self.preFileSaveMaterial = None
         # plasmac states
         self.IDLE           =  0
         self.PROBE_HEIGHT   =  1
@@ -416,6 +419,25 @@ class HandlerClass:
         self.w.mdihistory.MDILine.spindle_inhibit(True)
         if self.updateIni:
             self.update_iniwrite()
+        updateLog = os.path.join(self.PATHS.CONFIGPATH, 'update_log.txt')
+        if self.updateData:
+            restart = False
+            msgType = linuxcnc.OPERATOR_TEXT
+            msgText = ''
+            with open(updateLog, 'a') as f:
+                for update in self.updateData:
+                    if update[2]:
+                        f.write('{} {}\n'.format(time.strftime('%y-%m-%d'), update[2]))
+                        msgText += '{}\n'.format(update[2])
+                        if update[0]: restart = True
+                        if update[1]: msgType = linuxcnc.OPERATOR_ERROR
+            STATUS.emit('error', msgType, msgText)
+            if restart:
+                STATUS.emit('error', linuxcnc.OPERATOR_TEXT, 'Due to configuration changes a restart is required')
+
+        if not os.path.isfile(updateLog):
+            with open(updateLog, 'w') as f:
+                f.write('{} Initial    V{}\n'.format(time.strftime('%y-%m-%d'), VERSION))
         self.startupTimer.start(250)
 
 # called by qtvcp.py, can override qtvcp settings or qtvcp allowed user options (via INI)
@@ -451,11 +473,7 @@ class HandlerClass:
                 self.w.filemanager._getPathActivated()
                 return
             self.w.filemanager.recordBookKeeping()
-            pop = [key for key in self.materialDict if key >= 1000000]
-            if pop:
-                for e in pop:
-                    self.materialDict.pop(e)
-                self.display_materials()
+            self.remove_temp_materials()
             ACTION.OPEN_PROGRAM(fname)
             STATUS.emit('update-machine-log', 'Loaded: ' + fname, 'TIME')
         except Exception as e:
@@ -486,14 +504,17 @@ class HandlerClass:
         if saved is not None:
             self.w.gcode_editor.editor.setModified(False)
             if saved[-3:] in ['ngc', '.nc', 'tap']:
+                self.preFileSaveMaterial = int(self.w.materials_box.currentText().split(': ', 1)[0])
                 if self.rflActive:
                     self.clear_rfl()
-                self.open_file(saved)
+                self.remove_temp_materials()
+                ACTION.OPEN_PROGRAM(saved)
 
     # open a non gcode file and don't load it into linuxcnc
     def new_openReturn(self, filename):
         if filename[-3:] in ['ngc', '.nc', 'tap']:
-            self.open_file(filename)
+            self.remove_temp_materials()
+            ACTION.OPEN_PROGRAM(filename)
         else:
             self.w.gcode_editor.editor.load_text(filename)
         self.w.gcode_editor.editor.setModified(False)
@@ -907,8 +928,8 @@ class HandlerClass:
         self.w.chk_exit_warning.setChecked(self.PREFS.getpref('Exit warning', True, bool, 'GUI_OPTIONS'))
         self.exitMessage = self.PREFS.getpref('Exit warning text', '', str, 'GUI_OPTIONS')
         self.w.cone_size.setValue(self.PREFS.getpref('Preview cone size', 0.5, float, 'GUI_OPTIONS'))
-        self.w.grid_size.setValue(self.PREFS.getpref('Preview grid size', 0, float, 'GUI_OPTIONS'))
-        self.w.table_zoom_scale.setValue(self.PREFS.getpref('T view zoom scale', 1, float, 'GUI_OPTIONS'))
+        self.w.grid_size.setValue(self.PREFS.getpref('Preview grid size', 0.0, float, 'GUI_OPTIONS'))
+        self.w.table_zoom_scale.setValue(self.PREFS.getpref('T view zoom scale', 1.0, float, 'GUI_OPTIONS'))
         self.zPlusOverrideJog = self.PREFS.getpref('Override jog inhibit via Z+', False, bool, 'GUI_OPTIONS')
         self.w.color_foregrnd.setStyleSheet('background-color: {}'.format(self.PREFS.getpref('Foreground', '#ffee06', str, 'COLOR_OPTIONS')))
         self.w.color_foregalt.setStyleSheet('background-color: {}'.format(self.PREFS.getpref('Highlight', '#ffee06', str, 'COLOR_OPTIONS')))
@@ -1099,8 +1120,8 @@ class HandlerClass:
         head = _translate('HandlerClass', 'Prefs File Error')
         # laser
         try:
-            self.laserOffsetX = self.PREFS.getpref('X axis', 0, float, 'LASER_OFFSET')
-            self.laserOffsetY = self.PREFS.getpref('Y axis', 0, float, 'LASER_OFFSET')
+            self.laserOffsetX = self.PREFS.getpref('X axis', 0.0, float, 'LASER_OFFSET')
+            self.laserOffsetY = self.PREFS.getpref('Y axis', 0.0, float, 'LASER_OFFSET')
         except:
             self.w.laser.hide()
             msg0 = _translate('HandlerClass', 'Invalid entry for laser offset')
@@ -1111,8 +1132,8 @@ class HandlerClass:
             self.w.laser.hide()
         # camera
         try:
-            self.camOffsetX = self.PREFS.getpref('X axis', 0, float, 'CAMERA_OFFSET')
-            self.camOffsetY = self.PREFS.getpref('Y axis', 0, float, 'CAMERA_OFFSET')
+            self.camOffsetX = self.PREFS.getpref('X axis', 0.0, float, 'CAMERA_OFFSET')
+            self.camOffsetY = self.PREFS.getpref('Y axis', 0.0, float, 'CAMERA_OFFSET')
         except:
             self.w.camera.hide()
             msg0 = _translate('HandlerClass', 'Invalid entry for camera offset')
@@ -1124,9 +1145,9 @@ class HandlerClass:
             self.w.camera.hide()
         # probing
         try:
-            self.probeOffsetX = self.PREFS.getpref('X axis', 0, float, 'OFFSET_PROBING')
-            self.probeOffsetY = self.PREFS.getpref('Y axis', 0, float, 'OFFSET_PROBING')
-            self.probeDelay = self.PREFS.getpref('Delay', 0, float, 'OFFSET_PROBING')
+            self.probeOffsetX = self.PREFS.getpref('X axis', 0.0, float, 'OFFSET_PROBING')
+            self.probeOffsetY = self.PREFS.getpref('Y axis', 0.0, float, 'OFFSET_PROBING')
+            self.probeDelay = self.PREFS.getpref('Delay', 0.0, float, 'OFFSET_PROBING')
         except:
             msg0 = _translate('HandlerClass', 'Invalid entry for probe offset')
             STATUS.emit('error', linuxcnc.OPERATOR_ERROR, '{}:\n{}\n'.format(head, msg0))
@@ -1356,7 +1377,8 @@ class HandlerClass:
         if self.single_cut_request:
             self.single_cut_request = False
             if self.oldFile and self.fileOpened:
-                self.open_file(self.oldFile)
+                self.remove_temp_materials()
+                ACTION.OPEN_PROGRAM(self.oldFile)
             else:
                 self.fileOpened = True
                 self.file_clear_clicked()
@@ -1400,8 +1422,6 @@ class HandlerClass:
         if STATUS.machine_is_on() and STATUS.is_all_homed() and \
            STATUS.is_interp_idle() and not self.offsetsActivePin.get() and \
            self.plasmacStatePin.get() == 0 and not self.boundsError['loaded'] and not self.fileClear:
-            if int(self.w.materials_box.currentText().split(': ', 1)[0]) >= 1000000:
-                self.w.materials_box.setCurrentIndex(self.materialList.index(self.defaultMaterial))
             if self.w.gcode_display.lines() > 1:
                 self.w.run.setEnabled(True)
                 if self.frButton:
@@ -1527,12 +1547,12 @@ class HandlerClass:
             return
         if filename is not None:
             self.overlayProgress.setValue(0)
-            self.lastLoadedProgram = filename
+            if not any(name in filename for name in ['qtplasmac_program_clear', 'single_cut']):
+                self.lastLoadedProgram = filename
             if not self.cameraOn:
                 self.preview_index_return(self.w.preview_stack.currentIndex())
             self.w.file_open.setText(os.path.basename(filename))
-            if not self.single_cut_request:
-                self.fileOpened = True
+            self.fileOpened = True
             text = _translate('HandlerClass', 'EDIT')
             self.w.edit_label.setText('{}: {}'.format(text, filename))
             if self.w.gcode_stack.currentIndex() != self.GCODE:
@@ -1560,7 +1580,8 @@ class HandlerClass:
             if self.single_cut_request:
                 self.single_cut_request = False
                 if self.oldFile and not 'single_cut' in self.oldFile:
-                    self.open_file(self.oldFile)
+                    self.remove_temp_materials()
+                    ACTION.OPEN_PROGRAM(self.oldFile)
                     self.set_run_button_state()
                 self.w[self.scButton].setEnabled(True)
                 self.w.run.setEnabled(False)
@@ -1585,11 +1606,27 @@ class HandlerClass:
             self.w.gcode_display.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         if self.w.main_tab_widget.currentIndex() != self.MAIN:
             self.w.main_tab_widget.setCurrentIndex(self.MAIN)
+        # forces the view to remain "table view" if T is checked when a file is loaded
         if self.fileOpened:
-            if not (self.w.view_p.isChecked() or self.w.view_z.isChecked()):
+            if self.w.view_t.isChecked():
                 self.view_t_pressed()
         else:
             self.view_t_pressed()
+        if not 'single_cut.ngc' in filename:
+            self.preSingleCutMaterial = None
+        # remove unused temporary materials from comboboxes
+        self.getMaterialBusy = True
+        if int(self.w.materials_box.currentText().split(": ", 1)[0]) not in self.materialList:
+            self.change_material(self.defaultMaterial)
+        for idx in range(self.w.materials_box.count() - 1, -1, -1):
+            matNum = int(self.w.materials_box.itemText(idx).split(': ', 1)[0])
+            if matNum < 1000000:
+                break
+            if matNum not in self.materialList:
+                self.w.materials_box.removeItem(idx)
+                self.w.material_selector.removeItem(idx)
+                self.w.conv_material.removeItem(idx)
+        self.getMaterialBusy = False
 
     def joints_all_homed(self, obj):
         self.interp_idle(None)
@@ -1839,7 +1876,8 @@ class HandlerClass:
                     # load rfl file
                     if ACTION.prefilter_path or self.lastLoadedProgram != 'None':
                         self.preRflFile = ACTION.prefilter_path or self.lastLoadedProgram
-                    self.open_file(rflFile)
+                    self.remove_temp_materials()
+                    ACTION.OPEN_PROGRAM(rflFile)
                     ACTION.prefilter_path = self.preRflFile
                     self.set_run_button_state()
                     txt0 = _translate('HandlerClass', 'RUN FROM LINE')
@@ -2092,10 +2130,12 @@ class HandlerClass:
                     else:
                         if self.lastLoadedProgram != 'None':
                             self.preClearFile = ACTION.prefilter_path or self.lastLoadedProgram
-                self.open_file(clearFile)
+                        self.w.materials_box.setCurrentIndex(self.materialList.index(self.defaultMaterial))
+                        self.w.material_selector.setCurrentIndex(self.w.materials_box.currentIndex())
+                        self.w.conv_material.setCurrentIndex(self.w.materials_box.currentIndex())
+                self.remove_temp_materials()
+                ACTION.OPEN_PROGRAM(clearFile)
                 ACTION.prefilter_path = self.preClearFile
-                self.w.material_selector.setCurrentIndex(0)
-                self.w.conv_material.setCurrentIndex(0)
                 if self.w.lbl_tool.text() != 'TORCH' and STATUS.is_on_and_idle() and STATUS.is_all_homed():
                     ACTION.CALL_MDI_WAIT('T0 M6')
                     ACTION.CALL_MDI_WAIT('G43 H0')
@@ -2242,7 +2282,8 @@ class HandlerClass:
                 file = ACTION.prefilter_path or self.lastLoadedProgram
                 if os.path.exists(file):
                     self.overlayProgress.setValue(0)
-                    self.open_file(file)
+                    self.remove_temp_materials()
+                    ACTION.OPEN_PROGRAM(file)
                     log = _translate('HandlerClass', 'Reloaded')
                     STATUS.emit('update-machine-log', '{}: {}'.format(log, file), 'TIME')
                 else:
@@ -2317,15 +2358,6 @@ class HandlerClass:
 #########################################################################################################################
 # GENERAL FUNCTIONS #
 #########################################################################################################################
-    def open_file(self, file):
-        # remove temporary materials before opening a file
-        pop = [key for key in self.materialDict if key >= 1000000]
-        if pop:
-            for e in pop:
-                self.materialDict.pop(e)
-            self.display_materials()
-        ACTION.OPEN_PROGRAM(file)
-
 # called by ScreenOptions, this function overrides ScreenOption's closeEvent
     def closeEvent(self, event):
         O = self.w.screen_options
@@ -2367,23 +2399,33 @@ class HandlerClass:
         # to be done later in the update_iniwrite function
         halfiles = self.iniFile.findall('HAL', 'HALFILE') or None
         qtvcpPrefsFile = os.path.join(self.PATHS.CONFIGPATH, 'qtvcp.prefs')
+        self.restart = False
         # use qtplasmac_comp.hal for component connections (pre V1.221.154 2022/01/18)
         if halfiles and not [f for f in halfiles if 'plasmac.tcl' in f] and not \
             [f for f in halfiles if 'qtplasmac_comp.hal' in f]:
-            UPDATER.add_component_hal_file(self.PATHS.CONFIGPATH, halfiles)
+            restart, error, text = UPDATER.add_component_hal_file(self.PATHS.CONFIGPATH, halfiles)
+            self.updateData.append([restart, error, text])
+            if error:
+                return
             self.updateIni.append(154)
         # split out qtplasmac specific prefs into a separate file (pre V1.222.170 2022/03/08)
         if not os.path.isfile(self.prefsFile):
             old = os.path.join(self.PATHS.CONFIGPATH, 'qtplasmac.prefs')
             if os.path.isfile(old):
-                UPDATER.split_prefs_file(old, qtvcpPrefsFile, self.prefsFile)
+                restart, error, text = UPDATER.split_prefs_file(old, qtvcpPrefsFile, self.prefsFile)
+                self.updateData.append([restart, error, text])
+                if error:
+                    return
             self.PREFS = Access(self.prefsFile)
         # move conversational prefs from qtvcp.prefs to <machine_name>.prefs (pre V1.222.187 2022/05/03)
         if os.path.isfile(qtvcpPrefsFile) and os.path.isfile(self.prefsFile):
             with open(qtvcpPrefsFile, 'r') as inFile:
                 data = inFile.readlines()
                 if [line for line in data if '[CONVERSATIONAL]' in line]:
-                    UPDATER.move_prefs(qtvcpPrefsFile, self.prefsFile)
+                    restart, error, text = UPDATER.move_prefs(qtvcpPrefsFile, self.prefsFile)
+                    self.updateData.append([restart, error, text])
+                    if error:
+                        return
         # change RS274 startup parameters from a subroutine (pre V1.224.207 2022/06/22)
         startupCode = self.iniFile.find('RS274NGC', 'RS274NGC_STARTUP_CODE')
         if 'metric_startup' in startupCode or 'imperial_startup' in startupCode:
@@ -2398,25 +2440,54 @@ class HandlerClass:
                 os.unlink(os.path.join(self.PATHS.CONFIGPATH, 'qtplasmac'))
         # move qtplasmac options from INI file to prefs file pre V1.227.219 2022/07/14)
         if not self.PREFS.has_section('BUTTONS'):
-            UPDATER.move_options_to_prefs_file(self.iniFile, self.PREFS)
+            restart, error, text = UPDATER.move_options_to_prefs_file(self.iniFile, self.PREFS)
+            self.updateData.append([restart, error, text])
+            if error:
+                return
             self.updateIni.append(219)
         # move port info from [GUI_OPTIONS] section (if it was moved via V1.227.219 update) to [POWERMAX] section
         if self.PREFS.has_option('GUI_OPTIONS', 'Port'):
-            UPDATER.move_port(self.PREFS)
+            restart, error, text = UPDATER.move_port(self.PREFS)
+            self.updateData.append([restart, error, text])
+            if error:
+                return
         # move default material from prefs file to material 0 in materials file (pre V1.236.278 2023/07/07)
         if self.PREFS.has_section('DEFAULT MATERIAL'):
-            UPDATER.move_default_material(self.PREFS, self.materialFile, self.unitsPerMm)
+            restart, error, text = UPDATER.move_default_material(self.PREFS, self.materialFile, self.unitsPerMm)
+            self.updateData.append([restart, error, text])
+            if error:
+                return
 
     def update_iniwrite(self):
         # this is for updates that write to the INI file
         if 154 in self.updateIni:
-            UPDATER.add_component_hal_file_iniwrite(INIPATH)
+            restart, error, text = UPDATER.add_component_hal_file_iniwrite(INIPATH)
+            if restart:
+                self.restart = True
+            self.updateData.append([self.restart, error, text])
+            if error:
+                return
         if 207 in self.updateIni:
-            UPDATER.rs274ngc_startup_code_iniwrite(INIPATH)
+            restart, error, text = UPDATER.rs274ngc_startup_code_iniwrite(INIPATH)
+            if restart:
+                self.restart = True
+            self.updateData.append([self.restart, error, text])
+            if error:
+                return
         if 208 in self.updateIni:
-            UPDATER.remove_qtplasmac_link_iniwrite(INIPATH)
+            restart, error, text = UPDATER.remove_qtplasmac_link_iniwrite(INIPATH)
+            if restart:
+                self.restart = True
+            self.updateData.append([self.restart, error, text])
+            if error:
+                return
         if 219 in self.updateIni:
-            UPDATER.move_options_to_prefs_file_iniwrite(INIPATH)
+            restart, error, text = UPDATER.move_options_to_prefs_file_iniwrite(INIPATH)
+            if restart:
+                self.restart = True
+            self.updateData.append([self.restart, error, text])
+            if error:
+                return
 
     def motion_type_changed(self, value):
         if value == 0 and STATUS.is_mdi_mode():
@@ -2442,7 +2513,7 @@ class HandlerClass:
                               'mdi_show', 'height_lower', 'height_raise', 'wcs_button', 'set_offsets']
         self.ccButton, self.otButton, self.ptButton, self.tpButton = '', '', '', ''
         self.ctButton, self.scButton, self.frButton, self.mcButton = '', '', '', ''
-        self.ovButton, self.llButton, self.tlButton, self.umButton = '', '', '', ''
+        self.ovButton, self.llButton, self.tlButton, self.umButton = '', '', [], ''
         self.halTogglePins = {}
         self.halPulsePins = {}
 
@@ -2648,35 +2719,35 @@ class HandlerClass:
     def load_plasma_parameters(self):
         self.w.setup_feed_rate.setValue(self.PREFS.getpref('Setup Feed Rate', self.thcFeedRate * 0.8, float, 'PLASMA_PARAMETERS'))
         self.w.probe_feed_rate.setMaximum(self.w.setup_feed_rate.value())
-        self.w.arc_fail_delay.setValue(self.PREFS.getpref('Arc Fail Timeout', 3, float, 'PLASMA_PARAMETERS'))
-        self.w.arc_ok_high.setValue(self.PREFS.getpref('Arc OK High', 250, float, 'PLASMA_PARAMETERS'))
-        self.w.arc_ok_low.setValue(self.PREFS.getpref('Arc OK Low', 60, float, 'PLASMA_PARAMETERS'))
+        self.w.arc_fail_delay.setValue(self.PREFS.getpref('Arc Fail Timeout', 3.0, float, 'PLASMA_PARAMETERS'))
+        self.w.arc_ok_high.setValue(self.PREFS.getpref('Arc OK High', 250.0, float, 'PLASMA_PARAMETERS'))
+        self.w.arc_ok_low.setValue(self.PREFS.getpref('Arc OK Low', 60.0, float, 'PLASMA_PARAMETERS'))
         self.w.arc_max_starts.setValue(self.PREFS.getpref('Arc Maximum Starts', 3, int, 'PLASMA_PARAMETERS'))
-        self.w.arc_voltage_offset.setValue(self.PREFS.getpref('Arc Voltage Offset', 0, float, 'PLASMA_PARAMETERS'))
-        self.w.arc_voltage_scale.setValue(self.PREFS.getpref('Arc Voltage Scale', 1, float, 'PLASMA_PARAMETERS'))
-        self.w.cornerlock_threshold.setValue(self.PREFS.getpref('Velocity Anti Dive Threshold', 90, float, 'PLASMA_PARAMETERS'))
+        self.w.arc_voltage_offset.setValue(self.PREFS.getpref('Arc Voltage Offset', 0.0, float, 'PLASMA_PARAMETERS'))
+        self.w.arc_voltage_scale.setValue(self.PREFS.getpref('Arc Voltage Scale', 1.0, float, 'PLASMA_PARAMETERS'))
+        self.w.cornerlock_threshold.setValue(self.PREFS.getpref('Velocity Anti Dive Threshold', 90.0, float, 'PLASMA_PARAMETERS'))
         self.w.float_switch_travel.setValue(self.PREFS.getpref('Float Switch Travel', round(1.5 * self.unitsPerMm, 2), float, 'PLASMA_PARAMETERS'))
         self.w.height_per_volt.setValue(self.PREFS.getpref('Height Per Volt', round(0.1 * self.unitsPerMm, 3), float, 'PLASMA_PARAMETERS'))
         self.w.voidlock_slope.setValue(self.PREFS.getpref('Void Sense Slope', 500, int, 'PLASMA_PARAMETERS'))
         self.w.ohmic_max_attempts.setValue(self.PREFS.getpref('Ohmic Maximum Attempts', 0, int, 'PLASMA_PARAMETERS'))
-        self.w.ohmic_probe_offset.setValue(self.PREFS.getpref('Ohmic Probe Offset', 0, float, 'PLASMA_PARAMETERS'))
-        self.w.pid_p_gain.setValue(self.PREFS.getpref('Pid P Gain', 10, float, 'PLASMA_PARAMETERS'))
-        self.w.pid_d_gain.setValue(self.PREFS.getpref('Pid D Gain', 0, float, 'PLASMA_PARAMETERS'))
-        self.w.pid_i_gain.setValue(self.PREFS.getpref('Pid I Gain', 0, float, 'PLASMA_PARAMETERS'))
-        self.w.probe_feed_rate.setValue(self.PREFS.getpref('Probe Feed Rate', round(300 * self.unitsPerMm, 0), float, 'PLASMA_PARAMETERS'))
-        self.w.probe_start_height.setValue(self.PREFS.getpref('Probe Start Height', round(25 * self.unitsPerMm, 0), float, 'PLASMA_PARAMETERS'))
-        self.w.arc_restart_delay.setValue(self.PREFS.getpref('Arc Restart Delay', 1, float, 'PLASMA_PARAMETERS'))
-        self.w.safe_height.setValue(self.PREFS.getpref('Safe Height', round(25 * self.unitsPerMm, 0), float, 'PLASMA_PARAMETERS'))
+        self.w.ohmic_probe_offset.setValue(self.PREFS.getpref('Ohmic Probe Offset', 0.0, float, 'PLASMA_PARAMETERS'))
+        self.w.pid_p_gain.setValue(self.PREFS.getpref('Pid P Gain', 10.0, float, 'PLASMA_PARAMETERS'))
+        self.w.pid_d_gain.setValue(self.PREFS.getpref('Pid D Gain', 0.0, float, 'PLASMA_PARAMETERS'))
+        self.w.pid_i_gain.setValue(self.PREFS.getpref('Pid I Gain', 0.0, float, 'PLASMA_PARAMETERS'))
+        self.w.probe_feed_rate.setValue(self.PREFS.getpref('Probe Feed Rate', round(300.0 * self.unitsPerMm, 0), float, 'PLASMA_PARAMETERS'))
+        self.w.probe_start_height.setValue(self.PREFS.getpref('Probe Start Height', round(25.0 * self.unitsPerMm, 0), float, 'PLASMA_PARAMETERS'))
+        self.w.arc_restart_delay.setValue(self.PREFS.getpref('Arc Restart Delay', 1.0, float, 'PLASMA_PARAMETERS'))
+        self.w.safe_height.setValue(self.PREFS.getpref('Safe Height', round(25.0 * self.unitsPerMm, 0), float, 'PLASMA_PARAMETERS'))
         self.w.setup_feed_rate.setValue(self.PREFS.getpref('Setup Feed Rate', self.thcFeedRate * 0.8, float, 'PLASMA_PARAMETERS'))
-        self.w.scribe_arm_delay.setValue(self.PREFS.getpref('Scribe Arming Delay', 0, float, 'PLASMA_PARAMETERS'))
-        self.w.scribe_on_delay.setValue(self.PREFS.getpref('Scribe On Delay', 0, float, 'PLASMA_PARAMETERS'))
-        self.w.skip_ihs_distance.setValue(self.PREFS.getpref('Skip IHS Distance', 0, float, 'PLASMA_PARAMETERS'))
-        self.w.spotting_threshold.setValue(self.PREFS.getpref('Spotting Threshold', 1, float, 'PLASMA_PARAMETERS'))
-        self.w.spotting_time.setValue(self.PREFS.getpref('Spotting Time', 0, float, 'PLASMA_PARAMETERS'))
+        self.w.scribe_arm_delay.setValue(self.PREFS.getpref('Scribe Arming Delay', 0.0, float, 'PLASMA_PARAMETERS'))
+        self.w.scribe_on_delay.setValue(self.PREFS.getpref('Scribe On Delay', 0.0, float, 'PLASMA_PARAMETERS'))
+        self.w.skip_ihs_distance.setValue(self.PREFS.getpref('Skip IHS Distance', 0.0, float, 'PLASMA_PARAMETERS'))
+        self.w.spotting_threshold.setValue(self.PREFS.getpref('Spotting Threshold', 1.0, float, 'PLASMA_PARAMETERS'))
+        self.w.spotting_time.setValue(self.PREFS.getpref('Spotting Time', 0.0, float, 'PLASMA_PARAMETERS'))
         self.w.thc_delay.setValue(self.PREFS.getpref('THC Delay', 0.5, float, 'PLASMA_PARAMETERS'))
         self.w.thc_sample_counts.setValue(self.PREFS.getpref('THC Sample Counts', 50, int, 'PLASMA_PARAMETERS'))
-        self.w.thc_sample_threshold.setValue(self.PREFS.getpref('THC Sample Threshold', 1, float, 'PLASMA_PARAMETERS'))
-        self.w.thc_threshold.setValue(self.PREFS.getpref('THC Threshold', 1, float, 'PLASMA_PARAMETERS'))
+        self.w.thc_sample_threshold.setValue(self.PREFS.getpref('THC Sample Threshold', 1.0, float, 'PLASMA_PARAMETERS'))
+        self.w.thc_threshold.setValue(self.PREFS.getpref('THC Threshold', 1.0, float, 'PLASMA_PARAMETERS'))
 
     def set_signal_connections(self):
         self.w.power.pressed.connect(lambda:self.power_button("pressed", True))
@@ -3223,7 +3294,6 @@ class HandlerClass:
         else:
             return {'cancel':True}
 
-
     def invert_pin_state(self, halpin):
         if 'qtplasmac.ext_out_' in halpin:
             pin = 'out{}Pin'.format(halpin.split('out_')[1])
@@ -3250,10 +3320,11 @@ class HandlerClass:
                 if color != self.w.color_backgrnd.palette().color(QPalette.Background):
                     self.button_normal(self.halPulsePins[halpin][0])
         if self.tlButton:
-            if self.laserOnPin.get():
-                self.button_active(self.tlButton)
-            else:
-                self.button_normal(self.tlButton)
+            for button in self.tlButton:
+                if self.laserOnPin.get():
+                    self.button_active(button)
+                else:
+                    self.button_normal(button)
 
 
     def run_critical_check(self):
@@ -3669,7 +3740,7 @@ class HandlerClass:
         self.single_cut_request = False
         self.oldFile = None
         singleCodes = ['change-consumables', 'cut-type', 'framing', 'manual-cut', 'offsets-view', \
-                       'ohmic-test', 'probe-test', 'single-cut', 'torch-pulse', 'user-manual']
+                       'ohmic-test', 'probe-test', 'single-cut', 'torch-pulse', 'user-manual', 'latest-file']
         head = _translate('HandlerClass', 'User Button Error')
         for bNum in range(1,21):
             self.w['button_{}'.format(str(bNum))].setEnabled(False)
@@ -3826,7 +3897,7 @@ class HandlerClass:
                 # halTogglePins format is: button name, run critical flag, button text
                 self.halTogglePins[halpin] = ['button_{}'.format(str(bNum)), critical, bLabel]
             elif 'toggle-laser' in bCode:
-                self.tlButton = 'button_{}'.format(str(bNum))
+                self.tlButton.append('button_{}'.format(str(bNum)))
                 self.idleHomedList.append('button_{}'.format(str(bNum)))
                 continue
             elif 'pulse-halpin' in bCode:
@@ -3942,7 +4013,8 @@ class HandlerClass:
         elif 'load' in commands.lower():
             lFile = '{}/{}'.format(self.programPrefix, commands.split('load', 1)[1].strip())
             self.overlayProgress.setValue(0)
-            self.open_file(lFile)
+            self.remove_temp_materials()
+            ACTION.OPEN_PROGRAM(lFile)
         elif 'toggle-halpin' in commands.lower():
             halpin = commands.lower().split('toggle-halpin')[1].split(' ')[1].strip()
             try:
@@ -3961,6 +4033,7 @@ class HandlerClass:
                 command = command.strip()
                 if command != 'toggle-laser':
                     self.user_button_command(bNum, command)
+            ACTION.SET_MANUAL_MODE()
         elif 'pulse-halpin' in commands.lower():
             head = _translate('HandlerClass', 'HAL Pin Error')
             msg1 = _translate('HandlerClass', 'Failed to pulse HAL pin')
@@ -4004,7 +4077,8 @@ class HandlerClass:
                 files = glob.glob('{}/*.ngc'.format(dir))
                 latest = max(files, key = os.path.getctime)
                 self.overlayProgress.setValue(0)
-                self.open_file(latest)
+                self.remove_temp_materials()
+                ACTION.OPEN_PROGRAM(latest)
             except:
                 head = _translate('HandlerClass', 'File Error')
                 msg0 = _translate('HandlerClass', 'Cannot open latest file from user button')
@@ -4023,9 +4097,6 @@ class HandlerClass:
                 self.user_button_command(bNum, command)
                 if command[0] == "%":
                     continue
-                while not STATUS.is_interp_idle():
-                    self.w.gcodegraphics.updateGL()
-                    QApplication.processEvents()
                 if command.lower().replace(' ', '').startswith('g10l20') and self.fileOpened:
                     self.reloadRequired = True
             if self.reloadRequired:
@@ -4043,8 +4114,28 @@ class HandlerClass:
                     if char == '{':
                         subCommand = ':'
                     elif char == '}':
-                        f1, f2 = subCommand.replace(':','').split()
-                        newCommand += self.iniFile.find(f1,f2)
+                        if len(subCommand.split()) > 1:
+                            section, option = subCommand.replace(':','').split(' ', 1)
+                        else:
+                            head = _translate('HandlerClass', 'Code Error')
+                            msg0 = _translate('HandlerClass', 'Value Error in user button')
+                            msg1 = self.w['button_{}'.format(str(bNum))].text().replace('\n',' ')
+                            errorCode = '{}'.format(subCommand.replace(':', '{')) + '}'
+                            msg2 = _translate('HandlerClass', 'Requires a valid section and option pair')
+                            STATUS.emit('error', linuxcnc.OPERATOR_ERROR, '{}:\n{} #{} ({}):\n"{}"\n{}\n'.format(head, msg0, bNum, msg1, errorCode, msg2))
+                            return
+                        if self.PREFS.has_option(section, option):
+                            newCommand += str(self.PREFS.get(section, option))
+                        elif self.iniFile.find(section, option):
+                            newCommand += self.iniFile.find(section, option)
+                        else:
+                            head = _translate('HandlerClass', 'Code Error')
+                            msg0 = _translate('HandlerClass', 'Invalid code in user button')
+                            msg1 = self.w['button_{}'.format(str(bNum))].text().replace('\n',' ')
+                            errorCode = '{}'.format(subCommand.replace(':', '{')) + '}'
+                            msg2 = _translate('HandlerClass', 'Provided section option pair does not exist')
+                            STATUS.emit('error', linuxcnc.OPERATOR_ERROR, '{}:\n{} #{} ({}):\n"{}"\n{}\n'.format(head, msg0, bNum, msg1, errorCode, msg2))
+                            return
                         subCommand = ''
                     elif subCommand.startswith(':'):
                         subCommand += char
@@ -4052,6 +4143,9 @@ class HandlerClass:
                         newCommand += char
                 command = newCommand
             ACTION.CALL_MDI(command)
+            while not STATUS.is_interp_idle():
+                self.w.gcodegraphics.updateGL()
+                QApplication.processEvents()
         elif command and command[0] == '%':
             command = command.lstrip('%').lstrip()
             if command[-3:] == '.py':
@@ -4436,8 +4530,10 @@ class HandlerClass:
         xEnd = STATUS.get_position()[0][0] + xLength.value()
         yEnd = STATUS.get_position()[0][1] + yLength.value()
         newFile = '{}single_cut.ngc'.format(self.tmpPath)
+        matNum = int(self.w.materials_box.currentText().split(': ', 1)[0])
         with open(newFile, 'w') as f:
             f.write('G90\n')
+            f.write('M190 P{}\n'.format(matNum))
             f.write('F#<_hal[plasmac.cut-feed-rate]>\n')
             f.write('G53 G0 X{:0.6f} Y{:0.6f}\n'.format(STATUS.get_position()[0][0], STATUS.get_position()[0][1]))
             f.write('M3 $0 S1\n')
@@ -4445,7 +4541,9 @@ class HandlerClass:
             f.write('M5 $0\n')
             f.write('M2\n')
         self.single_cut_request = True
-        self.open_file(newFile)
+        if self.fileOpened:
+            self.preSingleCutMaterial = matNum
+        ACTION.OPEN_PROGRAM(newFile)
 
     def manual_cut(self):
         if self.manualCut:
@@ -4613,7 +4711,7 @@ class HandlerClass:
                 continue
             break
         mat = [matNum, matNam]
-        mat[2:] = self.materialDict[self.materialList[0]][1:]
+        mat[2:] = self.materialDict[self.materialList[self.w.materials_box.currentIndex()]][1:]
         self.write_one_material(mat)
         self.materialUpdate = True
         self.load_material_file(True)
@@ -4645,7 +4743,12 @@ class HandlerClass:
                 msg0 = _translate('HandlerClass', 'Default material cannot be deleted')
                 msgs = '{}.\n\n{}:'
                 continue
-            if matNum not in self.materialNumList:
+            elif matNum >= 1000000 and matNum in self.materialList:
+                msg0 = _translate('HandlerClass', 'Temporary material')
+                msg3 = _translate('HandlerClass', 'cannot be deleted')
+                msgs = '{} #{} {}.\n\n{}:'.format(msg0, matNum, msg3, msg1)
+                continue
+            elif matNum not in self.materialNumList:
                 msg0 = _translate('HandlerClass', 'Material')
                 msg3 = _translate('HandlerClass', 'does not exist')
                 msgs = '{} #{} {}.\n\n{}:'.format(msg0, matNum, msg3, msg1)
@@ -4661,20 +4764,33 @@ class HandlerClass:
         self.load_material_file(True)
         self.materialUpdate = False
 
+    def remove_temp_materials(self):
+        mats = [m for m in self.materialList if m >= 1000000]
+        if mats:
+            for mat in mats:
+                self.materialDict.pop(mat)
+                self.materialList.remove(mat)
+
     def selector_changed(self, index):
+        if index == -1 or self.getMaterialBusy:
+            return
         if self.w.material_selector.currentIndex() != self.w.materials_box.currentIndex():
             self.w.materials_box.setCurrentIndex(index)
             self.w.conv_material.setCurrentIndex(index)
 
     def conv_material_changed(self, index):
+        if index == -1 or self.getMaterialBusy:
+            return
         if self.w.conv_material.currentIndex() != self.w.materials_box.currentIndex():
             self.w.materials_box.setCurrentIndex(index)
             self.w.material_selector.setCurrentIndex(index)
 
     def material_changed(self, index):
+        if index == -1 or self.getMaterialBusy:
+            return
         if self.w.materials_box.currentText():
             if self.getMaterialBusy:
-                self.materialChangePin.set(0)
+                self.materialChangePin.set(-1)
                 self.autoChange = False
                 return
             matNum = int(self.w.materials_box.currentText().split(': ', 1)[0])
@@ -4684,8 +4800,9 @@ class HandlerClass:
                 self.w.save_material.setEnabled(True)
             if self.autoChange:
                 hal.set_p('motion.digital-in-03','0')
-                self.change_material(matNum)
-                self.materialChangePin.set(2)
+                if self.preSingleCutMaterial is None and self.preFileSaveMaterial is None:
+                    self.change_material(matNum)
+                    self.materialChangePin.set(2)
                 hal.set_p('motion.digital-in-03','1')
             else:
                 self.change_material(matNum)
@@ -4704,14 +4821,21 @@ class HandlerClass:
     def material_change_number_pin_changed(self, halpin):
         if halpin == -1:
             halpin = self.defaultMaterial
-        if self.getMaterialBusy:
+        if self.getMaterialBusy or halpin == int(self.w.materials_box.currentText().split(': ', 1)[0]):
             return
         if self.materialChangePin.get() == 1:
             self.autoChange = True
         if not self.material_exists(halpin):
             self.autoChange = False
             return
-        self.w.materials_box.setCurrentIndex(self.materialList.index(halpin))
+        if self.preSingleCutMaterial is not None:
+            self.materialChangeNumberPin.set(self.preSingleCutMaterial)
+            self.preSingleCutMaterial = None
+        elif self.preFileSaveMaterial is not None:
+            self.materialChangeNumberPin.set(self.preFileSaveMaterial)
+            self.preFileSaveMaterial = None
+        else:
+            self.w.materials_box.setCurrentIndex(self.materialList.index(halpin))
 
     def material_change_timeout_pin_changed(self, halpin):
         head = _translate('HandlerClass', 'Materials Error')
@@ -4760,9 +4884,23 @@ class HandlerClass:
                     elif line.startswith('CUT_MODE'):
                         mat[13] = float(line.split('=')[1].strip())
             self.write_materials_to_dict(mat)
-            self.display_materials()
-            self.change_material(self.defaultMaterial)
-            self.w.materials_box.setCurrentIndex(self.materialList.index(self.defaultMaterial))
+            self.materialList.append(halpin)
+            exists = False
+            for n in range(self.w.materials_box.count()):
+                if self.w.materials_box.itemText(n) .startswith(str(halpin)):
+                    self.w.materials_box.setItemText(n, '{:05d}: {}'.format(halpin, self.materialDict[halpin][0]))
+                    self.w.material_selector.setItemText(n, '{:05d}: {}'.format(halpin, self.materialDict[halpin][0]))
+                    self.w.conv_material.setItemText(n, '{:05d}: {}'.format(halpin, self.materialDict[halpin][0]))
+                    exists = True
+            if not exists:
+                self.w.materials_box.addItem('{:05d}: {}'.format(halpin, self.materialDict[halpin][0]))
+                self.w.material_selector.addItem('{:05d}: {}'.format(halpin, self.materialDict[halpin][0]))
+                self.w.conv_material.addItem('{:05d}: {}'.format(halpin, self.materialDict[halpin][0]))#
+            if halpin == int(self.w.materials_box.currentText().split(': ', 1)[0]):
+                self.change_material(halpin)
+
+
+
             self.materialTempPin.set(0)
 
     def write_materials_to_dict(self, matNum):
@@ -4835,7 +4973,7 @@ class HandlerClass:
         self.write_materials_to_dict(mat)
 
     def load_material_file(self, keepTemp=False):
-        self.getMaterialBusy = 1
+        self.getMaterialBusy = True
         # don't remove temporary materials unless required
         if keepTemp:
             pop = [key for key in self.materialDict if key < 1000000]
@@ -4871,7 +5009,7 @@ class HandlerClass:
         self.w.material_selector.setCurrentIndex(self.w.materials_box.currentIndex())
         self.w.conv_material.setCurrentIndex(self.w.materials_box.currentIndex())
         self.set_default_material()
-        self.getMaterialBusy = 0
+        self.getMaterialBusy = False
 
     def material_exists(self, matNum):
         if int(matNum) in self.materialList:
@@ -4892,15 +5030,15 @@ class HandlerClass:
         mat.append(self.MATS.getpref('KERF_WIDTH', 1.0 / self.unitsPerMm, float, section))
         mat.append(self.MATS.getpref('PIERCE_HEIGHT', 3.0 / self.unitsPerMm, float, section))
         mat.append(self.MATS.getpref('PIERCE_DELAY', 0.2, float, section))
-        mat.append(self.MATS.getpref('PUDDLE_JUMP_HEIGHT', 0, float, section))
-        mat.append(self.MATS.getpref('PUDDLE_JUMP_DELAY', 0, float, section))
+        mat.append(self.MATS.getpref('PUDDLE_JUMP_HEIGHT', 0.0, float, section))
+        mat.append(self.MATS.getpref('PUDDLE_JUMP_DELAY', 0.0, float, section))
         mat.append(self.MATS.getpref('CUT_HEIGHT', 1.0 / self.unitsPerMm, float, section))
-        mat.append(self.MATS.getpref('CUT_SPEED', 2000 / self.unitsPerMm, float, section))
-        mat.append(self.MATS.getpref('CUT_AMPS', 45, float, section))
+        mat.append(self.MATS.getpref('CUT_SPEED', 2000.0 / self.unitsPerMm, float, section))
+        mat.append(self.MATS.getpref('CUT_AMPS', 45.0, float, section))
         mat.append(self.MATS.getpref('CUT_VOLTS', 100, float, section))
-        mat.append(self.MATS.getpref('PAUSE_AT_END', 0, float, section))
-        mat.append(self.MATS.getpref('GAS_PRESSURE', 0, float, section))
-        mat.append(self.MATS.getpref('CUT_MODE', 1, float, section))
+        mat.append(self.MATS.getpref('PAUSE_AT_END', 0.0, float, section))
+        mat.append(self.MATS.getpref('GAS_PRESSURE', 0.0, float, section))
+        mat.append(self.MATS.getpref('CUT_MODE', 1.0, float, section))
         return(mat)
 
     def write_one_material(self, mat):
@@ -4920,12 +5058,16 @@ class HandlerClass:
         self.MATS.putpref('CUT_MODE', mat[13], float, section)
 
     def set_default_material(self):
+        self.getMaterialBusy = True
         self.w.default_material.clear()
         for n in self.materialNumList:
             self.w.default_material.addItem(str(n))
+        self.getMaterialBusy = False
         self.w.default_material.setCurrentIndex(self.materialList.index(self.defaultMaterial))
 
     def default_material_changed(self, index):
+        if self.getMaterialBusy:
+            return
         self.defaultMaterial = self.materialList[index]
         self.change_material(self.defaultMaterial)
         self.w.materials_box.setCurrentIndex(self.materialList.index(self.defaultMaterial))
@@ -5098,26 +5240,26 @@ class HandlerClass:
         self.statistics_load()
 
     def statistics_save(self, reset=False):
-        self.PREFS.putpref('Cut time', '{:0.2f}'.format(self.statsSaved['cut'] + hal.get_value('plasmac.cut-time')) , float,'STATISTICS')
-        self.PREFS.putpref('Paused time', '{:0.2f}'.format(self.statsSaved['paused'] + hal.get_value('plasmac.paused-time')) , float,'STATISTICS')
-        self.PREFS.putpref('Probe time', '{:0.2f}'.format(self.statsSaved['probe'] + hal.get_value('plasmac.probe-time')) , float,'STATISTICS')
-        self.PREFS.putpref('Program run time', '{:0.2f}'.format(self.statsSaved['run'] + hal.get_value('plasmac.run-time')) , float,'STATISTICS')
-        self.PREFS.putpref('Torch on time', '{:0.2f}'.format(self.statsSaved['torch'] + hal.get_value('plasmac.torch-time')) , float,'STATISTICS')
-        self.PREFS.putpref('Rapid time', '{:0.2f}'.format(self.statsSaved['rapid'] + hal.get_value('plasmac.rapid-time')) , float,'STATISTICS')
-        self.PREFS.putpref('Cut length', '{:0.2f}'.format(self.statsSaved['length'] + hal.get_value('plasmac.cut-length')) , float,'STATISTICS')
-        self.PREFS.putpref('Pierce count', '{:d}'.format(self.statsSaved['pierce'] + hal.get_value('plasmac.pierce-count')) , int,'STATISTICS')
+        self.PREFS.putpref('Cut time', '{:0.2f}'.format(self.statsSaved['cut'] + hal.get_value('plasmac.cut-time')), float,'STATISTICS')
+        self.PREFS.putpref('Paused time', '{:0.2f}'.format(self.statsSaved['paused'] + hal.get_value('plasmac.paused-time')), float,'STATISTICS')
+        self.PREFS.putpref('Probe time', '{:0.2f}'.format(self.statsSaved['probe'] + hal.get_value('plasmac.probe-time')), float,'STATISTICS')
+        self.PREFS.putpref('Program run time', '{:0.2f}'.format(self.statsSaved['run'] + hal.get_value('plasmac.run-time')), float,'STATISTICS')
+        self.PREFS.putpref('Torch on time', '{:0.2f}'.format(self.statsSaved['torch'] + hal.get_value('plasmac.torch-time')), float,'STATISTICS')
+        self.PREFS.putpref('Rapid time', '{:0.2f}'.format(self.statsSaved['rapid'] + hal.get_value('plasmac.rapid-time')), float,'STATISTICS')
+        self.PREFS.putpref('Cut length', '{:0.2f}'.format(self.statsSaved['length'] + hal.get_value('plasmac.cut-length')), float,'STATISTICS')
+        self.PREFS.putpref('Pierce count', '{:d}'.format(self.statsSaved['pierce'] + hal.get_value('plasmac.pierce-count')), int,'STATISTICS')
         self.statistics_load()
         self.jobRunning = False
 
     def statistics_load(self):
-        self.statsSaved['cut'] = self.PREFS.getpref('Cut time', 0 , float,'STATISTICS')
-        self.statsSaved['paused'] = self.PREFS.getpref('Paused time', 0 , float,'STATISTICS')
-        self.statsSaved['probe'] = self.PREFS.getpref('Probe time', 0 , float,'STATISTICS')
-        self.statsSaved['run'] = self.PREFS.getpref('Program run time', 0 , float,'STATISTICS')
-        self.statsSaved['torch'] = self.PREFS.getpref('Torch on time', 0 , float,'STATISTICS')
-        self.statsSaved['rapid'] = self.PREFS.getpref('Rapid time', 0 , float,'STATISTICS')
-        self.statsSaved['length'] = self.PREFS.getpref('Cut length', 0 , float,'STATISTICS')
-        self.statsSaved['pierce'] = self.PREFS.getpref('Pierce count', 0 , int,'STATISTICS')
+        self.statsSaved['cut'] = self.PREFS.getpref('Cut time', 0.0, float,'STATISTICS')
+        self.statsSaved['paused'] = self.PREFS.getpref('Paused time', 0.0, float,'STATISTICS')
+        self.statsSaved['probe'] = self.PREFS.getpref('Probe time', 0.0, float,'STATISTICS')
+        self.statsSaved['run'] = self.PREFS.getpref('Program run time', 0.0, float,'STATISTICS')
+        self.statsSaved['torch'] = self.PREFS.getpref('Torch on time', 0.0, float,'STATISTICS')
+        self.statsSaved['rapid'] = self.PREFS.getpref('Rapid time', 0.0, float,'STATISTICS')
+        self.statsSaved['length'] = self.PREFS.getpref('Cut length', 0.0, float,'STATISTICS')
+        self.statsSaved['pierce'] = self.PREFS.getpref('Pierce count', 0, int,'STATISTICS')
         for stat in ['cut', 'paused', 'probe', 'run', 'torch', 'rapid']:
             self.display_hms('{}_time_t'.format(stat), self.statsSaved['{}'.format(stat)])
         self.w.cut_length_t.setText('{:0.2f}'.format(self.statsSaved['length'] / self.statsDivisor))
@@ -5135,7 +5277,7 @@ class HandlerClass:
             self.w.cut_length.setText('0.00')
         elif stat == 'pierce_count':
             self.w.pierce_count.setText('0')
-        self.PREFS.putpref(statT, 0 , float,'STATISTICS')
+        self.PREFS.putpref(statT, 0.0, float,'STATISTICS')
         self.statistics_load()
 
     def statistics_reset(self):
@@ -5145,8 +5287,8 @@ class HandlerClass:
         self.w.pierce_count.setText('0')
         for stat in ['Cut time', 'Paused time', 'Probe time', 'Program run time', 'Torch on time', \
                      'Rapid time', 'Cut length']:
-            self.PREFS.putpref(stat, 0 , float,'STATISTICS')
-        self.PREFS.putpref('Pierce count', 0 , int ,'STATISTICS')
+            self.PREFS.putpref(stat, 0.0, float,'STATISTICS')
+        self.PREFS.putpref('Pierce count', 0, int,'STATISTICS')
         self.statistics_load()
 
     def statistics_init(self):

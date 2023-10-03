@@ -280,6 +280,13 @@ class HandlerClass:
         self.facing = Facing()
         self.w.layout_facing.addWidget(self.facing)
 
+        try:
+            from qtvcp.lib.gcode_utility.hole_enlarge import Hole_Enlarge
+            self.hole_enlarge = Hole_Enlarge()
+            ACTION.ADD_WIDGET_TO_TAB(self.w.tabWidget_utilities,self.hole_enlarge, 'Hole Enlarge')
+        except Exception as e:
+            LOG.info("Utility hole enlarge unavailable: {}".format(e))
+
         from qtvcp.lib.gcode_utility.hole_circle import Hole_Circle
         self.hole_circle = Hole_Circle()
         self.w.layout_hole_circle.addWidget(self.hole_circle)
@@ -297,20 +304,31 @@ class HandlerClass:
         # spindle control pins
         pin = QHAL.newpin("spindle-amps", QHAL.HAL_FLOAT, QHAL.HAL_IN)
         pin.value_changed.connect(self.spindle_pwr_changed)
+
         pin = QHAL.newpin("spindle-volts", QHAL.HAL_FLOAT, QHAL.HAL_IN)
         pin.value_changed.connect(self.spindle_pwr_changed)
-        pin = QHAL.newpin("spindle-fault", QHAL.HAL_U32, QHAL.HAL_IN)
+
+        pin = QHAL.newpin("spindle-fault-u32", QHAL.HAL_U32, QHAL.HAL_IN)
         pin.value_changed.connect(self.spindle_fault_changed)
-        pin = QHAL.newpin("spindle-modbus-errors", QHAL.HAL_U32, QHAL.HAL_IN)
+        pin = QHAL.newpin("spindle-fault", QHAL.HAL_S32, QHAL.HAL_IN)
+        pin.value_changed.connect(self.spindle_fault_changed)
+
+        pin = QHAL.newpin("spindle-modbus-errors-u32", QHAL.HAL_U32, QHAL.HAL_IN)
         pin.value_changed.connect(self.mb_errors_changed)
+        pin = QHAL.newpin("spindle-modbus-errors", QHAL.HAL_S32, QHAL.HAL_IN)
+        pin.value_changed.connect(self.mb_errors_changed)
+
         pin = QHAL.newpin("spindle-modbus-connection", QHAL.HAL_BIT, QHAL.HAL_IN)
         pin.value_changed.connect(self.mb_connection_changed)
+
         QHAL.newpin("spindle-inhibit", QHAL.HAL_BIT, QHAL.HAL_OUT)
+
         # external offset control pins
         QHAL.newpin("eoffset-enable", QHAL.HAL_BIT, QHAL.HAL_OUT)
         QHAL.newpin("eoffset-clear", QHAL.HAL_BIT, QHAL.HAL_OUT)
         self.h['eoffset-clear'] = True
         QHAL.newpin("eoffset-spindle-count", QHAL.HAL_S32, QHAL.HAL_OUT)
+
         # total external offset
         pin = QHAL.newpin("eoffset-value", QHAL.HAL_FLOAT, QHAL.HAL_IN)
 
@@ -519,12 +537,11 @@ class HandlerClass:
         self.w.lbl_spindle_power.setText(pwr)
 
     def spindle_fault_changed(self, data):
-        fault = hex(self.h['spindle-fault'])
+        fault = hex(data)
         self.w.lbl_spindle_fault.setText(fault)
 
     def mb_errors_changed(self, data):
-        errors = self.h['spindle-modbus-errors']
-        self.w.lbl_mb_errors.setText(str(errors))
+        self.w.lbl_mb_errors.setText(str(data))
 
     def mb_connection_changed(self, data):
         if data:
@@ -984,6 +1001,8 @@ class HandlerClass:
         if self.h['eoffset-clear'] != True:
             self.h['eoffset-spindle-count'] = int(fval)
 
+    def btn_pause_clicked(self, data):
+        self.disable_spindle_pause()
 
     #####################
     # GENERAL FUNCTIONS #

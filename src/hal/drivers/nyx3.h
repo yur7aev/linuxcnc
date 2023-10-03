@@ -1,12 +1,12 @@
 /*
- *  N Y X 2
+ *  N Y X 3
  *
  *  YxxxxP servo interface adapter board firmware
  *  DPRAM definition
  *
  *  License: GPL Version 2
  *
- *  (c) 2016-2022, http://yurtaev.com
+ *  (c) 2016-2023, http://yurtaev.com
  */
 
 #define RELEASE
@@ -21,8 +21,8 @@
 #define NYX_H
 
 #define NYX_VER_MAJ 3
-#define NYX_VER_MIN 0
-#define NYX_VER_REV 9
+#define NYX_VER_MIN 2
+#define NYX_VER_REV 0
 
 #ifndef NYX_AXES
 #define NYX_AXES 18
@@ -67,11 +67,13 @@
 #define Y_TYPE_FB	0x30000000	// normal servo feedback
 #define Y_TYPE_PLL	0x40000000	// PLL timing debug
 #define Y_TYPE_PARAM1	0x50000000	// mechatrolink - 1 param at a time
+#define Y_TYPE_FB64	0x70000000	// 64-bit position servo feedback
 
 // per-axis nyx_servo_fb.state
 
 #define YF_VALID	0x00000001	/* reply received in this cycle */
 #define YF_DI1		0x00000002	/* J3/J4 digital inputs */
+#define YF_SYNC_SPEED	0x00000002	// mds-sp
 #define YF_DI2		0x00000004
 #define YF_DI3		0x00000008
 #define YF_ONLINE	0x00000010	/* drive configured/detected */
@@ -194,7 +196,7 @@ typedef struct nyx_servo_fb {
 		uint8_t monb[12];	// 6 7 8
 		uint16_t monw[6];
 		uint32_t monl[3];
-		struct {		// Y_TYPE_FB
+		struct {		// Y_TYPE_FB / FB64
 			int32_t droop;	// 6
 			int32_t smth2;	// 7
 			union {
@@ -204,6 +206,7 @@ typedef struct nyx_servo_fb {
 				struct { int16_t mon4, mon3; };	// 6
 #endif
 				int32_t rxtime;	// 8 !!!DEBUG!!!
+				int32_t pos64;
 			};
 		};
 	};
@@ -221,6 +224,7 @@ typedef struct nyx_servo_fb {
 #define REQ_SNOOP	0x00070000
 #define REQ_DNA		0x00080000
 #define REQ_PLL		0x00090000
+#define REQ_SVCFG	0x000a0000
 
 #define REQ_FUNC	0x0000ffff
 #define REQ_CODE	0xffff0000

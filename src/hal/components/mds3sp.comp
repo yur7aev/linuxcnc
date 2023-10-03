@@ -1,0 +1,179 @@
+component mds3sp "MDS-D/E-SP spindle interface";
+description """
+sample use:
+
+loadrt mds3sp
+addf mds3sp.0 servo-thread
+
+setp mds3sp.0.accel 3000
+setp mds3sp.0.max-speed 8000
+net s-vel-fb     spindle.0.speed-in       <= nyx.0.servo-05.vel-fb
+net s-vel        spindle.0.speed-out      => mds3sp.0.speed-in
+net s-at-speed   spindle.0.at-speed       <= mds3sp.0.at-speed-out
+net s-enable     nyx.0.servo-05.enable    <= mds3sp.0.amp-enable-out
+net s-pos-cmd    nyx.0.servo-05.pos-cmd   <= mds3sp.0.pos-cmd-out
+net s-pos-fb     nyx.0.servo-05.pos-fb    => mds3sp.0.pos-fb-in
+
+net s-z-revs     nyx.0.servo-05.z-revs    => mds3sp.0.z-revs-in
+net s-z-reset    nyx.0.servo-05.spindle-orient <= mds3sp.0.z-reset-out
+net s-z-complete nyx.0.servo-05.spindle-oriented => mds3sp.0.z-complete-in
+setp mds3sp.0.at-speed-in 1
+
+net s-revs       spindle.0.revs           <= mds3sp.0.revs-out
+net s-index      spindle.0.index-enable  <=> mds3sp.0.index-enable
+
+setp nyx.0.servo-05.velocity-mode 0
+
+net s-orient   spindle.0.orient           => mds3sp.0.orient-in
+net s-locked   spindle.0.locked           => mds3sp.0.orient-locked-in
+net s-oriented spindle.0.is-oriented      <= mds3sp.0.is-oriented-out
+net s-orient-a spindle.0.orient-angle     => mds3sp.0.orient-angle-in
+net s-in-pos   nyx.0.servo-05.in-position => mds3sp.0.in-position-in
+""";
+
+author "Dmitry Yurtaev dmitry@yurtaev.com";
+license "GPL";
+
+pin in   float accel = 1000;		// rpm/s
+pin in   float speed-in "from spindle.X.speed-out";
+pin in   float max-speed = 8000;
+
+pin out  bit   amp-enable-out;
+pin in   float pos-fb-in;
+pin out  float pos-cmd-out;
+pin in   bit   at-speed-in;
+pin out  bit   at-speed-out;
+pin in   bit   in-position-in;
+
+pin in   bit   z-passed-in;
+pin out  bit   z-reset-out;
+pin in   bit   z-complete-in;
+pin in   float z-revs-in;
+pin io   bit   index-enable;
+pin out  float revs-out;
+
+pin in   float orient-speed = 500;	// orient speed, rpm
+pin in   float orient-angle-in;
+pin in   s32   orient-mode-in;
+pin in   bit   orient-in;
+pin out  bit   is-oriented-out;
+pin out  bit   orient-fault-out;
+pin in   bit   orient-locked-in;
+pin out  bit   overspeed-out;
+
+pin out float speed;		// ramped speed
+pin out s32 orient_stage;
+
+variable double offset;		// index offset for revs-out pin
+variable double prev_index;
+variable double next_index;
+variable int waiting_index;
+variable double min_dist_to_stop;
+variable double nearest_target;
+
+function _;
+;;
+
+#include "rtapi_math.h"
+
+////////////////////////////////////////////
+
+float dv = 0.0;			// difference between commanded speed_in and the actual
+
+if (orient_in || orient_locked_in) {
+	double dist_to_target;
+
+	switch (orient_stage) {
+	case 0:
+		orient_stage = 1;
+		// fall thru
+	case 1:
+		dv = orient_speed - speed;	// bring the spindle to the orient_speed, clockwise
+		if (fabs(dv) < 0.1) {		// at speed?
+			index_enable = 1;	// recapture the index mark
+			orient_stage = 2;
+		}
+		break;
+	case 2:
+		if (index_enable) break;	// still looking for the index? wait...
+		min_dist_to_stop = 0.5 * speed * speed / 3600 / accel * 60;	// d = v*t - 1/2*a*t^2
+		nearest_target = ceil(min_dist_to_stop - orient_angle_in/360) + orient_angle_in/360;
+		orient_stage = 3;
+		// fall thru
+	case 3:
+		dist_to_target = nearest_target - revs_out;
+		if (fabs(dist_to_target) < 1/3600.0 && fabs(speed) <= 5) {	// reached the target position?
+			dv = -speed;						// set speed to zero
+			orient_stage = 4;
+		} else if (fabs(dist_to_target) <= min_dist_to_stop * 1.05) {	// time to deccelerate?
+			dv = -0.5 * speed * speed / 3600 / dist_to_target * fperiod * 60;
+		}
+		break;
+	case 4:
+		dv = -speed;			// make sure the spindle is stoped
+		is_oriented_out = in_position_in;
+		break;
+	}
+} else {
+	orient_stage = 0;
+	is_oriented_out = 0;
+	dv = speed_in - speed;			// approach commanded speed_in
+}
+
+////////////////////////////////////////////
+
+if (dv > accel * fperiod) dv = accel * fperiod;		// clamp the acceleration
+if (dv < -accel * fperiod) dv = -accel * fperiod;
+speed += dv;
+
+if (speed > max_speed) {				// just in case something's wrong - clamp the speed
+	speed = max_speed;
+	overspeed_out = 1;
+} else if (speed < -max_speed) {
+	speed = -max_speed;
+	overspeed_out = 1;
+} else {
+	overspeed_out = 0;
+}
+
+amp_enable_out = (fabs(speed) > 0.001) || (orient_stage > 0);
+at_speed_out = fabs(speed_in - speed) < 1 && (at_speed_in || fabs(speed_in) < 0.1);
+
+if (amp_enable_out) {
+	pos_cmd_out += speed / 60 * fperiod;
+} else {
+	pos_cmd_out = pos_fb_in;
+}
+
+////////////////////////////////////////////
+
+if (index_enable) {
+	if (waiting_index) {
+		if (pos_cmd_out >= next_index) {
+			offset = next_index;
+			waiting_index = 0;
+			index_enable = 0;
+		} else if (pos_cmd_out <= prev_index) {
+			offset = prev_index;
+			waiting_index = 0;
+			index_enable = 0;
+		}
+	} else if (z_complete_in) {
+		prev_index = next_index = floor(pos_cmd_out) + z_revs_in;
+		if (pos_cmd_out < next_index)
+			prev_index -= 1;
+		else
+			next_index += 1;
+		z_reset_out = 0;
+		waiting_index = 1;
+	} else {
+		z_reset_out = 1;	// re-capture the index offset
+	}
+} else {
+	z_reset_out = 0;
+	waiting_index = 0;
+}
+
+revs_out = (pos_cmd_out - offset);
+
+////////////////////////////////////////////
