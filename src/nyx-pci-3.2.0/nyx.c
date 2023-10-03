@@ -20,7 +20,7 @@
 
 #define DEVICE_NAME "nyx"
 #define CLASS_NAME "servo"
-#define VER "2.4.1"
+#define VER "3.2.0"
 
 #define YSSC_VENDOR_ID 0x1067
 #define YMTL_VENDOR_ID 0x1313
@@ -278,7 +278,8 @@ static int nyx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		release_device(pdev);
 		return -EIO;
 	} else {
-		size_t offs = offsetof(struct nyx_dpram, fb);	// should be 512
+		static_assert(512 == offsetof(struct nyx_dpram, fb));	// should be 512
+		//size_t offs = offsetof(struct nyx_dpram, fb);
 		//printk(KERN_INFO "%s.%d: DMA mem vm:%p bus:%llx offs:%zu\n", DEVICE_NAME, minor, y->dpram, y->dpram_bus_addr, offs);
 	}
 
@@ -550,7 +551,6 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Dmitry Yurtaev <dmitry@yurtaev.com>");
 MODULE_DESCRIPTION("NYX servo interface card");
 MODULE_VERSION(VER);
-MODULE_SUPPORTED_DEVICE(DEVICE_NAME);
 
 module_init(nyx_init);
 module_exit(nyx_exit);
