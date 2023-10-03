@@ -147,7 +147,6 @@ static int __init nyx_init(void)
 
 fail3:	while (--n >= 0)
 		device_destroy(nyx_class, MKDEV(major, n));
-	class_unregister(nyx_class);
 	class_destroy(nyx_class);
 fail2:	unregister_chrdev(major, DEVICE_NAME);
 fail1:	pci_unregister_driver(&nyx_pci_driver);
@@ -160,7 +159,6 @@ static void __exit nyx_exit(void)
 
 	for (n = 0; n < nyx_cards; n++)
 		device_destroy(nyx_class, MKDEV(major, n));
-	class_unregister(nyx_class);
 	class_destroy(nyx_class);
 	unregister_chrdev(major, DEVICE_NAME);
 	pci_unregister_driver(&nyx_pci_driver);
