@@ -1,4 +1,4 @@
-linuxcnc (2.9.0nyx38) unstable; urgency=medium
+linuxcnc (2.9.0nyx39) unstable; urgency=medium
 
   * YI32/YO32 support
   * MDS3 64-bit positions
