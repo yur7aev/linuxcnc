@@ -1,0 +1,13 @@
+installation:
+
+	cp -R nyx-pci-3.2.0 dir to /usr/src/
+	dkms add nyx-pci/3.2.0
+	dkms install nyx-pci/3.2.0
+
+make deb package:
+
+	dkms mkdeb nyx-pci/3.2.0
+
+uninstall:
+
+	dkms remove nyx-pci/3.2.0 --all
