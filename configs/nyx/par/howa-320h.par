@@ -1,0 +1,494 @@
+;
+; Howa 320H VCJ parameters
+; originally MELDAS 520AM control
+; stripped back to 4 axes and spindle for test purposes
+; 0: X	MDS-A-V2-0505	HA43NC-S
+; 1: Y			HA43NC-S
+; 2: Z	MDS-A-V2-0505	HA43NCB-C
+; 3: JC			HA43NC-3
+; 5: S	MDS-C1-SPH-110	SJ-N-11LZM
+;    PS	MDS-A-CV-150
+; Last Revision: 07/04/23 - CK
+;
+
+AXIS 0
+
+;	0:X	1:Y	2:Z	3:JC
+SV001	1	1	1	1	; PC1	motor side gear		1-32767
+SV002	1	1	1	60	; PC2	machine side gear	1-32767
+SV003	23	23	23	33	; PGN1	position loop gain 1	0-200 rad/s
+SV004	62	62	62	0	; PGN2	position loop gain 2	0-999 rad/s
+SV005	150	150	200	150	; VGN1	speed loop gain1		1-999
+SV006	0	0	0	0	; VGN2	speed loop gain2		-1000-1000
+SV007	0	0	0	0	; VIL	speed loop delay comp	0-32767	0.034 rad/s
+SV008	1364	1364	1364	1364	; VIA	speed loop lead comp	1-9999
+SV009	2048	2048	2048	2048	; IQA	cur loop q lead comp	1-20480
+SV010	2048	2048	2048	2048	; IDA	cur loop d lead comp	1-20480
+SV011	256	256	256	256	; IQG	cur loop q gain		1-2560
+SV012	512	512	512	512	; IDG	cur loop d gin		1-2560
+SV013	330	330	330	90	; ILMT1	current limit		0-500%
+SV014	0	0	0	300	; ILMT2	current limit special	0-500%
+SV015	0	0	0	0	; FFC	acc rate ff gain	0-999%
+SV016	45	45	60	0	; LMC1	lost motion comp gain 1	-1-200%
+
+SV017	0x0080	0x0080	0x0080	0x0080	; SPEC	abs=0x80
+SV018	12	12	12	360	; PIT	ballscrew pitch		1-32767mm
+SV019	100	100	100	100	; RNG1	position detector res	8,16,25,100
+SV020	100	100	100	100	; RNG2	speed detector res	8,16,25,100
+SV021	60	60	60	60	; OLT	ovl detect time const	1-300s
+SV022	150	150	150	150	; OLL	ovl detect level	1-500%
+SV023	13	13	11	3	; OD1	error excessive svon	0-32767mm
+SV024	20	20	20	600	; INP	in position width	0-32767um
+SV025	0x1180	0x1180	0x1180	0x1180	; MTYP	motor type	HEX
+SV026	13	13	11	3	; OD2	error excessive svoff	0-32767mm
+SV027	0x4200	0x4200	0x4200	0x4000	; SSF1	servo function 1	HEX
+SV028	0	0	0	0	; not used
+SV029	0	0	0	0	; VCS	speed loop gain change start speed	-32768-32767r/min
+SV030	0	0	0	0	; not used
+SV031	0	0	0	0	; OVS1	overshoot comp 1	-1-100%
+SV032	0	0	-30	0	; TOF	torque offset comp gain	-100-100%
+
+SV033	0x0000	0x0000	0x0000	0x0000	; SSF2	servo function 2	HEX
+SV034	0x0000	0x0000	0x0000	0x0000	; SSF3	servo function 3	HEX
+SV035	0x0000	0x0000	0x0000	0x0000	; SSF4	servo function 4	HEX
+SV036	0	0	0	0	; PTYP	power supply type (only set for axis connected to PS)
+SV037	0	0	0	0	; JL	load inertia scale (not used - set to 0)	0-5000%
+SV038	0	0	0	0	; FHZ	vibration frequency to be suppressed (0 if not used)	0-3000Hz
+SV039	0	0	0	0	; not used - set to 0
+SV040	0	0	0	0	; LMCT	lost motion non-sensitive band	0-100um
+SV041	0	0	10	0	; LMC2	lost motion comp gain 2	-1-200%
+SV042	0	0	0	0	; OVS2	J2 overshoot comp 2	-1-100%
+SV043	0	0	0	0	; OBS1	observer pole	0-1000rad
+SV044	0	0	0	0	; OBS2	observer execution gain	0-500%
+SV045	0	0	0	0	; TRUB	frictional torque (0 if collision detection not used)	0-100%
+SV046	0	0	0	0	; not used
+SV047	100	100	100	100	; EC1	induct voltage comp gain	0-200%
+SV048	0	0	0	0	; EMGrt	brake operation delay	0-2000ms
+
+SV049	15	15	33	15	; PGN1SP	spindle synchronous position loop gain 1	0-200rad/s
+SV050	0	0	0	0	; PGN2SP	spindle synchronous position loop gain 2	10-9999rad/s
+SV051	0	0	0	0	; DFBT	dual feed back control time constant	0-9999ms
+SV052	0	0	0	0	; DFBN	non-sensitive band for dual feed back control	0-9999um
+SV053	0	0	0	0	; OD3	excessive error width for special ops	0-32767mm
+SV054	0	0	0	0	; ORE	closed loop overrun detection (0 if not used)	-1-32767mm
+SV055	0	0	0	0	; EMGx	emergency stop max delay (0 if not used)	0-2000ms
+SV056	0	0	0	0	; EMGt	dec time const from max rapid (0 if not used)	0-2000m/sec
+SV057	140	140	140	0	; SHGC	SHG control gain	0-999rad/s
+SV058	0	0	0	0	; SHGCSP high gain constant for spindle synch (0 if not used)	0-999rad/s
+SV059	0	0	0	0	; TCNV	collision detect torque gain estimate	0-32767
+SV060	0	0	0	0	; TLMT	G0 collision detect level	0-500%
+SV061	-1	-1	-1	-1	; DA1NO	D/A ch1 data num	-1 if not carried out
+SV062	-1	-1	-1	-1	; DA2NO	D/A ch2 data num	-1 if not carried out
+SV063	8	8	8	8	; DA1MPY	D/A ch1 magnification scale (value/256)	-32768-32767
+SV064	16	16	16	16	; DA2MPY	D/A ch2 magnification scale (value/256)	-32768-32767
+
+SV065	0   	0   	0   	0	;
+SV067	2	2	2	2	; cmd unit 1/2 um		0-20
+SV068	0x0404	0x0404	0x0404	0x0404	; 3.55ms cycle
+SV069	0	0	0	0	; rapid hi
+SV070	10000	10000	10000	10000	; rapid low
+SV071	0	0	0	0	; clamp hi
+SV072	8000	8000	8000	8000	; clamp low
+SV073	-	-	-	-	;
+SV074	-	-	-	-	;
+SV075	-	-	-	-	;
+SV076	-	-	-	-	;
+SV077	-	-	-	-	;
+SV078	-	-	-	-	; origin abs			-32768-32767
+SV079	-	-	-	-	; origin hi			-32768-32767
+SV080	-	-	-	-	; origin low			-32768-32767
+
+AXIS 5
+
+;	5:S
+SP001	270	; PGM	mag sensor/motor position gain	0-1000 (0.1rad/s)
+SP002	100	; PGE	encoder orientation position gain	0-1000 (0.1rad/s)100
+SP003	15	; PGC	position gain during axis C-axis rapids	0-100rad/s
+SP004	16	; OINP	orientation in-position error	1-2880 (1/16deg)
+SP005	0	; OSP	orientation mode speed clamp (if set to 0, SP017/TSP is used)	0-32767r/min
+SP006	150	; CSP	orientation mode decel rate	1-1000
+SP007	1950	; OPST	orientation position shift	0-4095
+SP008	0	; not used	0
+SP009	33	; PGT	position gain for tapping	1-100rad/s
+SP010	15	; PGS	position gain for spindle synch	1-100rad/s
+SP011	0	; not used	0
+SP012	0	; not used	0
+SP013	0	; not used	0
+SP014	0	; not used	0
+SP015	0	; not used	0
+SP016	0	; not used	0
+
+SP017	15000	; TSP	maximum spindle speed	1-32767r/min
+SP018	50	; ZSP	motor zero speed	1-1000r/min
+SP019	30	; CSN1	0 to maximum speed cushion	1-32767 (10ms)
+SP020	1500	; SDST	speed detection start (10% SP017/TSP)	0-32767r/min
+SP021	10	; TLM1	torque limit 1	0-120%
+SP022	63	; VGNP1	speed proportional gain in speed control mode	0-1000
+SP023	60	; VGNI1	speed integral gain in speed control mode	0-1000
+SP024	0	; not used	0
+SP025	1	; GRA1	spindle gear teeth count at gear 000	1-32767
+SP026	1	; GRA2	spindle gear teeth count at gear 001	1-32767
+SP027	1	; GRA3	spindle gear teeth count at gear 010	1-32767
+SP028	1	; GRA4	spindle gear teeth count at gear 011	1-32767
+SP029	1	; GRB1	motor gear teeth count at gear 000	1-32767
+SP030	1	; GRB2	motor gear teeth count at gear 001	1-32767
+SP031	1	; GRB3	motor gear teeth count at gear 010	1-32767
+SP032	1	; GRB4	motor gear teeth count at gear 011	1-32767
+
+SP033	0x0000	; SFNC1	spindle normal ready/high-speed ready	HEX
+SP034	0x0001	; SFNC2	special motor constant (valid/invalid)	HEX
+SP035	0x0001	; SFNC3	H-coil wide range constant (invalid/valid)	HEX
+SP036	0x0000	; SFNC4	spindle function 4 (0 = not used)	HEX
+SP037	0x0004	; SFNC5	PLG orientation valid/invalid	HEX
+SP038	0x0004	; SFNC6	spindle function 6 (set to 0x0004 for rigid tap with NYX card)	HEX
+SP039	0x0007	; ATYP	drive unit type (Mitsu MDS-C1-SP-110)	0000-FFFF
+SP040	0x0000	; MTYP	not used if SP034/SFNC2 is non-zero	0000-FFFF
+SP041	0x0015	; PTYP	power supply type (was set to 0x1015 - should it be 0015?)	HEX
+SP042	0	; CRNG	C-axis detector range (set to 0 for MDS-C1-SPH)	0-8
+SP043	0	; TRNG	synch tap & spindle synch detector range (set to 0)	0-7
+SP044	1028	; TRANS	NC comm frequency (standard = 0, special = 1028)	0-32767
+SP045	0	; CSNT	dual cushion timer during accel/decel	0-1000ms
+SP046	0	; CSN2	speed command dual cushion for start of accel/decel (0 = invalid)	0-1000
+SP047	300	; SDTR	speed detect reset (hysteresis for SP020/SDTS) 0-1000r/min
+SP048	15	; SUT	speed reach range	0-100%
+
+SP049	20	; TLM2	torque limit for torque limit signal 010	0-120%
+SP050	30	; TLM3	torque limit for torque limit signal 011	0-120%
+SP051	40	; TLM4	torque limit for torque limit signal 101	0-120%
+SP052	50	; TLM5	torque limit for torque limit signal 010	0-120%
+SP053	60	; TLM6	torque limit for torque limit signal 110	0-120%
+SP054	70	; TLM7	torque limit for torque limit signal 111	0-120%
+SP055	12	; SETM	exccessive speed deviation alarm timer	0-160s
+SP056	90	; PYVR	variable excitation rate min value	0-100%
+SP057	0	; STOD	judge transition from constant speed to accel/decel (0 = 12r/min)	0-50r/min
+SP058	500	; SDT2	speed for carrying out speed detection 2	0-32767r/min
+SP059	500	; MKT	base shut-off time for contactor switching at coil changeover	50-10000ms
+SP060	500	; MKT2	current-limit time after contactor switching at coil changeover	0-10000ms
+SP061	75	; MKIL	current limit value during SP061/MKT2	0-120%
+SP062	0	; not used	0
+SP063	60	; OLT	motor overload alarm detection time	0-1000s
+SP064	110	; OLL	overload alarm detection level	0-120%
+
+SP081	0	; LMCA	Mitsu fixed control constant (default = 14)	14 unless set to 0
+SP082	0	; LMCB	Mitsu fixed control constant (not used)	0
+SP083	0	; Mitsu fixed control constant (not used)	0
+SP084	0	; not used	0
+SP085	0	; AIQM	min value of variable torque limit at accel	0-150%
+SP086	0	; AIQN	speed where torque limit value at accel chnages	0-32767r/min
+SP087	85	; DIQM	min value of variable torque limit at decel	0-150%
+SP088	7000	; DIQN	speed where torque limit value starts to change at decel	0-32767r/min
+SP089	63	; VGHP	supposedly 'not used - set to 0'	63 in Meldas control
+SP090	60	; VGHP	supposedly 'not used - set to 0'	60 in Meldas control
+SP091	0	; OFSN	PLG offset compensation for forward	-2048-2048 (-1mV)
+SP092	0	; OFSI	PLG offset compensation for reverse	-2048-2048 (-1mV)
+SP093	0	; ORE	tolerable pulse check error (fully closed control only)	0-32767
+SP094	0	; LMAV	filter time constant for load meter output (0=100ms)	0-32767 (2ms)
+SP095	0	; VFAV	Mitsu fixed control constant	0
+SP096	0	; EGAR	encoder gear ratio (0 = 1:1)	-3-4
+
+SP097	0x0000	; SPECO	orientation specification for MDS-C1-SPH	HEX
+SP098	100	; VGOP	speed proportional gain in orientation control mode (default = 63)	0-1000
+SP099	90	; VGOI	speed integral gain in orientation control mode (default = 60)	0-1000
+SP100	15	; VGOD	speed gain delay advance in orientation control mode (default = 15)	0-1000
+SP101	16	; DINP	orientation control mode in-position width (default = 16)	1-2880 (1/16 deg)
+SP102	32767	; OODR	excessive error value in orientation control mode (in 1/4 pulses; 1 pulse = 0.088deg)	0-32767
+SP103	200	; FTM	index positioning completion pulse time (default = 200)	0-10000ms
+SP104	100	; TLOR	torque limit value after orientation completion completion	0-120%
+SP105	100	; IQGO	magnification of current loop gain (torque component) after orientation	1-1000%
+SP106	100	; IDGO	magnification of current loop gain (excitation component) after orientation	1-1000%
+SP107	0	; CSP2	decel rate in orientation mode for gear 001 (0 = setting is same as SP006/CSP)	0-1000
+SP108	0	; CSP3	decel rate in orientation mode for gear 010 (0 = setting is same as SP006/CSP)	0-1000
+SP109	0	; CSP4	decel rate in orientation mode for gear 011 (0 = setting is same as SP006/CSP)	0-1000
+SP110	0	; WCML	turret index control gear ratio (not used)	0-32767
+SP111	0	; WDEL	decel rate for turret index control (not used)	0-32767
+SP112	0	; WCLP	turret index control clamp speed (not used)	0-32767r/min
+
+SP113	0	; WINP	turret index control in-position width (not used)	0-32767 (0.088deg)
+SP114	0	; OPER	orientation stop missed pulse value for '5C' alarm (invalid if set to 0)	0-32767 (360deg/4096)
+SP115	0	; OSP2	orientation control speed clamp (not used)	0-32767r/min
+SP116	0	; OPYVR	min excitation rate when position control input selected	0-100%
+SP117	0	; ORUT	Mitsu fixed control constant (default = 0)	0
+SP118	0	; ORCT	retry attempts with orientation or feedback error until '5C' alarm	0-100
+SP119	0	; MPGH	orientation control position gain H-coil magnification (if 0, will = SP001 or SP002	0-2560
+SP120	0	; MPGL	orientation control position gain L-coil-coil magnification (if 0, will = SP001 or SP002	0-2560
+SP121	0	; MPCSH	0
+SP122	0	; MPCSL	0
+SP123	542	; MGDO	mag sensor output peak value (standard magnet =542; compact magnet = 500)	1-10000
+SP124	768	; MGD1	mag sensor linear zone width (standard magnet =768; compact magnet = 440)	1-10000
+SP125	384	; MGD2	distance from target stop point to change from position feedback to mag output ((50% of SP124/MGD1)	1-10000
+SP126	0	; MPGM	not used for MDS-C1-SPH (set to 0)	0-2560
+SP127	0	; MPCSM	not used for MDS-C1-SPH (set to 0)	0-2560
+SP128	0	; OXKPM	not used for MDS-C1-SPH (set to 0)	0-2560
+
+SP129	0x0000	; SPECC	C-axis specifications for MDS-C1-SPH	HEX
+SP130	15	; PGC1	first position loop gain for C-axis cutting (default = 15)	0-100rad/sec
+SP131	15	; PGC2	second position loop gain for C-axis cutting (default = 15)	0-100rad/sec
+SP132	15	; PGC3	third position loop gain for C-axis cutting (default = 15)	0-100rad/sec
+SP133	15	; PGC4	position loop gain for stopping under C-axis cutting (default = 15)	0-100rad/sec
+SP134	63	; VGCP0	speed loop proportional gain for C-axis non-cutting control (default = 63)	0-5000
+SP135	60	; VGCI0 speed loop integral gain for C-axis non-cutting control (default = 60)	0-5000
+SP136	15	; VGCD0	speed loop delay advance gain for C-axis non-cutting control (default = 15; 0 = PI only)	0-5000
+SP137	63	; VGCP1	speed loop proportional gain under first gain for C-axis cutting control (default = 63)	0-5000
+SP138	60	; VGCI1	speed loop integral gain under first gain for C-axis cutting control (default = 60)	0-5000
+SP139	15	; VGCD1	speed loop delay advance gain under first gain C-axis cutting control (default = 15; 0 = PI only)	0-5000
+SP140	63	; VGCP2	speed loop proportional gain under second gain for C-axis cutting control (default = 63)	0-5000
+SP141	60	; VGCI2	speed loop integral gain under second gain for C-axis cutting control (default = 60)	0-5000
+SP142	15	; VGCD2	speed loop delay advance gain under second gain C-axis cutting control (default = 15; 0 = PI only)	0-5000
+SP143	63	; VGCP3	speed loop proportional gain under third gain for C-axis cutting control (default = 63)	0-5000
+SP144	60	; VGCI3	speed loop integral gain under third gain for C-axis cutting control (default = 60)	0-5000
+
+SP145	15	; VGCD3	speed loop delay advance gain under third gain C-axis cutting control (default = 15; 0 = PI only)	0-5000
+SP146	63	; VGCP4	speed loop proportional gain when C-axis cutting is stopped (default = 63)	0-5000
+SP147	60	; VGCI4	speed loop integral gain when C-axis cutting is stopped (default = 60)	0-5000
+SP148	15	; VGCD4	speed loop delay advance gain when C-axis cutting is stopped (default = 15; 0 = PI only)	0-5000
+SP149	50	; CZRN 	C-axis control zero pint return speed (default = 50)	1-500r/min
+SP150	1	; CPDT	C-axiscontrol zero point decel rate (default = 1)	1-10000
+SP151	0x0000	; CPSTL	low-byte @ C-axis zero point return position (only if SP129/SPECC = 0)	HEX (default = 0x0000)
+SP152	0x0000	; CPSTH	high-byte @ C-axis zero point return position (only if SP129/SPECC = 0)	HEX (default = 0x0000)
+SP153	0x03e8	; CINP	C-axis in-position width (default =0x03e8)	HEX (1/1000deg)
+SP154	0xd4c0	; CODRL	low-byte on excessive error width on C-axis control	HEX (default = 0xd4c0)
+SP155	0x0001	; CODRH	high-byte on excessive error width on C-axis control	HEX (default = 0x0001)
+SP156	0	; OVSH	C-axis control overshoot compensation (default = 0)	0-1000 (0.1%)
+SP157	0	; not used - set to 0	0
+SP158	0	; not used - set to 0	0
+SP159	50	; CPYC	C-axis non-cutting control variable excitation ratio (default = 50)	0-100%
+SP160	100	; CPYX	C-axis cutting control variable exciation ratio9default = 100)	0-100%
+
+SP161	100	; IQGC0	current loop gain (torque component) for C-axis non-cutting control (default = 100)	0-1000%
+SP162	100	; IDGC0	current loop gain (excitation component) for C-axis non-cutting control (default = 100)	0-1000%
+SP163	100	; IQGC1	current loop gain (torque component) for C-axis cutting control (default = 100)	0-1000%
+SP164	100	; IDGC1	current loop gain (excitation component) for C-axis cutting control (default = 100)	0-1000%
+SP165	0	; PG2C	second position loop gain under C-axis high gain control (0 if not used)	0-999rad/s
+SP166	0	; PG3C	third position loop gain under C-axis high gain control (0 if not used)	0-999rad/s
+SP167	0	; PGU	position loop gain for increased spindle hold when disturbance observer is valid	0-999rad/s (default = 15)
+SP168	0	; VGUP	speed loop P gain for increased spindle hold when disturbance observer is valid	0-5000 (default = 63
+SP169	0	; VGUP	speed loop I gain for increased spindle hold when disturbance observer is valid (0 at Meldas 520)	0-5000 (default = 60
+SP170	0	; VGUD	speed loop gain delay advance for increased spindle hold when disturbance observer valid (0 at Meldas 520)	0-5000(default = 15
+SP171	0	; not used - set to 0	0
+SP172	0	; not used - set to 0	0
+SP173	0	; not used - set to 0	0
+SP174	0	; not used - set to 0	0
+SP175	0	; not used - set to 0	0
+SP176	0	;ZGOF	gate OFF delay after zero-speed (ZS) detection (default = 0)	0-1000 (10ms)
+
+SP177	0x0000	; SPECS	spindle synch spec for MDS-C1-SPH: closed loop	HEX
+SP178	63	; VGSP	spindle synch control: speed loop P gain (default = 63)	0-1000
+SP179	60	; VGSI	spindle synch control: speed loop I gain (default = 60)	0-1000
+SP180	15	; VGSD	spindle synch control: speed loop delay advance gain (default = 15)	0-1000
+SP181	100	; VCGS	spindle synch control: target value for variable speed loop P gain	0-100%
+SP182	0	; VCSS	spindle synch control: starting speed for variable speed loop P gain	0-32767r/min
+SP183	20	; SYNV	20
+SP184	0	; not used - set to 0	0
+SP185	16	; SINP	16
+SP186	32767	; SODR	32767
+SP187	100	; IQGS	100
+SP188	100	; IDGS	100
+SP189	0	; PG2S	0
+SP190	0	; PG3S	0
+SP191	0	; not used - set to 0	0
+SP192	0	; not used - set to 0	0
+
+SP193	0xc013	; SPECT	synch tap spec for MDS-C1-SPH: semi-closed loop	HEX
+SP194	140	; VGTP	speed loop P gain in synch tapping mode (default = 63; Meldas screen adjust = 140)	0-1000
+SP195	130	; VGT1	speed loop I gain in synch tapping mode (default = 60; Meldas screen adjust = 130)	0-1000
+SP196	15	; VGTD	speed loop delay advance gain in synch tapping mode (0 = PI control only; default = 15)	0-100
+SP197	0	; Mitsu fixed control constant - 0 if not used	0
+SP198	100	; VCGT	target value for variable speed loop P gain in synch tapping mode (default =100)	0-100%
+SP199	0	; VCST	speed where speed loop P gain starts during synch tap control (default = 0)	0-32767r/min
+SP200	0	; FFC1	accel feed forward gain for selection of gear 000 during synch tap control	0-1000%
+SP201	0	; FFC2	accel feed forward gain for selection of gear 001 during synch tap control	0-1000%
+SP202	0	; FFC3	accel feed forward gain for selection of gear 010 during synch tap control	0-1000%
+SP203	0	; FFC4	accel feed forward gain for selection of gear 011 during synch tap control	0-1000%
+SP204	0	; THOD	Mitsu constant (0 unless designated otherwise)	0
+SP205	0	; ZCHS	PLG Z-phase auto adjust (not used by MDS-C1-SPH - set to 0	0-1
+SP206	0	; Mitsu constant (0 unless designated otherwise)	0
+SP207	0	; Mitsu constant (0 unless designated otherwise)	0
+SP208	0	; Mitsu constant (0 unless designated otherwise)	0
+
+SP209	0	; not used - set to 0	0
+SP210	0	; not used - set to 0	0
+SP211	0	; not used - set to 0	0
+SP212	0	; not used - set to 0	0
+SP213	0	; LPF	low pass filter for MDS-C1-SPH to reduce motor noise (default = 0)	0-2250rad/s
+SP214	50	; TZRN	set zero point return speed to use when speed loop changes to position loop (default = 50)	0-500r/min
+SP215	1	; TPDT	set decel rate for return to target stop point during synch tap mode zero point return (default =1)	0-10000 pulses
+SP216	0	; TPST	zero point return shift amount during synch tap mode (only valid if SP193/SPECT bit E is 0)	0-4095 (default = 0)
+SP217	16	; TINP	position error range for output of in-position during synch tap control (default = 16)	1-2880 (1/16deg)
+SP218	32767	; TODR	excessive error width during synch tap (default = 32767)	0-32767pulse (1pulse = 0.088deg)
+SP219	100	; IQGT	magnification of current loop gain (torque component) during synch tap (default = 100)	1-1000%
+SP220	100	; IDGT	magnification of current loop gain (excitation component) during synch tap (default = 100)	1-1000%
+SP221	0	; PG2T	second position loop gain when hi-gain control is used (not used set to 0)	0-999rad/s
+SP222	0	; PG3T	third position loop gain when hi-gain control is used (not used set to 0)	0-999rad/s
+SP223	0	; SPDV	spindle speed limit in door-open state (invalid if set to 0)	0-800r/min
+SP224	0	; SPDF	set continous time to detect alarms (instant detect if set to 0)	0-2813ms
+
+SP225	0	; OXKPH	gain changeover is not valid, so set to 0	0-2560
+SP226	0	; OXKPL	gain changeover is not valid, so set to 0	0-2560
+SP227	0	; OXVKP	gain changeover is not valid, so set to 0	0-2560
+SP228	0	; OXVKI	gain changeover is not valid, so set to 0	0-2560
+SP229	0	; OXSFT	orientation virtual target position is not valid, so set to 0	0-2048 (360deg/4096)
+SP230	0	; WIH	ratio iron loss:all losses when temp compensation considering iron loss is valid for MDS-C1_SPH	0-100% (default = 0)
+SP231	0	; OL2T	primary-delay time constant to detect overload for MDS-C1-SPH (default = 0)	0-60min
+SP232	0	; not used - set to 0	0
+SP233	0	; JL	'motor inertia + motor axis conversion load inertia' in resepct to motor inertia (default = 0)	0-5000%
+SP234	0	; OBS1	low path filter frequency if disturbance observer is valid (0 if disturbance observer not valid)	0-1000rad/s
+SP235	0	; OBS2	gain for disturbance observer (0 if disturbance observer not valid)	0-500%
+SP236	0	; OBS3	Mitsu fixed control constant- set to 0 if not designated in particular	0
+SP237	0	; KSCP	spindle speed overrun judgment value (set to  0 - not used at MDS-C1-SPH)	0-32767r/min
+SP238	0	; SE2R	speed range for excessive deflection detection (set to  0 - not used at MDS-C1-SPH)	0-100%
+SP239	0	; SE2T	continous detection time for excessive deflection detection (set to  0 - not used at MDS-C1-SPH)	0-3000
+SP240	0	; EXHS	PLG automatic adjustment validation (not used at MDS-C1-SPH - set to 0)	0 or 1
+
+SP241	0	; EXBIT	spindle monitor chnageover display (not used at MDS-C1-SPH - set to 0)	0 or 1
+SP242	0	; Vavx	Mitsu fixed control constant- set to 0 if not designated in particular	0
+SP243	0	; UTTM	Mitsu fixed control constant- set to 0 if not designated in particular	0
+SP244	0	; OPLP	Mitsu fixed control constant- set to 0 if not designated in particular	0
+SP245	0	; PGHS	PLG automatic adjustment validation for MDS-C1-SPH (1 if valid; 0 if not valid)	0-1
+SP246	0	; TEST	Mitsu fixed control constant- set to 0 if not designated in particular	0
+SP247	0	; not used - set to 0	0
+SP248	0	; not used - set to 0	0
+SP249	0	; SMO	set motor speed for when speed meter 10V is output (if 0, value = SPO17/TSP)	0-32767r/min
+SP250	0	; LMO	set voltage when load meter 120% is output (when set to 0, this becomes 10V)	0-10V
+SP251	0	; not used - set to 0	0
+SP252	0	; not used - set to 0	0
+SP253	0	; DA1NO	output data number for D/A channel 1 (if 0, output set to speedometer)	-32767-32767
+SP254	0	; DA2NO	output data number for D/A channel 2 (if 0, output set to speedometer)	-32767-32767
+SP255	0	; DA1MPY	data magnification for D/A channel 1 (if set to 0 or 256, magnification is 1)	-32767-32767 (1/256-fold)
+SP256	0	; DA2MPY	data magnification for D/A channel 2 (if set to 0 or 256, magnification is 1)	-32767-32767 (1/256-fold)
+
+SP257	0x0001	; RPM	H, speed unit
+SP258	0x3a98	; NR	H, max speed (0x3a98 = 15000r/min)
+SP259	0x2710	; NP	H, constant output speed (0x2710 = 10000r/min; guess based on SJ-VL11-02FZT curve)
+SP260	0x06a4	; NB	H, basic speed (0x06a4 = 1700r/min)
+SP261	0x07f8	; NF	H, magnetic flux rpm (0x07f8 = 2040; 1.2 x base speed of 1700)
+SP262	0x0001	; PM	H, pair of magnetic poles (SJ-VL11-02FZT and are 2-pole)
+SP263	0x0400	; PLG	H, PLG pulse number (x4; 0x0400 =1024 x 4 =4096 - this is a guess)
+SP264	0x019d	; KVP	H, speed proportional gain (0x019d = 413; KVI/2.27 as guess based on other mills)
+SP265	0x03a9	; KVI	H, speed integral gain (0x03a9 = 937 at Meldas control)
+SP266	0x002c	; KVF	H, speed delay advance gain (0x002c at Meldas control)
+SP267	0x09a6	; KFP	H, magnetic control P gain (0x09a6 at Meldas control)
+SP268	0x057d	; KFI	H, magnetic control I gain (0x057d at Meldas control)
+SP269	0xc000	; PYLT	H, Ids current min. value (0xc000 at Meldas control)
+SP270	0x001c	; KDP	H, Ids propotional gain (0x001c at Meldas control)
+SP271	0x01a8	; KDI	H, Ids integral gain (0x01a8 at Meldas control)
+SP272	0x005e	; KQP	H, Iqs proportional gain (0x005e at Meldas control)
+
+SP273	0x0593	; KQI	H, Iqs integral gain (0x0593 at Meldas control)
+SP274	0x01dc	; IDSM	H, field current at 100% (0x01dc at Meldas control)
+SP275	0x064e	; IQSM	H, torque current at 100% (0x064e at Meldas control)
+SP276	0x006e	; KVDS	H, q-d interface ratio (0x006e at Meldas control)
+SP277	0x0036	; KVQS	H, d-q interface ratio (0x0036 at Meldas control)
+SP278	0x0c00	; TMLR	H, decel current limit (75%) (0x0c00 at Meldas control)
+SP279	0x1333	; TMLD	H, accel current limit(120%) (0x1333 at Meldas control)
+SP280	0x1800	; TMLS	H, constant current limit (150%)(0x1800 at Meldas control)
+SP281	0x008a	; KWS	H, Kws at power running (0x008a at Meldas control)
+SP282	0x00ad	; KWSR	H, Kws at regeneration (0x00ad at Meldas control)
+SP283	0x0562	; IQ1	H, Iqs 100% for calculation (0x0562 at Meldas control)
+SP284	0x0b1f	; M0	H, M0 for M saturation (0x0b1f at Meldas control)
+SP285	0x0762	; M2	H, M2 for M saturation (0x0762 at Meldas control)
+SP286	0x0891	; FLUX	H, FLUX1 for M saturation (0x0891 at Meldas control)
+SP287	0x004c	; KR2	H, R2 for ,2 FB. calculation (0x004c at Meldas control)
+SP288	0x0000	; LR2	H, F/B clamp value (0x0000 at Meldas control)
+
+SP289	0x0eea	; ICT	H, CT setting cunent (0x0eea at Meldas control)
+SP290	0x047d	; KI1	H, current F/B compensation (0x047d at Meldas control)
+SP291	0x0000	; TI	H, current loop sampling Ts (0x0000 at Meldas control)
+SP292	0x09c4	; VPWM	H, PWM triangle resolution (0x09c4 at Meldas control)
+SP293	0x0000	; IDLM	H, flux F/B clamp (min) (0x0000 at Meldas control)
+SP294	0x0000	; 0x0000 at Meldas control
+SP295	0x0000	; 0x0000 at Meldas control
+SP296	0x0000	; 0x0000 at Meldas control
+SP297	0x0000	; 0x0000 at Meldas control
+SP298	0x0000	; 0x0000 at Meldas control
+SP299	0x0000	; 0x0000 at Meldas control
+SP300	0x0000	; 0x0000 at Meldas control
+SP301	0x0000	; 0x0000 at Meldas control
+SP302	0x0000	; 0x0000 at Meldas control
+SP303	0x0000	; 0x0000 at Meldas control
+SP304	0x0000	; 0x0000 at Meldas control
+
+SP305	0x0000	; 0x0000 at Meldas control
+SP306	0x0000	; 0x0000 at Meldas control
+SP307	0x0000	; 0x0000 at Meldas control
+SP308	0x0000	; 0x0000 at Meldas control
+SP309	0x0000	; 0x0000 at Meldas control
+SP310	0x0000	; 0x0000 at Meldas control
+SP311	0x0000	; 0x0000 at Meldas control
+SP312	0x0000	; 0x0000 at Meldas control
+SP313	0x0000	; 0x0000 at Meldas control
+SP314	0x0691	; 0x0691 at Meldas control
+SP315	0x1388	; 0x1388 at Meldas control
+SP316	0x0032	; 0x0032 at Meldas control
+SP317	0x1388	; 0x1388 at Meldas control
+SP318	0x1388	; 0x1388 at Meldas control
+SP319	0x0078	; 0x0078 at Meldas control
+SP320	0x0000	; 0x0000 at Meldas control
+
+SP321	0x0000	; motor constants at L-coil (SP321-SP384 all 0x0000 for MDS-C1-SPH)	HEX (default 0x0000)
+SP322	0x0000	; ~
+SP323	0x0000	; ~
+SP324	0x0000	; ~
+SP325	0x0000	; ~
+SP326	0x0000	; ~
+SP327	0x0000	; ~
+SP328	0x0000	; ~
+SP329	0x0000	; ~
+SP330	0x0000	; ~
+SP331	0x0000	; ~
+SP332	0x0000	; ~
+SP333	0x0000	; ~
+SP334	0x0000	; ~
+SP335	0x0000	; ~
+SP336	0x0000	; ~
+
+SP337	0x0000	; ~
+SP338	0x0000	; ~
+SP339	0x0000	; ~
+SP340	0x0000	; ~
+SP341	0x0000	; ~
+SP342	0x0000	; ~
+SP343	0x0000	; ~
+SP344	0x0000	; ~
+SP345	0x0000	; ~
+SP346	0x0000	; ~
+SP347	0x0000	; ~
+SP348	0x0000	; ~
+SP349	0x0000	; ~
+SP350	0x0000	; ~
+SP351	0x0000	; ~
+SP352	0x0000	; ~
+
+SP353	0x0000	; ~
+SP354	0x0000	; ~
+SP355	0x0000	; ~
+SP356	0x0000	; ~
+SP357	0x0000	; ~
+SP358	0x0000	; ~
+SP359	0x0000	; ~
+SP360	0x0000	; ~
+SP361	0x0000	; ~
+SP362	0x0000	; ~
+SP363	0x0000	; ~
+SP364	0x0000	; ~
+SP365	0x0000	; ~
+SP366	0x0000	; ~
+SP367	0x0000	; ~
+SP368	0x0000	; ~
+
+SP369	0x0000	; ~
+SP370	0x0000	; ~
+SP371	0x0000	; ~
+SP372	0x0000	; ~
+SP373	0x0000	; ~
+SP374	0x0000	; ~
+SP375	0x0000	; ~
+SP376	0x0000	; ~
+SP377	0x0000	; ~
+SP378	0x0000	; ~
+SP379	0x0000	; ~
+SP380	0x0000	; ~
+SP381	0x0000	; ~
+SP382	0x0000	; ~
+SP383	0x0000	; ~
+SP384	0x0000	; ~
+
