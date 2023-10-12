@@ -3,7 +3,7 @@ linuxcnc (2.9.1nyx40) unstable; urgency=medium
   * YI32/YO32 support
   * MDS3 64-bit positions
   * mdssp speed ramp
-  * mds3sp comp
+  * mds3sp component/w index support
 
  -- Dmitry Yurtaev <dmitry@yurtaev.com>  Thu, 8 Oct 2023 17:37:01 +0300
 
