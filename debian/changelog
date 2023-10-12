@@ -1,10 +1,10 @@
-linuxcnc (2.9.1nyx40rtc) unstable; urgency=medium
+linuxcnc (2.9.1nyx41rtc) unstable; urgency=medium
 
   * YI32/YO32 support
   * MDS3 64-bit positions
   * mdssp speed ramp
-  * mds3sp comp
-  * 2.9 merge, random tc patch from forrestg
+  * mds3sp component/w index support
+  * random tc patch from forrestg
 
  -- Dmitry Yurtaev <dmitry@yurtaev.com>  Thu, 8 Oct 2023 17:37:01 +0300
 
@@ -24,7 +24,7 @@ linuxcnc (1:2.9.1) unstable; urgency=medium
 
  -- Andy Pugh <andy@bodgesoc.org>  Sun, 08 Oct 2023 10:39:03 +0100
 
-linuxcnc (2.9.0) unstable; urgency=medium
+linuxcnc (1:2.9.0) unstable; urgency=medium
 
   * Add firmware 7i96d_1pwm for 7i96 for PNCconf
   * add GTK and Qt backends to the OpenGL wayland workaround
