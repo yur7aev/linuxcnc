@@ -1,3 +1,9 @@
+linuxcnc (2.9.1nyx42) unstable; urgency=medium
+
+  * final post-release merge
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sun, 5 Mov 2023 14:29:42 +0400
+
 linuxcnc (2.9.1nyx41) unstable; urgency=medium
 
   * YI32/YO32 support

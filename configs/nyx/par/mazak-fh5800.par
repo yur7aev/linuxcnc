@@ -13,70 +13,70 @@
 ;
 
 ;	X	Y	Z	B
-SV001	1	1	1	7	; PC1	motor gear ratio		1-32768             
-SV002	1	1	1	10	; PC2	machine gear ratio  		1-32768             
-SV003	47	47	47	33	; PGN1	position loop gain 1		0-200 rad/sec         
-SV004	125	125	125	86	; PGN2	position loop gain 2		0-999 rac/sec         
-SV005	300	300	300	100	; VGN1	speed loop gain 1		1-999               
-SV006	100	100	0	0	; VGN2	speed loop gain 2		-1000-1000          
-SV007	0	0	0	66	; VIL	speed loop delay compensation	0-32768             
-SV008	682	682	1900	1900	; VIA	speed loop leading comp		1-9999              
-SV009	2048	2048	2048	2048	; IQA	cur loop q axis lead comp	1-20480             
-SV010	2048	2048	2048	2048	; IDA	cur loop d axis lead comp	1-20480             
-SV011	256	256	256	512	; IQG	cur loop q axis gain		1-4096              
-SV012	512	512	512	512	; IDG	cur loop d axis gain		1-4096              
-SV013	500	500	500	500	; ILMT1	current limit value 1		0-999 %              
-SV014	500	500	500	500	; ILMT2 current limit value 2   	0-999 %              
-SV015	15	15	15	100	; FFC	acceleration feed forward gain 	0-999 %              
-SV016	0	0	0	0	; LMC1	lost motion comp gain 1		-1-200 %             
-SV017	0x0000	0x0000	0x0000	0x0010	; SPEC	servo specifications                                
-SV018	16	16	16	9	; PIT	ballscrew pitch			1-32768 mm/rev          
-SV019	1000	1000	1000	3300	; RNG1	position sensor res		1-9999 kp/pit         
-SV020	1000	1000	1000	3300	; RNG2	speed sensor res		1-9999 kp/rev         
-SV021	60	60	60	60	; OLT	overload time const		1-300 s            
-SV022	150	150	150	150	; OLL	overload detect level		1-500 %              
-SV023	13	13	13	2	; OD1	excessive error width 1 at svon	0-32767 mm           
-SV024	50	50	50	50	; INP	in position width		0-32767 um           
-SV025	0x22C5	0x22C5	0x22C5	0x62B1	; MTYP	motor type                                          
-SV026	13	13	13	2	; OD2	excessive err width 2 at svoff	0-32767 mm           
-SV027	0xC000	0xC000	0xC000	0x4000	; SSF1	servo function 1                                    
-SV028	0	0	0	0	; MSFT	linear motor pole shift		-30000-30000 um      
-SV029	500	500	0	0	; VCS	speed loop gain, chg start	0-9999 mm/s         
-SV030	0	0	0	0	; IVC	current/voltage compensation	-32768-32767        
-SV031	0	0	0	0	; OVS1	overshooting compensation	-1-100 %             
-SV032	0	0	0	0	; TOF	torque offset comp gain		-100-100 %           
-SV033	0x0004	0x0002	0x0006	0x0000	; SSF2	servo function 2                                    
-SV034	0x0003	0x0003	0x0003	0x0003	; SSF3	servo function 3                                    
-SV035	0x0040	0x0040	0x0040	0x0000	; SSF4	servo function 4                                    
-SV036	0x0011	0x0000	0x0000	0x0000	; PTYP	power supply type                                   
-SV037	100	300	0	0	; JL	load inertia scale		0-5000 %            
-SV038	160	173	600	0	; FHzq	machine resonance supp filter	0-9000 Hz            
-SV039	0	0	0	0	; LMCD	lost motion comp timing		0-2000 ms            
-SV040	10240	10240	10240	0	; LMCT	lost motion comp non-sens band	-32768-32767 um      
-SV041	0	0	0	0	; LMC2	lost mot comp gain 2		-1-200 %             
-SV042	0	0	0	0	; OVS2	overshoot comp 2		-1-100 %             
-SV043	600	600	0	0	; OBS1	observer 1			0-1000 rad           
-SV044	100	100	0	0	; OBS2	observer 2			0-500 %              
-SV045	0	0	0	0	; TRUB	friction force			-32768-32767%       
-SV046	0	0	0	0	; FHz2	filter 2 freq			0-9000 Hz            
-SV047	100	100	100	100	; EC	induct volage comp gain		0-200 %              
-SV048	50	50	0	0	; EMGrt	vert axis droop prevention	0-2000 ms           
-SV049	15	15	33	15	; PGN1sp spindle sync pos loop gain 1	1-200 1/sec         
-SV050	0	0	0	0	; PGN2sp spindle sync pos loop gain 2	0-999 1/sec         
+SV001	1	1	1	7	; PC1	motor gear ratio		1-32768
+SV002	1	1	1	10	; PC2	machine gear ratio  		1-32768
+SV003	47	47	47	33	; PGN1	position loop gain 1		0-200 rad/sec
+SV004	125	125	125	86	; PGN2	position loop gain 2		0-999 rac/sec
+SV005	300	300	300	100	; VGN1	speed loop gain 1		1-999
+SV006	100	100	0	0	; VGN2	speed loop gain 2		-1000-1000
+SV007	0	0	0	66	; VIL	speed loop delay compensation	0-32768
+SV008	682	682	1900	1900	; VIA	speed loop leading comp		1-9999
+SV009	2048	2048	2048	2048	; IQA	cur loop q axis lead comp	1-20480
+SV010	2048	2048	2048	2048	; IDA	cur loop d axis lead comp	1-20480
+SV011	256	256	256	512	; IQG	cur loop q axis gain		1-4096
+SV012	512	512	512	512	; IDG	cur loop d axis gain		1-4096
+SV013	500	500	500	500	; ILMT1	current limit value 1		0-999 %
+SV014	500	500	500	500	; ILMT2 current limit value 2   	0-999 %
+SV015	15	15	15	100	; FFC	acceleration feed forward gain 	0-999 %
+SV016	0	0	0	0	; LMC1	lost motion comp gain 1		-1-200 %
+SV017	0x0000	0x0000	0x0000	0x0010	; SPEC	servo specifications
+SV018	16	16	16	9	; PIT	ballscrew pitch			1-32768 mm/rev
+SV019	1000	1000	1000	3300	; RNG1	position sensor res		1-9999 kp/pit
+SV020	1000	1000	1000	3300	; RNG2	speed sensor res		1-9999 kp/rev
+SV021	60	60	60	60	; OLT	overload time const		1-300 s
+SV022	150	150	150	150	; OLL	overload detect level		1-500 %
+SV023	13	13	13	2	; OD1	excessive error width 1 at svon	0-32767 mm
+SV024	50	50	50	50	; INP	in position width		0-32767 um
+SV025	0x22C5	0x22C5	0x22C5	0x62B1	; MTYP	motor type
+SV026	13	13	13	2	; OD2	excessive err width 2 at svoff	0-32767 mm
+SV027	0xC000	0xC000	0xC000	0x4000	; SSF1	servo function 1
+SV028	0	0	0	0	; MSFT	linear motor pole shift		-30000-30000 um
+SV029	500	500	0	0	; VCS	speed loop gain, chg start	0-9999 mm/s
+SV030	0	0	0	0	; IVC	current/voltage compensation	-32768-32767
+SV031	0	0	0	0	; OVS1	overshooting compensation	-1-100 %
+SV032	0	0	0	0	; TOF	torque offset comp gain		-100-100 %
+SV033	0x0004	0x0002	0x0006	0x0000	; SSF2	servo function 2
+SV034	0x0003	0x0003	0x0003	0x0003	; SSF3	servo function 3
+SV035	0x0040	0x0040	0x0040	0x0000	; SSF4	servo function 4
+SV036	0x0011	0x0000	0x0000	0x0000	; PTYP	power supply type
+SV037	100	300	0	0	; JL	load inertia scale		0-5000 %
+SV038	160	173	600	0	; FHzq	machine resonance supp filter	0-9000 Hz
+SV039	0	0	0	0	; LMCD	lost motion comp timing		0-2000 ms
+SV040	10240	10240	10240	0	; LMCT	lost motion comp non-sens band	-32768-32767 um
+SV041	0	0	0	0	; LMC2	lost mot comp gain 2		-1-200 %
+SV042	0	0	0	0	; OVS2	overshoot comp 2		-1-100 %
+SV043	600	600	0	0	; OBS1	observer 1			0-1000 rad
+SV044	100	100	0	0	; OBS2	observer 2			0-500 %
+SV045	0	0	0	0	; TRUB	friction force			-32768-32767%
+SV046	0	0	0	0	; FHz2	filter 2 freq			0-9000 Hz
+SV047	100	100	100	100	; EC	induct volage comp gain		0-200 %
+SV048	50	50	0	0	; EMGrt	vert axis droop prevention	0-2000 ms
+SV049	15	15	33	15	; PGN1sp spindle sync pos loop gain 1	1-200 1/sec
+SV050	0	0	0	0	; PGN2sp spindle sync pos loop gain 2	0-999 1/sec
 SV051	0	0	0	0	; DFBT	Dual f/b control time constant	0-9999 ms
-SV052	0	0	0	0	; DFBN	Dual f/b ctl non-sensitive band	0-9999 um            
-SV053	0	0	0	0	; OD3	excessive error width 3		0-32767 mm           
-SV054	0	0	0	0	; ORE	CN3 conn, overrun detection	-1-32767 mm          
-SV055	50	50	0	0	; EMGx	emg stop max delay time		0-2000 ms            
-SV056	130	128	0	0	; EMGt	dec time const im emg		0-2000 ms           
-SV057	281	281	281	187	; SHGC	High gain control constant	0-1200 rad/s        
-SV058	0	0	0	0	; SHGCsp spindle sync high gain const	0-1200 rad/s        
-SV059	0	0	0	0	; TCNV	estimated thrust gain		0-32767             
-SV060	0	0	0	0	; TLMT	G0 collision detection level	0-500%              
-SV061	0	0	0	0	; DA1NO	D/A output ch1 data num		-32768-32767        
-SV062	0	0	0	0	; DA2NO .. ch2                                                    
+SV052	0	0	0	0	; DFBN	Dual f/b ctl non-sensitive band	0-9999 um
+SV053	0	0	0	0	; OD3	excessive error width 3		0-32767 mm
+SV054	0	0	0	0	; ORE	CN3 conn, overrun detection	-1-32767 mm
+SV055	50	50	0	0	; EMGx	emg stop max delay time		0-2000 ms
+SV056	130	128	0	0	; EMGt	dec time const im emg		0-2000 ms
+SV057	281	281	281	187	; SHGC	High gain control constant	0-1200 rad/s
+SV058	0	0	0	0	; SHGCsp spindle sync high gain const	0-1200 rad/s
+SV059	0	0	0	0	; TCNV	estimated thrust gain		0-32767
+SV060	0	0	0	0	; TLMT	G0 collision detection level	0-500%
+SV061	0	0	0	0	; DA1NO	D/A output ch1 data num		-32768-32767
+SV062	0	0	0	0	; DA2NO .. ch2
 SV063	0	0	0	0	; DA1MPY D/A output ch1 mult factor 	-32768-32767
-SV064	0	0	0	0	; DA2MPY .. ch2                                                   
+SV064	0	0	0	0	; DA2MPY .. ch2
 SV065	0	0	0	2	; ???
 SV066	1	1	1	0	; ???
 SV067	2	2	2	2	; cmd unit: 0=0.5um 1=1um, 2=0.5um, 20=0.05um...
@@ -114,7 +114,7 @@ SP015	0	; -	-
 SP016	0	; -	-
 SP017	12000	; TSP	6000	Motor max. speed (rpm)					1-32767 rpm
 SP018	25	; ZSP	50	Motor zero speed (rpm)					1-1000 rpm
-SP019	30	; CSN1	30	Speed command accel/decel time constant			1-32767 10ms		
+SP019	30	; CSN1	30	Speed command accel/decel time constant			1-32767 10ms
 SP020	1350	; SDST	600	Speed detection set value				0-32767 rpm
 SP021	10	; TLM1	10	Torque limit 1						0-120 %
 SP022	32	; VGNP1	63	Speed loop P gain during speed control			0-1000
@@ -184,7 +184,7 @@ SP085	0	; -
 SP086	0	; -
 SP087	100	; DIQM	75	Target value of var torque limit mag at decel		0-150 %
 SP088	3000	; DIQN	3000	Speed for start change of var torque limit mag at decel	0-32767 rpm
-SP089	63	; VGHP	0	
+SP089	63	; VGHP	0
 SP090	60	; VGHI	0
 SP091	0	; OFSN	0
 SP092	0	; OFSI	0
@@ -416,43 +416,43 @@ SP317	0x064D	; ~
 SP318	0x0898	; ~
 SP319	0x0058	; ~
 SP320	0x0000	; BSD
-SP321	0x0001	; RPM	L winding: speed unit          
-SP322	0x2EE0	; NR	.. max, speed                  
-SP323	0x0D48	; NP	.. constant output speed       
-SP324	0x0334	; NB	.. basc speed                  
-SP325	0x0386	; NF	.. magnatic flux rpm           
-SP326	0x0002	; PM	.. pair of magnetic pole       
-SP327	0x0400	; PLG	.. PLG pulse number x4         
-SP328	0x0182	; KVP	.. speed propotional gain      
-SP329	0x036E	; KVI	.. speed integral gain         
-SP330	0x002C	; KVF	.. speed delay advance gain    
-SP331	0x03C0	; KFP	.. magnetic control P gain     
-SP332	0x0222	; KFI	.. magnatic control gain       
-SP333	0xC000	; PYLT	.. Ids current min value       
-SP334	0x0059	; KDP	.. Ids propotional gain        
-SP335	0x0541	; KDI	.. Ids integral gain           
-SP336	0x011A	; KQP	.. Iqs proportional gain       
-SP337	0x10B2	; KQI	.. Iqs integral gain           
-SP338	0x05F8	; IDSM	.. field current at 100%       
-SP339	0x132E	; IQSM	.. torque current at 100%      
-SP340	0x014C	; KVDS	.. q-d interface ratio         
-SP341	0x006E	; KVQS	.. d-q interface ratio         
-SP342	0x0C00	; TMLR	.. decel current limit (75%)   
-SP343	0x1333	; TMLD	.. accel current limit (120%)  
+SP321	0x0001	; RPM	L winding: speed unit
+SP322	0x2EE0	; NR	.. max, speed
+SP323	0x0D48	; NP	.. constant output speed
+SP324	0x0334	; NB	.. basc speed
+SP325	0x0386	; NF	.. magnatic flux rpm
+SP326	0x0002	; PM	.. pair of magnetic pole
+SP327	0x0400	; PLG	.. PLG pulse number x4
+SP328	0x0182	; KVP	.. speed propotional gain
+SP329	0x036E	; KVI	.. speed integral gain
+SP330	0x002C	; KVF	.. speed delay advance gain
+SP331	0x03C0	; KFP	.. magnetic control P gain
+SP332	0x0222	; KFI	.. magnatic control gain
+SP333	0xC000	; PYLT	.. Ids current min value
+SP334	0x0059	; KDP	.. Ids propotional gain
+SP335	0x0541	; KDI	.. Ids integral gain
+SP336	0x011A	; KQP	.. Iqs proportional gain
+SP337	0x10B2	; KQI	.. Iqs integral gain
+SP338	0x05F8	; IDSM	.. field current at 100%
+SP339	0x132E	; IQSM	.. torque current at 100%
+SP340	0x014C	; KVDS	.. q-d interface ratio
+SP341	0x006E	; KVQS	.. d-q interface ratio
+SP342	0x0C00	; TMLR	.. decel current limit (75%)
+SP343	0x1333	; TMLD	.. accel current limit (120%)
 SP344	0x1800	; TMLS	.. constant curret limit (150%)
-SP345	0x0083	; KWS	.. Kws at power running        
-SP346	0x00A4	; KWSR	.. Kws at regeneration         
-SP347	0x0800	; IQ1	.. Iqs 100% for calculation    
-SP348	0x0D8F	; M0	.. MO for M saturation         
-SP349	0x071A	; M2	.. M2 for M saturation         
-SP350	0x0A94	; FLUX	.. FLUX1 for M saturation      
-SP351	0x00C9	; KR2	.. R2 for ,2 F/B calculation   
-SP352	0x0000	; LR2	.. phs2 F/B clamp value        
-SP353	0x296F	; ICT	.. CT setting cunent           
-SP354	0x0447	; KI1	.. current F/B compensation    
-SP355	0x0000	; TI	.. current loop sampling Ts    
-SP356	0x09C4	; VPWM	.. PWM triangle resolution     
-SP357	0x0000	; IDLM	.. flux F/B clamp (min)        
+SP345	0x0083	; KWS	.. Kws at power running
+SP346	0x00A4	; KWSR	.. Kws at regeneration
+SP347	0x0800	; IQ1	.. Iqs 100% for calculation
+SP348	0x0D8F	; M0	.. MO for M saturation
+SP349	0x071A	; M2	.. M2 for M saturation
+SP350	0x0A94	; FLUX	.. FLUX1 for M saturation
+SP351	0x00C9	; KR2	.. R2 for ,2 F/B calculation
+SP352	0x0000	; LR2	.. phs2 F/B clamp value
+SP353	0x296F	; ICT	.. CT setting cunent
+SP354	0x0447	; KI1	.. current F/B compensation
+SP355	0x0000	; TI	.. current loop sampling Ts
+SP356	0x09C4	; VPWM	.. PWM triangle resolution
+SP357	0x0000	; IDLM	.. flux F/B clamp (min)
 SP358	0x0000	; ~
 SP359	0x0000	; ~
 SP360	0x0000	; ~
