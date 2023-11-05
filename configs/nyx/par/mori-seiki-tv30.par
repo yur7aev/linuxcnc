@@ -22,14 +22,14 @@ SV006	-	-	-	-	;
 SV007	-	-	-	-	;
 SV008	682	682	682	682	; VIA	speed loop lead comp	1-9999
 SV009	1024	1024	1024	1024	; IQA	cur loop q lead comp	1-20480
-SV010	2048	2048	1024	2048	; IDA	cur loop d lead comp	1-20480
+SV010	2048	2048	2048	2048	; IDA	cur loop d lead comp	1-20480
 SV011	256	256	256	256	; IQG	cur loop q gain		1-2560
 SV012	512	512	512	512	; IDG	cur loop d gin		1-2560
 SV013	500	500	500	500	; ILMT	current limit		0-500%
 SV014	500	500	500	500	; ILMTsp current limit special	0-500%
 SV015	0	0	0	0	; FFC	acc rate ff gain	0-999%
 SV016	0	0	0	0	; LMC1	lost motion comp	-1-200%
-SV017	0x0080	0x0080	0x0080	0x0080	; SPEC
+SV017	0x0080	0x0080	0x0080	0x0000	; SPEC
 SV018	10	10	10	10	; PIT	ballscrew pitch		1..32767
 SV019	4	4	4	4	; RNG1	position detector res	8,16,25,100
 SV020	4	4	4	4	; RNG2	speed detector res	8,16,25,100
