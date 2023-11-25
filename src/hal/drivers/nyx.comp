@@ -55,6 +55,7 @@ pin out    float servo-##.trq-fb[16 : personality];
 pin out   signed servo-##.droop[16 : personality];
 pin out   signed servo-##.mon1[16 : personality];
 pin out   signed servo-##.mon2[16 : personality];
+pin out   signed servo-##.mon12[16 : personality];
 pin  in unsigned servo-##.mon[16 : personality];
 
 pin out   signed servo-##.error-cnt[16 : personality] "drive feedback error count";
@@ -822,8 +823,9 @@ FUNCTION(rd)
 					servo_z_offs(a) = yssc2_z_offs(y, a);
 					servo_z_revs(a) = yssc2_z_offs(y, a) / (double)yssc2_feedback_res(y, a);
 
-					servo_mon1(a) = yssc2_mon1(y, a);
-					servo_mon2(a) = yssc2_mon2(y, a);
+					servo_mon12(a) =
+					((servo_mon1(a) = yssc2_mon1(y, a))<<16)
+					|(uint16_t)(servo_mon2(a) = yssc2_mon2(y, a));
 				} else {
 					servo_dbg(a) = 0;
 					++servo_error_cnt(a);
