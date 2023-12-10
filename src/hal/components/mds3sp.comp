@@ -13,6 +13,7 @@ net s-at-speed   spindle.0.at-speed       <= mds3sp.0.at-speed-out
 net s-enable     nyx.0.servo-05.enable    <= mds3sp.0.amp-enable-out
 net s-pos-cmd    nyx.0.servo-05.pos-cmd   <= mds3sp.0.pos-cmd-out
 net s-pos-fb     nyx.0.servo-05.pos-fb    => mds3sp.0.pos-fb-in
+net s-enabled    nyx.0.servo-05.enabled   => mds3sp.0.amp-enabled-in
 
 net s-z-revs     nyx.0.servo-05.z-revs    => mds3sp.0.z-revs-in
 net s-z-reset    nyx.0.servo-05.spindle-orient <= mds3sp.0.z-reset-out
@@ -39,6 +40,7 @@ pin in   float speed-in "from spindle.X.speed-out";
 pin in   float max-speed = 8000;
 
 pin out  bit   amp-enable-out;
+pin in   bit   amp-enabled-in;
 pin in   float pos-fb-in;
 pin out  float pos-cmd-out;
 pin in   bit   at-speed-in;
@@ -139,7 +141,7 @@ if (speed > max_speed) {				// just in case something's wrong - clamp the speed
 amp_enable_out = (fabs(speed) > 0.001) || (orient_stage > 0);
 at_speed_out = fabs(speed_in - speed) < 1 && (at_speed_in || fabs(speed_in) < 0.1);
 
-if (amp_enable_out) {
+if (amp_enabled_in) {
 	pos_cmd_out += speed / 60 * fperiod;
 } else {
 	pos_cmd_out = pos_fb_in;
