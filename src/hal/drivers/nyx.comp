@@ -1520,6 +1520,7 @@ void params_get_span(servo_params *params, uint16_t first, int count, uint16_t *
 	int i;
 
 	p = params_bfind(first, params->pa, params->count);
+	if (p && p->no < first && p - params->pa < params->count) ++p;
 	for (i = 0; i < count; i++) {
 		if (p && p - params->pa < params->count && p->no == first + i) {
 			mask |= 1<<i;
