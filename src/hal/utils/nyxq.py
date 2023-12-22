@@ -17,7 +17,7 @@ import re
 import string
 
 
-VER = "nyxq v3.2.0"
+VER = "nyxq v3.2.2"
 
 class nyx_dpram_hdr(Structure):
 	_fields_ = [
@@ -596,7 +596,7 @@ def flash_program(f, a=0x80000, verify_only=0):
 			req(0x00050022, 0xdeadbeef, o)
 		print()
 
-		print("writing", l, "bytes", end="")
+		print("writing", l, "bytes ", end="")
 		for o in range(0, l, 0x100):
 			s = min(256, l - o)
 			sys.stdout.write(".")

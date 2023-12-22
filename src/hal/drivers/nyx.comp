@@ -1519,8 +1519,8 @@ void params_get_span(servo_params *params, uint16_t first, int count, uint16_t *
 	uint32_t mask = 0;
 	int i;
 
-	p = params_bfind(first, params->pa, params->count);
-	if (p && p->no < first && p - params->pa < params->count) ++p;
+	p = params_bfind(first, params->pa, params->count);		// if not found, bfind returns previous existing param
+	if (p && p->no < first && p - params->pa < params->count) ++p;	// move to the next instead
 	for (i = 0; i < count; i++) {
 		if (p && p - params->pa < params->count && p->no == first + i) {
 			mask |= 1<<i;
