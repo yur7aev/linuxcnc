@@ -345,9 +345,6 @@ status pin telling that joint \fIN\fR is on the negative software limit
 .B halui.joint.N.override\-limits\fR bit out \fR
 status pin telling that joint \fIN\fR's limits are temporarily overridden
 .TP
-.B halui.joint.N.set-homed\fR bit in \fR
-pin for immediate homing joint N
-.TP
 .B halui.joint.N.unhome\fR bit in \fR
 pin for unhoming joint \fIN\fR
 .TP
@@ -380,9 +377,6 @@ status pin telling that the selected joint's limits are temporarily overridden
 .TP
 .B halui.joint.selected.unhome\fR bit in \fR
 pin for unhoming the selected joint
-.TP
-.B halui.joint.selected.set-homed\fR bit in \fR
-pin for immediate homing the selected joint
 
 .SS Joint jogging \fR(\fBN\fR = joint number (0 ... num_joints\-1))
 .B halui.joint.jog\-deadband\fR float in \fR
