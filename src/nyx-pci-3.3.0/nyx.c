@@ -14,13 +14,14 @@
 #include <linux/uaccess.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
+#include <linux/version.h>
 //#include <asm/cacheflush.h>
 
 #include "nyx3.h"
 
 #define DEVICE_NAME "nyx"
 #define CLASS_NAME "servo"
-#define VER "3.2.0"
+#define VER "3.3.0"
 
 #define YSSC_VENDOR_ID 0x1067
 #define YMTL_VENDOR_ID 0x1313
@@ -99,7 +100,7 @@ static struct file_operations fops =
 static struct class* nyx_class = NULL;
 static struct device* nyx_device = NULL;
 
-static char *nyx_devnode(struct device *dev, umode_t *mode)
+static char *nyx_devnode(const struct device *dev, umode_t *mode)
 {
 	if (mode) *mode = 0666;
 	return NULL;
@@ -125,7 +126,11 @@ static int __init nyx_init(void)
 
 	/* We can either tie our device to a bus (existing, or one that we create)
 	* or use a "virtual" device class. For this example, we choose the latter */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
 	nyx_class = class_create(THIS_MODULE, CLASS_NAME);
+#else
+	nyx_class = class_create(CLASS_NAME);
+#endif
 	if (IS_ERR(nyx_class)) {
 		printk(KERN_ALERT "%s: failed to register device class '%s'\n", DEVICE_NAME, CLASS_NAME);
 		goto fail2;
