@@ -1,4 +1,9 @@
-=======
+linuxcnc (2.9.2nyx45) unstable; urgency=medium
+
+  * upstream re-merge
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Tue, 6 Feb 2024 19:00:08 +0200
+
 linuxcnc (2.9.2nyx44) unstable; urgency=medium
 
   * upstream merge
