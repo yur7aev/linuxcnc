@@ -15,7 +15,8 @@ setp nyx.0.servo-05.trq-scale [NYX]TRQ_SCALE
 
 setp mds3sp.0.accel 2000
 setp mds3sp.0.max-speed 8000
-net s-vel-fb     spindle.0.speed-in       <= nyx.0.servo-05.vel-fb
+net s-vel-fb                              <= nyx.0.servo-05.vel-fb
+net s-vel-fb-rps spindle.0.speed-in       <= nyx.0.servo-05.vel-fb-rps
 net s-vel        spindle.0.speed-out      => mds3sp.0.speed-in
 net s-at-speed   spindle.0.at-speed       <= mds3sp.0.at-speed-out
 net s-enable     nyx.0.servo-05.enable    <= mds3sp.0.amp-enable-out
