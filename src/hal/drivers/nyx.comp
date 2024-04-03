@@ -51,6 +51,7 @@ pin out    float servo-##.pos-fb[16 : personality];
 pin  in      bit servo-##.velocity-mode[16 : personality];
 pin  in    float servo-##.vel-cmd[16 : personality];
 pin out    float servo-##.vel-fb[16 : personality];
+pin out    float servo-##.vel-fb-rps[16 : personality];
 pin out    float servo-##.trq-fb[16 : personality];
 pin out   signed servo-##.droop[16 : personality];
 pin out   signed servo-##.mon1[16 : personality];
@@ -87,6 +88,7 @@ pin  in      bit servo-##.undroop[16 : personality];
 pin out      bit ready "card is in sync with NC";
 pin out    float phase "sync pulse deviation, periods";
 pin out   signed error-cnt "missed comm cycles when not in sync";
+//pin out    float jitter;
 //pin  in      bit enable = 1;
 
 pin out   signed dbg0;
@@ -215,6 +217,7 @@ typedef struct yssc2 {
 	int errors_shown;
 	struct freq_data freq;
 	int was_ready;
+	long long int prev_clock;
 
 	servo_params par[NYX_AXES];
 } YSSC2;
@@ -676,6 +679,11 @@ FUNCTION(rd)
 		return;
 	}
 */
+
+//	long long int c = rtapi_get_clocks();
+//	jitter = (c - y->prev_clock) / 2.8 / 22.222222;
+//	y->prev_clock = c;
+
 	yssc2_receive(y);	// should be the very first routine
 
 	int insync;
@@ -807,7 +815,7 @@ FUNCTION(rd)
 					if (servo_undroop(a)) fb = ((int64_t)(CMD(a).pos64)<<32) + CMD(a).pos - servo_origin(a);
 
 					servo_pos_fb(a) = (fb) * servo_pos_scale(a) / yssc2_feedback_res(y, a);
-					servo_vel_fb(a) = yssc2_vel_fb(y, a) / servo_vel_scale(a);
+					servo_vel_fb_rps(a) = (servo_vel_fb(a) = yssc2_vel_fb(y, a) / servo_vel_scale(a)) / 60.0;
 					servo_trq_fb(a) = yssc2_trq_fb(y, a) / 10.0;
 					servo_droop(a) = yssc2_droop(y, a);
 					servo_torque_clamped(a) = yssc2_torque_clamped(y, a);
