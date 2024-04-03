@@ -4,7 +4,7 @@
 #
 # License: GPL Version 2
 #
-# 2018-2022, dmitry@yurtaev.com
+# 2018-2024, dmitry@yurtaev.com
 #
 
 from glob import glob
@@ -17,7 +17,7 @@ import re
 import string
 
 
-VER = "nyxq v3.2.2"
+VER = "nyxq v3.3.2"
 
 class nyx_dpram_hdr(Structure):
 	_fields_ = [
@@ -257,7 +257,7 @@ def req(code, a1=0, a2=0, a3=0):
 	return True
 
 def cstr(arr):
-	return str(cast(arr, c_char_p).value.split(b'\0',1)[0], 'ascii')
+	return str(cast(arr, c_char_p).value.split(b'\0',1)[0], 'ascii', 'ignore')
 
 def info():
 	req(0x00010000)
@@ -278,11 +278,13 @@ def bin(a, l):
 	return s
 
 def io_info():
+	print("ENC0..%d:" % (num_enc-1), end='')
 	for i in range(num_enc):
-		print("ENC%d: %d" % (i, dp.rly.enc[i]))
+		print(" %d" % dp.rly.enc[i], end='')
+	print("\nDAC0..%d:" % (num_dac-1), end='')
 	for i in range(num_dac):
-		print("DAC%d: %d" % (i, dp.cmd.dac[i]))
-	print("-------- fedcba9876543210fedcba9876543210")
+		print(" %d" % dp.cmd.dac[i], end='')
+	print("\n-------- fedcba9876543210fedcba9876543210")
 	print("GPI:     " + bin(dp.rly.gpi[0], 29))
 	print("GPO:     " + bin(dp.cmd.gpo[0], 8))
 
@@ -305,8 +307,8 @@ def io_info():
 				print("YO16  " + bin(yo, 16), end="")
 			elif typ == 0x12:
 				print("YO32  " + bin(yo, 32), end="")
-				if (yi & 0x40): print( " uv", end="")
-				if (yi & 0x80): print( " oc", end="")
+				if (yi & 0x40): print( " uv", end="")	# undervoltage
+				if (yi & 0x80): print( " oc", end="")	# overcurrent
 			elif typ == 3:
 				print("YENC  " + "%d" % (yi & 0xffff), end="")
 			elif typ == 5:
@@ -320,7 +322,7 @@ def io_info():
 			else:
 				print(typ, "?", "%x,%x %x,%x" % (yi, yi2, yo,yo2), end="")
 			if ok:
-				print(" err:",ok)
+				print(" err:", ok)
 			else:
 				print()
 	print("-------- fedcba9876543210fedcba9876543210")
@@ -333,21 +335,20 @@ def servo_info():
 		s = dp.rly.fb[a].state
 		if s & 0x10:	# YC_ONLINE
 			print("%d: [%02x] pos=%11d vel=%.1f trq=%.1f" % (a, dp.rly.fb[a].alarm, dp.rly.fb[a].pos, dp.rly.fb[a].vel/10, dp.rly.fb[a].trq/10), end="")
-			if s & 0x00010: print(" on", end="")
-			if s & 0x00080: print(" rdy", end="")
-			if s & 0x00100: print(" svon", end="")
-			if s & 0x00200: print(" inp", end="")
-			if s & 0x00400: print(" atsp", end="")
-			if s & 0x00800: print(" zsp", end="")
-			if s & 0x01000: print(" Ilim", end="")
-			if s & 0x02000: print(" alm", end="")
-			if s & 0x04000: print(" wrn", end="")
-			if s & 0x08000: print(" abs", end="")
-			if s & 0x10000: print(" abslost", end="")
-
-			if s & 0x000040: print(" zpass", end="")
-			if s & 0x400000: print(" ori", end="")
-			if s & 0x800000: print(" orc", end="")
+			if s & 0x0000010: print(" on", end="")
+			if s & 0x0000040: print(" zpass", end="")
+			if s & 0x0000080: print(" rdy", end="")
+			if s & 0x0000100: print(" svon", end="")
+			if s & 0x0000200: print(" inp", end="")
+			if s & 0x0000400: print(" atsp", end="")
+			if s & 0x0000800: print(" zsp", end="")
+			if s & 0x0001000: print(" Ilim", end="")
+			if s & 0x0002000: print(" alm", end="")
+			if s & 0x0004000: print(" wrn", end="")
+			if s & 0x0008000: print(" abs", end="")
+			if s & 0x0010000: print(" abslost", end="")
+			if s & 0x0400000: print(" ori", end="")
+			if s & 0x0800000: print(" orc", end="")
 			if s & 0x1000000: print(" fwd", end="")
 			if s & 0x2000000: print(" rev", end="")
 			# print("[%x]"%(s), end="")
@@ -369,8 +370,8 @@ def servo_fw():
 	for a in range(num_axes):
 		try:
 			req(0x00030007, a)
-			s = bytearray(dp.buf.byte)
-			print("%d:" % a, s[0:63].replace('\0', ' '))
+			s = bytes(dp.buf.byte[0:63])	#.replace(b'\0', b' ')
+			print("%d:" % a, cstr(s))
 		except:
 			pass
 
@@ -378,8 +379,8 @@ def servo_alarm():
 	for a in range(num_axes):
 		try:
 			req(0x00030008, a)
-			s = bytearray(dp.buf.byte)
-			print("%d:" % a, s[0:63].replace('\0', ' '))
+			s = bytes(dp.buf.byte[0:63])
+			print("%d:" % a, cstr(s))
 		except:
 			pass
 
