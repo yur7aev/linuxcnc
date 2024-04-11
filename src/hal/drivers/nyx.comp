@@ -152,6 +152,7 @@ typedef struct yssc2_amp {	// data collected during initialization
 } YSSC2_amp;
 
 #define ZSM_IDLE	0
+#define ZSM_SAVE_Z	11
 #define ZSM_INDEX_REQ	1
 #define ZSM_WAIT_Z	2
 #define ZSM_WAIT_OFFS	3
@@ -747,13 +748,16 @@ FUNCTION(rd)
 						case ZSM_IDLE:
 							if (servo_index_enable(a)) {
 								yssc2_reset_z(y, a, 1);
-								y->amp[a].index_req_pos = servo_counts_cmd(a);
-								state = ZSM_INDEX_REQ;
+///								y->amp[a].index_req_pos = servo_counts_cmd(a);
+								state = ZSM_SAVE_Z;
 							} else {
 		idle:						yssc2_reset_z(y, a, 0);
 								state = ZSM_IDLE;
 							}
 							break;
+						case ZSM_SAVE_Z:
+							state = ZSM_INDEX_REQ;
+							// fall thru
 						case ZSM_INDEX_REQ:
 							if (servo_index_enable(a)) {
 								if (!yssc2_z_passed(y, a)) {
@@ -812,7 +816,10 @@ FUNCTION(rd)
 
 //					if (!yssc2_zero_speed(y, a) && servo_undroop(a)) fb += yssc2_droop(y, a);
 //					if (servo_undroop(a)) fb += yssc2_droop(y, a);
-					if (servo_undroop(a)) fb = ((int64_t)(CMD(a).pos64)<<32) + CMD(a).pos - servo_origin(a);
+					if (servo_undroop(a) && servo_enable(a))
+						fb = (FB(a).state & Y_TYPE == Y_TYPE_FB64) ?
+						((int64_t)(CMD(a).pos64)<<32) + CMD(a).pos - servo_origin(a) :
+						CMD(a).pos - servo_origin(a);
 
 					servo_pos_fb(a) = (fb) * servo_pos_scale(a) / yssc2_feedback_res(y, a);
 					servo_vel_fb_rps(a) = (servo_vel_fb(a) = yssc2_vel_fb(y, a) / servo_vel_scale(a)) / 60.0;
@@ -1100,6 +1107,11 @@ FUNCTION(wr)
 			yssc2_do(y, a, 2, servo_out_02(a));
 
 			yssc2_mon(y, a, servo_mon(a));
+
+			if (y->amp[a].zsm == ZSM_SAVE_Z) {
+				y->amp[a].index_req_pos = servo_counts_cmd(a);
+				y->amp[a].zsm = ZSM_INDEX_REQ;
+			}
 		}
 	}
 

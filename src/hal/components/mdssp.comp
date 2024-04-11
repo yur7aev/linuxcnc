@@ -7,7 +7,12 @@ license "GPL";
 
 param r signed cpr = 23040000 "command/feedback resolution";
 pin in  signed spindle-counts-in "raw 32-bit feedback position";
+
 pin in  bit    spindle-oriented-in;
+pin in  bit    spindle-orient-in "from spindle.0.orient";
+pin in  bit    spindle-locked-in "from spindle.0.locked";
+pin out bit    orient-out "to servo-XX.orient";
+
 pin out float revs "spindle position output, in revolution";
 pin io  bit index-request;
 
@@ -109,3 +114,5 @@ if (index_request) {
 }
 
 revs = (counter - offset) / (double)cpr;
+
+orient_out = spindle_orient_in || spindle_locked_in;
