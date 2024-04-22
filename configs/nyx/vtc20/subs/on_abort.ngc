@@ -1,0 +1,17 @@
+; if aborted during a toolchange
+
+o<on_abort> sub
+
+;(debug, abort)
+;m65 p#<_ini[o]umb_change>	; umb comp change request
+;m65 p#<_ini[o]z_ex_enable>	; restore top limit
+;m68 e#<_ini[o]tpmux> q0		; disconnect touch probes
+o<context_restore> call
+;o<reset_state> call
+g64 p0.005 q0.005
+g43
+;m48 ; enable overrides
+;g92.3
+
+o<on_abort> endsub
+m2

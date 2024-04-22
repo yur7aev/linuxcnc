@@ -1,0 +1,7 @@
+;
+
+o<tp_off> sub
+	m68 e#<_ini[o]tpmux> q0		; select and activate renishaw
+o<tp_off> endsub [1]
+
+m2

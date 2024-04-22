@@ -1,0 +1,76 @@
+#
+# MAZAK VTC20B
+#
+#
+#
+# 2024, http://yurtaev.com
+#
+
+net estop <= iocontrol.0.user-enable-out
+#net emg-stop-in-1 X27-emg-stop-in-1 => iocontrol.0.emc-enable-in
+net estop => iocontrol.0.emc-enable-in
+
+# servos index homing
+
+net x-home-sw X18n-x-axis-zrn => joint.0.home-sw-in
+net y-home-sw X19n-y-axis-zrn => joint.1.home-sw-in
+net z-homw-sw X1An-z-axis-zrn => joint.2.home-sw-in
+
+net x-index  nyx.0.servo-00.index-enable <=> joint.0.index-enable
+net y-index  nyx.0.servo-01.index-enable <=> joint.1.index-enable
+net z-index  nyx.0.servo-02.index-enable <=> joint.2.index-enable
+
+net x-homing nyx.0.servo-00.undroop <= joint.0.homing
+net y-homing nyx.0.servo-01.undroop <= joint.1.homing
+net z-homing nyx.0.servo-02.undroop <= joint.2.homing
+
+# MDS-A-CV power contactor
+net cv-relay-on <= X1Cn-spindle-relay-check
+
+# servo power after contactor has been activated
+loadrt and2 count=1
+addf and2.0 servo-thread
+net cv-relay-on => and2.0.in0
+net estop => and2.0.in1
+net rdy-on <= and2.0.out
+
+# mag1 estop ?
+net estop => Y00-mag1-emg
+# servo on delay Y04 = X27(estop-in) && servo-XX.online
+net estop => Y04-servo-on-delay
+# machine ready Y0c = X27 && some other stuff
+net estop => Y0C-machine-ready
+# spindle set / s/w emg Y2D =
+# !Y29F(PCEMG) && M1358(EMG.X) && !X243(SP.ALM) && !X210(NC.ALM1) && !X211(NC.ALM2)
+# || X116(OTR.B)?
+# || !T80
+#    && !M1370 && M1100
+#    ||  M1331 && M1091 && !M1100
+net estop => Y2D-estop
+# flood coolant
+net flood-coolant iocontrol.0.coolant-flood => Y0F-flood-coolant
+# mist coolant Y06?
+# work air blast Y16
+# tool air blast Y29
+net mist-coolant iocontrol.0.coolant-mist => Y16-work-air-blast
+# 
+net lube <= iocontrol.0.lube
+# spindle lube Y17
+net lube => Y17-spindle-lube
+# lube unit Y18
+net lube => Y18-lube-unit
+# way lube level X12n
+# way lube pressure X1D
+net lube-level-ok iocontrol.0.lube_level <= X12n-way-lube-level
+
+# main-trans-overheat		X2Cn-main-trans-overheat	1
+# main-air-pressure		X2E-main-air-pressure		1
+# mag1-alarm			X37-mag1-alarm
+# mms-error			X0A-mms-error
+# mms-battery-alarm		X0C-mms-battery-alarm
+# sw-emg-stop-in		X0D-sw-emg-stop-in
+# emg-stop-in-2			X0F-emg-stop-in-2
+# spindle-relay-check		X1C-spindle-relay-check
+# breaker-trip			X2A-breaker-trip
+# conv-temperature-trip		X2B-conv-temperature-trip
+

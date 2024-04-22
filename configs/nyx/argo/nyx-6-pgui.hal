@@ -1,0 +1,187 @@
+#
+# NYX v2.3 LinuxCNC 2.8 sample PyVCP config, 6 axes
+#
+# 2019, http://www.yurtaev.com
+#
+
+net nyx-ready nyx.0.ready => pyvcp.led-ready
+net nyx-phase nyx.0.phase => pyvcp.phase
+
+net trq0 nyx.0.servo-00.trq-fb => pyvcp.trq0
+net trq1 nyx.0.servo-01.trq-fb => pyvcp.trq1
+net trq2 nyx.0.servo-02.trq-fb => pyvcp.trq2
+net trq3 nyx.0.servo-03.trq-fb => pyvcp.trq3
+net trq4 nyx.0.servo-04.trq-fb => pyvcp.trq4
+net trq5 nyx.0.servo-05.trq-fb => pyvcp.trq5
+
+net s-vel-fb => pyvcp.s-vel
+
+net offline0 nyx.0.servo-00.offline => pyvcp.led-offline0 pyvcp.led-ready0.disable pyvcp.led-alarm0.disable pyvcp.led-warning0.disable
+net offline1 nyx.0.servo-01.offline => pyvcp.led-offline1 pyvcp.led-ready1.disable pyvcp.led-alarm1.disable pyvcp.led-warning1.disable
+net offline2 nyx.0.servo-02.offline => pyvcp.led-offline2 pyvcp.led-ready2.disable pyvcp.led-alarm2.disable pyvcp.led-warning2.disable
+net offline3 nyx.0.servo-03.offline => pyvcp.led-offline3 pyvcp.led-ready3.disable pyvcp.led-alarm3.disable pyvcp.led-warning3.disable
+net offline4 nyx.0.servo-04.offline => pyvcp.led-offline4 pyvcp.led-ready4.disable pyvcp.led-alarm4.disable pyvcp.led-warning4.disable
+net offline5 nyx.0.servo-05.offline => pyvcp.led-offline5 pyvcp.led-ready5.disable pyvcp.led-alarm5.disable pyvcp.led-warning5.disable
+
+net ready0 nyx.0.servo-00.ready => pyvcp.led-ready0
+net ready1 nyx.0.servo-01.ready => pyvcp.led-ready1
+net ready2 nyx.0.servo-02.ready => pyvcp.led-ready2
+net ready3 nyx.0.servo-03.ready => pyvcp.led-ready3
+net ready4 nyx.0.servo-04.ready => pyvcp.led-ready4
+net ready5 nyx.0.servo-05.ready => pyvcp.led-ready5
+
+net alarm0 nyx.0.servo-00.alarm pyvcp.led-alarm0
+net alarm1 nyx.0.servo-01.alarm pyvcp.led-alarm1
+net alarm2 nyx.0.servo-02.alarm pyvcp.led-alarm2
+net alarm3 nyx.0.servo-03.alarm pyvcp.led-alarm3
+net alarm4 nyx.0.servo-04.alarm pyvcp.led-alarm4
+net alarm5 nyx.0.servo-05.alarm pyvcp.led-alarm5
+
+net warning0 nyx.0.servo-00.warning pyvcp.led-warning0
+net warning1 nyx.0.servo-01.warning pyvcp.led-warning1
+net warning2 nyx.0.servo-02.warning pyvcp.led-warning2
+net warning3 nyx.0.servo-03.warning pyvcp.led-warning3
+net warning4 nyx.0.servo-04.warning pyvcp.led-warning4
+net warning5 nyx.0.servo-05.warning pyvcp.led-warning5
+
+net enabled0 nyx.0.servo-00.enabled => pyvcp.led-enabled0
+net enabled1 nyx.0.servo-01.enabled => pyvcp.led-enabled1
+net enabled2 nyx.0.servo-02.enabled => pyvcp.led-enabled2
+net enabled3 nyx.0.servo-03.enabled => pyvcp.led-enabled3
+net enabled4 nyx.0.servo-04.enabled => pyvcp.led-enabled4
+net s-enabled                       => pyvcp.led-enabled5
+
+net reset-alarm <= pyvcp.reset-alarm
+net reset-alarm => nyx.0.servo-00.reset-alarm
+net reset-alarm => nyx.0.servo-01.reset-alarm
+net reset-alarm => nyx.0.servo-02.reset-alarm
+net reset-alarm => nyx.0.servo-03.reset-alarm
+net reset-alarm => nyx.0.servo-04.reset-alarm
+net reset-alarm => nyx.0.servo-05.reset-alarm
+
+net code0 nyx.0.servo-00.alarm-code => pyvcp.code0
+net code1 nyx.0.servo-01.alarm-code => pyvcp.code1
+net code2 nyx.0.servo-02.alarm-code => pyvcp.code2
+net code3 nyx.0.servo-03.alarm-code => pyvcp.code3
+net code4 nyx.0.servo-04.alarm-code => pyvcp.code4
+net code5 nyx.0.servo-05.alarm-code => pyvcp.code5
+
+
+# net disable-check <= pyvcp.disable-check
+
+#net mon1 => pyvcp.mon1
+#net mon2 => pyvcp.mon2
+#net mon3 => pyvcp.mon3
+#net mon4 => pyvcp.mon4
+#net mon1l => pyvcp.mon1l
+#net mon2l => pyvcp.mon2l
+
+#net mon-enc => pyvcp.mon-enc
+#net mon-theta => pyvcp.mon-theta
+
+#---------------------
+# mds-d-spj3 debug
+
+# =========================== spindle drive debug ===========================
+
+#net s-pos-cmd                                  => pyvcp.pos-cmd
+#net s-pos-fb                                   => pyvcp.pos-fb
+#net s-droop    nyx.0.servo-05.droop            => pyvcp.pos-droop
+
+#net vel-check  nyx.0.servo-05.velocity-mode     <= pyvcp.vel-check 
+#net s-z-reset  nyx.0.servo-05.spindle-orient    <= pyvcp.z-check
+
+net s-z-complete nyx.0.servo-05.spindle-oriented => pyvcp.led-z-complete
+net s-z-passed   nyx.0.servo-05.z-passed         => pyvcp.led-z-passed
+net z-offs       nyx.0.servo-05.z-offs           => pyvcp.z-offs
+#net s-revs                                       => pyvcp.revs
+
+net s-at-speed => pyvcp.led-at-speed
+net s-index    => pyvcp.led-index
+
+net i-z-neg-limit => pyvcp.led-min-z
+net i-z-home      => pyvcp.led-home-z
+net i-z-ind       => pyvcp.led-ind-z
+net i-z-pos-limit => pyvcp.led-up-z
+
+net s-overspeed mds3sp.0.overspeed-out pyvcp.led-overspeed
+
+# =========================== toolchanger ===========================
+
+net i-air-ok       => pyvcp.led-air
+net umb-clear-fault <= pyvcp.btn-cf
+net tc-faulted iocontrol.0.toolchanger-faulted => pyvcp.led-umb-flt
+# net z-pos-limit   motion.analog-out-00 => ini.z.max_limit
+
+# ---------------- UMBRELLA TEST -------------------
+
+net i-umb-1   => pyvcp.led-umb-1
+net i-umb-2   => pyvcp.led-umb-2
+net i-umb-idx => pyvcp.led-umb-idx
+net i-umb-sol => pyvcp.led-umb-sol
+
+#net umb-change      <= pyvcp.btn-tc
+#net umb-clear-fault <= pyvcp.btn-cf
+#net umb-pocket      <= pyvcp.scl-pocket-i
+
+# ---------------- SAMPLER -------------------
+
+#net enable-sampler <= pyvcp.btn-sample
+
+#loadrt sampler depth=3000 cfg=ffff
+#addf sampler.0 servo-thread
+#loadrt conv_s32_float names=i2f
+#addf i2f servo-thread
+
+#setp nyx.0.encoder-00.cpr 10000
+#net enc0-pos sampler.0.pin.0 nyx.0.encoder-00.pos => pyvcp.enc0-pos
+
+# X CALIBRATION
+#net x-j-cmd sampler.0.pin.1 joint.0.pos-cmd
+#net x-j-fb sampler.0.pin.2 joint.0.pos-fb
+#net droop0 nyx.0.servo-00.droop i2f.in
+#net droop0f i2f.out sampler.0.pin.3
+# Y CALIBRATION
+#net y-j-cmd sampler.0.pin.1 joint.1.pos-cmd
+#net y-j-fb sampler.0.pin.2 joint.1.pos-fb
+#net droop1 nyx.0.servo-01.droop i2f.in
+#net droop1f i2f.out sampler.0.pin.3
+
+#net x-j-cmd sampler.0.pin.0
+#net y-j-cmd sampler.0.pin.1
+#net z-j-cmd sampler.0.pin.1
+
+#net x-j-fb sampler.0.pin.2 joint.0.pos-fb
+#net y-j-fb sampler.0.pin.3 joint.1.pos-fb
+#net z-j-fb sampler.0.pin.3 joint.2.pos-fb
+
+#net enable-sampler sampler.0.enable
+
+# =========================== mds servo monitor ===========================
+
+net mon  nyx.0.servo-00.mon  => pyvcp.mon
+net mon1 nyx.0.servo-00.mon1 => pyvcp.mon1
+net mon2 nyx.0.servo-00.mon2 => pyvcp.mon2
+
+net i-x-home pyvcp.x-home
+net i-y-home pyvcp.y-home
+net i-z-home pyvcp.z-home
+
+# =========================== touch probe ===========================
+
+#net o-renishaw pyvcp.btn-tp
+net probe-input pyvcp.led-tp-st
+net probe-fault pyvcp.led-tp-er
+net probe-n pyvcp.tpmux
+net o-renishaw pyvcp.led-tp-en
+
+net flood-on halui.flood.on <= pyvcp.btn-flood-on
+net flood-off halui.flood.off <= pyvcp.btn-flood-off
+
+#
+
+net z-soft-limit => ini.z.max_limit
+
+loadrt beep
+addf beep.0 servo-thread
+net probe-input => beep.0.in

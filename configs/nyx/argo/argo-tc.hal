@@ -1,0 +1,50 @@
+# =========================== toolchanger ===========================
+
+loadrt umb
+addf umb.0 servo-thread
+
+net o-umb-sol      <= umb.0.release-lock
+net i-umb-sol      => umb.0.is-unlocked
+net i-umb-1        => umb.0.strobe1 motion.digital-in-[I]I_UMB_1
+net i-umb-2        => umb.0.strobe2 motion.digital-in-[I]I_UMB_2
+net i-umb-idx      => umb.0.first-pocket
+net i-z-ind        => umb.0.spindle-at-top2
+net i-z-pos-limit  => umb.0.spindle-at-top1
+net o-umb-rev      <= umb.0.rotate-rev
+net o-umb-fwd      <= umb.0.rotate-fwd
+
+net i-umb-locked   => motion.digital-in-[I]I_UMB_LOCKED
+net s-oriented     => motion.digital-in-[I]S_ORIENTED
+net z-ex-enable    <= motion.digital-out-[O]Z_EX_ENABLE
+net o-air1-z-probe <= motion.digital-out-[O]O_AIR_ZPROBE
+net i-air-ok       => motion.digital-in-[I]I_AIR_OK
+
+net umb-pocket      => umb.0.pocket
+net umb-change      => umb.0.change
+net umb-changed     <= umb.0.changed
+
+net umb-fault       <= umb.0.fault
+net umb-clear-fault => umb.0.clear-fault
+
+net umb-pocket      <= iocontrol.0.tool-prep-pocket
+net umb-change      <= motion.digital-out-[O]UMB_CHANGE
+net umb-changed     => iocontrol.0.tool-changed motion.digital-in-[I]UMB_CHANGED
+net umb-fault       => iocontrol.0.toolchanger-fault
+net umb-clear-fault => iocontrol.0.toolchanger-clear-fault
+
+setp umb.0.delay 100
+
+loadrt zlim
+addf zlim.0 servo-thread
+setp zlim.0.z-top  [AXIS_Z]MAX_LIMIT_EX
+setp zlim.0.z-norm [AXIS_Z]MAX_LIMIT
+setp zlim.0.z-blast -150
+setp zlim.0.blast-length 0.5
+
+net z-soft-limit zlim.0.z-out => ini.z.max_limit
+net x-j-cmd                   <= joint.0.pos-cmd
+net y-j-cmd                   <= joint.1.pos-cmd
+net z-j-cmd      zlim.0.z-in  <= joint.2.pos-cmd
+net z-ex-enable    => zlim.0.enable
+net o-air2-spindle <= zlim.0.blast-out
+

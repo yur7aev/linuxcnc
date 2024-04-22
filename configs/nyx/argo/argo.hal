@@ -1,0 +1,238 @@
+#
+# ARGO A1
+#
+# 2023, http://yurtaev.com
+#
+
+loadrt [KINS]KINEMATICS
+
+loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS num_dio=8
+loadrt nyx maxdrives=[NYX]AXES param_file=[NYX]PARAMS nodma=1
+
+addf nyx.0.rd servo-thread
+addf motion-command-handler servo-thread
+addf motion-controller servo-thread
+addf nyx.0.wr servo-thread
+
+# -------- i/o --------
+
+net i-x-home         nyx.0.yio-00.in-00-not
+net i-y-home         nyx.0.yio-00.in-01-not
+net i-z-home         nyx.0.yio-00.in-02-not
+net i-z-neg-limit    nyx.0.yio-00.in-03-not
+net i-z-top          nyx.0.yio-00.in-04-not
+net i-e-stop-button  nyx.0.yio-00.in-05-not
+net i-renishaw       nyx.0.yio-00.in-06-not
+net i-z-ind          nyx.0.yio-00.in-07-not
+net i-renishaw-err   nyx.0.yio-00.in-08-not
+#net i-              nyx.0.yio-00.in-09-not
+net i-zprobe         nyx.0.yio-00.in-10-not
+net i-zprobe-over    nyx.0.yio-00.in-11-not
+#net i-zprobe-near   nyx.0.yio-00.in-12-not
+#net i-              nyx.0.yio-00.in-13-not
+#net i-              nyx.0.yio-00.in-14-not
+#net i-              nyx.0.yio-00.in-15-not
+
+net i-coolant-fault  nyx.0.yio-01.in-00-not
+#net i-              nyx.0.yio-01.in-01-not
+net i-umb-locked     nyx.0.yio-01.in-02-not
+net i-umb-sol        nyx.0.yio-01.in-02
+net i-umb-idx        nyx.0.yio-01.in-03-not
+net i-umb-2          nyx.0.yio-01.in-04-not
+net i-umb-1          nyx.0.yio-01.in-05-not
+net i-vfd-fault      nyx.0.yio-01.in-06-not
+#net i-              nyx.0.yio-01.in-07-not
+net i-air-ok	     nyx.0.yio-01.in-08
+net i-lube-ok        nyx.0.yio-01.in-09-not
+#net i-              nyx.0.yio-01.in-10
+#net i-              nyx.0.yio-01.in-11
+#net i-              nyx.0.yio-01.in-12
+#net i-              nyx.0.yio-01.in-13
+#net i-              nyx.0.yio-01.in-14
+#net i-              nyx.0.yio-01.in-15
+
+net o-plc-fault      nyx.0.yio-02.out-00
+net o-coolant-pump   nyx.0.yio-02.out-01
+net o-umb-fwd        nyx.0.yio-02.out-02
+net o-umb-rev        nyx.0.yio-02.out-03
+net o-umb-sol        nyx.0.yio-02.out-04
+net o-air1-z-probe   nyx.0.yio-02.out-05
+net o-air2-spindle   nyx.0.yio-02.out-06
+net o-air3           nyx.0.yio-02.out-07
+net o-air4-mist      nyx.0.yio-02.out-08
+net o-renishaw       nyx.0.yio-02.out-09
+#net o-              nyx.0.yio-02.out-10
+#net o-              nyx.0.yio-02.out-11
+net o-lube-motor     nyx.0.yio-02.out-12
+#net o-              nyx.0.yio-02.out-13
+#net o-              nyx.0.yio-02.out-14
+#net o-              nyx.0.yio-02.out-15
+
+#-------- motion --------
+
+setp nyx.0.servo-00.pos-scale [JOINT_0]SCALE
+setp nyx.0.servo-01.pos-scale [JOINT_1]SCALE
+setp nyx.0.servo-02.pos-scale [JOINT_2]SCALE
+setp nyx.0.servo-05.pos-scale [JOINT_5]SCALE
+
+setp nyx.0.servo-00.vel-scale -17.777777
+setp nyx.0.servo-01.vel-scale [NYX]VEL_SCALE
+setp nyx.0.servo-02.vel-scale [NYX]VEL_SCALE
+setp nyx.0.servo-05.vel-scale [NYX]VEL_SCALE
+
+setp nyx.0.servo-00.trq-scale [NYX]TRQ_SCALE
+setp nyx.0.servo-01.trq-scale [NYX]TRQ_SCALE
+setp nyx.0.servo-02.trq-scale [NYX]TRQ_SCALE
+setp nyx.0.servo-05.trq-scale [NYX]TRQ_SCALE
+
+net x-pos-fb joint.0.motor-pos-fb <= nyx.0.servo-00.pos-fb
+net y-pos-fb joint.1.motor-pos-fb <= nyx.0.servo-01.pos-fb
+net z-pos-fb joint.2.motor-pos-fb <= nyx.0.servo-02.pos-fb
+
+net x-cmd joint.0.motor-pos-cmd => nyx.0.servo-00.pos-cmd
+net x-vff joint.0.vel-cmd       => nyx.0.servo-00.vel-cmd
+net y-cmd joint.1.motor-pos-cmd => nyx.0.servo-01.pos-cmd
+net z-cmd joint.2.motor-pos-cmd => nyx.0.servo-02.pos-cmd
+
+net alarm0   joint.0.amp-fault-in <= nyx.0.servo-00.alarm
+net alarm1   joint.1.amp-fault-in <= nyx.0.servo-01.alarm
+net alarm2   joint.2.amp-fault-in <= nyx.0.servo-02.alarm
+net alarm5 spindle.0.amp-fault-in <= nyx.0.servo-05.alarm
+
+# set homed flag if absolute position is valid
+net x-absolute halui.joint.0.set-homed <= nyx.0.servo-00.abs-ok
+net y-absolute halui.joint.1.set-homed <= nyx.0.servo-01.abs-ok
+net z-absolute halui.joint.2.set-homed <= nyx.0.servo-02.abs-ok
+
+# unhome axes on absolute position loss
+net x-abs-lost halui.joint.0.unhome <= nyx.0.servo-00.abs-lost
+net y-abs-lost halui.joint.1.unhome <= nyx.0.servo-01.abs-lost
+net z-abs-lost halui.joint.2.unhome <= nyx.0.servo-02.abs-lost
+
+net x-enable joint.0.amp-enable-out => nyx.0.servo-00.enable
+net y-enable joint.1.amp-enable-out => nyx.0.servo-01.enable
+net z-enable joint.2.amp-enable-out => nyx.0.servo-02.enable
+
+net estop => nyx.0.servo-00.power
+net estop => nyx.0.servo-01.power
+net estop => nyx.0.servo-02.power
+net estop => nyx.0.servo-05.power
+
+#-------- spindle --------
+
+loadrt mds3sp
+addf mds3sp.0 servo-thread
+
+setp mds3sp.0.accel 2000
+setp mds3sp.0.max-speed 8000
+net s-vel-fb     spindle.0.speed-in       <= nyx.0.servo-05.vel-fb
+net s-vel        spindle.0.speed-out      => mds3sp.0.speed-in
+net s-at-speed   spindle.0.at-speed       <= mds3sp.0.at-speed-out
+net s-enable     nyx.0.servo-05.enable    <= mds3sp.0.amp-enable-out
+net s-pos-cmd    nyx.0.servo-05.pos-cmd   <= mds3sp.0.pos-cmd-out
+net s-pos-fb     nyx.0.servo-05.pos-fb    => mds3sp.0.pos-fb-in
+net s-enabled    nyx.0.servo-05.enabled   => mds3sp.0.amp-enabled-in
+
+net s-z-revs     nyx.0.servo-05.z-revs    => mds3sp.0.z-revs-in
+net s-z-reset    nyx.0.servo-05.spindle-orient <= mds3sp.0.z-reset-out
+net s-z-complete nyx.0.servo-05.spindle-oriented => mds3sp.0.z-complete-in
+setp mds3sp.0.at-speed-in 1
+
+net s-revs       spindle.0.revs           <= mds3sp.0.revs-out
+net s-index      spindle.0.index-enable  <=> mds3sp.0.index-enable
+
+net vel-check => nyx.0.servo-05.velocity-mode
+
+net s-orient   spindle.0.orient           => mds3sp.0.orient-in
+net s-locked   spindle.0.locked           => mds3sp.0.orient-locked-in
+net s-oriented spindle.0.is-oriented      <= mds3sp.0.is-oriented-out
+net s-orient-a spindle.0.orient-angle     => mds3sp.0.orient-angle-in
+net s-in-pos   nyx.0.servo-05.in-position => mds3sp.0.in-position-in
+
+# net disable-check => nyx.0.disable
+
+#-------- toolchanger --------
+
+loadrt umb
+addf umb.0 servo-thread
+setp umb.0.delay 100
+
+net o-umb-sol      <= umb.0.release-lock
+net i-umb-sol      => umb.0.is-unlocked
+net i-umb-1        => umb.0.strobe1 motion.digital-in-[I]I_UMB_1
+net i-umb-2        => umb.0.strobe2 motion.digital-in-[I]I_UMB_2
+net i-umb-idx      => umb.0.first-pocket
+net i-z-ind        => umb.0.spindle-at-top2
+net i-z-top        => umb.0.spindle-at-top1
+net o-umb-rev      <= umb.0.rotate-rev
+net o-umb-fwd      <= umb.0.rotate-fwd
+
+net i-umb-locked   => motion.digital-in-[I]I_UMB_LOCKED
+net s-oriented     => motion.digital-in-[I]S_ORIENTED
+net z-ex-enable    <= motion.digital-out-[O]Z_EX_ENABLE
+net o-air1-z-probe <= motion.digital-out-[O]O_AIR_ZPROBE
+net i-air-ok       => motion.digital-in-[I]I_AIR_OK
+
+net umb-pocket      => umb.0.pocket
+net umb-change      => umb.0.change
+net umb-changed     <= umb.0.changed
+
+net umb-fault       <= umb.0.fault
+net umb-clear-fault => umb.0.clear-fault
+
+net umb-pocket      <= iocontrol.0.tool-prep-pocket
+net umb-change      <= motion.digital-out-[O]UMB_CHANGE
+net umb-changed     => iocontrol.0.tool-changed motion.digital-in-[I]UMB_CHANGED
+net umb-fault       => iocontrol.0.toolchanger-fault
+net umb-clear-fault => iocontrol.0.toolchanger-clear-fault
+
+loadrt zlim
+addf zlim.0 servo-thread
+setp zlim.0.z-top  [AXIS_Z]MAX_LIMIT_EX
+setp zlim.0.z-norm [AXIS_Z]MAX_LIMIT
+setp zlim.0.z-blast 750
+setp zlim.0.blast-length 0.5
+
+net z-soft-limit <= zlim.0.z-out
+net x-j-cmd                   <= joint.0.pos-cmd
+net y-j-cmd                   <= joint.1.pos-cmd
+net z-j-cmd      zlim.0.z-in  <= joint.2.pos-cmd
+net z-ex-enable    => zlim.0.enable
+net o-air2-spindle <= zlim.0.blast-out
+
+net iov2-start-change iocontrol.0.start-change iocontrol.0.start-change-ack
+net iov2-prepare      iocontrol.0.tool-prepare iocontrol.0.tool-prepared
+
+#-------- misc --------
+
+net estop <= iocontrol.0.user-enable-out
+net estop => iocontrol.0.emc-enable-in
+
+net o-coolant-pump  <= iocontrol.0.coolant-flood
+net o-air4-mist     <= iocontrol.0.coolant-mist
+#net i-x-home => motion.probe-input
+net o-lube-motor    <= iocontrol.0.lube
+net i-lube-ok       => iocontrol.0.lube_level
+
+#-------- touch probe --------
+
+loadrt tpmux
+addf tpmux.0 servo-thread
+
+net probe-input motion.probe-input <= tpmux.0.probe-out
+net probe-fault motion.digital-in-[I]TPFAULT <= tpmux.0.fault-out
+net probe-n     motion.analog-out-[O]TPMUX => tpmux.0.n
+
+net i-zprobe => tpmux.0.touch1
+net i-zprobe-over => tpmux.0.fault1
+net i-zprobe-near => tpmux.0.near1
+
+net i-renishaw     => tpmux.0.touch2
+net i-renishaw-err => tpmux.0.fault2
+net o-renishaw     <= tpmux.0.enable2
+setp tpmux.0.pulse-len 0.5
+
+net i-x-home => tpmux.0.touchx
+net i-y-home => tpmux.0.touchy
+net i-z-home => tpmux.0.touchz
+

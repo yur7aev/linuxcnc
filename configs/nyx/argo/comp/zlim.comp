@@ -1,0 +1,56 @@
+component zlim "auto limit extension";
+description """
+""";
+author "Dmitry Yurtaev dmitry@yurtaev.com";
+license "GPL";
+
+//pin in float z-top   =    3.1;	// extended z max
+//pin in float z-blast = -150.0;	// z air blast point
+//pin in float z-norm  = -224.0;	// normal z max
+pin in float z-top   =  843.7;	// extended z max
+pin in float z-blast =  690.0;	// z air blast point
+pin in float z-norm  =  616.6;	// normal z max
+
+
+pin in bit enable;
+pin in float z-in;		// joint.2.pos-cmd
+
+pin out float z-out;		// z soft limit out
+pin out bit enabled = 0;
+pin out bit blast-out;
+
+param rw float blast-length = 0.5;
+
+// internal
+
+variable int blast_counter = 0;
+variable int armed = 0;
+
+function _;
+;;
+
+
+if (enable) {
+	enabled = 1;
+} else if (z_in <= z_norm) {
+	enabled = 0;
+}
+
+z_out = enabled || z_in > z_norm ? z_top : z_norm;
+
+if (z_in > z_blast + 1.0) {
+	armed = 1;
+} else if (z_in < z_blast - 1.0 && armed) {
+	armed = 0;
+	if (!blast_counter) {
+		blast_counter = blast_length * 4500;
+		blast_out = 1;
+	}
+}
+
+if (blast_counter > 0) {
+	blast_out = 1;
+	--blast_counter;
+} else {
+	blast_out = 0;
+}

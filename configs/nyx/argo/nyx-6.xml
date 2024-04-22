@@ -1,0 +1,174 @@
+<!--
+    NYX v2.3 LinuxCNC 2.8 sample PyVCP config, 6 axes
+
+    2019, http://www.yurtaev.com
+-->
+
+<pyvcp>
+
+<label text="Torque 0..5 (%)" />
+<bar halpin="trq0" min_="-150" max_="150" bar_height="19" canvas_height="20" />
+<bar halpin="trq1" min_="-150" max_="150" bar_height="19" canvas_height="20" />
+<bar halpin="trq2" min_="-150" max_="150" bar_height="19" canvas_height="20" />
+<bar halpin="trq3" min_="-150" max_="150" bar_height="19" canvas_height="20" />
+<bar halpin="trq4" min_="-150" max_="150" bar_height="19" canvas_height="20" />
+<bar halpin="trq5" min_="-150" max_="150" bar_height="19" canvas_height="36" />
+
+<label text="Speed 5 (rpm)" />
+<bar halpin="s-vel" min_="-8000" max_="8000" bar_height="19" canvas_height="36" />
+
+<labelframe text="Controller">
+<hbox>
+	<led halpin="led-ready" size="18" />
+	<number halpin="phase" format="+4.2f" />
+</hbox>
+</labelframe>
+
+<labelframe text="Amp online/ready/on">
+    <hbox>
+	<led halpin="led-offline0" on_color="gray80" off_color="green" size="18" />
+	<led halpin="led-offline1" on_color="gray80" off_color="green" size="18" />
+	<led halpin="led-offline2" on_color="gray80" off_color="green" size="18" />
+	<led halpin="led-offline3" on_color="gray80" off_color="green" size="18" />
+	<led halpin="led-offline4" on_color="gray80" off_color="green" size="18" />
+	<led halpin="led-offline5" on_color="gray80" off_color="green" size="18" />
+    </hbox>
+    <hbox>
+	<led halpin="led-ready0" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-ready1" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-ready2" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-ready3" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-ready4" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-ready5" off_color="gray80" disable_pin="True" size="18" />
+    </hbox>
+    <hbox>
+	<led halpin="led-enabled0" on_color="#0f0" off_color="gray80" size="18" />
+	<led halpin="led-enabled1" on_color="#0f0" off_color="gray80" size="18" />
+	<led halpin="led-enabled2" on_color="#0f0" off_color="gray80" size="18" />
+	<led halpin="led-enabled3" on_color="#0f0" off_color="gray80" size="18" />
+	<led halpin="led-enabled4" on_color="#0f0" off_color="gray80" size="18" />
+	<led halpin="led-enabled5" on_color="#0f0" off_color="gray80" size="18" />
+    </hbox>
+</labelframe>
+
+<labelframe text="Amp alarm/warning">
+  <hbox><vbox>
+    <hbox>
+	<led halpin="led-alarm0" on_color="red" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-alarm1" on_color="red" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-alarm2" on_color="red" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-alarm3" on_color="red" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-alarm4" on_color="red" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-alarm5" on_color="red" off_color="gray80" disable_pin="True" size="18" />
+    </hbox>
+    <hbox>
+	<led halpin="led-warning0" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-warning1" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-warning2" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-warning3" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-warning4" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
+	<led halpin="led-warning5" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
+    </hbox>
+  </vbox>
+    <button halpin="reset-alarm" text="Rst" />
+  </hbox>
+    <hbox>
+	<u32 halpin="code0" format="02x" />
+	<u32 halpin="code1" format="02x" />
+	<u32 halpin="code2" format="02x" />
+	<u32 halpin="code3" format="02x" />
+	<u32 halpin="code4" format="02x" />
+	<u32 halpin="code5" format="02x" />
+    </hbox>
+</labelframe>
+
+<labelframe text="flood cooland">
+    <hbox>
+	<button halpin="btn-flood-on" text="ON" />
+	<button halpin="btn-flood-off" text="OFF" />
+    </hbox>
+</labelframe>
+
+<labelframe text="home sw x y z air">
+    <hbox>
+	<led halpin="x-home"   on_color="green"  off_color="gray80" />
+	<led halpin="y-home"   on_color="green"  off_color="gray80" />
+	<led halpin="z-home"   on_color="green"  off_color="gray80" />
+	<led halpin="led-air"  on_color="green"  off_color="red" />
+    </hbox>
+</labelframe>
+
+<labelframe text="at-sp idx Z: cmpl pass offs">
+    <hbox>
+	<led> <halpin>"led-at-speed"</halpin> <off_color>"gray80"</off_color> </led>
+	<led> <halpin>"led-index"</halpin> <off_color>"gray80"</off_color> </led>
+	<checkbutton  halpin="z-check" text="Z reset" />
+	<led> <halpin>"led-z-complete"</halpin> <off_color>"gray80"</off_color> </led>
+	<led> <halpin>"led-z-passed"</halpin> <off_color>"gray80"</off_color> </led>
+	<s32> <halpin>"z-offs"</halpin>	</s32>
+    </hbox>
+</labelframe>
+
+<hbox>
+	<u32 halpin="mon" format="05x" />
+	<s32 halpin="mon1" />
+	<s32 halpin="mon2" />
+</hbox>
+
+    <!--hbox>
+	<number>
+	    <halpin>"pos-cmd"</halpin>
+	    <format>"+4.2f"</format>
+	</number>
+	<number>
+	    <halpin>"pos-fb"</halpin>
+	    <format>"+4.2f"</format>
+	</number>
+	<s32>
+	    <halpin>"pos-droop"</halpin>
+	</s32>
+	<number>
+	    <halpin>"revs"</halpin>
+	    <format>"+4.2f"</format>
+	</number>
+	<number halpin="enc0-pos" format="+4.4f" />
+    </hbox-->
+
+<labelframe text="Z: min home ind up ovspd">
+    <hbox>
+	<led> <halpin>"led-min-z"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
+	<led> <halpin>"led-home-z"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
+	<led> <halpin>"led-ind-z"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
+	<led> <halpin>"led-up-z"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
+	<led> <halpin>"led-overspeed"</halpin> <on_color>"red"</on_color><off_color>"gray80"</off_color> </led> 
+   </hbox>
+</labelframe>
+
+<hbox>
+<labelframe text="TC 1/2/i/s/f unlk">
+    <hbox>
+	<led halpin="led-umb-1"   on_color="green"  off_color="gray80" />
+	<led halpin="led-umb-2"   on_color="green"  off_color="gray80" />
+	<led halpin="led-umb-idx" on_color="cyan"   off_color="gray80" />
+	<led halpin="led-umb-sol" on_color="yellow" off_color="gray80" />
+	<led halpin="led-umb-flt" on_color="red"    off_color="green" />
+	<!--button halpin="btn-tc" text="tc"/-->
+    </hbox>
+    <!--scale width="14" halpin="scl-pocket" resolution="1" min_="1" max_="10" orient="horizontal"/-->
+</labelframe>
+	<button halpin="btn-cf" text="cf"/>
+</hbox>
+
+<hbox>
+<labelframe text="tp st er">
+    <hbox>
+	<number halpin="tpmux" format="2.0f" />
+	<led halpin="led-tp-st"   on_color="green"  off_color="gray80" />
+	<led halpin="led-tp-er"   on_color="red"    off_color="green" />
+	<led halpin="led-tp-en"   on_color="blue"   off_color="gray80" />
+    </hbox>
+</labelframe>
+	<button halpin="btn-tp" text="tp"/>
+</hbox>
+
+</pyvcp>

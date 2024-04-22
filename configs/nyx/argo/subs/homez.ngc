@@ -1,0 +1,72 @@
+;
+; ARGO A1
+;
+; probe z home switch
+; should be at Z -222.666 going up (+)
+;              Y  333.564 fwd (+)
+;              X  461.215 right (+)
+;
+; net probe-n     motion.analog-out-[O]TPMUX => tpmux.0.n
+; net i-x-home => tpmux.0.touchx
+; net i-y-home => tpmux.0.touchy
+; net i-z-home => tpmux.0.touchz
+;
+
+o<homez> sub
+(AXIS,hide)
+
+o<context_save> call
+
+g21	; metric
+g90	; absolute
+g40	; cutter compensation off
+g94	; mm/min feed
+g49	; tool length compensation off
+m50 p0	; disable feed override
+m51 p0	; disable spindle speed override
+m52 p0	; disable adaptive feed
+m53 p0	; disable feed stop switch
+
+m5	; stop the spindle
+m9	; mist/flood off
+
+
+m19 r0 p1			; orient clockwise and lock the spindle (337 deg is the target angle)
+g53 g0 z[#<_ini[axis_z]max_limit>-5]	; go up, rapid
+
+m66 p#<_ini[i]s_oriented> l3 q1	; wait for spindle p4 to orient - l3 high q1 seconds
+o2 if [#5399 lt 0]
+	o<context_restore> call
+	(abort, HOMEZ spindle failed to orient)
+	o<m6> return [-1]
+o2 endif
+
+g92.2				; disable g92 offset
+G10 L2 P9 X0 Y0 Z0		; set G59.3 to machine coors
+G59.3				; and select it
+
+m64 p#<_ini[o]z_ex_enable>	; set extended top limit
+m68 e#<_ini[o]tpmux> q103	; select Z HOME switch as probe-input
+
+g38.2 z[#<_ini[axis_z]max_limit>+5] f100	; probe up
+o5 if [#5070 eq 1]				; probe succeded?
+	(debug, HOMEZ=#5063 617.95)
+o5 else
+	(debug, HOMEZ no touch 617.95)
+o5 endif
+
+m68 e#<_ini[o]tpmux> q0		; disconnect home switch
+
+f1000
+g53 g1 z[#<_ini[axis_z]max_limit>-5]	; -230 go down and grab the new tool
+					; zlim.comp will issue an air blast
+
+m65 p#<_ini[o]z_ex_enable>	; restore top limit. maybe earlier?
+m5				; release the spindle. maybe earlier?
+
+o<context_restore> call
+
+(AXIS,show)
+o<homez> endsub [1]		; signal success
+
+m2

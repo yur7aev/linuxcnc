@@ -1,0 +1,113 @@
+; G49			; cancel tool length comp
+; G38.2 Z-100 F100
+; #<zworkoffset> = [#[5203 + #5220 * 20] + #5213 * #5210]
+; G10 L1 P#5400 Z#<zworkoffset> (set new tool offset)
+; G43
+
+; 5210 - 1 if "G52" or "G92" offset is currently applied, 0 otherwise
+; 5213 - Shared "G52" and "G92" offset for Z
+; 5220 - Coordinate System number 1 - 9 for G54 - G59.3. Persistent.
+; 5223 - Coordinate System 1, G54 for Z
+; 5243 - ... 2 ...
+; 5400 - Tool Number
+
+; After successful probing, parameter #5063 will be set to the Z coordinate of the location of the
+; controlled point at the time the probe changed state (in the current work coordinate system).
+; After unsuccessful probing, they are set to the coordinates of the programmed point.
+; Parameter #5070 is set to 1 if the probe succeeded and 0 if the probe failed.
+; If the probing operation failed, G38.2 and G38.4 will signal an error by posting an message on screen
+; if the selected GUI supports that. And by halting program execution.
+
+; You can set G59.3 to machine zero
+; G10 L2 P9 X0 Y0 Z0	; set G59.3 to machine zero
+
+; optional r arg - a spacer on top of the tool probe:
+; m10 r50
+
+o<m10> sub
+(AXIS,hide)
+
+o1 if [#<_current_tool> lt 1]
+	(abort, M10 no tool)
+	o<m10> return [-1]
+o1 endif
+
+m66 p#<_ini[i]i_air_ok> l3 q1		; check for air, 1s timout
+o2 if [#5399 lt 0]
+	(abort, M10 no air pressure)
+	o<m10> return [-1]
+o2 endif
+
+o<context_save> call
+
+g21 g90			; metric, absolute
+g40			; cutter compensation off
+g49			; tool length compensation off
+g94			; mm/min feed
+m50 p0			; disable feed override
+m51 p0			; disable spindle speed override
+m52 p0			; disable adaptive feed
+m53 p0			; disable feed stop switch
+m5			; stop the spindle
+m9			; mist/flood off
+g92.2			; disable g92 offset
+
+;
+G10 L2 P9 X0 Y0 Z0		; set G59.3 to machine coors
+G59.3				; and select it
+
+o3 if [ #<_x> gt 3.0 or #<_y> lt 212.0 or #<_y> gt 215 ]	; if not above the sensor already -
+	g53 g0 z[#<_ini[axis_z]max_limit>-5]			; ... go up, rapid
+	g53 g0 x1.5 y213.5			; tool setter location on the table
+	g53 g0 z[#<_ini[axis_z]max_limit>-250]	; we should have at least 250 mm with the longest possible tool
+o3 else
+	g53 g0 x1.5 y213.5			; tool setter location on the table
+o3 endif
+			; so we can run M1 interrupt the probing move,
+			; jog down manually and re-run M10
+			; it will continue down
+
+;;;;;;;m68 e#<_ini[o]tpmux> q11		; select ts pre-travel optical sensor
+;;;;;;;g38.2 z#<_ini[axis_z]min_limit> f1000		; probe down, fast
+
+m68 e#<_ini[o]tpmux> q1		; select ts
+
+; z range is top 3..-635 bottom
+; tool length sensor height ~68.0mm
+; spindle nose touching table is at 0
+; 205.62 gap table to nose
+
+m64 p#<_ini[o]o_air_zprobe>	; blow ...
+g4 p0.5
+m65 p#<_ini[o]o_air_zprobe>	; ... stop
+
+#<z0> = #<_z> ;
+g38.2 z#<_ini[axis_z]min_limit> f100	; probe down
+o5 if [#5070 eq 1]				; probe succeded?
+	#<tool_len> = [#5063 - 67]	; #5063=touch point in currect CS, 67.27 - toolsetter height
+	o6 if [exists[#<r>]]
+		#<tool_len> = [#<tool_len> - #<r>]	; subtract q arg
+	o6 endif
+	G10 L1 P#<_current_tool> Z#<tool_len>
+	G43					; apply the tool offset
+	(xdebug, touch L=#<tool_len>)
+o5 else
+	(debug, no touch)
+o5 endif
+
+m68 e#<_ini[o]tpmux> q0		; disconnect probe-input
+
+g53 g0 z[#<_ini[axis_z]max_limit>-5]		; ... go up, rapid
+
+; G49			; cancel tool length comp
+; G38.2 Z-100 F100
+; #<zworkoffset> = [#[5203 + #5220 * 20] + #5213 * #5210]
+; G10 L1 P#5400 Z#<zworkoffset> (set new tool offset)
+; G43
+
+o<context_restore> call
+
+(AXIS,show)
+o<m10> endsub [1]		; signal success
+
+m2

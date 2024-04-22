@@ -1,0 +1,101 @@
+;
+; o<tpbox> call [x length] [y width]
+;
+
+o<tpbox> sub
+
+#<l> = #1	; length along x
+#<w> = #2	; width along y
+#<o> = 5	; overshoot
+
+(debug, probing box #<l>x<#w>)
+
+g90
+
+#<x> = #<_x>
+#<y> = #<_y>
+#<z> = #<_z>
+(debug, origin: #<x> #<y> #<z>)
+
+o<tp_z_minus> call [15] [0.5]
+o10 if [#<_value_returned> le 0]
+	(abort, z probe failed)
+o10 endif
+#<z0> = [#<_z> - 0.5]
+(debug, z0=#<z0>, going up #<z>)
+g0 z#<z>
+
+;;;
+
+g0 x[#<x>] y[#<y> + #<w>/2 + #<o>]
+o<tp_on> call		; activate probe
+f500 g38.3 z[#<z0> - 3]
+o80 if [#5070 gt 0]	; collision?
+	(abort, collision at far edge)
+o80 endif
+o<tp_off> call
+o<tp_y_minus> call [12] [0.5]
+o90 if [#<_value_returned> le 0]
+	(abort, probe failed far edge)
+o90 endif
+#<yp> = #<_y>
+g0 z#<z>
+
+g0 x[#<x>] y[#<y> - #<w>/2 - #<o>]
+o<tp_on> call		; activate probe
+f500 g38.3 z[#<z0> - 3]
+o60 if [#5070 gt 0]	; collision?
+	(abort, collision at near edge)
+o60 endif
+o<tp_off> call
+o<tp_y_plus> call [12] [0.5]
+o70 if [#<_value_returned> le 0]
+	(abort, probe failed near edge)
+o70 endif
+#<ym> = #<_y>
+g0 z#<z>
+
+;;;
+
+g0 x[#<x> - #<l>/2 - #<o>] y[#<y>]
+o<tp_on> call		; activate probe
+f500 g38.3 z[#<z0> - 3]
+o20 if [#5070 gt 0]	; collision?
+	(abort, collision at left edge)
+o20 endif
+o<tp_off> call
+o<tp_x_plus> call [12] [0.5]
+o30 if [#<_value_returned> le 0]
+	(abort, probe failed left edge)
+o30 endif
+#<xm> = #<_x>
+g0 z#<z>
+
+
+g0 x[#<x> + #<l>/2 + #<o>] y[#<y>]
+o<tp_on> call		; activate probe
+f500 g38.3 z[#<z0> - 3]
+o40 if [#5070 gt 0]	; collision?
+	(abort, collision at right edge)
+o40 endif
+o<tp_off> call
+o<tp_x_minus> call [12] [0.5]
+o50 if [#<_value_returned> le 0]
+	(abort, probe failed right edge)
+o50 endif
+#<xp> = #<_x>
+g0 z#<z>
+
+;
+
+#<x0> = [[#<xm>+#<xp>]/2]
+#<y0> = [[#<ym>+#<yp>]/2]
+
+g0 x#<x0> y#<y0>
+g1 f500 z[#<z0>+5]
+
+(debug, center at #<x0> #<y0> #<z0>)
+
+o<tpbox> endsub
+
+m2

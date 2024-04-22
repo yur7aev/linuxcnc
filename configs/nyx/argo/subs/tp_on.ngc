@@ -1,0 +1,11 @@
+;
+
+o<tp_on> sub
+	m68 e#<_ini[o]tpmux> q2		; select and activate renishaw
+	m66 p#<_ini[i]tpfault> l4 q2	; wait 2 sec until the fault goes low
+	o120 if [#5399 lt 0]		; failed?
+		o<tp_on> return
+	o120 endif
+o<tp_on> endsub [1]
+
+m2

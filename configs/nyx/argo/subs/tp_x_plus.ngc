@@ -1,0 +1,71 @@
+;(author: Chris P)
+;(version: 0.1)
+;(date: 04/25/19)
+
+;(Probe Z Minus direction to locate top, end at clearance distance)
+;(Start probe position is over stock within max z distance)
+;(ensure all settings have been set properly according to help diagrams)
+
+; o<tp_x_minus> call [distance] [clearance]
+
+o<tp_x_plus> sub
+	#<max_distance> = #1
+	#<clearance> = #2
+
+	o103 if [exists[#3] and #3 gt 0]
+		#<probe_slow_fr> = #3
+	o103 else
+		#<probe_slow_fr> = 10
+	o103 endif
+
+	o104 if [exists[#4] and #4 gt 0]
+		#<probe_fast_fr> = #4
+	o104 else
+		#<probe_fast_fr> = 100
+	o104 endif
+
+	o110 if [#5400 ne 10]		; probe tool safety check
+		(abort, probe T10 not in spindle)
+		o<tp_x_plus> return
+	o110 endif
+
+	;g43				; apply tool offset?
+	m68 e#<_ini[o]tpmux> q2		; select and activate renishaw
+	m66 p#<_ini[i]tpfault> l4 q2	; wait 2 sec until the fault goes low
+	o120 if [#5399 lt 0]		; failed?
+		(abort, probe failed to activate)
+		o<tp_x_plus> return
+	o120 endif
+
+	o<context_save> call
+	#<x> = #<_x>		; current position including offsets in current program units
+	#<y> = #<_y>
+	#<z> = #<_z>
+	G91 F[#<probe_fast_fr>] G38.3 X[+#<max_distance>]	; initial fast z- probe
+	m66 p#<_ini[i]tpfault> l0				; check probe fault
+	o130 if [#5070 gt 0 and #5399 eq 0]			; success?
+		#<probed> = #5061
+		G90 G0 X[#<probed> - #<clearance>]		; move to z_clearance height for slow probe
+		G91 F[#<probe_slow_fr>] G38.3 X[+#<clearance> * 2]	; initiate slow Z- Probe
+		m66 p#<_ini[i]tpfault> l0				; check probe fault
+		o140 if [#5070 gt 0 and #5399 eq 0]			; success?
+			#<probed> = #5061
+			#<finish_pos> = [#<probed> - #<clearance>]
+			m68 e#<_ini[o]tpmux> q0				; deselect probe
+			G90 G0 X#<finish_pos>
+			o<context_restore> call
+			(debug, probe #<finish_pos> )
+			o<tp_x_plus> return [#<finish_pos>]
+		o140 else
+			(msg, final probe failed)
+		o140 endif
+	o130 else
+		(msg, initial probe failed)
+	o130 endif
+
+	G90 G0 X#<x> Y#<y> Z#<z>	; back to start point and feed
+	m68 e#<_ini[o]tpmux> q0		; deselect probe
+	o<context_restore> call
+o<tp_x_plus> endsub
+
+m2

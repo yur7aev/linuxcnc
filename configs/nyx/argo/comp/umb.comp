@@ -1,0 +1,139 @@
+component umb "ARGO umbrella";
+description """
+""";
+
+author "Dmitry Yurtaev dmitry@yurtaev.com";
+license "GPL";
+
+pin in s32 delay = 500;
+pin in s32 spinup_time = 4500;
+pin in s32 pocket;
+pin in bit change;
+pin out bit changed;
+pin out bit fault;
+pin in  bit clear-fault;
+pin out s32 reason;
+
+pin in bit strobe1;
+pin in bit strobe2;
+pin in bit first-pocket;
+pin in bit is-unlocked;
+pin in bit spindle-at-top1;
+pin in bit spindle-at-top2;
+
+pin out bit release-lock;
+pin out bit rotate-fwd;
+pin out bit rotate-rev;
+
+pin out signed pos-out;
+pin in bit debug;
+
+pin out s32 state;
+variable int spinup;
+variable int dly;
+variable int homed;
+
+function _;
+;;
+
+#define FAULT(f) (state=99,reason=(f))
+#define INC(a) (((a)%10)+1)
+#define DEC(a) ((((a)+8)%10)+1)
+#define LOCK_TIMEOUT 1000
+#define STROBE_TIMEOUT 2000
+
+int strobe = strobe1 || strobe2;
+int spindle_at_top = (spindle_at_top1 && spindle_at_top2);
+
+changed = (pocket == pos_out && pos_out && state == 0);
+
+switch (state) {
+case 0:
+	release_lock = 0;
+        rotate_fwd = rotate_rev = 0;
+	fault = 0;
+	if (change) {
+		if (pocket < 1 || pocket > 10)
+			FAULT(0);
+		else if (!changed)
+			state = 1;
+	}
+	break;
+
+case 1:
+	if ((pos_out == 0 && pocket <= 5) || ((10 + pocket - pos_out) % 10 <= 5))
+		rotate_fwd = 1;
+	else
+		rotate_rev = 1;
+        state = 2;
+	spinup = 0;
+        break;
+
+case 2:
+	if (++spinup > spinup_time && spindle_at_top) {
+		release_lock = 1;				// start rotation
+                dly = 0;
+                state = 3;
+        } else if (!change && 0) {
+		state = 0;
+	}
+        break;
+
+case 3:
+	if (dly++ > LOCK_TIMEOUT) FAULT(3);
+	if (is_unlocked) state = 4;
+	break;
+
+case 4:					// lock released, turret is spinning
+	if (!strobe) {			// leaving current pos?
+		dly = 0;
+		state = 5;
+		if (pos_out) {		// homed?
+			if (rotate_fwd) pos_out = INC(pos_out);
+			if (rotate_rev) pos_out = DEC(pos_out);
+			if (pos_out == pocket) state = 7;
+		}
+	}
+	break;
+
+case 5:					// skip the pocket
+	++dly;
+	if (strobe) {
+		if (first_pocket) pos_out = 1;
+		state = 4;
+if(debug)	rtapi_print_msg(RTAPI_MSG_ERR, "umb: pocket %d -> %d ticks\n", pos_out, dly);
+	}
+	break;
+
+case 7:					// catch the pocket
+	if (dly++ > delay) {
+		release_lock = 0;
+		dly = 0;
+		state = 8;
+	}
+	if (strobe) FAULT(7);	// shouldn't happen
+	break;
+
+case 8:
+	if (dly++ > LOCK_TIMEOUT) FAULT(8);
+	if (!is_unlocked) {
+		dly = 0;
+		state = 9;
+	}
+	break;
+
+case 9:
+	if (dly++ > STROBE_TIMEOUT) FAULT(9);
+	if (strobe) state = 0;
+	break;
+
+case 99:
+	fault = 1;
+	release_lock = 0;
+	rotate_fwd = rotate_rev = 0;
+	if (clear_fault) state = 0;
+	break;
+	
+default:
+	state = 0;
+}

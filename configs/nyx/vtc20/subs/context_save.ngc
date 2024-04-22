@@ -1,0 +1,27 @@
+o<context_save> sub
+
+#<_argo_metric> = #<_metric>		; 1 if G21, 0 if G20
+#<_argo_absolute> = #<_absolute>	; 1 if G90, 0 if G91
+
+o1 if     [#<_inverse_time>]		; 1 if G93
+	#<_argo_feed_mode> = 93
+o1 elseif [#<_units_per_minute>]	; 1 if G94
+	#<_argo_feed_mode> = 94
+o1 elseif [#<_units_per_rev>]		; 1 if G95
+	#<_argo_feed_mode> = 95
+o1 else
+	(debug, neither G93/G94/G95)
+	#<_argo_feed_mode> = 94
+o1 endif
+
+#<_argo_speed_override> = #<_speed_override>	; 1 if M48 or M50 P1
+#<_argo_feed_override> = #<_feed_override>	; 1 if M48 or M51 P1
+#<_argo_adaptive_feed> = #<_argo_adaptive_feed>	; 1 if M52 or M52 P1
+#<_argo_feed_hold> = #<_feed_hold>		; 1 if M53 P1
+#<_argo_coord_system> = #<_coord_system>	; G54 G55 ...
+#<_argo_feed> = #<_feed>			; value of F
+#<_argo_rpm> = #<_rpm>				; value of S
+
+#<_argo_context_saved> = 1
+
+o<context_save> endsub

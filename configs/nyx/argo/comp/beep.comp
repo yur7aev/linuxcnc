@@ -1,0 +1,53 @@
+
+component beep "make a beep with pc speaker";
+license "GPL";
+
+option extra_setup yes;
+option extra_cleanup yes;
+function _;
+
+pin in bit in;
+pin in signed freq = 3000;
+pin in signed duration = 100;
+
+variable int p;
+
+;;
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <linux/kd.h>
+#include <sys/ioctl.h>
+
+int fd = -1;
+
+/*
+/dev/console should be writable
+chmod 666 /dev/console
+*/
+
+EXTRA_SETUP() {
+	fd = open("/dev/console", O_WRONLY);
+	if (fd < 0) rtapi_print_msg(RTAPI_MSG_ERR, "beep.comp can't open /dev/console: %d\n", fd);
+}
+
+EXTRA_CLEANUP() {
+	if (fd >= 0) {
+		close(fd);
+		fd = -1;
+	}
+}
+
+FUNCTION(_) {
+	if (fd >= 0) {
+		int f = freq > 0 ? freq : 3000;
+
+		if (duration > 0) {
+			if (in && !p) ioctl(fd, KDMKTONE, (1193180/f) + (duration<<16));
+		} else {
+			if (in && !p) ioctl(fd, KIOCSOUND, 1193180/f);
+			else if (!in && p) ioctl(fd, KIOCSOUND, 0);
+		}
+		p = in;
+	}
+}

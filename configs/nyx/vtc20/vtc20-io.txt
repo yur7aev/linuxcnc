@@ -1,0 +1,140 @@
+;
+; MAZAK VTC20B I/O
+;
+; 2024, dmitry@yurtaev.com
+;
+; KT1[15-18] 0610/04 controls CV input contactor KM1 0040/29
+; KT1 power supply off delay 6 seconds - from 2L+
+; 2L+ comes from KA100 safety unit by dual KA102 contacts
+; KA102 activated by Y2D
+;
+
+mag1-extend-stop		X00
+mag1-retract-stop		X01
+mag1-extended			X02
+mag1-retracted			X03
+				X04
+				X05
+atc-cover-is-open		X06
+atc-cover-closed		X07
+tool-height-arm-extended	X08
+tool-height-arm-retracted	X09
+mms-error			X0A
+mms-status			X0B
+mms-battery-alarm		X0C
+sw-emg-stop-in			X0D
+				X0E
+emg-stop-in-2			X0F
+tool-clamped			X10
+tool-unclamped			X11
+way-lube-level			X12
+				X13
+door-int-closed			X14
+door-int-is-open		X15
+op-feed-hold-pb			X16
+op-cycle-start-pb		X17
+x-axis-zrn			X18n	1	***
+y-axis-zrn			X19n	1	***
+z-axis-zrn			X1An	1	***
+a4-axis-zrn			X1B
+spindle-relay-check		X1C
+way-lube-pressure		X1D
+machine-door-locked		X1E	1
+machine-door-unlock-pb		X1F
+machine-door-closed		X20	1
+breaker-trip-on-sw		X21
+a4-axis-neglect			X22
+index-table-finish		X23
+op-tool-uclamp-sw		X24
+warm-up-program-sw?		X25
+auto-power-off			X26
+emg-stop-in-1			X27n	1	***
+chip-conv-is-on			X28
+chip-conv-is-off		X29
+breaker-trip			X2A
+conv-temperature-trip		X2B
+main-trans-overheat		X2Cn	1
+a4-axis-unclamped		X2D
+main-air-pressure		X2E	1
+mag1-tool-detect		X2F
+mag1-pos-0			X30	1
+mag1-pos-1			X31
+mag1-pos-2			X32
+mag1-pos-3			X33
+mag1-pos-4			X34
+mag1-coin			X35	1
+mag1-zspd			X36	1
+mag1-alarm			X37
+x-axis-interlock-1		X38
+x-axis-interlock-2		X39
+				X3A
+one-cycle-pb-1			X3B
+one-cycle-pb-2			X3C
+				X3D
+				X3E
+mag2-tool-detector		X3F
+
+mag1-emg			Y00	1	***
+				Y01
+				Y02
+				Y03
+servo-on-delay			Y04	1	***
+open-int-door			Y05	1
+?mist-coolant			Y06
+m41				Y07
+m42				Y08
+m43				Y09
+m44				Y0A
+m45				Y0B
+machine-ready			Y0C	1	***
+skip-on-buzzer			Y0D
+spindle-thru-coolant		Y0E
+flood-coolant			Y0F
+tool-unclamp			Y10
+tool-clamp			Y11
+?mag1-extend			Y12
+ ?m105				Y13
+?mag1-retract			Y14
+ breaker-trip-com		Y15	option ka102?
+work-air-blast			Y16
+spindle-lube			Y17	1	***
+lube-unit			Y18
+coolant				Y19
+chip-conv			Y1A
+atc-open-cover			Y1B
+atc-close-cover			Y1C
+auto-power-off			Y1D
+pato-light-stl			Y1E	cycle start
+pato-light-cfn			Y1F	cycle finish
+power-on			Y20	1
+work-light			Y21	1
+pato-light-alm			Y22
+cooling-fan			Y23	1
+overtravel-release		Y24
+op-cycle-start-led		Y25
+area-2-out			Y26	KA120 0610/16 0680/12
+area-1-out			Y27	KA119 0610/16 0680/10
+a4-axis-unclamp			Y28
+tool-air-blast			Y29
+mag1-brake			Y2A
+mms-start			Y2B
+h-arm-extend			Y2C
+estop				Y2D	1
+ennable-door-unlock		Y2E
+enable-door-2-unlock		Y2F
+mag1-sta-0			Y30
+mag1-sta-1			Y31
+mag1-sta-2			Y32
+mag1-sta-3			Y33
+mag1-sta-4			Y34
+mag1-start			Y35
+mag1-fwd-rev			Y36
+mag1-mode-0			Y37
+mag1-mode-1			Y38
+mag1-mode-2			Y39
+mag1-servo-on			Y3A
+				Y3B
+one-cycle-1-led			Y3C
+one-cycle-2-led			Y3D
+				Y3E
+mag1-reset			Y3F

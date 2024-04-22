@@ -1,0 +1,86 @@
+;
+;
+;
+
+o<context_restore> sub
+
+o1 if [exists[#<_argo_context_saved>] ne 1]
+;	(debug, restore without saved context)
+	o<context_restore> return [-1]
+o1 endif
+
+o11 if [#<_argo_context_saved> ne 1]
+;	(debug, restore without saved context)
+	o<context_restore> return [-1]
+o11 endif
+
+o2 if [#<_argo_metric>]
+	G21
+o2 else
+	G20
+o2 endif
+
+o3 if [#<_argo_absolute>]
+	G90
+o3 else
+	G91
+o3 endif
+
+
+o4 if [#<_argo_feed_mode> eq 93]
+	G93
+o4 elseif [#<_argo_feed_mode> eq 94]
+	G94
+o4 elseif [#<_argo_feed_mode> eq 95]
+	G95
+o4 else
+	(debug, neither G93/G94/G95)
+o4 endif
+
+
+o5 if [#<_argo_speed_override>]
+	M50 P1
+o5 endif
+o6 if [#<_argo_feed_override>]
+	M51 P1
+o6 endif
+o7 if [#<_argo_adaptive_feed>]
+	M52 P1
+o7 endif
+o8 if [#<_argo_feed_hold>]
+	M53 P1
+o8 endif
+
+
+o9 if [#<_argo_coord_system> eq 540]
+	G54
+o9 elseif [#<_argo_coord_system> eq 550]
+	G55
+o9 elseif [#<_argo_coord_system> eq 560]
+	G56
+o9 elseif [#<_argo_coord_system> eq 570]
+	G57
+o9 elseif [#<_argo_coord_system> eq 580]
+	G58
+o9 elseif [#<_argo_coord_system> eq 590]
+	G59
+o9 elseif [#<_argo_coord_system> eq 591]
+	G59.1
+o9 elseif [#<_argo_coord_system> eq 592]
+	G59.2
+o9 elseif [#<_argo_coord_system> eq 593]
+	G59.3
+o9 else
+	(debug, invalid coor sys in saved context)
+o9 endif
+
+F#<_argo_feed>
+S#<_argo_rpm>
+
+;G92.3	; restore G92 offset
+
+#<_argo_context_saved> = 0
+
+o<context_restore> endsub
+
+m2

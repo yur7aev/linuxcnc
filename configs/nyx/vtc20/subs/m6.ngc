@@ -1,0 +1,110 @@
+;
+; MAZAK VTC-20N
+;
+; toolchange remap
+;
+; 2024, dmitry@yurtaev.com
+;
+
+o<m6> sub
+(AXIS,hide)
+
+m66 p#<_ini[i]i_air_ok> l3 q1		; check for air, 1s timout
+o1 if [#5399 lt 0]
+	(abort, M6 no air pressure)	; fail if it's not there - umbrella won't unlock/rotate
+	o<m6> return [-1]
+o1 endif
+
+o<context_save> call
+
+g21	; metric
+g90	; absolute
+g40	; cutter compensation off
+g94	; mm/min feed
+g49	; tool length compensation off
+m50 p0	; disable feed override
+m51 p0	; disable spindle speed override
+m52 p0	; disable adaptive feed
+m53 p0	; disable feed stop switch
+
+m5	; stop the spindle
+m9	; mist/flood off
+
+f10000				; set change speed
+
+m19 r0 p1			; orient clockwise and lock the spindle (337 deg is the target angle)
+g53 g0 z[#<_ini[axis_z]max_limit>-5]	; go up, rapid
+
+m66 p#<_ini[i]i_z_ind> l4 q1	; verify if Z is NOT in extended area (l4=false)
+o2 if [#5399 lt 0]
+	o<context_restore> call
+	(abort, M6 Z inductive sensor active!)
+	o<m6> return [-1]
+o2 endif
+
+m66 p#<_ini[i]i_z_top> l4 q1	; verify if spindle is NOT at the top (l4=false)
+o3 if [#5399 lt 0]
+	o<context_restore> call
+	(abort, M6 Z top switch active!)
+	o<m6> return [-1]
+o3 endif
+
+m66 p#<_ini[i]s_oriented> l3 q1	; wait for spindle p4 to orient - l3 high q1 seconds
+o4 if [#5399 lt 0]
+	o<context_restore> call
+	(abort, M6 spindle failed to orient)
+	o<m6> return [-1]
+o4 endif
+
+m64 p#<_ini[o]umb_change>	; start change
+m64 p#<_ini[o]z_ex_enable>	; set extended top limit
+g53 g1 z[#<_ini[axis_z]max_limit_ex>-0.1]	; go to the top
+
+					; when z-top goes high
+					; the turret will start to rotate
+m66 p#<_ini[i]umb_changed> l3 q10	; change finished? wait input p0 to go high l3 for 10 seconds
+o5 if [#5399 lt 0]
+	m65 p#<_ini[o]umb_change>	; stop change
+	o<context_restore> call
+	(abort, M6 10s timeout - no air?)
+	o<m6> return [-1]
+o5 endif
+
+m61 q#<selected_tool>		; change the tool right away if case we are interrupted
+g43
+
+m65 p#<_ini[o]umb_change>	; deassert change request to the umb.comp
+
+m66 p#<_ini[i]i_umb_1> l3 q1	; verify if turret is in position - both strobe 1
+o6 if [#5399 lt 0]
+	(abort, M6 strobe 1 low after tool change)
+	o<context_restore> call
+	o<m6> return [-1]
+o6 endif
+
+m66 p#<_ini[i]i_umb_2> l3 q1	; ... and strobe 2 should be high
+o7 if [#5399 lt 0]
+	(abort, M6 strobe 2 low after tool change)
+	o<context_restore> call
+	o<m6> return [-1]
+o7 endif
+
+m66 p#<_ini[i]i_umb_locked> l3 q1	; verify if the turret is locked
+o8 if [#5399 lt 0]
+	(abort, M6 turret unlocked after tool change)
+	o<context_restore> call
+	o<m6> return [-1]
+o8 endif
+
+g53 g1 z[#<_ini[axis_z]max_limit>-5]	; -230 go down and grab the new tool
+					; zlim.comp will issue an air blast
+
+m65 p#<_ini[o]z_ex_enable>	; restore top limit. maybe earlier?
+m5				; release the spindle. maybe earlier?
+
+o<context_restore> call
+
+(AXIS,show)
+o<m6> endsub [1]		; signal success
+
+m2

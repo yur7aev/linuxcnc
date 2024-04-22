@@ -1,0 +1,165 @@
+#
+# NYX v3 LinuxCNC sample PyVCP config, 6 axes
+#
+# 2019-2023, http://yurtaev.com
+#
+
+net nyx-ready nyx.0.ready => pyvcp.led-ready
+net nyx-phase nyx.0.phase => pyvcp.phase
+
+net trq0 nyx.0.servo-00.trq-fb => pyvcp.trq0
+net trq1 nyx.0.servo-01.trq-fb => pyvcp.trq1
+net trq2 nyx.0.servo-02.trq-fb => pyvcp.trq2
+net trq3 nyx.0.servo-03.trq-fb => pyvcp.trq3
+net trq4 nyx.0.servo-04.trq-fb => pyvcp.trq4
+net trq5 nyx.0.servo-05.trq-fb => pyvcp.trq5
+
+net s-vel-fb => pyvcp.s-vel
+
+net offline0 nyx.0.servo-00.offline => pyvcp.led-offline0 pyvcp.led-ready0.disable pyvcp.led-alarm0.disable pyvcp.led-warning0.disable
+net offline1 nyx.0.servo-01.offline => pyvcp.led-offline1 pyvcp.led-ready1.disable pyvcp.led-alarm1.disable pyvcp.led-warning1.disable
+net offline2 nyx.0.servo-02.offline => pyvcp.led-offline2 pyvcp.led-ready2.disable pyvcp.led-alarm2.disable pyvcp.led-warning2.disable
+net offline3 nyx.0.servo-03.offline => pyvcp.led-offline3 pyvcp.led-ready3.disable pyvcp.led-alarm3.disable pyvcp.led-warning3.disable
+net offline4 nyx.0.servo-04.offline => pyvcp.led-offline4 pyvcp.led-ready4.disable pyvcp.led-alarm4.disable pyvcp.led-warning4.disable
+net offline5 nyx.0.servo-05.offline => pyvcp.led-offline5 pyvcp.led-ready5.disable pyvcp.led-alarm5.disable pyvcp.led-warning5.disable
+
+net ready0 nyx.0.servo-00.ready => pyvcp.led-ready0
+net ready1 nyx.0.servo-01.ready => pyvcp.led-ready1
+net ready2 nyx.0.servo-02.ready => pyvcp.led-ready2
+net ready3 nyx.0.servo-03.ready => pyvcp.led-ready3
+net ready4 nyx.0.servo-04.ready => pyvcp.led-ready4
+net ready5 nyx.0.servo-05.ready => pyvcp.led-ready5
+
+net alarm0 nyx.0.servo-00.alarm pyvcp.led-alarm0
+net alarm1 nyx.0.servo-01.alarm pyvcp.led-alarm1
+net alarm2 nyx.0.servo-02.alarm pyvcp.led-alarm2
+net alarm3 nyx.0.servo-03.alarm pyvcp.led-alarm3
+net alarm4 nyx.0.servo-04.alarm pyvcp.led-alarm4
+net alarm5 nyx.0.servo-05.alarm pyvcp.led-alarm5
+
+net warning0 nyx.0.servo-00.warning pyvcp.led-warning0
+net warning1 nyx.0.servo-01.warning pyvcp.led-warning1
+net warning2 nyx.0.servo-02.warning pyvcp.led-warning2
+net warning3 nyx.0.servo-03.warning pyvcp.led-warning3
+net warning4 nyx.0.servo-04.warning pyvcp.led-warning4
+net warning5 nyx.0.servo-05.warning pyvcp.led-warning5
+
+net enabled0 nyx.0.servo-00.enabled => pyvcp.led-enabled0
+net enabled1 nyx.0.servo-01.enabled => pyvcp.led-enabled1
+net enabled2 nyx.0.servo-02.enabled => pyvcp.led-enabled2
+net enabled3 nyx.0.servo-03.enabled => pyvcp.led-enabled3
+net enabled4 nyx.0.servo-04.enabled => pyvcp.led-enabled4
+net enabled5 nyx.0.servo-05.enabled => pyvcp.led-enabled5
+
+net reset-alarm <= pyvcp.reset-alarm
+net reset-alarm => nyx.0.servo-00.reset-alarm
+net reset-alarm => nyx.0.servo-01.reset-alarm
+net reset-alarm => nyx.0.servo-02.reset-alarm
+net reset-alarm => nyx.0.servo-03.reset-alarm
+net reset-alarm => nyx.0.servo-04.reset-alarm
+net reset-alarm => nyx.0.servo-05.reset-alarm
+
+net code0 nyx.0.servo-00.alarm-code => pyvcp.code0
+net code1 nyx.0.servo-01.alarm-code => pyvcp.code1
+net code2 nyx.0.servo-02.alarm-code => pyvcp.code2
+net code3 nyx.0.servo-03.alarm-code => pyvcp.code3
+net code4 nyx.0.servo-04.alarm-code => pyvcp.code4
+net code5 nyx.0.servo-05.alarm-code => pyvcp.code5
+
+
+loadrt weighted_sum wsum_sizes=5
+addf process_wsums servo-thread
+setp wsum.0.bit.0.weight 1
+setp wsum.0.bit.1.weight 2
+setp wsum.0.bit.2.weight 4
+setp wsum.0.bit.3.weight 8
+setp wsum.0.bit.4.weight 16
+net mag1-pos pyvcp.mag1-pos <= wsum.0.sum
+net mag1-pos-0 X30-mag1-pos-0 wsum.0.bit.0.in
+net mag1-pos-1 X31-mag1-pos-1 wsum.0.bit.1.in
+net mag1-pos-2 X32-mag1-pos-2 wsum.0.bit.2.in
+net mag1-pos-3 X33-mag1-pos-3 wsum.0.bit.3.in
+net mag1-pos-4 X34-mag1-pos-4 wsum.0.bit.4.in
+
+net atc-op    pyvcp.atc-op   X06-atc-cover-is-open
+net atc-cl    pyvcp.atc-cl   X07-atc-cover-closed
+	           
+net mag1-es   pyvcp.mag1-es  X00-mag1-extend-stop
+net mag1-rs   pyvcp.mag1-rs  X01-mag1-retract-stop
+net mag1-e    pyvcp.mag1-e   X02-mag1-extended
+net mag1-r    pyvcp.mag1-r   X03-mag1-retracted
+	           
+net mag1-tool pyvcp.mag1-tool X2F-mag1-tool-detector
+net tool-cl   pyvcp.tool-cl   X10-tool-clamped
+net tool-un   pyvcp.tool-un   X11-tool-unclamped
+
+net mag1-coin  pyvcp.mag1-coin  X35-mag1-coin
+net mag1-zspd  pyvcp.mag1-zspd  X36-mag1-zspd
+net mag1-alarm pyvcp.mag1-alarm X37-mag1-alarm
+
+net door-iop pyvcp.door-iop X14-door-int-closed
+net door-icl pyvcp.door-icl X15-door-int-is-open
+net door-cl  pyvcp.door-cl  X20-machine-door-closed
+net door-lk  pyvcp.door-lk  X1E-machine-door-locked
+net door-pb  pyvcp.door-pb  X1F-machine-door-unlock-pb
+net door-pb => Y2E-ennable-door-unlock
+net tool-pb  pyvcp.tool-pb  X24-op-tool-uclamp-sw
+
+net air pyvcp.air  X2E-main-air-pressure
+net toh pyvcp.toh  X2C-main-trans-overheat
+
+# --
+
+net ilim   pyvcp.ilim   => nyx.0.servo-00.limit-torque nyx.0.servo-01.limit-torque
+net x-ilim pyvcp.x-ilim <= nyx.0.servo-00.torque-clamped
+net y-ilim pyvcp.y-ilim <= nyx.0.servo-01.torque-clamped
+net z-ilim pyvcp.z-ilim <= nyx.0.servo-02.torque-clamped
+net x-home-sw => pyvcp.x-home
+net y-home-sw => pyvcp.y-home
+net z-homw-sw => pyvcp.z-home
+
+setp nyx.0.servo-00.mon 0x14
+setp nyx.0.servo-01.mon 0x14
+setp nyx.0.servo-02.mon 0x14
+
+net cyc0 pyvcp.cyc0 nyx.0.servo-00.mon12
+net cyc1 pyvcp.cyc1 nyx.0.servo-01.mon12
+net cyc2 pyvcp.cyc2 nyx.0.servo-02.mon12
+
+
+#X02-mag1-extended
+#X2F-mag1-tool-detector
+#X00-mag1-extend-stop
+#X03-mag1-retracted
+#X06-atc-cover-is-open
+#X11-tool-unclamped
+#X35-mag1-coin
+#X36-mag1-zspd
+#X37-mag1-alarm
+#X01-mag1-retract-stop
+#X07-atc-cover-closed
+#X30-mag1-pos-0
+#X31-mag1-pos-1
+#X32-mag1-pos-2
+#X33-mag1-pos-3
+#X34-mag1-pos-4
+
+#Y11-tool-clamp
+#Y10-tool-unclamp
+#Y12-mag1-extend
+#Y14-mag1-retract
+#Y1B-atc-open-cover
+#Y1C-atc-close-cover
+#Y2A-mag1-brake
+#Y37-mag1-mode-0
+#Y36-mag1-fwd-rev
+#Y35-mag1-start
+#Y34-mag1-sta-4
+#Y33-mag1-sta-3
+#Y32-mag1-sta-2
+#Y31-mag1-sta-1
+#Y30-mag1-sta-0
+#Y3A-mag1-servo-on
+#Y39-mag1-mode-2
+#Y38-mag1-mode-1
+

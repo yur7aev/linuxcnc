@@ -1,0 +1,83 @@
+component tpmux "touch probe mux";
+description """
+
+toolsetter:
+rapid down
+m68 e#<_ini[o]tpmux> q11 ; set tpmux = 11
+probe down fast
+verify not faulted
+set tpmux = 1
+probe down slow
+set tpmux = 0
+verify not faulted
+rapid up
+
+renishaw:
+set tpmux = 2
+""";
+author "Dmitry Yurtaev dmitry@yurtaev.com";
+license "GPL";
+
+// tool setter
+pin in bit near1;
+pin in bit touch1;
+pin in bit fault1;
+
+// renishaw in spindle
+pin in bit touch2;
+pin in bit fault2;
+pin out bit enable2;
+
+// home switches
+pin in bit touchx;
+pin in bit touchy;
+pin in bit touchz;
+
+// select input
+pin in float n;
+
+pin out bit probe-out;
+pin out bit fault-out;
+pin out bit buzzer-out;
+pin out signed selected;
+
+param rw float pulse-len = 0.5;
+
+variable double timer;
+
+function _;
+;;
+
+switch ((int)n) {
+case  11:	// stop on TS near, touch or overtravel
+	probe_out = buzzer_out = near1 || touch1 || fault1;
+	fault_out = touch1 || fault1 || (selected == 11 ? fault_out : 0);
+	break;
+case   1:	// stop on TS touch or overtravel
+	probe_out = buzzer_out = touch1 || fault1;
+	fault_out = fault1 || (selected == 1 ? fault_out : 0);
+	break;
+case   2: 	// stop on RENISHAW touch or error
+	probe_out = buzzer_out = touch2 || fault2;
+	fault_out = fault2;
+	if (fault2 || timer < pulse_len) {	// send wake up signal
+		timer += fperiod;
+		enable2 = 1;
+	} else {
+		enable2 = 0;
+	}
+	break;
+// home switches
+case 101: probe_out = buzzer_out = touchx; fault_out = 0; break;
+case 102: probe_out = buzzer_out = touchy; fault_out = 0; break;
+case 103: probe_out = buzzer_out = touchz; fault_out = 0; break;
+default:
+	probe_out = 1;
+	fault_out = 1;
+	selected = 0;
+	timer = 0.0;
+	enable2 = 0;
+	buzzer_out = 0;
+	break;
+}
+selected = (int)n;

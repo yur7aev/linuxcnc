@@ -1,0 +1,110 @@
+component vtc20 "MAZAK VTC-20 glue logic";
+author "Dmitry Yurtaev dmitry@yurtaev.com";
+license "GPL";
+
+// ATC
+
+pin in  bit extend;
+pin in  bit mag1-extend-stop  "X00-mag1-extend-stop";
+pin in  bit mag1-extended     "X02-mag1-extended";
+pin in  bit mag1-retracted    "X03-mag1-retracted";
+pin in  bit mag1-retract-stop "X01-mag1-retract-stop";
+pin out bit mag1-extend       "Y12-mag1-extend";
+pin out bit mag1-retract      "Y14-mag1-retract";
+
+/*
+34: X0-extend-stop & X2-extended & !X3-retracted -> M1429 ext stop cmd
+38: X1-retract-stop & X3-retracted & !X2-extended -> M1430 ret stop cmd
+42: !X3-retracted & X0-extend-stop & !X2-extended & Y12-extend -> C5 K1
+48: !X2-extended & X1-extend-stop & !X3-retracted & Y14-retract -> C6 K1
+54: !Y12-extend -> rst c5
+57: !Y14-retract -> rst c6
+60: (=K2 C5 | m1435) & m200 -> m1435 (mg ext al 1) too slow
+66: (=K2 C6 | m1437) & m200 -> m1437 (mg ret al 2)
+72: (X2-extended & Y12-extend & =K0,C5 | m1436) & m200 -> m1436 (mg ext al 2) too fast
+80: (X3-retracted & Y14-retract & =K0,C6 | m1438) & m200 -> m1438 (mg ret al 2)
+88: !m1435-al & !m1436-al & !m1429-ext-stop-cmd & m1919? & !Y14 -> Y12-extend
+95: !m1437-al & !m1438-al & !m1430-ret-stop-cmd & m1921? & !Y12 -> Y14-retract
+
+1072: (m1918-en-mag-ext & !m1986 & !m1891 & m1914 | m1919) & m200-rst & !m1915 -> m1919 mag ext memory
+1053: m1933-tool-unclamp-conf(992)|X2F-tool-det|m1011)&(y14a-z-0-pos|m1857-z=r2194)
+	& Y14D-y=pos2 & y14c-x=pos2
+*/
+
+pin in  bit mag1-tool-detect  "X2F-mag1-tool-detect";
+
+pin in  bit open-cover;
+pin in  bit atc-cover-is-open "X06-atc-cover-is-open";
+pin in  bit atc-cover-closed  "X07-atc-cover-closed";
+pin out bit atc-open-cover    "Y1B-atc-open-cover";
+pin out bit atc-close-cover   "Y1C-atc-close-cover";
+
+/*
+3267: m291 & !m289 & !Y1C -> Y1B
+*/
+
+pin in  bit unclamp;
+pin in  bit tool-clamped      "X10-tool-clamped";
+pin in  bit tool-unclamped    "X11-tool-unclamped";
+pin out bit tool-clamp        "Y11-tool-clamp";
+pin out bit tool-unclamp      "Y10-tool-unclamp";
+
+pin out bit fault;
+pin out u32 fault-code;
+pin in  bit atc-enable;
+
+////////////////////////////////////////////////////////
+
+function _;
+;;
+
+atc_open_cover  =  open_cover && !atc_cover_is_open && atc_enable;
+atc_close_cover = !open_cover && !atc_cover_closed  && atc_enable;
+
+mag1_extend  =  extend && !mag1_extend_stop  && atc_enable;
+mag1_retract = !extend && !mag1_retract_stop && atc_enable;
+
+tool_unclamp = unclamp && !tool_unclamped;
+tool_clamp =  !unclamp && !tool_clamped;
+
+/*
+X35-mag1-coin
+X36-mag1-zspd
+X37-mag1-alarm
+X30-mag1-pos-0
+X31-mag1-pos-1
+X32-mag1-pos-2
+X33-mag1-pos-3
+X34-mag1-pos-4
+
+Y2A-mag1-brake
+Y37-mag1-mode-0
+Y36-mag1-fwd-rev
+Y35-mag1-start
+Y34-mag1-sta-4
+Y33-mag1-sta-3
+Y32-mag1-sta-2
+Y31-mag1-sta-1
+Y30-mag1-sta-0
+Y3A-mag1-servo-on
+Y39-mag1-mode-2
+Y38-mag1-mode-1
+*/
+
+
+
+#include "rtapi_math.h"
+
+////////////////////////////////////////////
+
+float dv = 0.0;			// difference between commanded speed_in and the actual
+
+if (orient_in || orient_locked_in) {
+	double dist_to_target;
+
+	switch (orient_stage) {
+	case 0:
+		orient_stage = 1;
+		// fall thru
+	case 1:
+		dv = orient_speed - speed;	// bring the spindle to the orient_speed, clockwise
