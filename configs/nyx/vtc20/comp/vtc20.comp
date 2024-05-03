@@ -4,7 +4,15 @@ license "GPL";
 
 // ATC
 
-pin in  bit extend;
+pin in  bit open		"open ATC cover";
+pin in  bit close		"close ATC cover";
+pin in  bit atc-cover-is-open "X06-atc-cover-is-open";
+pin in  bit atc-cover-closed  "X07-atc-cover-closed";
+pin out bit atc-open-cover    "Y1B-atc-open-cover";
+pin out bit atc-close-cover   "Y1C-atc-close-cover";
+
+pin in  bit extend		"extend the magazine";
+pin in  bit retract		"retract the magazine";
 pin in  bit mag1-extend-stop  "X00-mag1-extend-stop";
 pin in  bit mag1-extended     "X02-mag1-extended";
 pin in  bit mag1-retracted    "X03-mag1-retracted";
@@ -12,9 +20,69 @@ pin in  bit mag1-retract-stop "X01-mag1-retract-stop";
 pin out bit mag1-extend       "Y12-mag1-extend";
 pin out bit mag1-retract      "Y14-mag1-retract";
 
+pin in  bit mag1-tool-detect  "X2F-mag1-tool-detect";
+
+pin in  bit unclamp		"unclamp tool in the spindle";
+pin in  bit clamp;		"clamp tool in the spindle"
+pin in  bit tool-clamped      "X10-tool-clamped";
+pin in  bit tool-unclamped    "X11-tool-unclamped";
+pin out bit tool-clamp        "Y11-tool-clamp";
+pin out bit tool-unclamp      "Y10-tool-unclamp";
+
+// Yaskawa CIMR-04JP3 Justpoint III
+//
+// mode	0	jog
+//	1	setup
+//	2	zero return
+//	3	zero offset
+//	4 	automatic
+//	5	manual
+//	6	none
+//	7	none
+/*
+24 stations: 1..24
+
+EMG <= 1
+Y20-power-on -> relay -> ABS.ST confirm ABS position read:
+
+position output 0
+mode <= setup, servo <= on, brake <= release
+start <= on
+wait for COIN
+start <= off
+brake <= engage, servo <= off
+
+mode <= auto
+station <= position
+start <= on
+wait for COIN
+brake <= engage, servo <= off
+*/
+
+pin in  s32 mode;
+pin out bit mag1-mode-0	    "Y37-mag1-mode-0";
+pin out bit mag1-mode-1	    "Y38-mag1-mode-1";
+pin out bit mag1-mode-2	    "Y39-mag1-mode-2";
+
+pin in  s32 station	"commanded carousel position";
+pin out bit mag1-sta-0 "Y30-mag1-sta-0";
+pin out bit mag1-sta-1 "Y31-mag1-sta-1";
+pin out bit mag1-sta-2 "Y32-mag1-sta-2";
+pin out bit mag1-sta-3 "Y33-mag1-sta-3";
+pin out bit mag1-sta-4 "Y34-mag1-sta-4";
+
+pin out s32 position	"current carousel position";
+pin out bit mag1-sta-0 "Y30-mag1-sta-0";
+pin out bit mag1-sta-1 "Y31-mag1-sta-1";
+pin out bit mag1-sta-2 "Y32-mag1-sta-2";
+pin out bit mag1-sta-3 "Y33-mag1-sta-3";
+pin out bit mag1-sta-4 "Y34-mag1-sta-4";
+
+
 /*
 34: X0-extend-stop & X2-extended & !X3-retracted -> M1429 ext stop cmd
 38: X1-retract-stop & X3-retracted & !X2-extended -> M1430 ret stop cmd
+
 42: !X3-retracted & X0-extend-stop & !X2-extended & Y12-extend -> C5 K1
 48: !X2-extended & X1-extend-stop & !X3-retracted & Y14-retract -> C6 K1
 54: !Y12-extend -> rst c5
@@ -23,51 +91,54 @@ pin out bit mag1-retract      "Y14-mag1-retract";
 66: (=K2 C6 | m1437) & m200 -> m1437 (mg ret al 2)
 72: (X2-extended & Y12-extend & =K0,C5 | m1436) & m200 -> m1436 (mg ext al 2) too fast
 80: (X3-retracted & Y14-retract & =K0,C6 | m1438) & m200 -> m1438 (mg ret al 2)
-88: !m1435-al & !m1436-al & !m1429-ext-stop-cmd & m1919? & !Y14 -> Y12-extend
+
+88: !m1435-MGEXA1 & !m1436-MGEXA2 & !m1429-ext-stop-cmd & m1919-MGEXME & !Y14-retract -> Y12-extend
+      alarm 1         alarm 2          (34)
+
 95: !m1437-al & !m1438-al & !m1430-ret-stop-cmd & m1921? & !Y12 -> Y14-retract
 
-1072: (m1918-en-mag-ext & !m1986 & !m1891 & m1914 | m1919) & m200-rst & !m1915 -> m1919 mag ext memory
+1072: (M1918-ENMGEX & !m1986-ATCSTM & !m1891-MD1OPX & m1914-MGEXCD | m1919) & m200-rst & !m1915-MGRTCD -> M1919-MGEXME mag ext memory
+	enable mag ext	atc stop m	m door1 open	mag ext cmd           	      mag retract cmd
+
 1053: m1933-tool-unclamp-conf(992)|X2F-tool-det|m1011)&(y14a-z-0-pos|m1857-z=r2194)
 	& Y14D-y=pos2 & y14c-x=pos2
 */
-
-pin in  bit mag1-tool-detect  "X2F-mag1-tool-detect";
-
-pin in  bit open-cover;
-pin in  bit atc-cover-is-open "X06-atc-cover-is-open";
-pin in  bit atc-cover-closed  "X07-atc-cover-closed";
-pin out bit atc-open-cover    "Y1B-atc-open-cover";
-pin out bit atc-close-cover   "Y1C-atc-close-cover";
 
 /*
 3267: m291 & !m289 & !Y1C -> Y1B
 */
 
-pin in  bit unclamp;
-pin in  bit tool-clamped      "X10-tool-clamped";
-pin in  bit tool-unclamped    "X11-tool-unclamped";
-pin out bit tool-clamp        "Y11-tool-clamp";
-pin out bit tool-unclamp      "Y10-tool-unclamp";
 
 pin out bit fault;
 pin out u32 fault-code;
-pin in  bit atc-enable;
+
+//
+
 
 ////////////////////////////////////////////////////////
 
 function _;
 ;;
 
-atc_open_cover  =  open_cover && !atc_cover_is_open && atc_enable;
-atc_close_cover = !open_cover && !atc_cover_closed  && atc_enable;
+atc_open_cover  =  open && !close && !atc_cover_is_open;
+atc_close_cover = close &&  !open && !atc_cover_closed && !mag1_extended && mag1_retracted;
 
-mag1_extend  =  extend && !mag1_extend_stop  && atc_enable;
-mag1_retract = !extend && !mag1_retract_stop && atc_enable;
+mag1_extend  =  extend && !retract && !(mag1_extend_stop && mag1_extended) && atc_cover_is_open;
+mag1_retract = retract &&  !extend && !(mag1_retract_stop && mag1_retracted);
 
-tool_unclamp = unclamp && !tool_unclamped;
-tool_clamp =  !unclamp && !tool_clamped;
+tool_unclamp = unclamp &&   !clamp && !tool_unclamped;
+tool_clamp =     clamp && !unclamp && !tool_clamped;
 
 /*
+2144:	M113 & M301 & M109 & !F83 & !F81 & !F85 
+	| M112
+	& !M114 & !M230 -> M112
+
+
+m108 | m112 -> y10
+2060   2153
+
+
 X35-mag1-coin
 X36-mag1-zspd
 X37-mag1-alarm
@@ -79,6 +150,8 @@ X34-mag1-pos-4
 
 Y2A-mag1-brake
 Y37-mag1-mode-0
+Y38-mag1-mode-1
+Y39-mag1-mode-2
 Y36-mag1-fwd-rev
 Y35-mag1-start
 Y34-mag1-sta-4
@@ -87,24 +160,49 @@ Y32-mag1-sta-2
 Y31-mag1-sta-1
 Y30-mag1-sta-0
 Y3A-mag1-servo-on
-Y39-mag1-mode-2
-Y38-mag1-mode-1
 */
 
+mag1_mode_0 = (mode & 1) != 0;
+mag1_mode_1 = (mode & 2) != 0;
+mag1_mode_2 = (mode & 4) != 0;
+
+mag1_sta_0 = (station & 1) != 0;
+mag1_sta_1 = (station & 2) != 0;
+mag1_sta_2 = (station & 4) != 0;
+mag1_sta_3 = (station & 8) != 0;
+mag1_sta_4 = (station & 16) != 0;
+
+//Y2A-mag1-brake
+//Y36-mag1-fwd-rev
+//Y35-mag1-start
+//Y3A-mag1-servo-on
 
 
-#include "rtapi_math.h"
+/*
+mag brake
 
-////////////////////////////////////////////
+12063: X36-MG1ZSP -> Q0 K30 mag zspd timer
+									   L-side mag valid  
+12066: ((M1410-MGM1 | M1409-MGM2 | 1419-MGZ1 | M1418-MGZ2 | M1405-MGJG) & !L9-LSIDVI) 
+	| (((M352-RSIDE & !M149) | (M357-CT=RX & M149)) & M377-TSELM)  
+	       & Y0-MG1EMG)
+                        | YC-MachineREADY & M1102-@MGBK   -> M1421-MGBKX
+12084: !M1421-MGBKX  -> Q2 K100 mag brake timer
+12087: Y2A-MG1BRK & !Q0-MGZSDT 
+     | M1421-MGBKX
+                        & !Q2-MGBKT -> Y2A
+12092: !Y2A-MG1BRK -> Q3 K20 mag servo off timer
+12095: Y3A & !Q3-MGSVFT
+     | Y2A-MG1BRK        -> Y3A mag servo on ???
 
-float dv = 0.0;			// difference between commanded speed_in and the actual
 
-if (orient_in || orient_locked_in) {
-	double dist_to_target;
+ 
+*/
 
-	switch (orient_stage) {
-	case 0:
-		orient_stage = 1;
-		// fall thru
-	case 1:
-		dv = orient_speed - speed;	// bring the spindle to the orient_speed, clockwise
+/*
+
+
+
+
+
+*/

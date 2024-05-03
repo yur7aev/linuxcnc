@@ -10,13 +10,14 @@ net rdy-on => nyx.0.servo-05.power
 net alarm5 spindle.0.amp-fault-in <= nyx.0.servo-05.alarm
 #net s-enable spindle.0.on => nyx.0.servo-05.enable
 
-net s-fwd      spindle.0.forward       => nyx.0.servo-05.spindle-fwd
-net s-rev      spindle.0.reverse       => nyx.0.servo-05.spindle-rev
-net s-vel-cmd  spindle.0.speed-out-abs => nyx.0.servo-05.vel-cmd
-net s-vel-fb   spindle.0.speed-in      <= nyx.0.servo-05.vel-fb
-net s-at-speed spindle.0.at-speed      <= nyx.0.servo-05.at-speed
-net s-orient                           => nyx.0.servo-05.spindle-orient
-net s-oriented spindle.0.is-oriented   <= nyx.0.servo-05.spindle-oriented
+net s-fwd        spindle.0.forward       => nyx.0.servo-05.spindle-fwd
+net s-rev        spindle.0.reverse       => nyx.0.servo-05.spindle-rev
+net s-vel-cmd    spindle.0.speed-out-abs => nyx.0.servo-05.vel-cmd
+net s-vel-fb                             <= nyx.0.servo-05.vel-fb
+net s-vel-fb-rps spindle.0.speed-in      <= nyx.0.servo-05.vel-fb-rps
+net s-at-speed   spindle.0.at-speed      <= nyx.0.servo-05.at-speed
+net s-orient                             => nyx.0.servo-05.spindle-orient
+net s-oriented   spindle.0.is-oriented   <= nyx.0.servo-05.spindle-oriented
 
 loadrt mdssp
 addf mdssp.0 servo-thread

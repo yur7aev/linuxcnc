@@ -75,7 +75,10 @@ o9 else
 o9 endif
 
 F#<_argo_feed>
-S#<_argo_rpm>
+
+o10 if [#<_argo_rpm> ne #<_rpm>]
+	S#<_argo_rpm>	; cancels spindle orient
+o10 endif
 
 ;G92.3	; restore G92 offset
 

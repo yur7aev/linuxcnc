@@ -6,6 +6,33 @@
 ; 2024, dmitry@yurtaev.com
 ;
 
+
+check cimr alarm
+check pocket
+check mag1-tool-detect empty
+check carousel retracted
+
+open cover
+go up
+go X,Y TC pos
+go down TC pos
+extend carousel
+unclamp
+air blast on
+go up
+cimr servo on
+cimr unbrake
+cimr auto rotate new pocket
+cimr check ok
+cimr brake
+go down
+air blast off
+clamp
+retract carousel
+close cover
+(opt) go up
+
+
 o<m6> sub
 (AXIS,hide)
 

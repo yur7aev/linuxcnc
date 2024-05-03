@@ -5,10 +5,10 @@
 ; 0: X  MDS-A-SVJ-20 HA-100NC-S E30 - 2kw 2000rpm encoder 25000p/rev
 ; 1: Y  MDS-A-SVJ-20 HA-100NC-S E30 - 2kw 2000rpm encoder 25000p/rev
 ; 2: Z  MDS-A-SVJ-20 HA-100NC-S E30 - 2kw 2000rpm encoder 25000p/rev
-; 3: SP MDS-A-SP-220 SJ-11KW8 6000RPM
+; 5: SP MDS-A-SP-220 SJ-11KW8 6000RPM
 ;       NDS-A-CV-100
 ;
-; 2023, http://yurtaev.com / Madoxen
+; 2023-2024, http://yurtaev.com / Madoxen
 ;
 
 ;	0:X	1:Y	2:Z
@@ -93,9 +93,9 @@ SV078	-	-	-	; origin abs
 SV079	-	-	-	; origin hi
 SV080	-	-	-	; origin low
 
-AXIS 3
+AXIS 5
 
-;	3:SP
+;	5:SP
 SP001	100	; PGM	mag sensor and motor built in encoder orientation 0-360 1/10s-1
 SP002	100	; PGE   encoder orientation mode position loop gain 	0-360 1/10s-1
 SP003	15	; PGCO	C-axis non cutting position loop gain 1-100s-1

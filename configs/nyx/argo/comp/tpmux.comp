@@ -27,6 +27,7 @@ pin in bit fault1;
 pin in bit touch2;
 pin in bit fault2;
 pin out bit enable2;
+param rw bit turnoff2 = 1;
 
 // home switches
 pin in bit touchx;
@@ -58,9 +59,10 @@ case   1:	// stop on TS touch or overtravel
 	fault_out = fault1 || (selected == 1 ? fault_out : 0);
 	break;
 case   2: 	// stop on RENISHAW touch or error
-	probe_out = buzzer_out = touch2 || fault2;
+	probe_out = touch2 || fault2;
+	buzzer_out = touch2 && !fault2;
 	fault_out = fault2;
-	if (fault2 || timer < pulse_len) {	// send wake up signal
+	if (fault2 && timer < pulse_len) {	// send wake up signal
 		timer += fperiod;
 		enable2 = 1;
 	} else {
@@ -81,3 +83,5 @@ default:
 	break;
 }
 selected = (int)n;
+
+if (turnoff2 && selected != 2 && !fault2) enable2 = 1;	// turn off the touch probe

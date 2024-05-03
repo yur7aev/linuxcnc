@@ -35,7 +35,7 @@ net estop => and2.0.in1
 net rdy-on <= and2.0.out
 
 # mag1 estop ?
-net estop => Y00-mag1-emg
+#net estop => Y00-mag1-emg
 # servo on delay Y04 = X27(estop-in) && servo-XX.online
 net estop => Y04-servo-on-delay
 # machine ready Y0c = X27 && some other stuff

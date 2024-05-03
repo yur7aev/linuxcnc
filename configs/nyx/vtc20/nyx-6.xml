@@ -10,8 +10,6 @@
 <bar halpin="trq0" min_="-150" max_="150" bar_height="22" canvas_height="24" />
 <bar halpin="trq1" min_="-150" max_="150" bar_height="22" canvas_height="24" />
 <bar halpin="trq2" min_="-150" max_="150" bar_height="22" canvas_height="24" />
-<bar halpin="trq3" min_="-150" max_="150" bar_height="22" canvas_height="24" />
-<bar halpin="trq4" min_="-150" max_="150" bar_height="22" canvas_height="24" />
 <bar halpin="trq5" min_="-150" max_="150" bar_height="22" canvas_height="36" />
 
 
@@ -30,24 +28,18 @@
 	<led halpin="led-offline0" on_color="gray80" off_color="green" size="18" />
 	<led halpin="led-offline1" on_color="gray80" off_color="green" size="18" />
 	<led halpin="led-offline2" on_color="gray80" off_color="green" size="18" />
-	<led halpin="led-offline3" on_color="gray80" off_color="green" size="18" />
-	<led halpin="led-offline4" on_color="gray80" off_color="green" size="18" />
 	<led halpin="led-offline5" on_color="gray80" off_color="green" size="18" />
     </hbox>
     <hbox>
 	<led halpin="led-ready0" off_color="gray80" disable_pin="True" size="18" />
 	<led halpin="led-ready1" off_color="gray80" disable_pin="True" size="18" />
 	<led halpin="led-ready2" off_color="gray80" disable_pin="True" size="18" />
-	<led halpin="led-ready3" off_color="gray80" disable_pin="True" size="18" />
-	<led halpin="led-ready4" off_color="gray80" disable_pin="True" size="18" />
 	<led halpin="led-ready5" off_color="gray80" disable_pin="True" size="18" />
     </hbox>
     <hbox>
 	<led halpin="led-enabled0" on_color="#0f0" off_color="gray80" size="18" />
 	<led halpin="led-enabled1" on_color="#0f0" off_color="gray80" size="18" />
 	<led halpin="led-enabled2" on_color="#0f0" off_color="gray80" size="18" />
-	<led halpin="led-enabled3" on_color="#0f0" off_color="gray80" size="18" />
-	<led halpin="led-enabled4" on_color="#0f0" off_color="gray80" size="18" />
 	<led halpin="led-enabled5" on_color="#0f0" off_color="gray80" size="18" />
     </hbox>
 </labelframe>
@@ -58,16 +50,12 @@
 	<led halpin="led-alarm0" on_color="red" off_color="gray80" disable_pin="True" size="18" />
 	<led halpin="led-alarm1" on_color="red" off_color="gray80" disable_pin="True" size="18" />
 	<led halpin="led-alarm2" on_color="red" off_color="gray80" disable_pin="True" size="18" />
-	<led halpin="led-alarm3" on_color="red" off_color="gray80" disable_pin="True" size="18" />
-	<led halpin="led-alarm4" on_color="red" off_color="gray80" disable_pin="True" size="18" />
 	<led halpin="led-alarm5" on_color="red" off_color="gray80" disable_pin="True" size="18" />
     </hbox>
     <hbox>
 	<led halpin="led-warning0" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
 	<led halpin="led-warning1" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
 	<led halpin="led-warning2" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
-	<led halpin="led-warning3" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
-	<led halpin="led-warning4" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
 	<led halpin="led-warning5" on_color="yellow" off_color="gray80" disable_pin="True" size="18" />
     </hbox>
   </vbox>
@@ -77,33 +65,60 @@
 	<u32 halpin="code0" format="02x" />
 	<u32 halpin="code1" format="02x" />
 	<u32 halpin="code2" format="02x" />
-	<u32 halpin="code3" format="02x" />
-	<u32 halpin="code4" format="02x" />
 	<u32 halpin="code5" format="02x" />
     </hbox>
 </labelframe>
 
 <labelframe text="ATC op/cl es/rs e/r t/cl/un">
     <hbox>
-	<led halpin="atc-op" on_color="red"   off_color="gray60" size="18" />
-	<led halpin="atc-cl" on_color="green" off_color="gray60" size="18" />
-
-	<led halpin="mag1-es" on_color="red"   off_color="gray80" size="18" />
-	<led halpin="mag1-rs" on_color="green" off_color="gray80" size="18" />
-	<led halpin="mag1-e" on_color="red"   off_color="gray60" size="18" />
-	<led halpin="mag1-r" on_color="green" off_color="gray60" size="18" />
-
-	<led halpin="mag1-tool" on_color="green" off_color="gray80" size="18" />
-	<led halpin="tool-cl" on_color="green" off_color="gray80" size="18" />
-	<led halpin="tool-un" on_color="green" off_color="gray80" size="18" />
-    </hbox>
-    <hbox>
+	<label text="cover open:"/> <led halpin="atc-op" on_color="red"   off_color="gray60" size="18" />
+        <button halpin="atc-b-op" text="op" />
+	<label text="closed:"/> <led halpin="atc-cl" on_color="green" off_color="gray60" size="18" />
+        <button halpin="atc-b-cl" text="cl" />
+    </hbox> <hbox>
+	<label text="extended:"/> <led halpin="mag1-e" on_color="green"   off_color="gray60" size="18" />
+	<label text="ext stop:"/> <led halpin="mag1-es" on_color="yellow"   off_color="gray60" size="18" />
+        <button halpin="atc-b-e" text="ext" />
+    </hbox> <hbox>
+	<label text="retracted:"/> <led halpin="mag1-r" on_color="green" off_color="gray60" size="18" />
+	<label text="ret stop:"/> <led halpin="mag1-rs" on_color="yellow" off_color="gray60" size="18" />
+        <button halpin="atc-b-r" text="ret" />
+    </hbox> <hbox>
+	<label text="tool det:"/> <led halpin="mag1-tool" on_color="green" off_color="gray60" size="18" />
+	<label text="clamp:"/> <led halpin="tool-cl" on_color="green" off_color="gray60" size="18" />
+        <button halpin="tool-b-cl" text="cl" />
+	<label text="uncl:"/> <led halpin="tool-un" on_color="green" off_color="gray60" size="18" />
+        <button halpin="tool-b-un" text="un" />
+    </hbox> <hbox>
 	<s32 halpin="mag1-pos" format="02d"/>
+	<label text="coin:"/>
 	<led halpin="mag1-coin" on_color="green" off_color="gray80" size="18" />
+	<label text="zspd:"/>
 	<led halpin="mag1-zspd" on_color="green"   off_color="gray80" size="18" />
+	<label text="alm:"/>
 	<led halpin="mag1-alarm" on_color="red" off_color="gray80" size="18" />
-	<label text="coin zspd alm"/>
-    </hbox>
+    </hbox> <hbox>
+     <checkbutton  halpin="pwr-on" text="pwr on" />
+     <checkbutton  halpin="mag1-emg" text="emg" />
+     <checkbutton  halpin="mag1-brake" text="brake" />
+     <checkbutton  halpin="mag1-fwd" text="fwd" />
+     <checkbutton  halpin="mag1-start" text="start" />
+     <checkbutton  halpin="mag1-svon" text="svon" />
+     <checkbutton  halpin="mag1-rst" text="rst" />
+    </hbox> <hbox>
+     <checkbutton  halpin="mode-2" text="2" />
+     <checkbutton  halpin="mode-1" text="1" />
+     <checkbutton  halpin="mode-0" text="0" />
+    </hbox> 
+<scale>
+    <width>"16"</width>
+    <halpin>"station"</halpin>
+    <resolution>1</resolution>
+    <orient>HORIZONTAL</orient>
+    <min_>0</min_>
+    <max_>31</max_>
+</scale>
+
 </labelframe>
 
 <labelframe text="Door io/ic/cl/lk pb tool">
@@ -117,7 +132,7 @@
     </hbox>
 </labelframe>
 
-<labelframe text="air toh">
+<labelframe text="air xfrm-overheat">
     <hbox>
 	<led halpin="air" on_color="green" off_color="red" size="18" />
 	<led halpin="toh" on_color="green" off_color="red" size="18" />

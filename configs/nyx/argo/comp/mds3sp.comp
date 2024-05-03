@@ -66,6 +66,10 @@ pin out  bit   overspeed-out;
 pin out float speed;		// ramped speed
 pin out s32 orient_stage;
 
+pin in  float c-pos-cmd;	// c axis
+pin out float c-pos-fb;
+
+variable double c_offset;
 variable double offset;		// index offset for revs-out pin
 variable double prev_index;
 variable double next_index;
@@ -179,3 +183,13 @@ if (index_enable) {
 revs_out = (pos_cmd_out - offset);
 
 ////////////////////////////////////////////
+
+// c-axis control during oriented/locked spindle
+
+if (orient_stage != 4) {
+	c_offset = pos_cmd_out - c_pos_cmd / 360.0;
+	c_pos_fb = c_pos_cmd;
+} else {
+	pos_cmd_out = c_offset + c_pos_cmd / 360.0;
+	c_pos_fb = (pos_fb_in - c_offset) * 360.0;
+}

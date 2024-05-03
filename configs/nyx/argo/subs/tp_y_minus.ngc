@@ -9,6 +9,8 @@
 o<tp_y_minus> sub
 	#<max_distance> = #1
 	#<clearance> = #2
+	#<backoff> = 0.3
+	#<ptv> = 0.081
 
 	o103 if [exists[#3] and #3 gt 0]
 		#<probe_slow_fr> = #3
@@ -27,6 +29,10 @@ o<tp_y_minus> sub
 		o<tp_y_minus> return
 	o110 endif
 
+	m19 r170
+	m66 p#<_ini[i]s_oriented> l3 q1	; wait for spindle p4 to orient - l3 high q1 seconds
+	m5
+
 	;g43				; apply tool offset?
 	m68 e#<_ini[o]tpmux> q2		; select and activate renishaw
 	m66 p#<_ini[i]tpfault> l4 q2	; wait 2 sec until the fault goes low
@@ -43,16 +49,16 @@ o<tp_y_minus> sub
 	m66 p#<_ini[i]tpfault> l0				; check probe fault
 	o130 if [#5070 gt 0 and #5399 eq 0]			; success?
 		#<probed> = #5062
-		G90 G0 Y[#<probed> + #<clearance>]		; move to z_clearance height for slow probe
-		G91 F#<probe_slow_fr> G38.3 Y[-#<clearance> * 2]	; initiate slow Z- Probe
+		G90 G0 Y[#<probed> + #<backoff>]		; move to z_clearance height for slow probe
+		G91 F#<probe_slow_fr> G38.3 Y[-#<backoff> * 2]	; initiate slow Z- Probe
 		m66 p#<_ini[i]tpfault> l0				; check probe fault
 		o140 if [#5070 gt 0 and #5399 eq 0]			; success?
 			#<probed> = #5062
-			#<finish_pos> = [#<probed> + #<clearance>]
+			#<finish_pos> = [#<probed> + #<clearance> + #<ptv>]
 			m68 e#<_ini[o]tpmux> q0				; deselect probe
 			G90 G0 Y#<finish_pos>
 			o<context_restore> call
-			(debug, probe #<finish_pos> )
+			(xdebug, probe #<finish_pos> )
 			o<tp_y_minus> return [#<finish_pos>]
 		o140 else
 			(msg, final probe failed)

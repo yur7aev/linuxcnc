@@ -9,6 +9,7 @@
 o<tp_z_minus> sub
 	#<max_distance> = #1
 	#<clearance> = #2
+	#<backoff> = 0.3
 
 	o103 if [exists[#3] and #3 gt 0]
 		#<probe_slow_fr> = #3
@@ -43,8 +44,8 @@ o<tp_z_minus> sub
 	m66 p#<_ini[i]tpfault> l0				; check probe fault
 	o130 if [#5070 gt 0 and #5399 eq 0]			; success?
 		#<probed> = #5063
-		G90 G0 Z[#<probed> + #<clearance>]		; move to z_clearance height for slow probe
-		G91 F[#<probe_slow_fr>] G38.3 Z[-#<clearance> * 2]	; initiate slow Z- Probe
+		G90 G0 Z[#<probed> + #<backoff>]		; move to z_clearance height for slow probe
+		G91 F[#<probe_slow_fr>] G38.3 Z[-#<backoff> * 2]	; initiate slow Z- Probe
 		m66 p#<_ini[i]tpfault> l0				; check probe fault
 		o140 if [#5070 gt 0 and #5399 eq 0]			; success?
 			#<probed> = #5063
@@ -52,7 +53,7 @@ o<tp_z_minus> sub
 			m68 e#<_ini[o]tpmux> q0				; deselect probe
 			G90 G0 Z#<finish_pos>
 			o<context_restore> call
-			(debug, probe #<finish_pos>)
+			(xdebug, probe #<finish_pos>)
 			o<tp_z_minus> return [#<finish_pos>]
 		o140 else
 			(msg, final probe failed)
