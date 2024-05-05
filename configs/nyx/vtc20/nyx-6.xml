@@ -109,7 +109,7 @@
      <checkbutton  halpin="mode-2" text="2" />
      <checkbutton  halpin="mode-1" text="1" />
      <checkbutton  halpin="mode-0" text="0" />
-    </hbox> 
+    </hbox>
 <scale>
     <width>"16"</width>
     <halpin>"station"</halpin>

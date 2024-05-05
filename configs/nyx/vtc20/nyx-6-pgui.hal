@@ -165,17 +165,17 @@ net tool-unclamped vtc20.0.tool-unclamped <= X11-tool-unclamped                 
 net tool-clamp     vtc20.0.tool-clamp     => Y11-tool-clamp
 net tool-unclamp   vtc20.0.tool-unclamp   => Y10-tool-unclamp
 
-net mode-0 Y37-mag1-mode-0           pyvcp.mode-0	    
-net mode-1 Y38-mag1-mode-1           pyvcp.mode-1	    
-net mode-2 Y39-mag1-mode-2           pyvcp.mode-2	    
+net mode-0 Y37-mag1-mode-0           pyvcp.mode-0
+net mode-1 Y38-mag1-mode-1           pyvcp.mode-1
+net mode-2 Y39-mag1-mode-2           pyvcp.mode-2
 
 net pwr-on     Y20-power-on          pyvcp.pwr-on
 net mag1-emg   Y00-mag1-emg          pyvcp.mag1-emg
-net mag1-brake Y2A-mag1-brake        pyvcp.mag1-brake 
-net mag1-fwd   Y36-mag1-fwd-rev      pyvcp.mag1-fwd   
-net mag1-start Y35-mag1-start        pyvcp.mag1-start 
-net mag1-svon  Y3A-mag1-servo-on     pyvcp.mag1-svon  
-net mag1-rst   Y3F-mag1-reset        pyvcp.mag1-rst  
+net mag1-brake Y2A-mag1-brake        pyvcp.mag1-brake
+net mag1-fwd   Y36-mag1-fwd-rev      pyvcp.mag1-fwd
+net mag1-start Y35-mag1-start        pyvcp.mag1-start
+net mag1-svon  Y3A-mag1-servo-on     pyvcp.mag1-svon
+net mag1-rst   Y3F-mag1-reset        pyvcp.mag1-rst
 
 net station   vtc20.0.station <= pyvcp.station-i
 

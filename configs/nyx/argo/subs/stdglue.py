@@ -47,7 +47,7 @@ def setspeed_prolog(self,**words):
     try:
         c = self.blocks[self.remap_level]
         if not c.s_flag:
-            self.set_errormsg("S requires a value") 
+            self.set_errormsg("S requires a value")
             return INTERP_ERROR
         self.params["speed"] = c.s_number
     except Exception as e:
@@ -63,7 +63,7 @@ def setspeed_epilog(self,**words):
                              % (r.name,r.remap_ngc if r.remap_ngc else r.remap_py))
             return INTERP_ERROR
         if self.return_value < -TOLERANCE_EQUAL: # 'less than 0 within interp's precision'
-            self.set_errormsg("S: remap procedure returned %f" % (self.return_value)) 
+            self.set_errormsg("S: remap procedure returned %f" % (self.return_value))
             return INTERP_ERROR
         if self.blocks[self.remap_level].builtin_used:
             pass
@@ -75,7 +75,7 @@ def setspeed_epilog(self,**words):
     except Exception as e:
         self.set_errormsg("S/setspeed_epilog: %s)" % (e))
         return INTERP_ERROR
-    return INTERP_OK    
+    return INTERP_OK
 
 # REMAP=F   prolog=setfeed_prolog  ngc=setfeed epilog=setfeed_epilog
 # exposed parameter: #<feed>
@@ -84,13 +84,13 @@ def setfeed_prolog(self,**words):
     try:
         c = self.blocks[self.remap_level]
         if not c.f_flag:
-            self.set_errormsg("F requires a value") 
+            self.set_errormsg("F requires a value")
             return INTERP_ERROR
         self.params["feed"] = c.f_number
     except Exception as e:
         self.set_errormsg("F/setfeed_prolog: %s)" % (e))
         return INTERP_ERROR
-    return INTERP_OK    
+    return INTERP_OK
 
 def setfeed_epilog(self,**words):
     try:
@@ -109,7 +109,7 @@ def setfeed_epilog(self,**words):
     except Exception as e:
         self.set_errormsg("F/setfeed_epilog: %s)" % (e))
         return INTERP_ERROR
-    return INTERP_OK    
+    return INTERP_OK
 
 # REMAP=T   prolog=prepare_prolog ngc=prepare epilog=prepare_epilog
 # exposed parameters: #<tool> #<pocket>
@@ -156,7 +156,7 @@ def prepare_epilog(self, **words):
                 return INTERP_ERROR
     except Exception as e:
         self.set_errormsg("T%d/prepare_epilog: %s" % (tool,e))
-        return INTERP_ERROR       
+        return INTERP_ERROR
 
 # REMAP=M6  modalgroup=6 prolog=change_prolog ngc=change epilog=change_epilog
 # exposed parameters:
@@ -234,11 +234,11 @@ def settool_prolog(self,**words):
     try:
         c = self.blocks[self.remap_level]
         if not c.q_flag:
-            self.set_errormsg("M61 requires a Q parameter") 
+            self.set_errormsg("M61 requires a Q parameter")
             return INTERP_ERROR
         tool = int(c.q_number)
         if tool < -TOLERANCE_EQUAL: # 'less than 0 within interp's precision'
-            self.set_errormsg("M61: Q value < 0") 
+            self.set_errormsg("M61: Q value < 0")
             return INTERP_ERROR
         (status,pocket) = self.find_tool_pocket(tool)
         if status != INTERP_OK:
@@ -289,7 +289,7 @@ def set_tool_number(self, **words):
             toolno = int(c.q_number)
         else:
             self.set_errormsg("M61 requires a Q parameter")
-            return status 
+            return status
         (status,pocket) = self.find_tool_pocket(toolno)
         if status != INTERP_OK:
             self.set_errormsg("M61 failed: requested tool %d not in table" % (toolno))
@@ -319,7 +319,7 @@ _compat = {
     emccanon.CANON_PLANE_XZ : (("y","r"),_uvw,"XZ"),
     emccanon.CANON_PLANE_UV : (("w","r"),_xyz,"UV"),
     emccanon.CANON_PLANE_VW : (("u","r"),_xyz,"VW"),
-    emccanon.CANON_PLANE_UW : (("v","r"),_xyz,"UW")}           
+    emccanon.CANON_PLANE_UW : (("v","r"),_xyz,"UW")}
 
 # extract and pass parameters from current block, merged with extra parameters on a continuation line
 # keep tjose parameters across invocations
@@ -328,7 +328,7 @@ def cycle_prolog(self,**words):
     # self.sticky_params is assumed to have been initialized by the
     # init_stgdlue() method below
     global _compat
-    try:    
+    try:
         # determine whether this is the first or a subsequent call
         c = self.blocks[self.remap_level]
         r = c.executing_remap
@@ -365,7 +365,7 @@ def cycle_prolog(self,**words):
             # checked in interpreter during block parsing
             # if l <= 0 or l not near an int
             self.params["l"] = words["l"]
-            
+
         if "p" in words:
             p = words["p"]
             if p < 0.0:
@@ -514,7 +514,7 @@ def index_lathe_tool_with_wear(self,**words):
 # based on Versaprobe remap
 #
 # param 5000 holds the work piece height
-# param 4999 should be set to 1 if the 
+# param 4999 should be set to 1 if the
 # machine is based in imperial
 #
 # required INI settings
@@ -641,7 +641,7 @@ def tool_probe_m6(self, **words):
 
             # adjust tool offset from calculations
             proberesult = self.params[5063]
-            probeheight = self.params["_ini[TOOLSENSOR]PROBEHEIGHT"] 
+            probeheight = self.params["_ini[TOOLSENSOR]PROBEHEIGHT"]
             workheight = self.params[5000]
 
             adj = proberesult - probeheight + workheight
@@ -658,7 +658,7 @@ def tool_probe_m6(self, **words):
                 else:
                     self.execute("G20")
                     print ("switched Units back to imperial")
- 
+
         except InterpreterException as e:
             msg = "%d: '%s' - %s" % (e.line_number,e.line_text, e.error_message)
             print (msg)

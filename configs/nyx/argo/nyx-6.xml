@@ -140,7 +140,7 @@
 	<led> <halpin>"led-home-z"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
 	<led> <halpin>"led-ind-z"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
 	<led> <halpin>"led-up-z"</halpin> <on_color>"green"</on_color><off_color>"gray80"</off_color> </led>
-	<led> <halpin>"led-overspeed"</halpin> <on_color>"red"</on_color><off_color>"gray80"</off_color> </led> 
+	<led> <halpin>"led-overspeed"</halpin> <on_color>"red"</on_color><off_color>"gray80"</off_color> </led>
    </hbox>
 </labelframe>
 

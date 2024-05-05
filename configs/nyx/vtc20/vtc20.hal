@@ -53,7 +53,7 @@ net flood-coolant iocontrol.0.coolant-flood => Y0F-flood-coolant
 # work air blast Y16
 # tool air blast Y29
 net mist-coolant iocontrol.0.coolant-mist => Y16-work-air-blast
-# 
+#
 net lube <= iocontrol.0.lube
 # spindle lube Y17
 net lube => Y17-spindle-lube

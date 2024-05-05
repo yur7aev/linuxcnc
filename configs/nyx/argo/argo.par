@@ -19,7 +19,7 @@ SV085	40	40	40	; LMCk	Lost motion comp 3 spring const	0.01%/um 0-32767
 SV086	1600	1600	1600	; LMCc	Lost motion comp 3 visc coef	0.01%/mm 0-32767
 
 
-;	0	1	2	
+;	0	1	2
 SV001	1	1	1	; PC1	Motor side gear ratio			1-32767
 SV002	1	1	1	; PC2	Machine side gear ratio			1-32767
 SV003	48	48	48	; PGN1	Position loop gain		rad/s	1-200
@@ -116,14 +116,14 @@ SV083	0x0006	0x0006	0x0000	; SSF6	Servo function 6 6=fil4-8.5dB
 SV084	0x0000	0x0000	0x0000	; SSF7	Servo function 7
 SV087	1300	1300	0	; FHz4	Notch filter frequency 4	Hz	0-2250
 SV088	0	0	0	; FHz5	Notch filter frequency 5	Hz	0-2250
-SV089	-	-	-	
-SV090	-	-	-	
+SV089	-	-	-
+SV090	-	-	-
 SV091	0	0	0	; LMC4G	Lost motion comp 4 gain		0.01%	0-20000
-SV092	-	-	-	
+SV092	-	-	-
 SV093	0	0	0	
 SV094	10	10	10	; MPV	Mag pole pos error detect speed		0-31999
 SV095	0	0	0	; ZUPD	Vertical axis pull up distance	um	0-2000
-SV096	-	-	-	
+SV096	-	-	-
 
 SV106	0	0	0	; PGM OMR-FF scale model gain		rad/s	0-300
 SV112	0	0	0	; IFF OMR-FF current feed forward gain	0.01%	0-32767
@@ -164,7 +164,7 @@ SP014	50	; PY1	Minimum excitation rate 1 000				50
 SP015	100	; PY2	Minimum excitation rate 2 000				100
 SP016	20	; DDT	Phase alignment deceleration rate 20 20 20
 SP017	0x0009	; SPEC1	Spindle specification 1 4008 4008 4008			0008-filter
-SP018	0x0000	; SPEC2	Spindle specification 2					2=open loop 
+SP018	0x0000	; SPEC2	Spindle specification 2					2=open loop
 
 SP019	0	; RNG1	Sub side detector resolution 260 260 260		?
 SP020	0	; RNG2	Main side detector resolution 260 260 260		?
@@ -297,7 +297,7 @@ SP148	1186	; LA	(H) inductance mH		11366	4299	3841			*7132		kp43: 7.7mH
 SP149	2683	; IQSM	(H) torque current 100%		150	180	360			484
 SP150	1228	; IDSM	(H) field current 100%		0	0	0			172
 SP151	297	; R1	(H) resistance			5062	1484	548			*3103		3.1ohm
-SP152	75	; TMLR	(H) decel current limit %	330	565	388			*90	   
+SP152	75	; TMLR	(H) decel current limit %	330	565	388			*90
 SP153	120	; TMLD	(H) accel current limit %	330	565	388			*120
 SP154	150	; TMLS	(H) constant curret limit %	367	628	431			*150
 SP155	1162	; KI1	(H) current F/B compensation	1000	1000	1000			1511
@@ -310,7 +310,7 @@ SP160	0	; BSD	(H) 0
 SP161	0
 SP162	0
 SP163	0
-	
+
 SP164	0
 SP165	0	; NRL	(L) 0
 SP166	0	; NBL	(L) 0
@@ -341,7 +341,7 @@ SP190	0	; DNBL	(L) 0
 SP191	0	; SNBL	(L) 0
 SP192	0	; BSDL	(L) 0
 SP193	0
-; :::	
+; :::
 SP224	0
 SP225	0x0004	; SFNC5	Spindle function 5	0004
 SP226	0x1000	; SFNC6	Spindle function 6	1000

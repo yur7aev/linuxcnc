@@ -133,7 +133,7 @@ case 99:
 	rotate_fwd = rotate_rev = 0;
 	if (clear_fault) state = 0;
 	break;
-	
+
 default:
 	state = 0;
 }

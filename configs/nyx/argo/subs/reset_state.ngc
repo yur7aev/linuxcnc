@@ -2,7 +2,7 @@
 ; clear it out here, and any other state you what to have established after an error
 ;
 ; executing an M2 here is NOT recommended here, so we replicate the steps taken by an M2
-; but keep executing 
+; but keep executing
 
 o<reset_state> sub
 

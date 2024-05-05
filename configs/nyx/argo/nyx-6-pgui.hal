@@ -88,7 +88,7 @@ net code5 nyx.0.servo-05.alarm-code => pyvcp.code5
 #net s-pos-fb                                   => pyvcp.pos-fb
 #net s-droop    nyx.0.servo-05.droop            => pyvcp.pos-droop
 
-#net vel-check  nyx.0.servo-05.velocity-mode     <= pyvcp.vel-check 
+#net vel-check  nyx.0.servo-05.velocity-mode     <= pyvcp.vel-check
 #net s-z-reset  nyx.0.servo-05.spindle-orient    <= pyvcp.z-check
 
 net s-z-complete nyx.0.servo-05.spindle-oriented => pyvcp.led-z-complete

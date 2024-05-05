@@ -1,12 +1,13 @@
-linuxcnc (2.9.2nyx48) unstable; urgency=medium
+linuxcnc (1:2.9.2nyx48) unstable; urgency=medium
 
   * nyx.0.servo-XX.vel-fb-rps pin
   * nyxq python3 bugfixes
   * upstream merge
   * mds index-enable support
   * mds reqs: alarms, fw
+  * checked in argo/vtc20 configs
 
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Thu, 11 Apr 2024 15:39:02 +0200
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Thu, 3 May 2024 12:46:43 +0200
 
 linuxcnc (2.9.2nyx46) unstable; urgency=medium
 
