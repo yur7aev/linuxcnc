@@ -24,7 +24,7 @@ net x-homing nyx.0.servo-00.undroop <= joint.0.homing
 net y-homing nyx.0.servo-01.undroop <= joint.1.homing
 net z-homing nyx.0.servo-02.undroop <= joint.2.homing
 
-# MDS-A-CV power contactor
+# MDS-A-CV power contactor on signal
 net cv-relay-on <= X1Cn-spindle-relay-check
 
 # servo power after contactor has been activated
@@ -34,8 +34,9 @@ net cv-relay-on => and2.0.in0
 net estop => and2.0.in1
 net rdy-on <= and2.0.out
 
-# mag1 estop ?
-#net estop => Y00-mag1-emg
+# mag1 estop
+net estop => Y00-mag1-emg
+net rdy-on => Y20-power-on
 # servo on delay Y04 = X27(estop-in) && servo-XX.online
 net estop => Y04-servo-on-delay
 # machine ready Y0c = X27 && some other stuff
@@ -49,9 +50,6 @@ net estop => Y0C-machine-ready
 net estop => Y2D-estop
 # flood coolant
 net flood-coolant iocontrol.0.coolant-flood => Y0F-flood-coolant
-# mist coolant Y06?
-# work air blast Y16
-# tool air blast Y29
 net mist-coolant iocontrol.0.coolant-mist => Y16-work-air-blast
 #
 net lube <= iocontrol.0.lube
@@ -63,14 +61,113 @@ net lube => Y18-lube-unit
 # way lube pressure X1D
 net lube-level-ok iocontrol.0.lube_level <= X12n-way-lube-level
 
-# main-trans-overheat		X2Cn-main-trans-overheat	1
-# main-air-pressure		X2E-main-air-pressure		1
-# mag1-alarm			X37-mag1-alarm
+# -------------------------- toolchanger
+
+net mag1-tool-det	X2Fn-mag1-tool-detect	=> motion.digital-in-[I]MAG_TOOL_DET
+net mag1-coin		X35-mag1-coin		=> motion.digital-in-[I]MAG_COIN
+net mag1-zspd		X36-mag1-zspd		=> motion.digital-in-[I]MAG_ZSP
+net mag1-alarm		X37-mag1-alarm		=> motion.digital-in-[I]MAG_ALARM
+
+net door-iop		<= X14-door-int-closed
+net door-icl		<= X15-door-int-is-open
+net door-cl		<= X20-machine-door-closed
+net door-lk		<= X1E-machine-door-locked
+net door-pb		<= X1F-machine-door-unlock-pb
+net door-pb		=> Y2E-enable-door-unlock
+
+net air			X2E-main-air-pressure	=> motion.digital-in-[I]AIR_PRESSURE
+
+# --------------------------
+
+loadrt vtc20
+addf vtc20.0 servo-thread
+
+net atc-cover-is-open vtc20.0.atc-cover-is-open <= X06-atc-cover-is-open	motion.digital-in-[I]ATC_IS_OPEN
+net atc-cover-closed  vtc20.0.atc-cover-closed  <= X07-atc-cover-closed		motion.digital-in-[I]ATC_CLOSED
+net atc-open-cover    vtc20.0.atc-open-cover    => Y1B-atc-open-cover
+net atc-close-cover   vtc20.0.atc-close-cover   => Y1C-atc-close-cover
+
+net mag1-extend-stop  vtc20.0.mag1-extend-stop  <= X00-mag1-extend-stop
+net mag1-extended     vtc20.0.mag1-extended     <= X02-mag1-extended
+net mag1-retracted    vtc20.0.mag1-retracted    <= X03-mag1-retracted
+net mag1-retract-stop vtc20.0.mag1-retract-stop <= X01-mag1-retract-stop
+net mag1-extend       vtc20.0.mag1-extend	=> Y12-mag1-extend
+net mag1-retract      vtc20.0.mag1-retract	=> Y14-mag1-retract
+net mag1-is-extended  vtc20.0.extended               				motion.digital-in-[I]MAG_EXTENDED
+net mag1-is-retracted vtc20.0.retracted   					motion.digital-in-[I]MAG_RETRACTED
+
+net s-oriented	     =>			   					motion.digital-in-[I]SP_ORIENTED
+
+net unclamp-sw		<= X24-op-tool-uclamp-sw
+
+net clamp2		vtc20.0.clamp2
+net unclamp2		vtc20.0.unclamp2
+net s-zsp	     =>	vtc20.0.spindle-zero-speed				motion.digital-in-[I]SP_ZSP
+net tool-clamped	vtc20.0.tool-clamped	<= X10-tool-clamped		motion.digital-in-[I]TOOL_CLAMPED
+net tool-unclamped	vtc20.0.tool-unclamped	<= X11-tool-unclamped 	        motion.digital-in-[I]TOOL_UNCLAMPED
+net tool-clamp		vtc20.0.tool-clamp	=> Y11-tool-clamp
+net tool-unclamp	vtc20.0.tool-unclamp	=> Y10-tool-unclamp
+
+net mag-mode		vtc20.0.mode						motion.analog-out-[O]MAG_MODE
+net mode-0		vtc20.0.mag1-mode-0	Y37-mag1-mode-0
+net mode-1		vtc20.0.mag1-mode-1	Y38-mag1-mode-1
+net mode-2		vtc20.0.mag1-mode-2	Y39-mag1-mode-2
+
+net mag-station		vtc20.0.station						motion.analog-out-[O]MAG_STATION
+#net mag-stati		vtc20.0.stati
+net station-4		vtc20.0.mag1-sta-4	Y34-mag1-sta-4
+net station-3		vtc20.0.mag1-sta-3	Y33-mag1-sta-3
+net station-2		vtc20.0.mag1-sta-2	Y32-mag1-sta-2
+net station-1		vtc20.0.mag1-sta-1	Y31-mag1-sta-1
+net station-0		vtc20.0.mag1-sta-0	Y30-mag1-sta-0
+
+net mag-position	vtc20.0.pos						motion.analog-in-[I]MAG_POS
+net mag-posi		vtc20.0.posi
+net mag1-pos-0		vtc20.0.mag1-pos-0	X30-mag1-pos-0
+net mag1-pos-1		vtc20.0.mag1-pos-1	X31-mag1-pos-1
+net mag1-pos-2		vtc20.0.mag1-pos-2	X32-mag1-pos-2
+net mag1-pos-3		vtc20.0.mag1-pos-3	X33-mag1-pos-3
+net mag1-pos-4		vtc20.0.mag1-pos-4	X34-mag1-pos-4
+
+#net pwr-on     Y20-power-on          pyvcp.pwr-on
+#net mag1-emg   Y00-mag1-emg          pyvcp.mag1-emg
+#net mag1-brake Y2A-mag1-brake        pyvcp.mag1-brake
+#net mag1-fwd   Y36-mag1-fwd-rev      pyvcp.mag1-fwd
+#net mag1-start Y35-mag1-start        pyvcp.mag1-start
+#net mag1-svon  Y3A-mag1-servo-on     pyvcp.mag1-svon
+
+#net pwr-on     Y20-power-on          pyvcp.pwr-on
+#net mag1-emg   Y00-mag1-emg          pyvcp.mag1-emg
+
+net sp-air-blst	Y29-tool-air-blast	<= motion.digital-out-[O]SP_AIR_BLAST
+net mag1-brake	Y2A-mag1-brake		<= motion.digital-out-[O]MAG_BRAKE
+#net mag1-fwd	Y36-mag1-fwd-rev	<= motion.digital-out-[O]
+net mag1-start	Y35-mag1-start		<= motion.digital-out-[O]MAG_START
+net mag1-svon	Y3A-mag1-servo-on	<= motion.digital-out-[O]MAG_SVON
+net mag1-rst	Y3F-mag1-reset
+#net mag1-rst   Y3F-mag1-reset		<= motion.digital-out-[O]
+net unclamp	vtc20.0.unclamp		<= motion.digital-out-[O]TOOL_UNCLAMP
+net clamp	vtc20.0.clamp		<= motion.digital-out-[O]TOOL_CLAMP
+net atc-open	vtc20.0.open		<= motion.digital-out-[O]ATC_OPEN
+net atc-close	vtc20.0.close		<= motion.digital-out-[O]ATC_CLOSE
+net mag-extend	vtc20.0.extend		<= motion.digital-out-[O]MAG_EXTEND
+net mag-retract	vtc20.0.retract		<= motion.digital-out-[O]MAG_RETRACT
+
+#net station   vtc20.0.station <= pyvcp.station-i
+
+
+# -------------- todo
+# net mag1-alarm
+net trans-overheat		X2Cn-main-trans-overheat
+net breaker-trip		X2A-breaker-trip
+net conv-temperature-trip	X2B-conv-temperature-trip
 # mms-error			X0A-mms-error
 # mms-battery-alarm		X0C-mms-battery-alarm
 # sw-emg-stop-in		X0D-sw-emg-stop-in
 # emg-stop-in-2			X0F-emg-stop-in-2
-# spindle-relay-check		X1C-spindle-relay-check
-# breaker-trip			X2A-breaker-trip
-# conv-temperature-trip		X2B-conv-temperature-trip
+#alias pin nyx.0.yio-01.in-16     X1D-way-lube-pressure
+#alias pin nyx.0.yio-01.in-1a     X28-chip-conv-is-on
+#alias pin nyx.0.yio-02.out-1e Y0D-skip-on-buzzer
+#alias pin nyx.0.yio-03.out-12 Y21-work-light
+#alias pin nyx.0.yio-03.out-1e Y0E-spindle-thru-coolant
 

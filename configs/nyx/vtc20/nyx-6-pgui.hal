@@ -50,37 +50,23 @@ net code1 nyx.0.servo-01.alarm-code => pyvcp.code1
 net code2 nyx.0.servo-02.alarm-code => pyvcp.code2
 net code5 nyx.0.servo-05.alarm-code => pyvcp.code5
 
+####################3
 
-loadrt weighted_sum wsum_sizes=5
-addf process_wsums servo-thread
-setp wsum.0.bit.0.weight 1
-setp wsum.0.bit.1.weight 2
-setp wsum.0.bit.2.weight 4
-setp wsum.0.bit.3.weight 8
-setp wsum.0.bit.4.weight 16
-net mag1-pos pyvcp.mag1-pos <= wsum.0.sum
-net mag1-pos-0 X30-mag1-pos-0 wsum.0.bit.0.in
-net mag1-pos-1 X31-mag1-pos-1 wsum.0.bit.1.in
-net mag1-pos-2 X32-mag1-pos-2 wsum.0.bit.2.in
-net mag1-pos-3 X33-mag1-pos-3 wsum.0.bit.3.in
-net mag1-pos-4 X34-mag1-pos-4 wsum.0.bit.4.in
+net mag1-posi pyvcp.mag1-pos
 
-net mag1-tool-det X2F-mag1-tool-detect => pyvcp.mag1-tool
+net mag1-tool-det => pyvcp.mag1-tool
+net mag1-coin  pyvcp.mag1-coin
+net mag1-zspd  pyvcp.mag1-zspd
+net mag1-alarm pyvcp.mag1-alarm
 
-net mag1-coin  pyvcp.mag1-coin  X35-mag1-coin
-net mag1-zspd  pyvcp.mag1-zspd  X36-mag1-zspd
-net mag1-alarm pyvcp.mag1-alarm X37-mag1-alarm
+net door-iop	pyvcp.door-iop
+net door-icl	pyvcp.door-icl
+net door-cl	pyvcp.door-cl
+net door-lk	pyvcp.door-lk
+net door-pb	pyvcp.door-pb
 
-net door-iop pyvcp.door-iop X14-door-int-closed
-net door-icl pyvcp.door-icl X15-door-int-is-open
-net door-cl  pyvcp.door-cl  X20-machine-door-closed
-net door-lk  pyvcp.door-lk  X1E-machine-door-locked
-net door-pb  pyvcp.door-pb  X1F-machine-door-unlock-pb
-net door-pb => Y2E-ennable-door-unlock
-net tool-pb  pyvcp.tool-pb  X24-op-tool-uclamp-sw
-
-net air pyvcp.air  X2E-main-air-pressure
-net toh pyvcp.toh  X2C-main-trans-overheat
+net air pyvcp.air
+net trans-overheat pyvcp.toh
 
 # --
 
@@ -139,48 +125,29 @@ net cyc2 pyvcp.cyc2 nyx.0.servo-02.mon12
 
 # ---------------------
 
-loadrt vtc20
-addf vtc20.0 servo-thread
+#net atc-open          vtc20.0.open  <= pyvcp.atc-b-op
+#net atc-close         vtc20.0.close <= pyvcp.atc-b-cl
+net atc-cover-is-open pyvcp.atc-op
+net atc-cover-closed  pyvcp.atc-cl
 
-net atc-open          vtc20.0.open  <= pyvcp.atc-b-op
-net atc-close         vtc20.0.close <= pyvcp.atc-b-cl
-net atc-cover-is-open vtc20.0.atc-cover-is-open <= X06-atc-cover-is-open	pyvcp.atc-op
-net atc-cover-closed  vtc20.0.atc-cover-closed  <= X07-atc-cover-closed		pyvcp.atc-cl
-net atc-open-cover    vtc20.0.atc-open-cover    => Y1B-atc-open-cover
-net atc-close-cover   vtc20.0.atc-close-cover   => Y1C-atc-close-cover
+#net mag-extend        vtc20.0.extend  <= pyvcp.atc-b-e
+#net mag-retract       vtc20.0.retract <= pyvcp.atc-b-r
+net mag1-extend-stop  pyvcp.mag1-es
+net mag1-extended     pyvcp.mag1-e
+net mag1-retracted    pyvcp.mag1-r
+net mag1-retract-stop pyvcp.mag1-rs
 
-net mag-extend        vtc20.0.extend  <= pyvcp.atc-b-e
-net mag-retract       vtc20.0.retract <= pyvcp.atc-b-r
-net mag1-extend-stop  vtc20.0.mag1-extend-stop  <= X00-mag1-extend-stop         pyvcp.mag1-es
-net mag1-extended     vtc20.0.mag1-extended     <= X02-mag1-extended            pyvcp.mag1-e
-net mag1-retracted    vtc20.0.mag1-retracted    <= X03-mag1-retracted		pyvcp.mag1-r
-net mag1-retract-stop vtc20.0.mag1-retract-stop <= X01-mag1-retract-stop        pyvcp.mag1-rs
-net mag1-extend       vtc20.0.mag1-extend  => Y12-mag1-extend
-net mag1-retract      vtc20.0.mag1-retract => Y14-mag1-retract
+net unclamp2       pyvcp.tool-b-un
+net clamp2         pyvcp.tool-b-cl
+net tool-clamped   pyvcp.tool-cl
+net tool-unclamped pyvcp.tool-un
 
-net unclamp        vtc20.0.unclamp <= pyvcp.tool-b-un
-net clamp          vtc20.0.clamp   <= pyvcp.tool-b-cl
-net tool-clamped   vtc20.0.tool-clamped   <= X10-tool-clamped			pyvcp.tool-cl
-net tool-unclamped vtc20.0.tool-unclamped <= X11-tool-unclamped                 pyvcp.tool-un
-net tool-clamp     vtc20.0.tool-clamp     => Y11-tool-clamp
-net tool-unclamp   vtc20.0.tool-unclamp   => Y10-tool-unclamp
+#net pwr-on     Y20-power-on          pyvcp.pwr-on
+#net mag1-emg   Y00-mag1-emg          pyvcp.mag1-emg
+#net mag1-brake Y2A-mag1-brake        pyvcp.mag1-brake
+#net mag1-fwd   Y36-mag1-fwd-rev      pyvcp.mag1-fwd
+#net mag1-start Y35-mag1-start        pyvcp.mag1-start
+#net mag1-svon  Y3A-mag1-servo-on     pyvcp.mag1-svon
+net mag1-rst    pyvcp.mag1-rst
 
-net mode-0 Y37-mag1-mode-0           pyvcp.mode-0
-net mode-1 Y38-mag1-mode-1           pyvcp.mode-1
-net mode-2 Y39-mag1-mode-2           pyvcp.mode-2
-
-net pwr-on     Y20-power-on          pyvcp.pwr-on
-net mag1-emg   Y00-mag1-emg          pyvcp.mag1-emg
-net mag1-brake Y2A-mag1-brake        pyvcp.mag1-brake
-net mag1-fwd   Y36-mag1-fwd-rev      pyvcp.mag1-fwd
-net mag1-start Y35-mag1-start        pyvcp.mag1-start
-net mag1-svon  Y3A-mag1-servo-on     pyvcp.mag1-svon
-net mag1-rst   Y3F-mag1-reset        pyvcp.mag1-rst
-
-net station   vtc20.0.station <= pyvcp.station-i
-
-net station-4 vtc20.0.mag1-sta-4 Y34-mag1-sta-4
-net station-3 vtc20.0.mag1-sta-3 Y33-mag1-sta-3
-net station-2 vtc20.0.mag1-sta-2 Y32-mag1-sta-2
-net station-1 vtc20.0.mag1-sta-1 Y31-mag1-sta-1
-net station-0 vtc20.0.mag1-sta-0 Y30-mag1-sta-0
+#net station   vtc20.0.station <= pyvcp.station-i

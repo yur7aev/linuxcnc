@@ -72,23 +72,23 @@
 <labelframe text="ATC op/cl es/rs e/r t/cl/un">
     <hbox>
 	<label text="cover open:"/> <led halpin="atc-op" on_color="red"   off_color="gray60" size="18" />
-        <button halpin="atc-b-op" text="op" />
+        <!--button halpin="atc-b-op" text="op" /-->
 	<label text="closed:"/> <led halpin="atc-cl" on_color="green" off_color="gray60" size="18" />
-        <button halpin="atc-b-cl" text="cl" />
+        <!--button halpin="atc-b-cl" text="cl" /-->
     </hbox> <hbox>
-	<label text="extended:"/> <led halpin="mag1-e" on_color="green"   off_color="gray60" size="18" />
-	<label text="ext stop:"/> <led halpin="mag1-es" on_color="yellow"   off_color="gray60" size="18" />
-        <button halpin="atc-b-e" text="ext" />
+	<label text="extended, stop:"/> <led halpin="mag1-e" on_color="green"   off_color="gray60" size="18" />
+	<led halpin="mag1-es" on_color="green"   off_color="gray60" size="18" />
+        <!--button halpin="atc-b-e" text="ext" /-->
     </hbox> <hbox>
-	<label text="retracted:"/> <led halpin="mag1-r" on_color="green" off_color="gray60" size="18" />
-	<label text="ret stop:"/> <led halpin="mag1-rs" on_color="yellow" off_color="gray60" size="18" />
-        <button halpin="atc-b-r" text="ret" />
+	<label text="retracted, stop:"/> <led halpin="mag1-r" on_color="green" off_color="gray60" size="18" />
+	<led halpin="mag1-rs" on_color="green" off_color="gray60" size="18" />
+        <!--button halpin="atc-b-r" text="ret" /-->
     </hbox> <hbox>
 	<label text="tool det:"/> <led halpin="mag1-tool" on_color="green" off_color="gray60" size="18" />
 	<label text="clamp:"/> <led halpin="tool-cl" on_color="green" off_color="gray60" size="18" />
         <button halpin="tool-b-cl" text="cl" />
-	<label text="uncl:"/> <led halpin="tool-un" on_color="green" off_color="gray60" size="18" />
-        <button halpin="tool-b-un" text="un" />
+	<label text="uncl:"/> <led halpin="tool-un" on_color="yellow" off_color="gray60" size="18" />
+        <checkbutton halpin="tool-b-un" text="un" />
     </hbox> <hbox>
 	<s32 halpin="mag1-pos" format="02d"/>
 	<label text="coin:"/>
@@ -97,7 +97,9 @@
 	<led halpin="mag1-zspd" on_color="green"   off_color="gray80" size="18" />
 	<label text="alm:"/>
 	<led halpin="mag1-alarm" on_color="red" off_color="gray80" size="18" />
-    </hbox> <hbox>
+    <button halpin="mag1-rst" text="rst" />
+
+    </hbox> <!--hbox>
      <checkbutton  halpin="pwr-on" text="pwr on" />
      <checkbutton  halpin="mag1-emg" text="emg" />
      <checkbutton  halpin="mag1-brake" text="brake" />
@@ -117,7 +119,7 @@
     <orient>HORIZONTAL</orient>
     <min_>0</min_>
     <max_>31</max_>
-</scale>
+</scale-->
 
 </labelframe>
 
@@ -135,7 +137,7 @@
 <labelframe text="air xfrm-overheat">
     <hbox>
 	<led halpin="air" on_color="green" off_color="red" size="18" />
-	<led halpin="toh" on_color="green" off_color="red" size="18" />
+	<led halpin="toh" on_color="red" off_color="gray60" size="18" />
     </hbox>
 </labelframe>
 
