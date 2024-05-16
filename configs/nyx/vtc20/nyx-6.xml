@@ -71,13 +71,13 @@
 
 <labelframe text="ATC op/cl es/rs e/r t/cl/un">
     <hbox>
-	<label text="cover open:"/> <led halpin="atc-op" on_color="red"   off_color="gray60" size="18" />
+	<label text="cover open:"/> <led halpin="atc-op" on_color="yellow"   off_color="gray60" size="18" />
         <!--button halpin="atc-b-op" text="op" /-->
 	<label text="closed:"/> <led halpin="atc-cl" on_color="green" off_color="gray60" size="18" />
         <!--button halpin="atc-b-cl" text="cl" /-->
     </hbox> <hbox>
-	<label text="extended, stop:"/> <led halpin="mag1-e" on_color="green"   off_color="gray60" size="18" />
-	<led halpin="mag1-es" on_color="green"   off_color="gray60" size="18" />
+	<label text="extended, stop:"/> <led halpin="mag1-e" on_color="yellow"   off_color="gray60" size="18" />
+	<led halpin="mag1-es" on_color="yellow"   off_color="gray60" size="18" />
         <!--button halpin="atc-b-e" text="ext" /-->
     </hbox> <hbox>
 	<label text="retracted, stop:"/> <led halpin="mag1-r" on_color="green" off_color="gray60" size="18" />
@@ -85,21 +85,25 @@
         <!--button halpin="atc-b-r" text="ret" /-->
     </hbox> <hbox>
 	<label text="tool det:"/> <led halpin="mag1-tool" on_color="green" off_color="gray60" size="18" />
-	<label text="clamp:"/> <led halpin="tool-cl" on_color="green" off_color="gray60" size="18" />
-        <button halpin="tool-b-cl" text="cl" />
+	<label text="clamped:"/> <led halpin="tool-cl" on_color="green" off_color="gray60" size="18" />
+        <!--button halpin="tool-b-cl" text="cl" /-->
 	<label text="uncl:"/> <led halpin="tool-un" on_color="yellow" off_color="gray60" size="18" />
         <checkbutton halpin="tool-b-un" text="un" />
     </hbox> <hbox>
-	<s32 halpin="mag1-pos" format="02d"/>
-	<label text="coin:"/>
-	<led halpin="mag1-coin" on_color="green" off_color="gray80" size="18" />
-	<label text="zspd:"/>
-	<led halpin="mag1-zspd" on_color="green"   off_color="gray80" size="18" />
-	<label text="alm:"/>
-	<led halpin="mag1-alarm" on_color="red" off_color="gray80" size="18" />
-    <button halpin="mag1-rst" text="rst" />
+	<label text="pos:"/> <s32 halpin="mag1-pos" format="02d"/>
+	<label text="coin:"/> <led halpin="mag1-coin" on_color="green" off_color="gray80" size="18" />
+	<label text="zspd:"/> <led halpin="mag1-zspd" on_color="green"   off_color="gray80" size="18" />
+	<label text="alm:"/> <led halpin="mag1-alarm" on_color="red" off_color="gray80" size="18" />
+	<button halpin="mag1-rst" text="rst" />
+    </hbox> <hbox>
+	<label text="sta:"/> <s32 halpin="mag1-stati" format="02d"/>
+	<label text="mode:"/> <number halpin="mag1-mode" format="1.0f" />
+	<label text="start:"/> <led halpin="mag1-start" on_color="green"   off_color="gray80" size="18" />
+	<label text="brake:"/> <led halpin="mag1-brake" on_color="green" off_color="gray80" size="18" />
+	<label text="svon:"/> <led halpin="mag1-svon" on_color="green"   off_color="gray80" size="18" />
+    </hbox>
 
-    </hbox> <!--hbox>
+<!--hbox>
      <checkbutton  halpin="pwr-on" text="pwr on" />
      <checkbutton  halpin="mag1-emg" text="emg" />
      <checkbutton  halpin="mag1-brake" text="brake" />
@@ -134,10 +138,14 @@
     </hbox>
 </labelframe>
 
-<labelframe text="air xfrm-overheat">
+<labelframe text="alarms">
     <hbox>
-	<led halpin="air" on_color="green" off_color="red" size="18" />
-	<led halpin="toh" on_color="red" off_color="gray60" size="18" />
+	<label text="air:"/> <led halpin="air" on_color="green" off_color="red" size="18" />
+	<label text="overheat:"/> <led halpin="toh" on_color="red" off_color="gray60" size="18" />
+	<label text="lube lvl:"/> <led halpin="lube-level" on_color="gray60" off_color="red" size="18" />
+	<label text="lube pres:"/> <led halpin="lube-pres" on_color="gray60" off_color="red" size="18" />
+	<label text="brkr trip:"/> <led halpin="brkr-trip" on_color="red" off_color="gray60" size="18" />
+	<label text="conv trip:"/> <led halpin="conv-trip" on_color="red" off_color="gray60" size="18" />
     </hbox>
 </labelframe>
 

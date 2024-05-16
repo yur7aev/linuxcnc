@@ -52,12 +52,17 @@ net code5 nyx.0.servo-05.alarm-code => pyvcp.code5
 
 ####################3
 
-net mag1-posi pyvcp.mag1-pos
-
+net mag-posi pyvcp.mag1-pos
 net mag1-tool-det => pyvcp.mag1-tool
 net mag1-coin  pyvcp.mag1-coin
 net mag1-zspd  pyvcp.mag1-zspd
 net mag1-alarm pyvcp.mag1-alarm
+
+net mag-stati	pyvcp.mag1-stati
+net mag-mode	pyvcp.mag1-mode
+net mag1-brake	pyvcp.mag1-brake
+net mag1-start	pyvcp.mag1-start
+net mag1-svon	pyvcp.mag1-svon
 
 net door-iop	pyvcp.door-iop
 net door-icl	pyvcp.door-icl
@@ -65,8 +70,14 @@ net door-cl	pyvcp.door-cl
 net door-lk	pyvcp.door-lk
 net door-pb	pyvcp.door-pb
 
-net air pyvcp.air
-net trans-overheat pyvcp.toh
+#
+
+net air			pyvcp.air
+net trans-overheat	pyvcp.toh
+net lube-level-ok	pyvcp.lube-level
+net lube-pressure-ok	pyvcp.lube-pres
+net breaker-trip	pyvcp.brkr-trip
+net conv-temp-trip	pyvcp.conv-trip
 
 # --
 
@@ -85,43 +96,6 @@ setp nyx.0.servo-02.mon 0x14
 net cyc0 pyvcp.cyc0 nyx.0.servo-00.mon12
 net cyc1 pyvcp.cyc1 nyx.0.servo-01.mon12
 net cyc2 pyvcp.cyc2 nyx.0.servo-02.mon12
-
-
-#X02-mag1-extended
-#X2F-mag1-tool-detector
-#X00-mag1-extend-stop
-#X03-mag1-retracted
-#X06-atc-cover-is-open
-#X11-tool-unclamped
-#X35-mag1-coin
-#X36-mag1-zspd
-#X37-mag1-alarm
-#X01-mag1-retract-stop
-#X07-atc-cover-closed
-#X30-mag1-pos-0
-#X31-mag1-pos-1
-#X32-mag1-pos-2
-#X33-mag1-pos-3
-#X34-mag1-pos-4
-
-#Y11-tool-clamp
-#Y10-tool-unclamp
-#Y12-mag1-extend
-#Y14-mag1-retract
-#Y1B-atc-open-cover
-#Y1C-atc-close-cover
-#Y2A-mag1-brake
-#Y37-mag1-mode-0
-#Y36-mag1-fwd-rev
-#Y35-mag1-start
-#Y34-mag1-sta-4
-#Y33-mag1-sta-3
-#Y32-mag1-sta-2
-#Y31-mag1-sta-1
-#Y30-mag1-sta-0
-#Y3A-mag1-servo-on
-#Y39-mag1-mode-2
-#Y38-mag1-mode-1
 
 # ---------------------
 

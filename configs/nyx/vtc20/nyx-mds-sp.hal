@@ -29,4 +29,3 @@ net s-revs     spindle.0.revs          <= mdssp.0.revs
 net s-orient                           <= mdssp.0.orient-out
 net s-orient-orient   spindle.0.orient => mdssp.0.spindle-orient-in
 net s-orient-locked   spindle.0.locked => mdssp.0.spindle-locked-in
-

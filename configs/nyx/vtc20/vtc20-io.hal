@@ -7,9 +7,9 @@
 # 2024, dmitry@yurtaev.com
 #
 
-#alias pin nyx.0.yio-00.in-00     X08-h-arm-extendrd
-#alias pin nyx.0.yio-00.in-01     X09-h-arm-retracted
-alias pin nyx.0.yio-00.in-02     X0C-mms-battery-alarm
+#alias pin nyx.0.yio-00.in-00     X08-h-arm-extendrd-NP
+#alias pin nyx.0.yio-00.in-01     X09-h-arm-retracted-NP
+#alias pin nyx.0.yio-00.in-02     X0C-mms-battery-alarm-NP
 alias pin nyx.0.yio-00.in-03     X0F-emg-stop-in-2
 alias pin nyx.0.yio-00.in-04     X02-mag1-extended
 #alias pin nyx.0.yio-00.in-05     X05
@@ -61,7 +61,7 @@ alias pin nyx.0.yio-01.in-12     X01-mag1-retract-stop
 #alias pin nyx.0.yio-01.in-13     X04
 alias pin nyx.0.yio-01.in-14     X07-atc-cover-closed
 alias pin nyx.0.yio-01.in-15-not X1An-z-axis-zrn
-#alias pin nyx.0.yio-01.in-16     X1D-way-lube-pressure
+alias pin nyx.0.yio-01.in-16     X1D-way-lube-pressure
 alias pin nyx.0.yio-01.in-17     X1F-machine-door-unlock-pb
 alias pin nyx.0.yio-01.in-18-not X12n-way-lube-level
 alias pin nyx.0.yio-01.in-19     X15-door-int-is-open

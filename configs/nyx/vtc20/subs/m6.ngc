@@ -14,10 +14,16 @@ o1 if [#<tool_in_spindle> lt 0]
 	o<m6> return [1]
 o1 endif
 
+o2 if [ #<selected_pocket> lt 0 and #<selected_pocket> gt 24 ]
+	(debug, M6 invalid pocket #<selected_pocket>)
+	o<m6> return [-1]
+o2 endif
+
 #<xt> = 0.6
 #<yt> = -264.9
 #<zt> = -179.5
-#<dz> = 10		; slowdown distance when grabbing/releasing a tool
+#<dz> = 20		; slowdown distance when grabbing/releasing a tool
+#<zsafe> = -80
 
 m65 p#<_ini[o]tool_unclamp>
 m65 p#<_ini[o]tool_clamp>
@@ -30,70 +36,71 @@ m65 p#<_ini[o]sp_air_blast>
 ; check air
 m66 p#<_ini[i]air_pressure> l3 q1	; wait high
 o8 if [#5399 lt 0]
-	(abort, M6 no air)
-	o<m6> return [-1]
+	(msg, M6 no air)
+	o<m6> return [-1.1]
 o8 endif
 
 ; check inverter alarm
 m66 p#<_ini[i]mag_alarm> l4 q1		; wait low 1s
 o10 if [#5399 lt 0]
-	(abort, M6 mag alarm)
-	o<m6> return [-1]
+	(msg, M6 mag alarm)
+	; todo: reset
+	o<m6> return [-1.2]
 o10 endif
 
 ; check inverter ready
 m66 p#<_ini[i]mag_coin> l3 q1		; wait high 1s
 o12 if [#5399 lt 0]
-	(abort, M6 mag not ready)
-	o<m6> return [-2]
+	(msg, M6 mag not ready)
+	o<m6> return [-1.3]
 o12 endif
 
 ; check is the persistent tool number is correct TODO!
 o14 if [#4999 ne #<tool_in_spindle>]
-	(abort, M6 tool in spindle != #4999)
+	(msg, M6 tool in spindle != #4999)
 	o<m6> return [-3]
 o14 endif
 
 ; make sure the magazine is retracted
 m66 p#<_ini[i]mag_retracted> l3 q3
 o18 if [#5399 lt 0]
-	(abort, M6 mag extended)
-	o<m6> return [-5]
+	(msg, M6 mag extended)
+	o<m6> return [-4]
 o18 endif
 
 o<context_save> call
 ;======================================================================
-f5000
+f2000
 
+;m1 (debug, opening, orienting)
 m64 p#<_ini[o]atc_open>			; open ATC cover
 m19 r0					; orient the spindle
 g53 g0 z0				; go up
 g53 g0 x#<xt> y#<yt>			; go to toolchange position
 
-; make sure spindle is oriented
-m66 p#<_ini[i]sp_oriented l2 q2
-o20 if [#5399 lt 0]
-	m65 p#<_ini[o]atc_open>
+; make sure the atc cover has open
+m66 p#<_ini[i]atc_is_open> l3 q5
+m65 p#<_ini[o]atc_open>
+o22 if [#5399 lt 0]
 	o<context_restore> call
-	(abort, M6 spindle orient failed)
+	(msg, M6 mag cover not open)
+	o<m6> return [-5]
+o22 endif
+
+; make sure spindle is oriented
+m66 p#<_ini[i]sp_oriented> l3 q2
+o20 if [#5399 lt 0]
+	o<context_restore> call
+	(msg, M6 spindle orient failed)
 	o<m6> return [-6]
 o20 endif
 
-; make sure the atc cover is open
-m66 p#<_ini[i]atc_is_open l2 q2
-o22 if [#5399 lt 0]
-	m65 p#<_ini[o]atc_open>
-	o<context_restore> call
-	(abort, M6 mag cover not open)
-	o<m6> return [-7]
-o22 endif
-m65 p#<_ini[o]atc_open>
-
+; ???
 ; check if we (supposedly) have a tool in spindle and occupied pocket
-m66 p#<_ini[i]mag_tool_det> l4 q1
+m66 p#<_ini[i]mag_tool_det> l4 q1 ; wait low
 o16 if [#<tool_in_spindle> ne 0 and #5399 lt 0]
-	(abort, M6 tool in spindle, mag not empty)
-	o<m6> return [-4]
+	(msg, M6 tool in spindle, mag not empty)
+	o<m6> return [-7]
 o16 endif
 
 ;
@@ -101,134 +108,157 @@ o16 endif
 ;
 
 o30 if [#<tool_in_spindle> ne 0]		; put the tool back
+	;m1 (debug, storing tool, going down)
 	g53 g0 z#<zt>				; go to mag level
 
+	;m1 (debug, extending mag)
 	m64 p#<_ini[o]mag_extend>		; extend the magazine - grab the tool in spindle
 	m66 p#<_ini[i]mag_extended> l3 q3
 	m65 p#<_ini[o]mag_extend>
 	o32 if [#5399 lt 0]
 		o<context_restore> call
-		(abort, M6 mag extend failed)
+		(msg, M6 mag extend failed)
 		o<m6> return [-8]
 	o32 endif
 
+	;m1 (debug, unclamping)
 	m64 p#<_ini[o]tool_unclamp>
 	m66 p#<_ini[i]tool_unclamped> l3 q2	; make sure the tool is unclamped, 2s timeout
 	o34 if [#5399 lt 0]
 		o<context_restore> call
 		m65 p#<_ini[o]tool_unclamp>
-		(abort, M6 tool unclamp failed)
+		(msg, M6 tool unclamp failed)
 		o<m6> return [-9]
 	o34 endif
 
-	g4 0.2
+	g4 p0.2
 
-	m64 p#<_ini[o]sp_air_blast
+	;m1 (debug, going up a bit, unclamped, blasting)
+	m64 p#<_ini[o]sp_air_blast>
 	g53 g1 z[#<zt> + #<dz>]
-	m65 p#<_ini[o]tool_unclamp>
-	m65 p#<_ini[o]sp_air_blast		; turn off air blast in sync with the next command
-	g53 g0 z0
 
-	m61 q0 #4999				; remember - no tool in spindle
-	g43
+	m65 p#<_ini[o]sp_air_blast>
+	m65 p#<_ini[o]tool_unclamp>
+	;m1 (debug, going up the clear the carousel)
+	g53 g0 z#<zsafe>
+
+	m61 q0 #4999=0				; remember - no tool in spindle
+	g43					; discard offsets
 o30 endif
 
-; the spindle is on top, at toolchange position
+; the spindle is on top or zsafe, at toolchange position
 
-o40 if [ #<selected_pocket> ge 1 and #<selected_pocket> le 24 ]	; valid new pocket?
+#<fault> = 0
+
+o40 while [ #<selected_pocket> gt 0]		; do once
+	;m1 (debug, extending mag)
+	m64 p#<_ini[o]mag_extend>		; extend the magazine if it's not
+	m66 p#<_ini[i]mag_extended> l3 q3
+	m65 p#<_ini[o]mag_extend>
+	o132 if [#5399 lt 0]
+		o<context_restore> call
+		(msg, M6 mag extend 2 failed)
+		o<m6> return [-8]
+	o132 endif
+
+	;m1 (debug, mag on)
 	m64 p#<_ini[o]mag_svon>
 	g4 p0.2
 	m64 p#<_ini[o]mag_brake>
 	g4 p0.2
 
-	m66 e#<_ini[i]mag_pos> l0
-	o42 if [#5399 eq 0] 			; not homed?
-		m68 e#<_ini[o]mag_mode> q2	; zero return
+	#<fault> = 1
+
+	m66 e#<_ini[i]mag_pos> l0		; read mag position - should be 1..24
+	o42 if [#5399 eq 0] 			; 0 - not homed?
+		;m1 (debug, mag homing)
+		m68 e#<_ini[o]mag_mode> q2	; cimr zero return
 		m64 p#<_ini[o]mag_start>
-		g4 p0.1
-		m66 p#<_ini[i]mag_coin> l3 q3
+		g4 p0.2
+		m66 p#<_ini[i]mag_coin> l3 q8
 		m65 p#<_ini[o]mag_start>
 		o44 if [#5399 lt 0]
-			m65 p#<_ini[i]mag_brake
-			m65 p#<_ini[i]mag_svon
-			o<context_restore> call
-			(abort, M6 mag zrn failed)
-			o<m6> return [-10]
+			#<fault> = -10 (msg, M6 mag zrn failed)
+			o40 break
 		o44 endif
 
-		m68 e#<_ini[o]mag_mode> q1	; setup
+		m68 e#<_ini[o]mag_mode> q1	; cimr setup
 		m68 e#<_ini[o]mag_station> q1	; pocket 1
 		m64 p#<_ini[o]mag_start>
-		g4 p0.1
+		g4 p0.2
 		m66 p#<_ini[i]mag_coin> l3 q3
 		m65 p#<_ini[o]mag_start>
 		o46 if [#5399 lt 0]
-			m65 p#<_ini[o]mag_brake>
-			m65 p#<_ini[o]mag_svon>
-			o<context_restore> call
-			(abort, M6 mag setup failed)
-			o<m6> return [-11]
+			#<fault> = -11 (msg, M6 mag setup failed)
+			o40 break
 		o46 endif
 
 		m66 e#<_ini[i]mag_pos> l0	; read position, should be 1
 		o48 if [#5399 ne 1]
-			m65 p#<_ini[o]mag_brake>
-			m65 p#<_ini[o]mag_svon>
-			o<context_restore> call
-			(abort, M6 pocket is not 1 after zrn)
-			o<m6> return [-12]
+			#<fault> = -12 (msg, M6 pocket is not 1 after zrn)
+			o40 break
 		o48 endif
 	o42 endif
 
-	m68 e#<_ini[o]mag_mode> q4		; automatic mode
+	;m1 (debug, mag to #<selected_pocket>)
+	m68 e#<_ini[o]mag_mode> q4		; cimr automatic mode
 	m68 e#<_ini[o]mag_station> q#<selected_pocket>
 	m64 p#<_ini[o]mag_start>
-	g4 p0.1
-	m66 p#<_ini[i]mag_coin> l3 q3		; wait 3 sec for coin to go high
-	m64 p#<_ini[o]mag_start>
+	g4 p0.2
+	m66 p#<_ini[i]mag_coin> l3 q5		; wait 5 sec for coin to go high
+	m65 p#<_ini[o]mag_start>
 
 	o50 if [#5399 lt 0]
-		m65 p#<_ini[o]mag_brake>
-		m65 p#<_ini[o]mag_svon>
-		o<context_restore> call
-		(abort, M6 mag positioning failed)
-		o<m6> return [-13]
+		#<fault> = -13 (msg, M6 mag positioning failed)
+		o40 break
 	o50 endif
 
 	m66 p#<_ini[i]mag_alarm> l4 q1		; wait alarm low 1s
 	o51 if [#5399 lt 0]
-		o<context_restore> call
-		(abort, M6 mag alarm)
-		o<m6> return [-1]
+		#<fault> = -13.1 (msg, M6 mag alarm)
+		o40 break
 	o51 endif
 
 	m66 e#<_ini[i]mag_pos> l0		; read position, should match the requested pocket
 	o52 if [#5399 ne #<selected_pocket>]
-		m65 p#<_ini[o]mag_brake>
-		m65 p#<_ini[o]mag_svon>
-		o<context_restore> call
-		(abort, M6 wrong mag position)
-		o<m6> return [-14]
+		#<fault> = -1 (msg, M6 wrong mag position)
+		o40 break
 	o52 endif
 
+	;m1 (debug, mag off)
 	m65 p#<_ini[o]mag_brake>
 	g4 p0.2
 	m65 p#<_ini[o]mag_svon>
+	g4 p0.2
 
-	;
+	; mag positioned at selected pocket
 
+	;m1 (debug, going down)
 	g53 g0 z[#<zt> + #<dz>]			; go down
+	;m1 (debug, grabbing)
 	m64 p#<_ini[o]tool_unclamp>
 	m66 p#<_ini[i]tool_unclamped> l3 q2	; make sure the tool is unclamped, 2s timeout
 	o54 if [#5399 lt 0]
 		m65 p#<_ini[o]tool_unclamp>
 		o<context_restore> call
-		(abort, M6 tool unclamp failed)
+		(msg, M6 tool unclamp failed)
 		o<m6> return [-15]
 	o54 endif
 	m64 p#<_ini[o]sp_air_blast>
 	g53 g1 z#<zt>				; grab the new tool
-o40 endif	; selected_pocket ne 0
+
+	o<40> break
+o40 endwhile	; selected_pocket ne 0
+
+; servo off in case we broke out of the loop with a fault
+
+o55 if [#<fault> lt 0]
+		m65 p#<_ini[o]mag_brake>
+		g4 p0.2
+		m65 p#<_ini[o]mag_svon>
+		o<context_restore> call
+		o<m6> return [#<fault>]
+o55 endif
 
 m65 p#<_ini[o]sp_air_blast>
 
@@ -238,33 +268,37 @@ m66 p#<_ini[i]tool_clamped> l3 q2		; make sure the tool is clamped, 2s timeout
 m65 p#<_ini[o]tool_clamp>
 o60 if [#5399 lt 0]
 	o<context_restore> call
-	(abort, M6 tool clamp failed)
+	(msg, M6 tool clamp failed)
 	o<m6> return [-16]
 o60 endif
 
 m61 q#<selected_tool> #4999=#<selected_tool>
+;m1 (debug, retracting)
 
 m64 p#<_ini[o]mag_retract>
 m66 p#<_ini[i]mag_retracted> l3 q3
 m65 p#<_ini[o]mag_retract>
 o62 if [#5399 lt 0]
 	o<context_restore> call
-	(abort, M6 magazine retract failed)
+	(msg, M6 magazine retract failed)
 	o<m6> return [-17]
 o62 endif
 
+m5	; orient off
+
+;m1 (debug, closing)
 m64 p#<_ini[o]atc_close>			; close ATC cover
 
+;m1 (debug, going up)
 g53 g0 z0
 
 m66 p#<_ini[i]atc_closed> l3 q2
 m65 p#<_ini[o]atc_close>
 o64 if [#5399 lt 0]
-	o<context_restore> call
-	(abort, M6 cover close failed)
-	o<m6> return [-18]
+	(msg, M6 cover close failed)		; not fatal?
 o64 endif
 
 o<context_restore> call
 (AXIS,show)
+(debug, M6 done)
 o<m6> endsub [1]
