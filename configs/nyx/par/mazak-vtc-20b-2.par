@@ -90,6 +90,32 @@ SV078	-	-	-	; origin abs
 SV079	-	-	-	; origin hi
 SV080	-	-	-	; origin low
 
+;			X	Y	Z
+; M1 rapid		24000	24000	20000	m/min
+; M2 home srch		10000	10000	10000	m/min
+; N8 home latch	200	200	200	m/min
+; M3 feed		5000	5000	5000	m/min
+; M5 G30		-3.126	-277.24	-188.7	mm
+; M8 max limit		1.0	1.0	1.0	mm
+; M9 min limit		-1120.0	-510.0	-510.0	mm
+; hard stop -		-6	-20	-5
+; hard stop +		+8	+5	+20
+; M13 0010 0000 	- dir:1:CCW, zrtn:0:+
+; M14 1000 0000 	- simplified homing
+; M17 0001 0001 	- linear acc/dec
+; N1 rapid acc		170	120	90	ms to M3
+;			2353	3333	3700	mm/s/s
+; N2 cut acc		32	32	32	ms
+;			2600	2600	2600	mm/s/s
+; N9 grid ignore	0	0	0	um
+; N10 grid		10	10	10	mm
+; N11 home offs		4.015	9.439	9.830	mm
+; N12 rapid backlash	0	0.002	0	mm
+; N13 cut backlash	0	0.003	0.0025	mm
+; S4 feed-forward gain	40	40	40	%
+; S13 G0 in-position	0.2	0.2	0.2	mm
+; S14 G1 in-position	0.005	0.005	0.005	mm
+
 AXIS 5
 
 ;	SP
