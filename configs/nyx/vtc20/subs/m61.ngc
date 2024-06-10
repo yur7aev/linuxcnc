@@ -1,0 +1,12 @@
+;
+; MAZAK VTC-20N
+;
+; toolchange remap
+;
+; 2024, dmitry@yurtaev.com
+;
+
+o<m61> sub
+#4999 = #<tool>		; store the tool number
+o<m61> endsub [1]
+m2

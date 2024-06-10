@@ -1,0 +1,17 @@
+;
+; retract magazine
+;
+
+o<m13> sub
+
+m65 p#<_ini[o]mag_extend>
+m64 p#<_ini[o]mag_retract>
+m66 p#<_ini[i]mag_retracted> l3 q3
+m65 p#<_ini[o]mag_retract>
+o2 if [#5399 lt 0]
+	(abort, M13 magazine retract failed)
+	o<m13> return [-1]
+o2 endif
+
+o<m13> endsub [1]
+m2

@@ -1,0 +1,16 @@
+;
+; open ATC cover
+;
+
+o<m16> sub
+
+m65 p#<_ini[o]atc_close>
+m64 p#<_ini[o]atc_open>
+m66 p#<_ini[i]atc_is_open> l3 q3
+m65 p#<_ini[o]atc_open>
+o2 if [#5399 lt 0]
+	(msg, M16 cover open failed)
+	o<m16> return [-1]
+o2 endif
+o<m16> endsub [1]
+m2

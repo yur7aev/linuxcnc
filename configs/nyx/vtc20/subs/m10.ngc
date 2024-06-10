@@ -1,0 +1,27 @@
+;
+; clamp tool
+;
+
+o<m10> sub
+
+m66 p#<_ini[i]sp_zsp> l3 q1	; spindle stopped?
+o1 if [#5399 lt 0]
+	(abort, M10 spindle runninge)
+	o<m10> return [-1]
+o1 endif
+
+m0 (debug, clamping...)
+
+m65 p#<_ini[o]tool_unclamp>		; de-assert unclamp signal
+m64 p#<_ini[o]tool_clamp>
+m66 p#<_ini[i]tool_clamped> l3 q3	; make sure the tool is clamped, 3s timeout
+m65 p#<_ini[o]tool_clamp>
+o2 if [#5399 lt 0]
+	(msg, M10 tool clamp failed)
+	o<m10> return [-1]
+o2 endif
+
+(debug, done)
+
+o<m10> endsub [1]
+m2

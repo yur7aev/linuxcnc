@@ -9,12 +9,13 @@
 net estop <= iocontrol.0.user-enable-out
 #net emg-stop-in-1 X27-emg-stop-in-1 => iocontrol.0.emc-enable-in
 net estop => iocontrol.0.emc-enable-in
+net estop-activate halui.estop.activate <= X27n-emg-stop-in-1
 
 # servos index homing
 
 net x-home-sw X18n-x-axis-zrn => joint.0.home-sw-in
 net y-home-sw X19n-y-axis-zrn => joint.1.home-sw-in
-net z-homw-sw X1An-z-axis-zrn => joint.2.home-sw-in
+net z-home-sw X1An-z-axis-zrn => joint.2.home-sw-in
 
 net x-index  nyx.0.servo-00.index-enable <=> joint.0.index-enable
 net y-index  nyx.0.servo-01.index-enable <=> joint.1.index-enable
@@ -27,7 +28,7 @@ net z-homing nyx.0.servo-02.undroop <= joint.2.homing
 # MDS-A-CV power contactor on signal
 net cv-relay-on <= X1Cn-spindle-relay-check
 
-# servo power after contactor has been activated
+# servo power after the contactor has been activated
 loadrt and2 count=1
 addf and2.0 servo-thread
 net cv-relay-on => and2.0.in0
@@ -54,9 +55,9 @@ net mist-coolant	Y16-work-air-blast	<= iocontrol.0.coolant-mist
 #
 net lube <= iocontrol.0.lube
 net lube => Y17-spindle-lube
-net lube => Y18-lube-unit
+net lube-unit => Y18-lube-unit
 # way lube pressure X1D
-net lube-level-ok	X12n-way-lube-level	=> iocontrol.0.lube_level
+net lube-level-ok	X12-way-lube-level	=> iocontrol.0.lube_level
 # TODO:
 net lube-pressure-ok	X1D-way-lube-pressure
 net trans-overheat	X2Cn-main-trans-overheat
@@ -142,7 +143,7 @@ net sp-air-blst	Y29-tool-air-blast	<= motion.digital-out-[O]SP_AIR_BLAST
 net mag1-brake	Y2A-mag1-brake		<= motion.digital-out-[O]MAG_BRAKE
 net mag1-start	Y35-mag1-start		<= motion.digital-out-[O]MAG_START
 net mag1-svon	Y3A-mag1-servo-on	<= motion.digital-out-[O]MAG_SVON
-net mag1-rst	Y3F-mag1-reset
+net mag1-reset	Y3F-mag1-reset		<= motion.digital-out-[O]MAG_RESET
 #net mag1-fwd	Y36-mag1-fwd-rev	<= motion.digital-out-[O]
 net unclamp	vtc20.0.unclamp		<= motion.digital-out-[O]TOOL_UNCLAMP
 net clamp	vtc20.0.clamp		<= motion.digital-out-[O]TOOL_CLAMP
@@ -171,3 +172,10 @@ net door-pb		=> Y2E-enable-door-unlock
 #alias pin nyx.0.yio-02.out-01 Y22-pato-light-alarm
 #alias pin nyx.0.yio-02.out-18 Y1E-pato-light-stl
 #alias pin nyx.0.yio-03.out-18 Y1F-pato-light-cfn
+
+#-----
+
+net lube => vtc20.0.lube-enable
+net lube-unit <= vtc20.0.lube-unit
+setp vtc20.0.lube-on-time 15
+setp vtc20.0.lube-off-time 900

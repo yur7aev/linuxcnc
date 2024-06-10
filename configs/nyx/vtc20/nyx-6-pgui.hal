@@ -87,7 +87,7 @@ net y-ilim pyvcp.y-ilim <= nyx.0.servo-01.torque-clamped
 net z-ilim pyvcp.z-ilim <= nyx.0.servo-02.torque-clamped
 net x-home-sw => pyvcp.x-home
 net y-home-sw => pyvcp.y-home
-net z-homw-sw => pyvcp.z-home
+net z-home-sw => pyvcp.z-home
 
 setp nyx.0.servo-00.mon 0x14
 setp nyx.0.servo-01.mon 0x14
@@ -112,16 +112,16 @@ net mag1-retracted    pyvcp.mag1-r
 net mag1-retract-stop pyvcp.mag1-rs
 
 net unclamp2       pyvcp.tool-b-un
-net clamp2         pyvcp.tool-b-cl
+#net clamp2         pyvcp.tool-b-cl
 net tool-clamped   pyvcp.tool-cl
 net tool-unclamped pyvcp.tool-un
 
-#net pwr-on     Y20-power-on          pyvcp.pwr-on
-#net mag1-emg   Y00-mag1-emg          pyvcp.mag1-emg
-#net mag1-brake Y2A-mag1-brake        pyvcp.mag1-brake
-#net mag1-fwd   Y36-mag1-fwd-rev      pyvcp.mag1-fwd
-#net mag1-start Y35-mag1-start        pyvcp.mag1-start
-#net mag1-svon  Y3A-mag1-servo-on     pyvcp.mag1-svon
-net mag1-rst    pyvcp.mag1-rst
+#net pwr-on     Y20-power-on		pyvcp.pwr-on
+#net mag1-emg   Y00-mag1-emg		pyvcp.mag1-emg
+#net mag1-brake Y2A-mag1-brake		pyvcp.mag1-brake
+#net mag1-fwd   Y36-mag1-fwd-rev	pyvcp.mag1-fwd
+#net mag1-start Y35-mag1-start		pyvcp.mag1-start
+#net mag1-svon  Y3A-mag1-servo-on	pyvcp.mag1-svon
+#net mag1-reset				pyvcp.mag1-rst
 
 #net station   vtc20.0.station <= pyvcp.station-i

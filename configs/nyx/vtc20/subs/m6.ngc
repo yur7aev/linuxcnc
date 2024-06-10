@@ -19,16 +19,19 @@ o2 if [ #<selected_pocket> lt 0 and #<selected_pocket> gt 24 ]
 	o<m6> return [-1]
 o2 endif
 
-#<xt> = 0.6
+#<xt> = 0.6		; tc position
 #<yt> = -264.9
 #<zt> = -179.5
 #<dz> = 20		; slowdown distance when grabbing/releasing a tool
-#<zsafe> = -80
+#<zsafe> = -80		; safe height above the carousel
+#<feed> = 2000		; grab/release speed
 
+; reset any stale outputs
 m65 p#<_ini[o]tool_unclamp>
 m65 p#<_ini[o]tool_clamp>
 m65 p#<_ini[o]mag_extend>
 m65 p#<_ini[o]mag_retract>
+m65 p#<_ini[o]mag_reset>
 m65 p#<_ini[o]atc_open>
 m65 p#<_ini[o]atc_close>
 m65 p#<_ini[o]sp_air_blast>
@@ -43,42 +46,46 @@ o8 endif
 ; check inverter alarm
 m66 p#<_ini[i]mag_alarm> l4 q1		; wait low 1s
 o10 if [#5399 lt 0]
-	(msg, M6 mag alarm)
-	; todo: reset
-	o<m6> return [-1.2]
+	; try to reset it
+	m64 p#<_ini[o]mag_reset>
+	m66 p#<_ini[i]mag_alarm> l4 q1		; wait low again 1s
+	m65 p#<_ini[o]mag_reset>
+	o11 if [#5399 lt 0]
+		(msg, M6 mag alarm)
+		o<m6> return [-1.2]
+	o11 endif
 o10 endif
 
 ; check inverter ready
-m66 p#<_ini[i]mag_coin> l3 q1		; wait high 1s
-o12 if [#5399 lt 0]
-	(msg, M6 mag not ready)
-	o<m6> return [-1.3]
-o12 endif
+;m66 p#<_ini[i]mag_coin> l3 q1		; wait high 1s
+;o12 if [#5399 lt 0]
+;	(msg, M6 mag not ready)
+;	o<m6> return [-1.3]
+;o12 endif
 
 ; check is the persistent tool number is correct TODO!
 o14 if [#4999 ne #<tool_in_spindle>]
 	(msg, M6 tool in spindle != #4999)
-	o<m6> return [-3]
+	o<m6> return [-1.4]
 o14 endif
 
 ; make sure the magazine is retracted
 m66 p#<_ini[i]mag_retracted> l3 q3
 o18 if [#5399 lt 0]
 	(msg, M6 mag extended)
-	o<m6> return [-4]
+	o<m6> return [-1.5]
 o18 endif
 
 o<context_save> call
 ;======================================================================
-f2000
+f#<feed>
 
-;m1 (debug, opening, orienting)
 m64 p#<_ini[o]atc_open>			; open ATC cover
 m19 r0					; orient the spindle
 g53 g0 z0				; go up
 g53 g0 x#<xt> y#<yt>			; go to toolchange position
 
-; make sure the atc cover has open
+; make sure the atc cover has opened
 m66 p#<_ini[i]atc_is_open> l3 q5
 m65 p#<_ini[o]atc_open>
 o22 if [#5399 lt 0]
@@ -95,7 +102,7 @@ o20 if [#5399 lt 0]
 	o<m6> return [-6]
 o20 endif
 
-; ???
+; todo:
 ; check if we (supposedly) have a tool in spindle and occupied pocket
 m66 p#<_ini[i]mag_tool_det> l4 q1 ; wait low
 o16 if [#<tool_in_spindle> ne 0 and #5399 lt 0]
@@ -272,9 +279,10 @@ o60 if [#5399 lt 0]
 	o<m6> return [-16]
 o60 endif
 
-m61 q#<selected_tool> #4999=#<selected_tool>
-;m1 (debug, retracting)
+m61 q#<selected_tool> #4999=#<selected_tool>	; change the tool right away if case we are interrupted
+g43						; and apply offsets
 
+;m1 (debug, retracting)
 m64 p#<_ini[o]mag_retract>
 m66 p#<_ini[i]mag_retracted> l3 q3
 m65 p#<_ini[o]mag_retract>
@@ -284,7 +292,7 @@ o62 if [#5399 lt 0]
 	o<m6> return [-17]
 o62 endif
 
-m5	; orient off
+m5	; release the oriented spindle
 
 ;m1 (debug, closing)
 m64 p#<_ini[o]atc_close>			; close ATC cover
@@ -300,5 +308,5 @@ o64 endif
 
 o<context_restore> call
 (AXIS,show)
-(debug, M6 done)
+;(debug, M6 done)
 o<m6> endsub [1]

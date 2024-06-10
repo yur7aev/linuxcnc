@@ -94,7 +94,7 @@
 	<label text="coin:"/> <led halpin="mag1-coin" on_color="green" off_color="gray80" size="18" />
 	<label text="zspd:"/> <led halpin="mag1-zspd" on_color="green"   off_color="gray80" size="18" />
 	<label text="alm:"/> <led halpin="mag1-alarm" on_color="red" off_color="gray80" size="18" />
-	<button halpin="mag1-rst" text="rst" />
+	<!--button halpin="mag1-reset" text="rst" /-->
     </hbox> <hbox>
 	<label text="sta:"/> <s32 halpin="mag1-stati" format="02d"/>
 	<label text="mode:"/> <number halpin="mag1-mode" format="1.0f" />

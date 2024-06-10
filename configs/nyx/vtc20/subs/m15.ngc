@@ -1,0 +1,22 @@
+;
+; close ATC cover
+;
+
+o<m15> sub
+
+m66 p#<_ini[i]mag_retracted> l3 q1	; spindle stopped?
+o1 if [#5399 lt 0]
+	(abort, M15 magazine extended)
+	o<m15> return [-1]
+o1 endif
+
+m65 p#<_ini[o]atc_open>
+m64 p#<_ini[o]atc_close>
+m66 p#<_ini[i]atc_closed> l3 q2
+m65 p#<_ini[o]atc_close>
+o2 if [#5399 lt 0]
+	(abort, M15 cover close failed)
+	o<m15> return [-1]
+o2 endif
+o<m15> endsub [1]
+m2

@@ -63,7 +63,7 @@ alias pin nyx.0.yio-01.in-14     X07-atc-cover-closed
 alias pin nyx.0.yio-01.in-15-not X1An-z-axis-zrn
 alias pin nyx.0.yio-01.in-16     X1D-way-lube-pressure
 alias pin nyx.0.yio-01.in-17     X1F-machine-door-unlock-pb
-alias pin nyx.0.yio-01.in-18-not X12n-way-lube-level
+alias pin nyx.0.yio-01.in-18     X12-way-lube-level
 alias pin nyx.0.yio-01.in-19     X15-door-int-is-open
 #alias pin nyx.0.yio-01.in-1a     X28-chip-conv-is-on
 alias pin nyx.0.yio-01.in-1b     X2B-conv-temperature-trip
@@ -89,7 +89,7 @@ alias pin nyx.0.yio-02.out-0d Y0C-machine-ready
 #alias pin nyx.0.yio-02.out-0e Y09-m43
 #alias pin nyx.0.yio-02.out-0f Y08-m42
 #alias pin nyx.0.yio-02.out-10 Y25-op-cycle-start-led
-#alias pin nyx.0.yio-02.out-11 Y23-cooling-fan
+alias pin nyx.0.yio-02.out-11 Y23-cooling-fan
 alias pin nyx.0.yio-02.out-12 Y20-power-on
 alias pin nyx.0.yio-02.out-13 Y2D-estop
 alias pin nyx.0.yio-02.out-14 Y2A-mag1-brake

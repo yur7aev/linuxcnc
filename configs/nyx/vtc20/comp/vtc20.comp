@@ -36,11 +36,13 @@ pin out bit tool-clamp		"Y11-tool-clamp";
 pin out bit tool-unclamp	"Y10-tool-unclamp";
 
 pin in float mode	"cimr inverter mode";
+pin out s32 modi;
 pin out bit mag1-mode-0		"Y37-mag1-mode-0";
 pin out bit mag1-mode-1		"Y38-mag1-mode-1";
 pin out bit mag1-mode-2		"Y39-mag1-mode-2";
 
 pin in float station	"commanded carousel position";
+pin out s32 stati;
 pin out bit mag1-sta-0		"Y30-mag1-sta-0";
 pin out bit mag1-sta-1		"Y31-mag1-sta-1";
 pin out bit mag1-sta-2		"Y32-mag1-sta-2";
@@ -55,8 +57,12 @@ pin in  bit mag1-pos-2		"X32-mag1-pos-2";
 pin in  bit mag1-pos-3		"X33-mag1-pos-3";
 pin in  bit mag1-pos-4		"X34-mag1-ps-4";
 
-variable int stati;
-variable int modi;
+pin in  bit lube-enable;
+pin out bit lube-unit;
+param rw float lube-on-time = 2;
+param rw float lube-off-time = 8;
+
+variable int lube_timer;
 
 ////////////////////////////////////////////////////////
 
@@ -103,9 +109,12 @@ pos = posi;
 #define CIMR_MODE_AUTO     4
 #define CIMR_MODE_MANUAL   5
 
-// mode	0	jog
-//	1	setup
-//	2	zero return
-//	3	zero offset
-//	4 	automatic
-//	5	manual
+//
+
+if (lube_enable) {
+	if (++lube_timer * fperiod > lube_on_time + lube_off_time) lube_timer = 0;
+	lube_unit = lube_timer * fperiod < lube_on_time;
+} else {
+	lube_unit = 0;
+	lube_timer = 0;
+}

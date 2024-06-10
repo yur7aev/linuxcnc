@@ -1,0 +1,25 @@
+;
+; extend magazine
+;
+
+o<m12> sub
+
+m66 p#<_ini[i]atc_is_open> l3 q1
+o1 if [#5399 lt 0]
+	(abort, M12 cover closed)
+	o<m12> return [-1]
+o1 endif
+
+m65 p#<_ini[o]mag_retract>
+m64 p#<_ini[o]mag_extend>
+m66 p#<_ini[i]mag_extended> l3 q3
+m65 p#<_ini[o]mag_extend>
+o2 if [#5399 lt 0]
+	(abort, M12 magazine extend failed)
+	o<m12> return [-1]
+o2 endif
+
+; keep unclamp signal active
+
+o<m12> endsub [1]
+m2
