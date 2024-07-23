@@ -120,7 +120,7 @@ SV089	-	-	-
 SV090	-	-	-
 SV091	0	0	0	; LMC4G	Lost motion comp 4 gain		0.01%	0-20000
 SV092	-	-	-
-SV093	0	0	0	
+SV093	0	0	0
 SV094	10	10	10	; MPV	Mag pole pos error detect speed		0-31999
 SV095	0	0	0	; ZUPD	Vertical axis pull up distance	um	0-2000
 SV096	-	-	-

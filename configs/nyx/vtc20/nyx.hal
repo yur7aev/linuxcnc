@@ -8,7 +8,7 @@
 
 loadrt [KINS]KINEMATICS
 
-loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS num_dio=13
+loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS
 loadrt nyx maxdrives=[NYX]AXES param_file=[NYX]PARAMS nodma=1
 
 addf nyx.0.rd servo-thread

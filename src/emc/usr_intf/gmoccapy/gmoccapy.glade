@@ -2196,7 +2196,7 @@
                                                   <object class="GtkLabel" id="lbl_vc">
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">False</property>
-                                                    <property name="label" translatable="yes">Vc= 0.00</property>
+                                                    <property name="label">Vc= 0.00</property>
                                                     <property name="xalign">0.949999988079071</property>
                                                   </object>
                                                   <packing>
@@ -4171,213 +4171,24 @@ clicking on the DRO</property>
                               <object class="GtkFrame" id="frm_message_position">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
-                                <property name="hexpand">False</property>
                                 <property name="label-xalign">0.5</property>
                                 <child>
-                                  <!-- n-columns=2 n-rows=7 -->
-                                  <object class="GtkGrid" id="grid_messages_style">
+                                  <object class="GtkCheckButton" id="chk_use_kb_shortcuts">
+                                    <property name="label" translatable="yes">Use keyboard shortcuts</property>
+                                    <property name="use-action-appearance">False</property>
                                     <property name="visible">True</property>
-                                    <property name="can-focus">False</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="receives-default">False</property>
                                     <property name="margin-start">3</property>
-                                    <property name="margin-end">6</property>
+                                    <property name="margin-end">3</property>
                                     <property name="margin-top">5</property>
                                     <property name="margin-bottom">5</property>
-                                    <property name="hexpand">True</property>
-                                    <property name="row-spacing">2</property>
-                                    <property name="column-spacing">5</property>
-                                    <child>
-                                      <object class="GtkLabel" id="lbl_x_pos_popup">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">False</property>
-                                        <property name="margin-start">3</property>
-                                        <property name="hexpand">True</property>
-                                        <property name="label" translatable="yes">X Pos.</property>
-                                        <property name="xalign">0</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">0</property>
-                                        <property name="top-attach">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkSpinButton" id="spbtn_x_pos_popup">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">True</property>
-                                        <property name="tooltip-text" translatable="yes">X-position in pixel from top left corner of the screen</property>
-                                        <property name="invisible-char">●</property>
-                                        <property name="xalign">1</property>
-                                        <property name="primary-icon-activatable">False</property>
-                                        <property name="secondary-icon-activatable">False</property>
-                                        <property name="adjustment">adj_x_pos_popup</property>
-                                        <property name="numeric">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">1</property>
-                                        <property name="top-attach">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel" id="lbl_y_pos_popup">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">False</property>
-                                        <property name="margin-start">3</property>
-                                        <property name="hexpand">True</property>
-                                        <property name="label" translatable="yes">Y Pos.</property>
-                                        <property name="xalign">0</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">0</property>
-                                        <property name="top-attach">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel" id="lbl_width_popup">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">False</property>
-                                        <property name="margin-start">3</property>
-                                        <property name="hexpand">True</property>
-                                        <property name="label" translatable="yes">Width</property>
-                                        <property name="xalign">0</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">0</property>
-                                        <property name="top-attach">2</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel" id="lbl_max_popup">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">False</property>
-                                        <property name="margin-start">3</property>
-                                        <property name="hexpand">True</property>
-                                        <property name="label" translatable="yes">Max. messages</property>
-                                        <property name="xalign">0</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">0</property>
-                                        <property name="top-attach">3</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkLabel" id="lbl_font_popup">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">False</property>
-                                        <property name="margin-start">3</property>
-                                        <property name="hexpand">True</property>
-                                        <property name="label" translatable="yes">Font</property>
-                                        <property name="xalign">0</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">0</property>
-                                        <property name="top-attach">4</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkSpinButton" id="spbtn_y_pos_popup">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">True</property>
-                                        <property name="tooltip-text" translatable="yes">Y-position in pixel from top left corner of the screen</property>
-                                        <property name="invisible-char">●</property>
-                                        <property name="xalign">1</property>
-                                        <property name="primary-icon-activatable">False</property>
-                                        <property name="secondary-icon-activatable">False</property>
-                                        <property name="adjustment">adj_y_pos_popup</property>
-                                        <property name="numeric">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">1</property>
-                                        <property name="top-attach">1</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkSpinButton" id="spbtn_width_popup">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">True</property>
-                                        <property name="tooltip-text" translatable="yes">The width of the messages</property>
-                                        <property name="invisible-char">●</property>
-                                        <property name="xalign">1</property>
-                                        <property name="progress-fraction">0.009999999776482582</property>
-                                        <property name="primary-icon-activatable">False</property>
-                                        <property name="secondary-icon-activatable">False</property>
-                                        <property name="adjustment">adj_width_popup</property>
-                                        <property name="numeric">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">1</property>
-                                        <property name="top-attach">2</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkSpinButton" id="spbtn_max_popup">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">True</property>
-                                        <property name="tooltip-text" translatable="yes">The maximum messages you want to be shown	</property>
-                                        <property name="invisible-char">●</property>
-                                        <property name="xalign">1</property>
-                                        <property name="primary-icon-activatable">False</property>
-                                        <property name="secondary-icon-activatable">False</property>
-                                        <property name="adjustment">adj_max_messages</property>
-                                        <property name="numeric">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">1</property>
-                                        <property name="top-attach">3</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkFontButton" id="fontbutton_popup">
-                                        <property name="use-action-appearance">False</property>
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">True</property>
-                                        <property name="receives-default">True</property>
-                                        <property name="tooltip-text" translatable="yes">The font to use</property>
-                                        <property name="font">Sans 12</property>
-                                        <signal name="font-set" handler="on_fontbutton_popup_font_set" swapped="no"/>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">1</property>
-                                        <property name="top-attach">4</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkCheckButton" id="chk_use_frames">
-                                        <property name="label" translatable="yes">Use frames</property>
-                                        <property name="use-action-appearance">False</property>
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">True</property>
-                                        <property name="receives-default">False</property>
-                                        <property name="tooltip-text" translatable="yes">If checked, the messages
-will be in a frame.</property>
-                                        <property name="draw-indicator">True</property>
-                                        <signal name="toggled" handler="on_chk_use_frames_toggled" swapped="no"/>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">0</property>
-                                        <property name="top-attach">5</property>
-                                        <property name="width">2</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkButton" id="btn_launch_test_message">
-                                        <property name="label" translatable="yes">Launch test message</property>
-                                        <property name="use-action-appearance">False</property>
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">True</property>
-                                        <property name="receives-default">True</property>
-                                        <property name="tooltip-text" translatable="yes">Push here to launch a test message
-to test your settings.</property>
-                                        <signal name="pressed" handler="on_btn_launch_test_message_pressed" swapped="no"/>
-                                      </object>
-                                      <packing>
-                                        <property name="left-attach">0</property>
-                                        <property name="top-attach">6</property>
-                                        <property name="width">2</property>
-                                      </packing>
-                                    </child>
+                                    <property name="draw-indicator">True</property>
+                                    <signal name="toggled" handler="on_chk_use_kb_shortcuts_toggled" swapped="no"/>
                                   </object>
                                 </child>
                                 <child type="label">
-                                  <object class="GtkLabel" id="lbl_frm_message_style">
+                                  <object class="GtkLabel" id="lbl_frm_kb_shortcuts">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
                                     <property name="label" translatable="yes">&lt;b&gt;gmoccapy messages&lt;/b&gt;</property>
@@ -4592,7 +4403,7 @@ to test your settings.</property>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">False</property>
-                                <property name="position">1</property>
+                                <property name="position">3</property>
                               </packing>
                             </child>
                             <child>
@@ -5269,7 +5080,7 @@ to test your settings.</property>
                                               <object class="GtkLabel" id="lbl_x_probe">
                                                 <property name="visible">True</property>
                                                 <property name="can-focus">False</property>
-                                                <property name="label" translatable="yes">0.000</property>
+                                                <property name="label">0.000</property>
                                                 <property name="xalign">1</property>
                                               </object>
                                               <packing>
@@ -5281,7 +5092,7 @@ to test your settings.</property>
                                               <object class="GtkLabel" id="lbl_y_probe">
                                                 <property name="visible">True</property>
                                                 <property name="can-focus">False</property>
-                                                <property name="label" translatable="yes">0.000</property>
+                                                <property name="label">0.000</property>
                                                 <property name="xalign">1</property>
                                               </object>
                                               <packing>
@@ -5293,7 +5104,7 @@ to test your settings.</property>
                                               <object class="GtkLabel" id="lbl_z_probe">
                                                 <property name="visible">True</property>
                                                 <property name="can-focus">False</property>
-                                                <property name="label" translatable="yes">0.000</property>
+                                                <property name="label">0.000</property>
                                                 <property name="xalign">1</property>
                                               </object>
                                               <packing>
@@ -5305,7 +5116,7 @@ to test your settings.</property>
                                               <object class="GtkLabel" id="lbl_maxprobe">
                                                 <property name="visible">True</property>
                                                 <property name="can-focus">False</property>
-                                                <property name="label" translatable="yes">0.000</property>
+                                                <property name="label">0.000</property>
                                                 <property name="xalign">1</property>
                                               </object>
                                               <packing>
@@ -5432,7 +5243,7 @@ to test your settings.</property>
                                           <object class="GtkLabel" id="lbl_frm_probe_vel">
                                             <property name="visible">True</property>
                                             <property name="can-focus">False</property>
-                                            <property name="label" translatable="yes">&lt;b&gt;Probe velocitys&lt;/b&gt;</property>
+                                            <property name="label" translatable="yes">&lt;b&gt;Probe velocities&lt;/b&gt;</property>
                                             <property name="use-markup">True</property>
                                           </object>
                                         </child>

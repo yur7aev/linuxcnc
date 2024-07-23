@@ -61,7 +61,7 @@ DEFAULT = 0
 WARNING = 1
 CRITICAL = 2
 
-VERSION ='1.4'
+VERSION ='1.5'
 
 class HandlerClass:
     def __init__(self, halcomp, widgets, paths):
@@ -282,6 +282,7 @@ class HandlerClass:
         pin = QHAL.newpin("eoffset-zlevel-count", QHAL.HAL_S32, QHAL.HAL_IN)
         pin.value_changed.connect(self.comp_count_changed)
         QHAL.newpin("comp-on", Qhal.HAL_BIT, Qhal.HAL_OUT)
+        QHAL.newpin("spindle-lift-on", Qhal.HAL_BIT, Qhal.HAL_OUT)
 
     def init_preferences(self):
         if not self.w.PREFS_:
@@ -317,6 +318,7 @@ class HandlerClass:
         self.w.chk_inhibit_selection.setChecked(self.w.PREFS_.getpref('Inhibit display mouse selection', True, bool, 'CUSTOM_FORM_ENTRIES'))
         self.cam_xscale_changed(self.w.PREFS_.getpref('Camview xscale', 100, int, 'CUSTOM_FORM_ENTRIES'))
         self.cam_yscale_changed(self.w.PREFS_.getpref('Camview yscale', 100, int, 'CUSTOM_FORM_ENTRIES'))
+        self.w.camview._camNum = self.w.PREFS_.getpref('Camview cam number', 0, int, 'CUSTOM_FORM_ENTRIES')
 
     def closing_cleanup__(self):
         if not self.w.PREFS_: return
@@ -352,6 +354,7 @@ class HandlerClass:
         self.w.PREFS_.putpref('Inhibit display mouse selection', self.w.chk_inhibit_selection.isChecked(), bool, 'CUSTOM_FORM_ENTRIES')
         self.w.PREFS_.putpref('Camview xscale', self.cam_xscale_percent(), int, 'CUSTOM_FORM_ENTRIES')
         self.w.PREFS_.putpref('Camview yscale', self.cam_yscale_percent(), int, 'CUSTOM_FORM_ENTRIES')
+        self.w.PREFS_.putpref('Camview cam number', self.w.camview._camNum, int, 'CUSTOM_FORM_ENTRIES')
 
     def init_widgets(self):
         self.w.stackedWidget_mainTab.setCurrentIndex(0)
@@ -607,7 +610,7 @@ class HandlerClass:
         elif sensor_code and name == 'MESSAGE' and rtn is True:
             self.touchoff('sensor')
         elif wait_code and name == 'MESSAGE':
-            self.h['eoffset-clear'] = True
+            self.h['spindle-lift-on'] = False
             self.h['eoffset-spindle-count'] = 0
             self.w.spindle_eoffset_value.setText('0')
             self.add_status('Spindle lowered')
@@ -764,6 +767,7 @@ class HandlerClass:
         self.w.action_step.setEnabled(not state)
         if state:
         # set external offsets to lift spindle
+            self.h['spindle-lift-on'] = True
             self.h['eoffset-clear'] = False
             self.h['eoffset-enable'] = self.w.chk_eoffsets.isChecked()
             fval = int(self.w.lineEdit_eoffset_count.text())
@@ -804,6 +808,7 @@ class HandlerClass:
                 self.w.btn_enable_comp.setChecked(False)
                 return
             self.h['comp-on'] = True
+            self.h['eoffset-clear'] = False
             self.add_status("Z level compensation ON")
         else:
             if not QHAL.hal.component_exists("z_level_compensation"):
@@ -1103,7 +1108,7 @@ class HandlerClass:
         else:
             fval += 1
         self.w.lineEdit_eoffset_count.setText(str(fval))
-        if self.h['eoffset-clear'] != True:
+        if self.h['spindle-lift-on'] == True:
             self.h['eoffset-spindle-count'] = int(fval)
 
     def btn_spindle_z_down_clicked(self):
@@ -1114,7 +1119,7 @@ class HandlerClass:
             fval -= 1
         if fval <0: fval = 0
         self.w.lineEdit_eoffset_count.setText(str(fval))
-        if self.h['eoffset-clear'] != True:
+        if self.h['spindle-lift-on'] == True:
             self.h['eoffset-spindle-count'] = int(fval)
 
     def btn_pause_clicked(self):
@@ -1323,10 +1328,9 @@ class HandlerClass:
         # if waiting and up to speed, lower spindle
         if self._spindle_wait:
             if bool(self.h.hal.get_value('spindle.0.at-speed')):
+                self.h['spindle-lift-on'] = False
                 self.h['eoffset-spindle-count'] = 0
-                self.h['eoffset-clear'] = True
                 self.add_status('Spindle lowered')
-                self.h['eoffset-clear'] = False
                 self._spindle_wait = False
 
         self.update_runtimer()
