@@ -6,7 +6,7 @@
  *
  *  License: GPL Version 2
  *
- *  (c) 2016-2023, http://yurtaev.com
+ *  (c) 2016-2024, http://yurtaev.com
  */
 
 #define RELEASE
@@ -21,7 +21,7 @@
 #define NYX_H
 
 #define NYX_VER_MAJ 3
-#define NYX_VER_MIN 2
+#define NYX_VER_MIN 5
 #define NYX_VER_REV 0
 
 #ifndef NYX_AXES
@@ -29,6 +29,7 @@
 #endif
 
 #define MAX_AXES 18
+#define YIO_SLAVES 8
 
 // per-axis nyx_servo_cmd.flags
 
@@ -49,7 +50,7 @@
 #define YC_SPEC		0x00004000	// MDS
 #define YC_REQ_HOME	0x00008000
 #define YC_WR_PARAM	0x00010000
-#define YC_PARAM_ACK	0x00020000	// param change notofy acknowledge
+#define YC_PARAM_ACK	0x00020000	// param change notify acknowledge
 #define YC_RD_PARAM	0x00040000	// ??
 #define YC_VEL_CTL	0x00080000
 #define YC_VFF		0x00100000      // ----Y M-II velocity feed-forward
@@ -67,35 +68,34 @@
 #define Y_TYPE_FB	0x30000000	// normal servo feedback
 #define Y_TYPE_PLL	0x40000000	// PLL timing debug
 #define Y_TYPE_PARAM1	0x50000000	// mechatrolink - 1 param at a time
+#define Y_TYPE_MON	0x60000000	// todo: monitoring
 #define Y_TYPE_FB64	0x70000000	// 64-bit position servo feedback
 
-// per-axis nyx_servo_fb.state
-
-#define YF_VALID	0x00000001	/* reply received in this cycle */
-#define YF_DI1		0x00000002	/* J3/J4 digital inputs */
+#define YF_VALID	0x00000001	// reply received in this cycle
+#define YF_DI1		0x00000002	// J3/J4/SGDV digital inputs
 #define YF_SYNC_SPEED	0x00000002	// mds-sp
 #define YF_DI2		0x00000004
 #define YF_DI3		0x00000008
-#define YF_ONLINE	0x00000010	/* drive configured/detected */
+#define YF_ONLINE	0x00000010	// drive configured/detected
 #define YF_DBG		0x00000020
 					/// servo reply-derived flags below:
 #define YF_Z_PASSED	0x00000040
-#define YF_READY	0x00000080	/* power relay on */
-#define YF_ENABLED	0x00000100	/* servo is on */
+#define YF_READY	0x00000080	// power relay on
+#define YF_ENABLED	0x00000100	// servo is on
 #define YF_IN_POSITION	0x00000200
 #define YF_AT_SPEED	0x00000400
 #define YF_ZERO_SPEED	0x00000800
 #define YF_TORQUE_LIM	0x00001000
 #define YF_ALARM	0x00002000
 #define YF_WARNING	0x00004000
-#define YF_ABS		0x00008000	/* absolute positioning mode */
-#define YF_ABS_LOST	0x00010000	/* amp lost absolute position */
+#define YF_ABS		0x00008000	// absolute positioning mode
+#define YF_ABS_LOST	0x00010000	// amp lost absolute position
 #define YF_HOME_ACK	0x00020000
 #define YF_HOME_NACK	0x00040000
 #define YF_LCOIL	0x00080000
-#define YF_COIL_CH	0x00100000	/* amplifier parameter w[10] changed to w[11] */
+#define YF_COIL_CH	0x00100000	// amplifier parameter w[10] changed to w[11]
 #define YF_VEL_CTL	0x00200000
-#define YF_ORIENTED	0x00400000	/* spindle */
+#define YF_ORIENTED	0x00400000	// spindle
 #define YF_ORIENTING	0x00800000
 #define YF_FWD		0x01000000
 #define YF_REV		0x02000000
@@ -196,9 +196,9 @@ typedef struct nyx_servo_fb {
 		uint8_t monb[12];	// 6 7 8
 		uint16_t monw[6];
 		uint32_t monl[3];
-		struct {		// Y_TYPE_FB / FB64
-			int32_t droop;	// 6
-			int32_t smth2;	// 7
+		struct {		// Y_TYPE_FB
+			int32_t droop;	// 6 (monitor)
+			int32_t smth2;	// 7 (z-index)
 			union {
 #ifdef __BIG_ENDIAN__
 				struct { int16_t mon3, mon4; };	// 6
@@ -225,6 +225,7 @@ typedef struct nyx_servo_fb {
 #define REQ_DNA		0x00080000
 #define REQ_PLL		0x00090000
 #define REQ_SVCFG	0x000a0000
+#define REQ_YIOFLSH	0x000b0000
 
 #define REQ_FUNC	0x0000ffff
 #define REQ_CODE	0xffff0000
@@ -256,6 +257,7 @@ typedef struct nyx_servo_fb {
 #define FUNC_PMASK_SET	0x0018
 #define FUNC_ABS_INIT	0x0019
 #define FUNC_WRNV_PARAM	0x001a
+#define FUNC_MEM_DUMP	0x001b
 
 #define FUNC_READ	0x0021
 #define FUNC_ERASE	0x0022
@@ -371,6 +373,14 @@ typedef struct nyx_snoop {
 	uint8_t buf[768-5*4];
 } _P nyx_snoop;
 
+struct nyx_req_dump {
+	volatile uint32_t code;
+	volatile int32_t axis;			// mask
+	volatile int32_t rc;
+	volatile uint32_t addr;
+	volatile uint16_t mem[16];
+} _P;
+
 //
 //
 //
@@ -405,11 +415,13 @@ typedef struct nyx2_dp_cmd {
 	nyx_servo_cmd servo_cmd[MAX_AXES];
 } _P nyx2_dp_cmd;
 
+#ifdef YIO_SLAVES
+
 #define NUM_GPI 12+17
 #define NUM_ENC 6
 #define NUM_GPO 8
 #define NUM_DAC 2
-#define NUM_YIO 8
+#define NUM_YIO YIO_SLAVES
 #define NUM_DBG 2
 
 typedef struct nyx3_dp_fb {
@@ -437,12 +449,14 @@ typedef struct nyx3_dp_cmd {
 #define nyx_dp_cmd nyx3_dp_cmd
 #define nyx_dp_fb nyx3_dp_fb
 
+#endif
+
 #define YIO_TYPE_I16	1
 #define YIO_TYPE_O16	2
 #define YIO_TYPE_AO2	5
-#define YIO_TYPE_I32O32		11
-#define YIO_TYPE_I32O16		12
-#define YIO_TYPE_I32O16A	15
+#define YIO_TYPE_I32	0x11
+#define YIO_TYPE_O32P	0x12
+#define YIO_TYPE_O32N	0x13
 
 // board status
 #define STATUS_REALTIME		0x01
@@ -462,10 +476,12 @@ typedef struct nyx_dpram {
 				struct nyx_req req;
 				struct nyx_req_flash flash;
 				struct nyx_req_param req_param;
+				struct nyx_req_dump req_dump;
 			};
 		};
 		uint8_t reqpage[512];
 	};
+#ifdef YIO_SLAVES
 	union {				// host <- board
 		uint8_t fbpage[768];	// 192 dwords
 		nyx3_dp_fb fb;
@@ -477,6 +493,7 @@ typedef struct nyx_dpram {
 		nyx3_dp_cmd cmd;
 		nyx2_dp_cmd cmd2;
 	};
+#endif
 } _P nyx_dpram;
 
 //

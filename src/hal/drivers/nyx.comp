@@ -3,7 +3,7 @@
  *
  * License: GPL Version 2
  *
- * (c) 2016-2022 http://yurtaev.com
+ * (c) 2016-2024 http://yurtaev.com
  */
 
 component nyx "YxxxxP servo interface card driver";
@@ -355,7 +355,7 @@ struct yao2 {
 	hal_s32_t *delta;
 };
 
-struct yo32 {
+struct yo32p {
 	hal_float_t *i[32];
 	hal_float_t *v[32];
 	hal_float_t *vb1;
@@ -366,25 +366,28 @@ struct yo32 {
 	hal_bit_t *pulldown;
 };
 
+struct yo32n {
+	hal_bit_t *open[32];
+	hal_bit_t *oc[32];
+	hal_bit_t *pulldown;
+	hal_bit_t *fault;
+};
+
 struct io_pins {
-	hal_bit_t *in[16][16];
-	hal_bit_t *in_not[16][16];
-	hal_bit_t *out[16][16];
+	hal_bit_t *in[16][32];
+	hal_bit_t *in_not[16][32];
+	hal_bit_t *out[16][32];
 	hal_bit_t *alarm[16];
 	hal_s32_t *yio_error_cnt[16];
-	hal_bit_t *mon[16][16];		// mirrors either input or outpus pins for monitoring
+	hal_bit_t *mon[16][32];		// mirrors either input or outpus pins for monitoring
 //	hal_s32_t *enc[16];
 //	hal_bit_t x4[16];
 	uint32_t yi16, yo16, yao2;	// set bit indicates corresponding slave is present
-
-	hal_bit_t *in2[16][32];
-	hal_bit_t *in2_not[16][32];
-	hal_bit_t *out2[16][32];
-	hal_bit_t *mon2[16][32];		// mirrors either input or outpus pins for monitoring
-	uint32_t yi32, yo32;		// set bit indicates corresponding slave is present
+	uint32_t yi32, yo32p, yo32n;		// set bit indicates corresponding slave is present
 
 	struct yao2 ao2[16][2];
-	struct yo32 o32[16];
+	struct yo32p o32p[16];
+	struct yo32n o32n[16];
 };
 
 static int nodma;
@@ -425,7 +428,14 @@ static int export_io(char *prefix, int inst_num)
 	for (i = 0; i < y->num_yio; i++) {
 		uint32_t iotype = yssc2_yi(y, i) >> 24;
 
-		if (iotype == 1 || iotype == 2 || iotype == 5 || iotype == 0x11 || iotype == 0x12) {	// known YIO module
+
+		if (	   iotype == YIO_TYPE_I16			// known YIO module?
+			|| iotype == YIO_TYPE_O16
+			|| iotype == YIO_TYPE_AO2
+			|| iotype == YIO_TYPE_I32
+			|| iotype == YIO_TYPE_O32P
+			|| iotype == YIO_TYPE_O32N )
+		{
 			rc = hal_pin_bit_newf(HAL_OUT, &(io->alarm[i]), comp_id,
 					"%s.yio-%02d.alarm", prefix, i);
 			if(rc != 0) return rc;
@@ -435,7 +445,7 @@ static int export_io(char *prefix, int inst_num)
 			if(rc != 0) return rc;
 		}
 
-		if (iotype == 1) {		// YI16
+		if (iotype == YIO_TYPE_I16) {		// YI16
 			io->yi16 |= 1<<i;
 			for (j = 0; j < 16; j++) {
 				rc = hal_pin_bit_newf(HAL_OUT, &(io->in[i][j]), comp_id,
@@ -451,23 +461,23 @@ static int export_io(char *prefix, int inst_num)
 					if(rc != 0) return rc;
 				}
 			}
-		} else if (iotype == 0x11) {		// YI32
+		} else if (iotype == YIO_TYPE_I32) {		// YI32
 			io->yi32 |= 1<<i;
 			for (j = 0; j < 32; j++) {
-				rc = hal_pin_bit_newf(HAL_OUT, &(io->in2[i][j]), comp_id,
+				rc = hal_pin_bit_newf(HAL_OUT, &(io->in[i][j]), comp_id,
 					            "%s.yio-%02d.in-%02x", prefix, i, j);
 				if(rc != 0) return rc;
-				rc = hal_pin_bit_newf(HAL_OUT, &(io->in2_not[i][j]), comp_id,
+				rc = hal_pin_bit_newf(HAL_OUT, &(io->in_not[i][j]), comp_id,
 					            "%s.yio-%02d.in-%02x-not", prefix, i, j);
 				if(rc != 0) return rc;
 
 				if (mon) {
-					rc = hal_pin_bit_newf(HAL_OUT, &(io->mon2[i][j]), comp_id,
+					rc = hal_pin_bit_newf(HAL_OUT, &(io->mon[i][j]), comp_id,
 						"%s.yio-%02d.mon-%02x", prefix, i, j);
 					if(rc != 0) return rc;
 				}
 			}
-		} else if (iotype == 2) {	// YO16
+		} else if (iotype == YIO_TYPE_O16) {	// YO16
 			io->yo16 |= 1<<i;
 			for (j = 0; j < 16; j++) {
 				rc = hal_pin_bit_newf(HAL_IN, &(io->out[i][j]), comp_id,
@@ -479,26 +489,42 @@ static int export_io(char *prefix, int inst_num)
 					if(rc != 0) return rc;
 				}
 			}
-		} else if (iotype == 0x12) {	// YO32
-			io->yo32 |= 1<<i;
+		} else if (iotype == YIO_TYPE_O32P) {	// YO32P
+			io->yo32p |= 1<<i;
 			for (j = 0; j < 32; j++) {
-				rc = hal_pin_bit_newf(HAL_IN, &(io->out2[i][j]), comp_id,
+				rc = hal_pin_bit_newf(HAL_IN, &(io->out[i][j]), comp_id,
 					            "%s.yio-%02d.out-%02x", prefix, i, j);
 				if(rc != 0) return rc;
 				if (mon) {
-					rc = hal_pin_bit_newf(HAL_OUT, &(io->mon2[i][j]), comp_id,
+					rc = hal_pin_bit_newf(HAL_OUT, &(io->mon[i][j]), comp_id,
 						            "%s.yio-%02d.mon-%02x", prefix, i, j);
 					if(rc != 0) return rc;
 				}
-				rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].i[j]), comp_id, "%s.yio-%02d.i-%02x", prefix, i, j);
-				rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].v[j]), comp_id, "%s.yio-%02d.v-%02x", prefix, i, j);
+				rc = hal_pin_float_newf(HAL_OUT, &(io->o32p[i].i[j]), comp_id, "%s.yio-%02d.i-%02x", prefix, i, j);
+				rc = hal_pin_float_newf(HAL_OUT, &(io->o32p[i].v[j]), comp_id, "%s.yio-%02d.v-%02x", prefix, i, j);
 			}
-			rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].vb1), comp_id, "%s.yio-%02d.vb1", prefix, i);
-			rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].vb2), comp_id, "%s.yio-%02d.vb2", prefix, i);
-			rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].t1), comp_id, "%s.yio-%02d.t1", prefix, i);
-			rc = hal_pin_float_newf(HAL_OUT, &(io->o32[i].t2), comp_id, "%s.yio-%02d.t2", prefix, i);
-			rc = hal_pin_s32_newf(HAL_IN,  &(io->o32[i].raw), comp_id, "%s.yio-%02d.raw", prefix, i);
-			rc = hal_pin_bit_newf(HAL_IN,  &(io->o32[i].pulldown), comp_id, "%s.yio-%02d.pull-down", prefix, i);
+			rc = hal_pin_float_newf(HAL_OUT, &(io->o32p[i].vb1), comp_id, "%s.yio-%02d.vb1", prefix, i);
+			rc = hal_pin_float_newf(HAL_OUT, &(io->o32p[i].vb2), comp_id, "%s.yio-%02d.vb2", prefix, i);
+			rc = hal_pin_float_newf(HAL_OUT, &(io->o32p[i].t1), comp_id, "%s.yio-%02d.t1", prefix, i);
+			rc = hal_pin_float_newf(HAL_OUT, &(io->o32p[i].t2), comp_id, "%s.yio-%02d.t2", prefix, i);
+			rc = hal_pin_s32_newf(HAL_IN,  &(io->o32p[i].raw), comp_id, "%s.yio-%02d.raw", prefix, i);
+			rc = hal_pin_bit_newf(HAL_IN,  &(io->o32p[i].pulldown), comp_id, "%s.yio-%02d.pull-down", prefix, i);
+			if(rc != 0) return rc;
+
+		} else if (iotype == YIO_TYPE_O32N) {	// YO32N
+			io->yo32n |= 1<<i;
+			for (j = 0; j < 32; j++) {
+				rc = hal_pin_bit_newf(HAL_IN, &(io->out[i][j]), comp_id, "%s.yio-%02d.out-%02x", prefix, i, j);
+				if(rc != 0) return rc;
+				if (mon) {
+					rc = hal_pin_bit_newf(HAL_OUT, &(io->mon[i][j]), comp_id, "%s.yio-%02d.mon-%02x", prefix, i, j);
+					if(rc != 0) return rc;
+				}
+				rc = hal_pin_bit_newf(HAL_OUT, &(io->o32n[i].open[j]), comp_id, "%s.yio-%02d.open-%02x", prefix, i, j);
+				rc = hal_pin_bit_newf(HAL_OUT, &(io->o32n[i].oc[j]), comp_id, "%s.yio-%02d.oc-%02x", prefix, i, j);
+			}
+			rc = hal_pin_bit_newf(HAL_IN,  &(io->o32n[i].pulldown), comp_id, "%s.yio-%02d.pull-down", prefix, i);
+			rc = hal_pin_bit_newf(HAL_OUT,  &(io->o32n[i].fault), comp_id, "%s.yio-%02d.fault", prefix, i);
 			if(rc != 0) return rc;
 /*		} else if (iotype == 3) {	// incremental encoder
 			io->yenc |= 1<<i;
@@ -506,7 +532,7 @@ static int export_io(char *prefix, int inst_num)
 			if(rc != 0) return rc;
 			rc = hal_param_bit_newf(HAL_RW, &(io->x4[i]), comp_id, "%s.encoder-%02d.x4-mode", prefix, i);
 			if(rc != 0) return rc;
-*/		} else if (iotype == 5) {	// YAO2
+*/		} else if (iotype == YIO_TYPE_AO2) {	// YAO2
 			io->yao2 |= 1<<i;
 			for (j = 0; j < 2; j++) {
 				rc = hal_pin_float_newf(HAL_IN, &(io->ao2[i][j].value), comp_id, "%s.yio-%02d.dac-%02d.value", prefix, i, j);
@@ -558,19 +584,16 @@ static int export_io(char *prefix, int inst_num)
 
 #define yio_pin_in(a,b) (*(y->io->in[a][b]))
 #define yio_pin_in_not(a,b) (*(y->io->in_not[a][b]))
-#define yio_pin_in2(a,b) (*(y->io->in2[a][b]))
-#define yio_pin_in2_not(a,b) (*(y->io->in2_not[a][b]))
 #define yio_pin_out(a,b) (*(y->io->out[a][b]))
 #define yio_pin_mon(a,b) (*(y->io->mon[a][b]))
-#define yio_pin_out2(a,b) (*(y->io->out2[a][b]))
-#define yio_pin_mon2(a,b) (*(y->io->mon2[a][b]))
 #define yio_pin_alarm(a) (*(y->io->alarm[a]))
 #define yio_pin_error_cnt(a) (*(y->io->yio_error_cnt[a]))
 #define yio_pin_enc(a) (*(y->io->enc[a]))
 #define yio_yi16(a) (y->io->yi16 & (1<<a))
 #define yio_yo16(a) (y->io->yo16 & (1<<a))
 #define yio_yi32(a) (y->io->yi32 & (1<<a))
-#define yio_yo32(a) (y->io->yo32 & (1<<a))
+#define yio_yo32p(a) (y->io->yo32p & (1<<a))
+#define yio_yo32n(a) (y->io->yo32n & (1<<a))
 //#define yio_yenc(a) (y->io->yenc & (1<<a))
 #define yio_yao2(a) (y->io->yao2 & (1<<a))
 
@@ -932,8 +955,8 @@ FUNCTION(rd)
 		if (yio_yi32(a)) {
 			i = yssc2_yi2(y, a);
 			for (n = 0; n < 32; n++) {
-				yio_pin_in2_not(a, n) = !(yio_pin_in2(a, n) = (i & (1<<n)) ? 1 : 0);
-				if (mon) yio_pin_mon2(a, n) = yio_pin_in2(a, n);
+				yio_pin_in_not(a, n) = !(yio_pin_in(a, n) = (i & (1<<n)) ? 1 : 0);
+				if (mon) yio_pin_mon(a, n) = yio_pin_in(a, n);
 			}
 			yio_pin_error_cnt(a) = (yssc2_yi(y,a) & 0x00ff0000) >> 16;
 			yio_pin_alarm(a) = (yio_pin_error_cnt(a) > 10) ||
@@ -1030,14 +1053,14 @@ FUNCTION(rd)
 			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
 		}
 
-		if (yio_yo32(a)) {	// output board - input pins
+		if (yio_yo32p(a)) {	// output board - input pins
 			i = yssc2_yi(y, a);
 			uint32_t i2 = yssc2_yi2(y, a);
 			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
 			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;	// TODO
 
-#define yio_pin_o32(a,f) (*(y->io->o32[a].f))
-#define yio_pin_o32n(a,f,n) (*(y->io->o32[a].f[n]))
+#define yio_pin_o32p(a,f)    (*(y->io->o32p[a].f))
+#define yio_pin_o32pi(a,f,n) (*(y->io->o32p[a].f[n]))
 
 			uint16_t v0 = (i2&0x03ff);
 			uint16_t c0 = (i2&0xf800)>>11;
@@ -1047,22 +1070,41 @@ FUNCTION(rd)
 			double f = 1;
 			switch (i & 7) {
 			case 7:
-				yio_pin_o32(a, t1) = (774 - v0) / 2.22;
-				yio_pin_o32(a, t2) = (774 - v1) / 2.22;
+				yio_pin_o32p(a, t1) = (774 - v0) / 2.22;
+				yio_pin_o32p(a, t2) = (774 - v1) / 2.22;
 				break;
 			case 5:
-				yio_pin_o32(a, vb1) = 40.32e-3 * v0;
-				yio_pin_o32(a, vb2) = 40.32e-3 * v1;
+				yio_pin_o32p(a, vb1) = 40.32e-3 * v0;
+				yio_pin_o32p(a, vb2) = 40.32e-3 * v1;
 				break;
 			case 1:
-				f = yio_pin_o32(a, raw) ? 1 : 182.92e-3;
-				if (v0 < 1023) yio_pin_o32n(a, i, c0) = f * v0;
-				if (v1 < 1023) yio_pin_o32n(a, i, c1) = f * v1;
+				f = yio_pin_o32p(a, raw) ? 1 : 182.92e-3;
+				if (v0 < 1023) yio_pin_o32pi(a, i, c0) = f * v0;
+				if (v1 < 1023) yio_pin_o32pi(a, i, c1) = f * v1;
 				break;
 			case 3:
-				yio_pin_o32n(a, v, c0) = 40.32e-3 * v0;
-				yio_pin_o32n(a, v, c1) = 40.32e-3 * v1;
+				yio_pin_o32pi(a, v, c0) = 40.32e-3 * v0;
+				yio_pin_o32pi(a, v, c1) = 40.32e-3 * v1;
 				break;
+			}
+		}
+
+		if (yio_yo32n(a)) {	// output board - input pins
+			i = yssc2_yi(y, a);
+			uint32_t i2 = yssc2_yi2(y, a);
+			yio_pin_error_cnt(a) = (i & 0x00ff0000) >> 16;
+			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;	// TODO
+
+#define yio_pin_o32n(a,f)    (*(y->io->o32n[a].f))
+#define yio_pin_o32ni(a,f,i) (*(y->io->o32n[a].f[i]))
+
+			yio_pin_o32n(a, fault) = (i & 0x80) ? 1 : 0;
+			if ((i & 0x7) == 1) {
+				for (n = 0; n < 32; n++)
+					yio_pin_o32ni(a, open, n) = (i2 & (1<<n)) ? 1 : 0;
+			} else {
+				for (n = 0; n < 32; n++)
+					yio_pin_o32ni(a, oc, n) = (i2 & (1<<n)) ? 1 : 0;
 			}
 		}
 	}
@@ -1146,14 +1188,24 @@ FUNCTION(wr)
 			yssc2_yo(y, a, o);
 		}
 
-		if (yio_yo32(a)) {	// output board - input pins
+		if (yio_yo32p(a)) {	// output board - input pins
 			for (o = n = 0; n < 32; n++) {
 				o >>= 1;
-				if (yio_pin_out2(a, n)) o |= 0x80000000;
-				if (mon) yio_pin_mon2(a, n) = yio_pin_out2(a, n);
+				if (yio_pin_out(a, n)) o |= 0x80000000;
+				if (mon) yio_pin_mon(a, n) = yio_pin_out(a, n);
 			}
 			yssc2_yo(y, a, o);
-			yssc2_yo2(y, a, yio_pin_o32(a, pulldown));
+			yssc2_yo2(y, a, yio_pin_o32p(a, pulldown));
+		}
+
+		if (yio_yo32n(a)) {	// output board - input pins
+			for (o = n = 0; n < 32; n++) {
+				o >>= 1;
+				if (yio_pin_out(a, n)) o |= 0x80000000;
+				if (mon) yio_pin_mon(a, n) = yio_pin_out(a, n);
+			}
+			yssc2_yo(y, a, o);
+			yssc2_yo2(y, a, yio_pin_o32n(a, pulldown));
 		}
 
 		if (yio_yao2(a)) {	//

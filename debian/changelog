@@ -1,3 +1,9 @@
+linuxcnc (1:2.9.3nyx51) unstable; urgency=medium
+
+  * YO32N support
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Tue, 20 Aug 2024 15:17:12 +0200
+
 linuxcnc (1:2.9.3nyx50) unstable; urgency=medium
 
   * upstream merge

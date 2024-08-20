@@ -17,7 +17,7 @@ import re
 import string
 
 
-VER = "nyxq v3.3.2"
+VER = "nyxq v3.5.0"
 
 class nyx_dpram_hdr(Structure):
 	_fields_ = [
@@ -306,8 +306,11 @@ def io_info():
 			elif typ == 2:
 				print("YO16  " + bin(yo, 16), end="")
 			elif typ == 0x12:
-				print("YO32  " + bin(yo, 32), end="")
+				print("YO32P " + bin(yo, 32), end="")
 				if (yi & 0x40): print( " uv", end="")	# undervoltage
+				if (yi & 0x80): print( " oc", end="")	# overcurrent
+			elif typ == 0x13:
+				print("YO32N " + bin(yo, 32), end="")
 				if (yi & 0x80): print( " oc", end="")	# overcurrent
 			elif typ == 3:
 				print("YENC  " + "%d" % (yi & 0xffff), end="")
@@ -320,7 +323,8 @@ def io_info():
 					((yo2 & 0xffff) - 32767) * 10.0 / 32768 , yi2 & 0xffff, i1, o1,
 					((yo2 >> 16) - 32767) * 10.0 / 32768 , yi2 >> 16, i2, o2), end="")
 			else:
-				print(typ, "?", "%x,%x %x,%x" % (yi, yi2, yo,yo2), end="")
+				print("%x? %x,%x %x,%x" % (typ, yi,yi2, yo,yo2), end="")
+#			print(" [%x,%x %x,%x]" % (yi,yi2, yo,yo2), end="")
 			if ok:
 				print(" err:", ok)
 			else:
