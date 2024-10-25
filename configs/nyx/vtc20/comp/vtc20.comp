@@ -23,7 +23,7 @@ pin out bit mag1-retract      "Y14-mag1-retract";
 pin in  bit mag1-tool-detect  "X2F-mag1-tool-detect";
 
 pin in  bit unclamp		"unclamp tool in the spindle";
-pin in  bit clamp;		"clamp tool in the spindle"
+pin in  bit clamp		"clamp tool in the spindle";
 pin in  bit tool-clamped      "X10-tool-clamped";
 pin in  bit tool-unclamped    "X11-tool-unclamped";
 pin out bit tool-clamp        "Y11-tool-clamp";
@@ -49,14 +49,6 @@ pin out bit mag1-sta-1 "Y31-mag1-sta-1";
 pin out bit mag1-sta-2 "Y32-mag1-sta-2";
 pin out bit mag1-sta-3 "Y33-mag1-sta-3";
 pin out bit mag1-sta-4 "Y34-mag1-sta-4";
-
-pin out s32 position	"current carousel position";
-pin out bit mag1-sta-0 "Y30-mag1-sta-0";
-pin out bit mag1-sta-1 "Y31-mag1-sta-1";
-pin out bit mag1-sta-2 "Y32-mag1-sta-2";
-pin out bit mag1-sta-3 "Y33-mag1-sta-3";
-pin out bit mag1-sta-4 "Y34-mag1-sta-4";
-
 
 /*
 34: X0-extend-stop & X2-extended & !X3-retracted -> M1429 ext stop cmd
@@ -153,6 +145,7 @@ mag brake
 
 12063: X36-MG1ZSP -> Q0 K30 mag zspd timer
 									   L-side mag valid
+
 12066: ((M1410-MGM1 | M1409-MGM2 | 1419-MGZ1 | M1418-MGZ2 | M1405-MGJG) & !L9-LSIDVI)
 	| (((M352-RSIDE & !M149) | (M357-CT=RX & M149)) & M377-TSELM)
 	       & Y0-MG1EMG)
@@ -164,4 +157,7 @@ mag brake
 12092: !Y2A-MG1BRK -> Q3 K20 mag servo off timer
 12095: Y3A & !Q3-MGSVFT
      | Y2A-MG1BRK        -> Y3A mag servo on ???
+
+
+
 */
