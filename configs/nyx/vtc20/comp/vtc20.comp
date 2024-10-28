@@ -23,7 +23,7 @@ pin out bit mag1-retract      "Y14-mag1-retract";
 pin in  bit mag1-tool-detect  "X2F-mag1-tool-detect";
 
 pin in  bit unclamp		"unclamp tool in the spindle";
-pin in  bit clamp;		"clamp tool in the spindle"
+pin in  bit clamp		"clamp tool in the spindle";
 pin in  bit tool-clamped      "X10-tool-clamped";
 pin in  bit tool-unclamped    "X11-tool-unclamped";
 pin out bit tool-clamp        "Y11-tool-clamp";
@@ -49,14 +49,6 @@ pin out bit mag1-sta-1 "Y31-mag1-sta-1";
 pin out bit mag1-sta-2 "Y32-mag1-sta-2";
 pin out bit mag1-sta-3 "Y33-mag1-sta-3";
 pin out bit mag1-sta-4 "Y34-mag1-sta-4";
-
-pin out s32 position	"current carousel position";
-pin out bit mag1-sta-0 "Y30-mag1-sta-0";
-pin out bit mag1-sta-1 "Y31-mag1-sta-1";
-pin out bit mag1-sta-2 "Y32-mag1-sta-2";
-pin out bit mag1-sta-3 "Y33-mag1-sta-3";
-pin out bit mag1-sta-4 "Y34-mag1-sta-4";
-
 
 /*
 34: X0-extend-stop & X2-extended & !X3-retracted -> M1429 ext stop cmd
