@@ -145,6 +145,7 @@ mag brake
 
 12063: X36-MG1ZSP -> Q0 K30 mag zspd timer
 									   L-side mag valid
+
 12066: ((M1410-MGM1 | M1409-MGM2 | 1419-MGZ1 | M1418-MGZ2 | M1405-MGJG) & !L9-LSIDVI)
 	| (((M352-RSIDE & !M149) | (M357-CT=RX & M149)) & M377-TSELM)
 	       & Y0-MG1EMG)
@@ -156,4 +157,7 @@ mag brake
 12092: !Y2A-MG1BRK -> Q3 K20 mag servo off timer
 12095: Y3A & !Q3-MGSVFT
      | Y2A-MG1BRK        -> Y3A mag servo on ???
+
+
+
 */
