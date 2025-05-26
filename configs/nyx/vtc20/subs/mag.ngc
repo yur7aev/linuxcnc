@@ -1,0 +1,52 @@
+;
+; MAZAK VTC20
+;
+; home the magazine
+;
+; 2024, dmitry@yurtaev.com
+;
+
+o<mag> sub
+(AXIS,hide)
+
+	m66 e#<_ini[i]mag_pos> l0
+	o42 if [#5399 ne -1] 			; not homed?
+		m64 p#<_ini[o]mag_svon>
+		g4 p0.2
+		m64 p#<_ini[o]mag_brake>
+		g4 p0.2
+
+		m68 e#<_ini[o]mag_mode> q2	; zero return
+		m64 p#<_ini[o]mag_start>
+		g4 p0.1
+		m66 p#<_ini[i]mag_coin> l3 q5
+		m65 p#<_ini[o]mag_start>
+		o44 if [#5399 lt 0]
+			(msg, M6 mag zrn failed)
+			o<m6> return [-10]
+		o44 endif
+
+		m68 e#<_ini[o]mag_mode> q1	; setup
+		m68 e#<_ini[o]mag_station> q1	; pocket 1
+		m64 p#<_ini[o]mag_start>
+		g4 p0.1
+		m66 p#<_ini[i]mag_coin> l3 q3
+		m65 p#<_ini[o]mag_start>
+		o46 if [#5399 lt 0]
+			(msg, M6 mag setup failed)
+			o<m6> return [-11]
+		o46 endif
+
+		m66 e#<_ini[i]mag_pos> l0	; read position, should be 1
+		o48 if [#5399 ne 1]
+			(msg, M6 pocket is not 1 after zrn)
+			o<m6> return [-12]
+		o48 endif
+
+		m65 p#<_ini[o]mag_brake>
+		g4 p0.2
+		m65 p#<_ini[o]mag_svon>
+	o42 endif
+
+o<mag> endsub [1]
+m2

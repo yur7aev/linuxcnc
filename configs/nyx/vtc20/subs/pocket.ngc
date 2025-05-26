@@ -1,0 +1,46 @@
+;
+; MAZAK VTC20
+;
+; rotate magazine to specified position
+;
+; 2024, dmitry@yurtaev.com
+;
+
+o<pocket> sub
+
+	m65 p#<_ini[o]mag_start>
+
+	m64 p#<_ini[o]mag_svon>
+	g4 p0.2
+	m64 p#<_ini[o]mag_brake>
+	g4 p0.2
+
+		m68 e#<_ini[o]mag_mode> q4	; auto
+		m68 e#<_ini[o]mag_station> q#1
+		m64 p#<_ini[o]mag_start>
+		g4 p0.1
+		m66 p#<_ini[i]mag_coin> l3 q5
+		m65 p#<_ini[o]mag_start>
+		o44 if [#5399 lt 0]
+			m65 p#<_ini[o]mag_brake>
+			g4 p0.2
+			m65 p#<_ini[o]mag_svon>
+			(debug, auto failed)
+			o<m6> return [-10]
+		o44 endif
+
+		m66 e#<_ini[i]mag_pos> l0	; read position
+		o48 if [#5399 ne #1]
+			m65 p#<_ini[o]mag_brake>
+			g4 p0.2
+			m65 p#<_ini[o]mag_svon>
+			(debug, pocket #5399 is not #1)
+			o<m6> return [-12]
+		o48 endif
+
+	m65 p#<_ini[o]mag_brake>
+	g4 p0.2
+	m65 p#<_ini[o]mag_svon>
+
+o<pocket> endsub [1]
+m2
