@@ -1154,7 +1154,7 @@ int main(int argc, char *argv[])
                 b = ((EMC_TOOL_SET_OFFSET *) emcioCommand)->backangle;
                 o = ((EMC_TOOL_SET_OFFSET *) emcioCommand)->orientation;
 
-                rtapi_print_msg(RTAPI_MSG_DBG,
+                rtapi_print_msg(RTAPI_MSG_ERR,
                      "EMC_TOOL_SET_OFFSET idx=%d toolno=%d zoffset=%lf, "
                      "xoffset=%lf, diameter=%lf, "
                      "frontangle=%lf, backangle=%lf, orientation=%d\n",

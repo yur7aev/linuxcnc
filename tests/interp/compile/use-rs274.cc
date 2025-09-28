@@ -68,7 +68,7 @@ void SET_G92_OFFSET(double x, double y, double z,
                            double a, double b, double c,
                            double u, double v, double w) {}
 void SET_XY_ROTATION(double t) {}
-void CANON_UPDATE_END_POINT(double x, double y, double z, 
+void CANON_UPDATE_END_POINT(double x, double y, double z,
 				   double a, double b, double c,
 				   double u, double v, double w) {}
 void USE_LENGTH_UNITS(CANON_UNITS u) {}
@@ -91,7 +91,7 @@ void STOP_SPEED_FEED_SYNCH() {}
 void ARC_FEED(int lineno,
                      double first_end, double second_end,
 		     double first_axis, double second_axis, int rotation,
-		     double axis_end_point, 
+		     double axis_end_point,
                      double a, double b, double c,
                      double u, double v, double w) {}
 void STRAIGHT_FEED(int lineno,
@@ -140,8 +140,8 @@ void USE_NO_SPINDLE_FORCE() {}
 void SET_TOOL_TABLE_ENTRY(int pocket, int toolno, EmcPose offset, double diameter,
                                  double frontangle, double backangle, int orientation) {}
 void USE_TOOL_LENGTH_OFFSET(EmcPose offset) {}
-void CHANGE_TOOL(int slot) {}	
-void SELECT_TOOL(int tool) {}	
+void CHANGE_TOOL(int slot) {}
+void SELECT_TOOL(int tool) {}
 void CHANGE_TOOL_NUMBER(int number) {}
 void RELOAD_TOOLDATA() {}
 void START_CHANGE(void) {}
@@ -168,7 +168,7 @@ void PALLET_SHUTTLE() {}
 void TURN_PROBE_OFF() {}
 void TURN_PROBE_ON() {}
 void UNCLAMP_AXIS(CANON_AXIS axis) {}
-void NURB_KNOT_VECTOR() {}	
+void NURB_KNOT_VECTOR() {}
 void NURB_CONTROL_POINT(int i, double x, double y, double z,
 			       double w) {}
 void NURB_FEED(double sStart, double sEnd) {}
@@ -185,9 +185,9 @@ void SET_AUX_OUTPUT_BIT(int index) {}
 void CLEAR_AUX_OUTPUT_BIT(int index) {}
 void SET_MOTION_OUTPUT_VALUE(int index, double value) {}
 void SET_AUX_OUTPUT_VALUE(int index, double value) {}
-int WAIT(int index, 
-		int input_type, 
-	        int wait_type, 
+int WAIT(int index,
+		int input_type,
+	        int wait_type,
                 double timeout) { return 0; }
 int UNLOCK_ROTARY(int line_no, int axis) { return 0; }
 int LOCK_ROTARY(int line_no, int axis) { return 0; }

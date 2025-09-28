@@ -688,6 +688,7 @@ int main(int argc, char *argv[])
 #else //}{
   #define TOOL_DATA "mmap"
 #endif //}
+
     if (getenv( (char*)"IO_DEBUG" )) { getpid(),io_debug = 1; }
     if (io_debug) {
         fprintf(stderr,"%8d IO: %s\n",getpid(),TOOL_DATA);
@@ -782,8 +783,9 @@ int main(int argc, char *argv[])
             UNEXPECTED_MSG;
         }
     }
+
     if (0 != tooldata_load(io_tool_table_file, ttcomments)) {
-        rcs_print_error("can't load tool table.\n");
+        rcs_print_error("can't load tool table %s.\n", io_tool_table_file);
     }
     done = 0;
 

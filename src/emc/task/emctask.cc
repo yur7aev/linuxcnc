@@ -594,6 +594,7 @@ int emcTaskPlanExecute(const char *command)
     if (command != 0) {		// Command is 0 if in AUTO mode, non-null if in MDI mode.
 	// Don't sync if not in position.
 	if ((*command != 0) && (inpos)) {
+fprintf(stderr, "--------- emcTaskExecute()\n");
 	    interp.synch();
 	}
     }

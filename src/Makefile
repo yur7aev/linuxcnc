@@ -181,6 +181,7 @@ SUBDIRS := \
     emc/usr_intf/axis emc/usr_intf/touchy emc/usr_intf/stepconf emc/usr_intf/pncconf \
     emc/usr_intf/gremlin emc/usr_intf/gscreen emc/usr_intf/pyui emc/usr_intf/qtvcp \
     emc/usr_intf/gmoccapy emc/usr_intf/qtplasmac emc/usr_intf/mdro\
+    emc/usr_intf/nopy \
     emc/usr_intf emc/nml_intf emc/task emc/iotask emc/kinematics emc/tp emc/canterp \
     emc/motion emc/ini emc/rs274ngc emc/sai emc/pythonplugin \
     emc/motion-logger \
@@ -248,6 +249,7 @@ endif
 INCLUDE := $(patsubst %,-I%, $(INCLUDES)) -I$(RTDIR)/include
 INCLUDE += $(PYTHON_CPPFLAGS)
 INCLUDE += $(LIBTIRPC_CFLAGS)
+INCLUDE += -I/home/dmitry/git/imgui -I/home/dmitry/git/imgui/backends
 
 # Compilation options.	Perhaps some of these should come from Makefile.inc? (CXXFLAGS now does)
 INTEGER_OVERFLOW_FLAGS := -fwrapv
@@ -1434,3 +1436,4 @@ cscope:
 cscopeclean:
 	bash -c 'for f in `find ./ -name "cscope.*out"`;do rm $$f;done'
 # vim:ts=8:sts=8:sw=8:noet:
+#

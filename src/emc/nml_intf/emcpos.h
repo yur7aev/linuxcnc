@@ -17,9 +17,14 @@
 #include "posemath.h"		/* PmCartesian */
 
 typedef struct EmcPose {
-    PmCartesian tran;
-    double a, b, c;
-    double u, v, w;
+	union {
+		struct {
+			PmCartesian tran;
+			double a, b, c;
+			double u, v, w;
+		};
+		double coor[9];
+	};
 } EmcPose;
 
 #define ZERO_EMC_POSE(pos) do { \

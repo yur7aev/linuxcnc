@@ -47,6 +47,7 @@ struct CANON_TOOL_TABLE tooldata_entry_init()
     tdata.frontangle  =  0;
     tdata.backangle   =  0;
     tdata.orientation =  0;
+    tdata.comment[0] = 0;
     ZERO_EMC_POSE(tdata.offset);
 
     return tdata;
@@ -208,12 +209,13 @@ int tooldata_read_entry(const char *input_line,
         tdata.frontangle  = frontangle;
         tdata.backangle   = backangle;
         tdata.orientation = orientation;
+        strncpy(tdata.comment, comment ? comment : "", sizeof(tdata.comment)-1);
         if (tooldata_put(tdata,idx) == IDX_FAIL) {
             UNEXPECTED_MSG;
         }
-        if (ttcomments && comment) {
-             strcpy(ttcomments[idx], comment);
-        }
+//        if (ttcomments && comment) {
+//             strcpy(ttcomments[idx], comment);
+//        }
     } else {
          return -1;
     }
@@ -261,10 +263,12 @@ void tooldata_format_toolline (int idx,
     I_ITEM(orientation,    "Q");
 #undef F_ITEM
 #undef I_ITEM
-    if (ttcomments) {  //ignore if nil pointer
-       snprintf(tmp,sizeof(tmp)," ;%s\n",ttcomments[idx]);
-       strncat(formatted_line,tmp,CANON_TOOL_ENTRY_LEN-1);
-    }
+//    if (ttcomments) {  //ignore if nil pointer
+//       snprintf(tmp,sizeof(tmp)," ;%s\n",ttcomments[idx]);
+//       strncat(formatted_line,tmp,CANON_TOOL_ENTRY_LEN-1);
+//    }
+    snprintf(tmp, sizeof(tmp)," ;%s\n", tdata.comment);
+    strncat(formatted_line, tmp, CANON_TOOL_ENTRY_LEN-1);
     return;
 } // tooldata_format_toolline()
 
@@ -318,12 +322,16 @@ int tooldata_load(const char *filename,
         }
         strcpy(orig_line, input_line);
 
+fprintf(stderr, "LOAD %s", input_line);
+
         // parse and store one line from tool table file
         int entry_idx = tooldata_read_entry(input_line, ttcomments);
         if (entry_idx <0) {
             printf("File: %s Unrecognized line skipped:\n    %s",filename, orig_line);
             continue;
         }
+
+fprintf(stderr, "OK\n");
 
         if (!is_random_toolchanger) {
             CANON_TOOL_TABLE spindletool;
@@ -340,6 +348,8 @@ int tooldata_load(const char *filename,
             }
         }
     } // while
+
+fprintf(stderr, "DONE\n");
 
     // close the file
     fclose(fp);
@@ -380,6 +390,8 @@ int tooldata_save(const char *filename,
             UNEXPECTED_MSG;
         }
     }
+
+fprintf(stderr, "SAVING TO %s\n", filename);
 
     // open tool table file
     if (NULL == (fp = fopen(filename, "w"))) {

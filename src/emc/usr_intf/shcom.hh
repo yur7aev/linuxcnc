@@ -98,8 +98,10 @@ extern double convertAngularUnits(double u);
 extern int sendDebug(int level);
 extern int sendEstop();
 extern int sendEstopReset();
+extern int sendEstop(bool on);
 extern int sendMachineOn();
 extern int sendMachineOff();
+extern int sendMachineOn(bool on);
 extern int sendManual();
 extern int sendAuto();
 extern int sendMdi();
@@ -130,11 +132,14 @@ extern int sendRapidOverride(double override);
 extern int sendMaxVelocity(double velocity);
 extern int sendSpindleOverride(int spindle, double override);
 extern int sendTaskPlanInit();
-extern int sendProgramOpen(char *program);
+extern int sendProgramOpen(const char *program);
+extern int sendProgramClose(void);
 extern int sendProgramRun(int line);
 extern int sendProgramPause();
 extern int sendProgramResume();
+extern int sendProgramAbort();
 extern int sendSetOptionalStop(bool state);
+extern int sendSetFeedHoldEnable(bool enable);
 extern int sendProgramStep();
 extern int sendMdiCmd(const char *mdi);
 extern int sendLoadToolTable(const char *file);
@@ -147,5 +152,11 @@ extern int sendClearProbeTrippedFlag();
 extern int sendProbe(double x, double y, double z);
 extern int iniLoad(const char *filename);
 extern int checkStatus();
+
+extern int sendSetBlockDelete(bool state);
+extern int sendSetG5x(int index, EmcPose offset);
+extern int sendSetSOEnable(int spindle, unsigned char mode);
+extern int sendSynch();
+extern int sendMdiAndSynch(const char *cmd);
 
 #endif				/* ifndef SHCOM_HH */

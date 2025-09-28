@@ -264,7 +264,7 @@ static int loadTraj(EmcIniFile *trajInifile)
         int len;
         char homes[LINELEN];
         char home[LINELEN];
-        EmcPose homePose = { {0.0, 0.0, 0.0}, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+        EmcPose homePose = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
         double d;
         if (NULL != (inistring = trajInifile->Find("HOME", "TRAJ"))) {
             // [TRAJ]HOME is important for genhexkins.c kinetmaticsForward()

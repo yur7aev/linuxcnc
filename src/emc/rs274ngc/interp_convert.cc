@@ -4373,6 +4373,7 @@ int Interp::convert_setup(block_pointer block,   //!< pointer to a block of RS27
   else
     enqueue_COMMENT("interpreter: setting coordinate system origin");
 #endif
+fprintf(stderr, "interpreter: setting coordinate system origin\n");
   return INTERP_OK;
 }
 

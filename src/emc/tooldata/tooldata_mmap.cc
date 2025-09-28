@@ -41,6 +41,7 @@ typedef struct {
     rtapi_mutex_t   mutex;
     unsigned int    last_index;
     int             is_random_toolchanger;
+    int             change;
 } tooldata_header_t;
 
 /* mmap region:
@@ -52,10 +53,11 @@ typedef struct {
 #define TOOL_MMAP_HEADER_OFFSET 0
 #define TOOL_MMAP_HEADER_SIZE sizeof(tooldata_header_t)
 
-#define TOOL_MMAP_SIZE    TOOL_MMAP_HEADER_SIZE + \
-                          CANON_POCKETS_MAX * sizeof(struct CANON_TOOL_TABLE)
-
 #define TOOL_MMAP_STRIDE  sizeof(CANON_TOOL_TABLE)
+
+#define TOOL_MMAP_SIZE    TOOL_MMAP_HEADER_SIZE + \
+                          CANON_POCKETS_MAX * TOOL_MMAP_STRIDE
+
 //---------------------------------------------------------------------
 #define HPTR()    (tooldata_header_t*)( tool_mmap_base \
                                       + TOOL_MMAP_HEADER_OFFSET)
@@ -157,6 +159,7 @@ int tool_mmap_creator(EMC_TOOL_STAT const * ptr,int random_toolchanger)
     tooldata_header_t *hptr = HPTR();
     hptr->is_random_toolchanger = random_toolchanger;
     hptr->last_index = 0;
+    hptr->change = 1;
 
     inited = 1;
     tool_mmap_mutex_give(); return 0;
@@ -220,6 +223,7 @@ void tooldata_last_index_set(int idx)  //force last_index
         fprintf(stderr,"!!!continuing using idx=%d\n",idx);
     }
     hptr->last_index = idx;
+    ++hptr->change;
     tool_mmap_mutex_give(); return;
 } //tooldata_last_index_set()
 
@@ -229,6 +233,17 @@ int tooldata_last_index_get(void)
     tooldata_header_t *hptr = HPTR();
     if (tool_mmap_base) {
         tool_mmap_mutex_give(); return hptr->last_index;
+    } else {
+        tool_mmap_mutex_give(); return -1;
+    }
+} // tooldata_last_index_get()
+
+int tooldata_change_get(void)
+{
+    tool_mmap_mutex_get();
+    tooldata_header_t *hptr = HPTR();
+    if (tool_mmap_base) {
+        tool_mmap_mutex_give(); return hptr->change;
     } else {
         tool_mmap_mutex_give(); return -1;
     }
@@ -265,6 +280,7 @@ toolidx_t tooldata_put(struct CANON_TOOL_TABLE tdata,int idx)
     if (idx==0 && toolstat) { //note sai does not use toolTableCurrent
        *(struct CANON_TOOL_TABLE*)(&toolstat->toolTableCurrent) = tdata;
     }
+    ++hptr->change;
     tool_mmap_mutex_give(); return ret;
 } // tooldata_put()
 
@@ -277,6 +293,8 @@ void tooldata_reset()
         CANON_TOOL_TABLE *tptr = TPTR(idx);
         *tptr = initdata;
     }
+    tooldata_header_t *hptr = HPTR();
+    ++hptr->change;
     tool_mmap_mutex_give(); return;
 } // tooldata_reset()
 

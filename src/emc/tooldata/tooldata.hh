@@ -50,7 +50,7 @@ typedef enum {
 //----------------------------------------------------------
 // tooldata_*(): access to internal tool table data:
 struct    CANON_TOOL_TABLE tooldata_entry_init(void);
-toolidx_t tooldata_put(struct CANON_TOOL_TABLE tdata,int idx);
+toolidx_t tooldata_put(CANON_TOOL_TABLE tdata,int idx);
 toolidx_t tooldata_get(CANON_TOOL_TABLE* pdata,int idx);
 
 void   tooldata_init(bool random_tool_changer);
@@ -87,6 +87,7 @@ int  tool_mmap_creator(EMC_TOOL_STAT const  *ptr,int random_toolchanger);
 int  tool_mmap_user(void);
 void tool_mmap_close(void);
 bool tool_mmap_is_random_toolchanger(void);
+int  tooldata_change_get(void);
 
 //----------------------------------------------------------
 //nml specific

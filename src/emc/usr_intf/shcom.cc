@@ -226,6 +226,7 @@ int updateError()
 
     case 0:
 	// nothing new
+	return 1;
 	break;
 
     case EMC_OPERATOR_ERROR_TYPE:
@@ -467,6 +468,21 @@ int sendEstopReset()
     return 0;
 }
 
+int sendEstop(bool on)
+{
+    EMC_TASK_SET_STATE state_msg;
+
+    state_msg.state = on ? EMC_TASK_STATE_ESTOP : EMC_TASK_STATE_ESTOP_RESET;
+    emcCommandSend(state_msg);
+    if (emcWaitType == EMC_WAIT_RECEIVED) {
+	return emcCommandWaitReceived();
+    } else if (emcWaitType == EMC_WAIT_DONE) {
+	return emcCommandWaitDone();
+    }
+
+    return 0;
+}
+
 int sendMachineOn()
 {
     EMC_TASK_SET_STATE state_msg;
@@ -487,6 +503,21 @@ int sendMachineOff()
     EMC_TASK_SET_STATE state_msg;
 
     state_msg.state = EMC_TASK_STATE_OFF;
+    emcCommandSend(state_msg);
+    if (emcWaitType == EMC_WAIT_RECEIVED) {
+	return emcCommandWaitReceived();
+    } else if (emcWaitType == EMC_WAIT_DONE) {
+	return emcCommandWaitDone();
+    }
+
+    return 0;
+}
+
+int sendMachineOn(bool on)
+{
+    EMC_TASK_SET_STATE state_msg;
+
+    state_msg.state = on ? EMC_TASK_STATE_ON : EMC_TASK_STATE_OFF;
     emcCommandSend(state_msg);
     if (emcWaitType == EMC_WAIT_RECEIVED) {
 	return emcCommandWaitReceived();
@@ -989,7 +1020,7 @@ int sendTaskPlanInit()
 // saved value of last program opened
 static char lastProgramFile[LINELEN] = "";
 
-int sendProgramOpen(char *program)
+int sendProgramOpen(const char *program)
 {
     EMC_TASK_PLAN_OPEN emc_task_plan_open_msg;
 
@@ -998,6 +1029,33 @@ int sendProgramOpen(char *program)
 
     rtapi_strxcpy(emc_task_plan_open_msg.file, program);
     emcCommandSend(emc_task_plan_open_msg);
+    if (emcWaitType == EMC_WAIT_RECEIVED) {
+	return emcCommandWaitReceived();
+    } else if (emcWaitType == EMC_WAIT_DONE) {
+	return emcCommandWaitDone();
+    }
+
+    return 0;
+}
+
+int sendProgramClose(void)
+{
+    EMC_TASK_PLAN_CLOSE msg;
+    lastProgramFile[0] = 0;
+    emcCommandSend(msg);
+    if (emcWaitType == EMC_WAIT_RECEIVED) {
+	return emcCommandWaitReceived();
+    } else if (emcWaitType == EMC_WAIT_DONE) {
+	return emcCommandWaitDone();
+    }
+
+    return 0;
+}
+
+int sendProgramAbort(void)
+{
+    EMC_TASK_ABORT msg;
+    emcCommandSend(msg);
     if (emcWaitType == EMC_WAIT_RECEIVED) {
 	return emcCommandWaitReceived();
     } else if (emcWaitType == EMC_WAIT_DONE) {
@@ -1132,7 +1190,7 @@ int sendToolSetOffset(int toolno, double zoffset, double diameter)
     emc_tool_set_offset_msg.offset.tran.z = zoffset;
     emc_tool_set_offset_msg.diameter = diameter;
     emc_tool_set_offset_msg.orientation = 0; // mill style tool table
-
+fprintf(stderr, "EMC_TOOL_SET_OFFSET\n");
     emcCommandSend(emc_tool_set_offset_msg);
     if (emcWaitType == EMC_WAIT_RECEIVED) {
 	return emcCommandWaitReceived();
@@ -1226,6 +1284,22 @@ int sendSetTeleopEnable(int enable)
 
     emc_set_teleop_enable_msg.enable = enable;
     emcCommandSend(emc_set_teleop_enable_msg);
+    if (emcWaitType == EMC_WAIT_RECEIVED) {
+	return emcCommandWaitReceived();
+    } else if (emcWaitType == EMC_WAIT_DONE) {
+	return emcCommandWaitDone();
+    }
+
+    return 0;
+}
+
+
+int sendSetFeedHoldEnable(bool enable)
+{
+    EMC_TRAJ_SET_FH_ENABLE msg;
+
+    msg.mode = enable ? 1 : 0;
+    emcCommandSend(msg);
     if (emcWaitType == EMC_WAIT_RECEIVED) {
 	return emcCommandWaitReceived();
     } else if (emcWaitType == EMC_WAIT_DONE) {
@@ -1349,5 +1423,108 @@ int checkStatus ()
     return 0;
 }
 
+int sendSetBlockDelete(bool state)
+{
+    EMC_TASK_PLAN_SET_BLOCK_DELETE msg;
+
+    msg.state = state;
+    emcCommandSend(msg);
+    if (emcWaitType == EMC_WAIT_RECEIVED) {
+	return emcCommandWaitReceived();
+    } else if (emcWaitType == EMC_WAIT_DONE) {
+	return emcCommandWaitDone();
+    }
+
+    return 0;
+}
+
+int sendSetG5x(int index, EmcPose offset)
+{
+    EMC_TRAJ_SET_G5X msg;
+
+    msg.g5x_index = index;
+    msg.origin = offset;
+
+    emcCommandSend(msg);
+    if (emcWaitType == EMC_WAIT_RECEIVED) {
+	return emcCommandWaitReceived();
+    } else if (emcWaitType == EMC_WAIT_DONE) {
+	return emcCommandWaitDone();
+    }
+
+    return 0;
+}
 
 
+int sendMaxVelocity(double vel)
+{
+    EMC_TRAJ_SET_MAX_VELOCITY msg;
+
+    if (vel < 0.0) vel = 0.0;
+
+    msg.velocity = vel;
+    emcCommandSend(msg);
+    if (emcWaitType == EMC_WAIT_RECEIVED) {
+	return emcCommandWaitReceived();
+    } else if (emcWaitType == EMC_WAIT_DONE) {
+	return emcCommandWaitDone();
+    }
+
+    return 0;
+}
+
+int sendSetSOEnable(int spindle, unsigned char mode)
+{
+    EMC_TRAJ_SET_SO_ENABLE msg;
+
+    msg.spindle = spindle;
+    msg.mode = mode;
+    if (emcWaitType == EMC_WAIT_RECEIVED) {
+	return emcCommandWaitReceived();
+    } else if (emcWaitType == EMC_WAIT_DONE) {
+	return emcCommandWaitDone();
+    }
+
+    return 0;
+}
+
+int sendSynch()
+{
+    EMC_TASK_PLAN_SYNCH msg;
+
+    emcCommandSend(msg);
+    if (emcWaitType == EMC_WAIT_RECEIVED) {
+	return emcCommandWaitReceived();
+    } else if (emcWaitType == EMC_WAIT_DONE) {
+	return emcCommandWaitDone();
+    }
+
+    return 0;
+}
+
+int sendMdiAndSynch(const char *cmd)
+{
+	if (emcStatus->task.interpState != EMC_TASK_INTERP_IDLE)
+		return 1;
+
+	if (emcStatus->task.mode != EMC_TASK_MODE_MDI) {
+		sendMdi();
+		emcCommandWaitDone();
+		for (int i = 0; i < 10; ++i) {
+			usleep(10000);
+			updateStatus();
+		} while (emcStatus->task.mode != EMC_TASK_MODE_MDI);
+	}
+
+	if (emcStatus->task.mode != EMC_TASK_MODE_MDI) {
+		fprintf(stderr, "not mdi!\n");
+		return 3;
+	}
+
+	sendMdiCmd(cmd);
+//	emcCommandWaitDone();
+//	sendSynch();
+//	emcCommandWaitDone();
+
+	return 0;
+}

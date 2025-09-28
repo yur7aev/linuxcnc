@@ -73,6 +73,7 @@ void tooldata_reset()
 
 toolidx_t tooldata_get(CANON_TOOL_TABLE* pdata,int idx)
 {
+fprintf(stderr, "TOODATA_GET\n");
     if (idx < 0 || idx >= CANON_POCKETS_MAX) {
         fprintf(stderr,"!!!%5d PROBLEM tooldata_get(): idx=%d, maxallowed=%d\n",
                 getpid(),idx,CANON_POCKETS_MAX-1);

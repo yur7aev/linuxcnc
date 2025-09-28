@@ -2048,6 +2048,7 @@ int Interp::synch()
 	  _setup.spindle_mode[s] = CONSTANT_RPM;
   }
   GET_EXTERNAL_PARAMETER_FILE_NAME(file_name, (LINELEN - 1));
+fprintf(stderr, "*** SYNCH ***\n");
   save_parameters(((file_name[0] ==
                              0) ?
                             RS274NGC_PARAMETER_FILE_NAME_DEFAULT :

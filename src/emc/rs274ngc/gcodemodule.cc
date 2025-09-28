@@ -543,7 +543,7 @@ void GET_EXTERNAL_PARAMETER_FILE_NAME(char *name, int max_size) {
 }
 CANON_UNITS GET_EXTERNAL_LENGTH_UNIT_TYPE() { return CANON_UNITS_INCHES; }
 CANON_TOOL_TABLE GET_EXTERNAL_TOOL_TABLE(int pocket) {
-    CANON_TOOL_TABLE tdata = {-1,-1,{{0,0,0},0,0,0,0,0,0},0,0,0,0};
+    CANON_TOOL_TABLE tdata = {-1,-1,{0,0,0,0,0,0,0,0,0},0,0,0,0, ""};
     if(interp_error) return tdata;
     PyObject *result =
         callmethod(callback, "get_tool", "i", pocket);

@@ -68,6 +68,7 @@ IniFile::Open(const char *file)
 
     if(IsOpen()) Close();
 
+fprintf(stderr, "IniFile::Open %s\n", file);
     TildeExpansion(file, path, sizeof(path));
 
     if((fp = fopen(path, "r")) == NULL)

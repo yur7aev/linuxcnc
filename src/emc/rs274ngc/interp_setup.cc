@@ -130,7 +130,7 @@ setup::setup() :
     spindle_turning{CANON_STOPPED},
     stack{},
     stack_index(0),
-    tool_offset{{0,0,0},0,0,0,0,0,0},
+    tool_offset{0,0,0,0,0,0,0,0,0},
     tool_table{},
     traverse_rate (0.0),
     orient_offset (0.0),
