@@ -1,3 +1,7 @@
 *.po merge=pofile
 *.pot merge=pofile
 .github/ export-ignore
+*.po -diff
+*.pot -diff
+*.par -diff
+*.ini -diff

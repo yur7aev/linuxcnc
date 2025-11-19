@@ -1,0 +1,97 @@
+#
+# Cross Platform Makefile
+# Compatible with MSYS2/MINGW, Ubuntu 14.04.1 and Mac OS X
+#
+# You will need GLFW (http://www.glfw.org):
+# Linux:
+#   apt-get install libglfw-dev
+# Mac OS X:
+#   brew install glfw
+# MSYS2:
+#   pacman -S --noconfirm --needed mingw-w64-x86_64-toolchain mingw-w64-x86_64-glfw
+#
+
+#CXX = g++
+#CXX = clang++
+
+IMGUI_DIR = /home/dmitry/git/imgui
+#SOURCES = nopy.cc
+SOURCES = $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
+SOURCES += $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
+OBJS = $(addprefix build/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
+UNAME_S := $(shell uname -s)
+LINUX_GL_LIBS = -lGL
+
+iCXXFLAGS = -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends
+iCXXFLAGS += -g -Wall -Wformat
+LIBS += -lGL -lGLEW -lrs274 -ltooldata -llinuxcnc -lposemath
+LIBS += -L../../glfw/build/src -lglfw3
+
+CXXFLAGS += -Iemc/usr_intf/nopy -Wno-format-security -I../../glfw/include
+
+##---------------------------------------------------------------------
+## OPENGL ES
+##---------------------------------------------------------------------
+
+## This assumes a GL ES library available in the system, e.g. libGLESv2.so
+# CXXFLAGS += -DIMGUI_IMPL_OPENGL_ES2
+# LINUX_GL_LIBS = -lGLESv2
+
+##---------------------------------------------------------------------
+## BUILD FLAGS PER PLATFORM
+##---------------------------------------------------------------------
+
+ifeq ($(UNAME_S), Linux) #LINUX
+	ECHO_MESSAGE = "Linux"
+	LIBS += $(LINUX_GL_LIBS) `pkg-config --static --libs glfw3`
+
+	iCXXFLAGS += `pkg-config --cflags glfw3`
+#	CFLAGS = $(CXXFLAGS)
+endif
+
+##---------------------------------------------------------------------
+## BUILD RULES
+##---------------------------------------------------------------------
+
+#build/%.o:%.cpp
+#	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJS) : $(IMGUI_DIR)/*.h
+
+build/%.o : $(IMGUI_DIR)/%.cpp
+	$(CXX) $(iCXXFLAGS) -c -o $@ $<
+
+build/%.o : $(IMGUI_DIR)/backends/%.cpp
+	$(CXX) -I../../glfw/include $(iCXXFLAGS) -c -o $@ $<
+
+##---------------------------------------------------------------------
+
+NOPYSRCS :=	emc/usr_intf/nopy/nopy.cc \
+		emc/usr_intf/nopy/theme.cc \
+		emc/usr_intf/nopy/widgets.cc \
+		emc/usr_intf/nopy/osk.cc \
+		emc/usr_intf/nopy/glfb.cc \
+		emc/usr_intf/nopy/trackball.c \
+		emc/usr_intf/nopy/w_dro.cc \
+		emc/usr_intf/nopy/w_offsets.cc \
+		emc/usr_intf/nopy/w_tools.cc \
+		emc/usr_intf/nopy/w_3d.cc \
+		emc/usr_intf/nopy/w_gcode.cc \
+		emc/usr_intf/nopy/w_mdi.cc \
+		emc/usr_intf/nopy/w_manual.cc \
+		emc/usr_intf/nopy/w_hal.cc \
+		emc/usr_intf/nopy/msg_log.cc \
+		emc/usr_intf/nopy/interp.cc \
+		emc/usr_intf/nopy/TextEditor.cc \
+		emc/usr_intf/nopy/glut_mroman.c \
+		emc/usr_intf/nopy/glut_roman.c \
+		emc/usr_intf/nopy/glut_stroke.c \
+		emc/usr_intf/shcom.cc \
+		emc/usr_intf/sockets.c
+
+USERSRCS += $(NOPYSRCS)
+
+../bin/nopy: $(OBJS) $(call TOOBJS, $(NOPYSRCS)) ../lib/liblinuxcnchal.so.0 ../lib/liblinuxcnc.a ../lib/libnml.so.0 ../lib/liblinuxcncini.so.0 ../lib/libtooldata.so.0 ../lib/librs274.so
+	$(ECHO) Linking $(notdir $@)
+	$(Q)$(CXX) -o $@ $(ULFLAGS) $^ -lpthread $(LDFLAGS) $(LIBS)
+TARGETS += ../bin/nopy

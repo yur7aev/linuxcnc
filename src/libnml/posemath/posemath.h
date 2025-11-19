@@ -525,10 +525,12 @@ extern "C" {
 
 /* PmCartesian */
 
-    typedef struct {
+typedef union {
+    struct {
 	double x, y, z;		/* this.x, etc. */
-
-    } PmCartesian;
+    };
+	double coor[3];
+} PmCartesian;
 
 /* PmSpherical */
 
