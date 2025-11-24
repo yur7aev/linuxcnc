@@ -6,7 +6,7 @@
  * (c) 2016-2024 http://yurtaev.com
  */
 
-component nyx "YxxxxP servo interface card driver";
+component nyx "YxxxxP, YSSCxN servo interface card driver";
 
 param rw  signed servo-##.origin[16 : personality] = 0;		// 32bit servo command-feedback offset to prevent integer overflow
 param rw   float servo-##.pos-scale[16 : personality] = 5.0;	// travel units per revolution (5mm)
@@ -88,6 +88,8 @@ pin  in      bit servo-##.undroop[16 : personality];
 pin out      bit ready "card is in sync with NC";
 pin out    float phase "sync pulse deviation, periods";
 pin out   signed error-cnt "missed comm cycles when not in sync";
+pin out   signed error-rx;
+pin out   signed error-tx;
 //pin out    float jitter;
 //pin  in      bit enable = 1;
 
@@ -132,7 +134,7 @@ function wr;
 
 license "GPL";
 
-include <nyx3.h>;
+include <nyx4.h>;
 
 ;;
 
@@ -208,7 +210,7 @@ typedef struct yssc2 {
 	void *dev;
 	dma_addr_t dpram_bus_addr;
 #else
-	int fd;			// nyx device file descriptor
+	int fd;			// nyx device file descriptor / socket
 #endif
 
 	YSSC2_amp amp[NYX_AXES];
@@ -221,6 +223,8 @@ typedef struct yssc2 {
 	long long int prev_clock;
 
 	servo_params par[NYX_AXES];
+
+	int eth;
 } YSSC2;
 
 //
@@ -234,6 +238,7 @@ uint32_t yssc2_magic(YSSC2 *y)		{ return y->dpram->magic; }
 int yssc2_axes(YSSC2 *y)		{ return y->num_axes; }
 int yssc2_fb_seq(YSSC2 *y)		{ return y->dpram->fb.seq; }
 double yssc2_irq_time_us(YSSC2 *y)	{ return y->dpram->fb.irq_time / 45.0; }
+int yssc2_irq_time(YSSC2 *y)	{ return y->dpram->fb.irq_time; }
 ///double yssc2_debug(YSSC2 *y, int n)	{ return 0; } ///y->dpram->dbg[n]; }
 double yssc2_rx_time(YSSC2 *y, int n)	{ return FB(n).rxtime; }
 int yssc2_z_offs(YSSC2 *y, int n)       { return FB(n).smth2; }
@@ -324,7 +329,7 @@ int  yssc2_index_falling(YSSC2 *y, int a) {
 int  yssc2_init(void);
 int  yssc2_start(int instance, int maxdrives);
 void yssc2_cleanup(void);
-void yssc2_receive(YSSC2 *y);
+int yssc2_receive(YSSC2 *y);
 void yssc2_process(YSSC2 *y);
 int  yssc2_transmit(YSSC2 *y);
 YSSC2 *yssc2_board(int i);
@@ -410,6 +415,9 @@ RTAPI_MP_INT(debug, "Enable debugging messages");
 
 static int encres[NYX_AXES] = {0,};
 RTAPI_MP_ARRAY_INT(encres, NYX_AXES, "Encoder resolution override");
+
+char *ip[YSSC2_MAX_BOARDS] = {0,};
+RTAPI_MP_ARRAY_STRING(ip, YSSC2_MAX_BOARDS, "IP address if YUSI1");
 
 //
 //
@@ -607,12 +615,14 @@ static unsigned int num_boards = 0;
 //
 
 int rtapi_app_main(void) {
-	int i, count, r;
+	int i, count, r = -1;
 
 	comp_id = hal_init("nyx");
 	yssc2_init();
 	count = get_count();
 	if (comp_id < 0) return comp_id;
+
+//rtapi_print_msg(RTAPI_MSG_ERR, " nyx: starting, %d boards\n", count);
 
 	for (i = r = 0; !r && i < count; i++) {
 		YSSC2 *y = yssc2_board(i);
@@ -633,6 +643,7 @@ int rtapi_app_main(void) {
 		hal_exit(comp_id);
 	} else {
 		hal_ready(comp_id);
+		rtapi_print_msg(RTAPI_MSG_ERR, "\nnyx ready %d\n", count);
 	}
 
 	return r;
@@ -653,6 +664,8 @@ EXTRA_SETUP()
 
 	enc_changed[0] = -1;
 	enc_changed[1] = -1;
+
+		rtapi_print_msg(RTAPI_MSG_ERR, "\nREADY 3\n");
 
 	return 0;
 }
@@ -708,10 +721,10 @@ FUNCTION(rd)
 //	jitter = (c - y->prev_clock) / 2.8 / 22.222222;
 //	y->prev_clock = c;
 
-	yssc2_receive(y);	// should be the very first routine
+	if (yssc2_receive(y)) error_rx += 1;	// should be the very first routine
 
 	int insync;
-	phase = yssc2_irq_time_us(y) * 45.0;
+	phase = yssc2_irq_time(y);
 	insync = (yssc2_fb_seq(y) & YS_INSYNC) != 0;
 
 	if (y->num_dbg > 0) dbg0 = y->dp_dbg[0];
@@ -737,13 +750,14 @@ FUNCTION(rd)
 				}
 			}
 			ready = 1;
+		} else {
+			if ((dbg3&YS_SEQ) != ((y->prev_fb_seq+1)&YS_SEQ)) ++error_cnt;
 		}
 		glitch_len = 0;
 	} else {
 		if (++glitch_len >= MAX_GLITCH) {
 			ready = 0;
 		}
-		++error_cnt;
 	}
 
 	{
@@ -1702,7 +1716,28 @@ int config_dpram(YSSC2 *y)
 		y->dp_yo = (uint32_t*)(y->dp_dac + y->num_dac);
 		y->dp_servo_cmd = (nyx_servo_cmd*)(y->dp_yo + y->num_yio*2);
 		y->yio_size = 2;
+	} else if (magic == 0x6f6c6568) {	// YUSI helo
+		y->num_axes = 8;
+		y->num_yio = 8;
+		y->num_enc = 6;
+		y->num_dac = 2;
+		y->num_gpi = 12+17;
+		y->num_gpo = 8;
+		y->num_dbg = 2;
+
+		y->dp_gpi = y->dpram->fb.gpi;
+		y->dp_enc = y->dp_gpi + y->num_gpi/32+1;
+		y->dp_yi = y->dp_enc + y->num_enc;
+		y->dp_dbg = y->dp_yi + y->num_yio*2;
+		y->dp_servo_fb = (nyx_servo_fb*)(y->dp_dbg + y->num_dbg);
+
+		y->dp_gpo = y->dpram->cmd.gpo;
+		y->dp_dac = (uint16_t*)(y->dp_gpo + y->num_gpo/32+1);
+		y->dp_yo = (uint32_t*)(y->dp_dac + y->num_dac);
+		y->dp_servo_cmd = (nyx_servo_cmd*)(y->dp_yo + y->num_yio*2);
+		y->yio_size = 2;
 	} else {
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx: bad magic %x\n", magic);
 		return -ENODEV;
 	}
 
@@ -1876,14 +1911,23 @@ void yssc2_cleanup()
 #include <rtapi_slab.h>
 #include <rtapi_io.h>
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+
 int yssc2_init()
 {
 	char dev[32];
 	YSSC2 *y;
+	int rc;
+
+	// PCI
 
 	for (num_boards = 0; num_boards < YSSC2_MAX_BOARDS; num_boards++) {
 		y = &yssc2_brd[num_boards];
 		y->no = num_boards;
+		y->eth = 0;
 
 		rtapi_snprintf(dev, 32, "/dev/nyx%d", num_boards);
 		y->fd = open(dev, O_RDWR);
@@ -1925,6 +1969,76 @@ int yssc2_init()
 		freq_init(y);
 		y->was_ready = 0;
 		y->prev_fb_seq = 0;
+	}
+
+	// ethernet
+
+	for (int i = 0; num_boards < YSSC2_MAX_BOARDS && i < YSSC2_MAX_BOARDS; i++, num_boards++) {
+		if(ip[i] == NULL || !ip[i]) break;
+		rtapi_print_msg(RTAPI_MSG_ERR, "IP = %s", ip[i]);
+
+		y = &yssc2_brd[num_boards];
+		y->no = num_boards;
+		y->eth = 1;
+
+
+		y->fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+		if (y->fd < 0) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: socket() failed", num_boards);
+			break;
+		}
+
+		struct sockaddr_in board_addr;
+		board_addr.sin_family = AF_INET;
+		board_addr.sin_port = htons(666);
+		board_addr.sin_addr.s_addr = inet_addr(ip[i]);
+
+		rc = connect(y->fd, (struct sockaddr *)&board_addr, sizeof(board_addr));
+		if (rc < 0) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: connect() failed", num_boards);
+			close(y->fd);
+			break;
+		}
+
+                struct timeval timeout;
+                timeout.tv_sec = 0;
+                timeout.tv_usec = 5;
+
+                rc = setsockopt(y->fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+                if (rc < 0) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: set receive timeout failed", num_boards);
+			close(y->fd);
+                        break;
+                }
+		
+                rc = setsockopt(y->fd, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
+                if (rc < 0) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: set send timeout failed", num_boards);
+			close(y->fd);
+                        break;
+                }
+
+		y->dpram = calloc(sizeof(nyx_dpram), 1);
+		if (y->dpram == NULL) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: malloc failed", num_boards);
+			close(y->fd);
+			return -1;
+		}
+
+		rc = send(y->fd, "helo", 4, 0);
+		rc = recv(y->fd, y->dpram, sizeof(y->dpram), 0);
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: received %d", num_boards, rc);
+
+		if (config_dpram(y))
+			return -1;
+
+		y->initial_delay = 0;
+		y->errors_shown = 0;
+		freq_init(y);
+		y->was_ready = 0;
+		y->prev_fb_seq = 0;
+
+		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: IP done", num_boards);
 	}
 
 	if (num_boards < 1) {
@@ -1983,6 +2097,9 @@ void yssc2_process(YSSC2 *y)
 		switch (fb->state & Y_TYPE) {
 		case Y_TYPE_ORIGIN:
 			if (y->amp[a].fbres == 0) {
+
+rtapi_print_msg(RTAPI_MSG_ERR, "fbres:%d\n", fb->fbres);
+
 				y->amp[a].fbres = encres[a] ? encres[a] : fb->fbres;
 				y->amp[a].cyc0 = fb->cyc0;
 				y->amp[a].abs0 = fb->abs0;
@@ -2028,10 +2145,11 @@ void yssc2_process(YSSC2 *y)
 
 #ifdef __KERNEL__
 
-void yssc2_receive(YSSC2 *y)
+int yssc2_receive(YSSC2 *y)
 {
-	if (y == NULL) return;
-	if (y->iomem == NULL) return;
+	if (y == NULL) return -1;
+	if (y->iomem == NULL) return -1;
+	int rc = 0;
 
 	y->iomem->jtag = 0x80;	// sync pulse
 	y->iomem->jtag = 0;
@@ -2049,12 +2167,15 @@ void yssc2_receive(YSSC2 *y)
 		do { udelay(5); } while (y->iomem->jtag & 0x40);
 		if (y->iomem->jtag & 8) {	// DMA error
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: DMA mem write error\n", y->no);
+			rc = -2;
 		}
 	}
 
 	y->dpram->cmd.seq =
 		(y->dpram->cmd.seq & ~YS_SEQ) |
 		(y->dpram->fb.seq  &  YS_SEQ);
+
+	return rc;
 }
 
 int yssc2_transmit(YSSC2 *y)
@@ -2086,21 +2207,34 @@ int yssc2_transmit(YSSC2 *y)
 
 #else // __USERSPACE__
 
-void yssc2_receive(YSSC2 *y)
+int yssc2_receive(YSSC2 *y)
 {
-	int rc;
+	int rc = 0;
+	if (y == NULL) return -1;
 
-	if (y == NULL) return;
-	lseek(y->fd, offsetof(struct nyx_dpram, fb), SEEK_SET);
-	rc = read(y->fd, &y->dpram->fb, SIZE_FB(y));
-	if (rc <= 0) {
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: read err %d", y->no, rc);
-		y->dpram->magic = 0;	// mark
+	if (!y->eth) {
+		lseek(y->fd, offsetof(struct nyx_dpram, fb), SEEK_SET);
+		rc = read(y->fd, &y->dpram->fb, SIZE_FB(y));
+		if (rc <= 0) {
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: read err %d", y->no, rc);
+			y->dpram->magic = 0;	// mark
+		}
+	} else {
+		rc = recv(y->fd, &y->dpram->fb_magic, SIZE_FB(y)+4, 0);
+		if (rc != SIZE_FB(y)+4) {
+//			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: recv err %d", y->no, rc);
+			y->dpram->magic = 0;	// mark
+			rc = -2;
+		} else {
+			rc = 0;
+		}
 	}
 
 	y->dpram->cmd.seq =
 		(y->dpram->cmd.seq & ~YS_SEQ) |
 		(y->dpram->fb.seq  &  YS_SEQ);
+
+	return rc;
 }
 
 int yssc2_transmit(YSSC2 *y)
@@ -2110,10 +2244,17 @@ int yssc2_transmit(YSSC2 *y)
 	if (y == NULL) return -1;
 	y->prev_fb_seq = y->dpram->fb.seq;
 
-	lseek(y->fd, offsetof(struct nyx_dpram, cmd), SEEK_SET);
-	rc = write(y->fd, &y->dpram->cmd, SIZE_CMD(y));
-	if (rc <= 0)
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: write err %d\n", y->no, rc);
+	if (!y->eth) {
+		lseek(y->fd, offsetof(struct nyx_dpram, cmd), SEEK_SET);
+		rc = write(y->fd, &y->dpram->cmd, SIZE_CMD(y));
+		if (rc <= 0)
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: write err %d\n", y->no, rc);
+	} else {
+		y->dpram->cmd_magic = 0xcccccccc;
+		rc = send(y->fd, &y->dpram->cmd_magic, SIZE_CMD(y)+4, 0);
+		if (rc <= 0)
+			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: send err %d\n", y->no, rc);
+	}
 
 	return 0;
 }
