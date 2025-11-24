@@ -224,6 +224,7 @@ class gmoccapy(object):
         self.height = 750     # The height of the main Window
 
         self.gcodeerror = ""   # we need this to avoid multiple messages of the same error
+        self.max_spindle_disp = 999999 # maximum display value for 'S' and 'Vc'
 
         self.file_changed = False
         self.widgets.hal_action_saveas.connect("saved-as", self.saved_as)
@@ -396,10 +397,10 @@ class gmoccapy(object):
         self.widgets.gremlin.set_property("view", view)
 
         # get if run from line should be used
-        rfl = self.prefs.getpref("run_from_line", "no_run", str)
+        self.run_from_line = self.prefs.getpref("run_from_line", "no_run", str)
         # and set the corresponding button active
-        self.widgets["rbtn_{0}_from_line".format(rfl)].set_active(True)
-        if rfl == "no_run":
+        self.widgets["rbtn_{0}_from_line".format(self.run_from_line)].set_active(True)
+        if self.run_from_line == "no_run":
             self.widgets.btn_from_line.set_sensitive(False)
         else:
             self.widgets.btn_from_line.set_sensitive(True)
@@ -1923,7 +1924,9 @@ class gmoccapy(object):
         self.widgets.tooledit1.set_visible("abcxyzuvwijq", False)
         for axis in self.axis_list:
             self.widgets.tooledit1.set_visible("{0}".format(axis), True)
-
+        # disconnect the key_press handler in the widget
+        tv = self.widgets.tooledit1.wTree.get_object("treeview1")
+        tv.disconnect_by_func(self.widgets.tooledit1.on_tree_navigate_key_press)
         # if it's a lathe config we show lathe related columns
         if self.lathe_mode:
             self.widgets.tooledit1.set_visible("ijq", True)
@@ -2567,10 +2570,12 @@ class gmoccapy(object):
         if self.load_tool:
             return
 
-        widgetlist = ["ntb_jog", "btn_from_line",
+        widgetlist = ["ntb_jog",
                       "tbtn_flood", "tbtn_mist", "rbt_forward", "rbt_reverse", "rbt_stop",
                       "btn_load", "btn_edit", "tbtn_optional_blocks", "btn_reload"
         ]
+        if self.run_from_line == "run":
+            widgetlist.append("btn_from_line")
         if not self.widgets.rbt_hal_unlock.get_active() and not self.user_mode:
             widgetlist.append("tbtn_setup")
 
@@ -2618,14 +2623,15 @@ class gmoccapy(object):
         LOG.debug("RUN")
 
         widgetlist = ["rbt_manual", "rbt_mdi", "rbt_auto", "tbtn_setup", "btn_index_tool",
-                      "btn_from_line", "btn_change_tool", "btn_select_tool_by_no",
+                      "btn_change_tool", "btn_select_tool_by_no",
                       "btn_load", "btn_edit", "tbtn_optional_blocks", "rbt_reverse", "rbt_stop", "rbt_forward",
                       "btn_tool_touchoff_x", "btn_tool_touchoff_z", "btn_touch", "btn_reload"
         ]
         # in MDI it should be possible to add more commands, even if the interpreter is running
         if self.stat.task_mode != linuxcnc.MODE_MDI:
             widgetlist.append("ntb_jog")
-
+        if self.run_from_line == "run":
+            widgetlist.append("btn_from_line")
         self._sensitize_widgets(widgetlist, False)
         self.widgets.btn_run.set_sensitive(False)
         self.widgets.btn_stop.set_sensitive(True)
@@ -3948,30 +3954,33 @@ class gmoccapy(object):
             self.widgets.rbt_stop.set_active(True)
             return
 
-        # set the speed label in active code frame
-        if self.stat.spindle[0]['speed'] == 0:
-            speed = self.stat.settings[2]
+        # set the S label in active code frame
+        self.widgets.active_speed_label.set_label("{0:.0f}".format(self.stat.settings[2]))
+
+        # set the 'Spindle [rpm]' label
+        #Note: self.stat.spindle[0]['speed'] does not reflect 'spindle.0.speed-out' pins when using G96 mode (issue #3449)
+        speed = hal.get_value("spindle.0.speed-out")
+        # catch very large values eg when using G96 w/o D value
+        if speed > self.max_spindle_disp:
+            self.widgets.lbl_spindle_act.set_text("S >"+str(self.max_spindle_disp))
+        elif speed < -self.max_spindle_disp:
+            self.widgets.lbl_spindle_act.set_text("S <"+str(self.max_spindle_disp))
         else:
-            speed = self.stat.spindle[0]['speed']
-        self.widgets.active_speed_label.set_label("{0:.0f}".format(abs(speed)))
-        self.widgets.lbl_spindle_act.set_text("S {0}".format(int(round(speed * self.spindle_override))))
+            self.widgets.lbl_spindle_act.set_text("S {0}".format(int(round(speed))))
 
     def _update_vc(self):
-        if self.stat.spindle[0]['direction'] != 0:
-            if self.stat.spindle[0]['speed'] == 0:
-                speed = self.stat.settings[2]
-            else:
-                speed = self.stat.spindle[0]['speed']
-
-            if not self.lathe_mode:
-                diameter = self.halcomp["tool-diameter"]
-            else:
-                diameter = int(self.dro_dic["Combi_DRO_0"].get_position()[1] * 2)
-                speed = self.widgets.spindle_feedback_bar.value
-            vc = abs(int(speed * self.spindle_override) * diameter * 3.14 / 1000)
+        #Note: self.stat.spindle[0]['speed'] does not reflect 'spindle.0.speed-out' pins when using G96 mode (issue #3449)
+        speed = hal.get_value("spindle.0.speed-out")
+        if not self.lathe_mode:
+            diameter = self.halcomp["tool-diameter"]
         else:
-            vc = 0
-        if vc >= 100:
+            diameter = int(self.dro_dic["Combi_DRO_0"].get_position()[1] * 2)
+            speed = self.widgets.spindle_feedback_bar.value
+        vc = abs(int(speed * self.spindle_override) * diameter * 3.14 / 1000)
+        # catch very large Vc values due to very large S values eg when using G96 w/o D value
+        if vc > self.max_spindle_disp:
+            text = "Vc= >" + str(self.max_spindle_disp)
+        elif vc >= 100:
             text = "Vc= {0:d}".format(int(vc))
         elif vc >= 10:
             text = "Vc= {0:2.1f}".format(vc)
@@ -3979,7 +3988,8 @@ class gmoccapy(object):
             text = "Vc= {0:.2f}".format(vc)
         self.widgets.lbl_vc.set_text(text)
 
-    def on_rbt_forward_clicked(self, widget, data=None):
+    # This is for handling mouse clicks on the GUI button
+    def on_rbt_forward_released(self, widget, data=None):
         if widget.get_active():
             widget.set_image(self.widgets.img_spindle_forward_on)
             self._set_spindle("forward")
@@ -3989,10 +3999,31 @@ class gmoccapy(object):
         widget.set_sensitive(not widget.get_sensitive())
         widget.set_sensitive(not widget.get_sensitive())
 
-    def on_rbt_reverse_clicked(self, widget, data=None):
+    # This is for handling mouse clicks on the GUI button
+    def on_rbt_reverse_released(self, widget, data=None):
         if widget.get_active():
             widget.set_image(self.widgets.img_spindle_reverse_on)
             self._set_spindle("reverse")
+        else:
+            widget.set_image(self.widgets.img_spindle_reverse)
+        # Toggling the sensitive property is important here! See the commit description.
+        widget.set_sensitive(not widget.get_sensitive())
+        widget.set_sensitive(not widget.get_sensitive())
+
+    # This is for handling self.widgets.rbt_forward.set_active(True)
+    def on_rbt_forward_clicked(self, widget, data=None):
+        if widget.get_active():
+            widget.set_image(self.widgets.img_spindle_forward_on)
+        else:
+            widget.set_image(self.widgets.img_spindle_forward)
+        # Toggling the sensitive property is important here! See the commit description.
+        widget.set_sensitive(not widget.get_sensitive())
+        widget.set_sensitive(not widget.get_sensitive())
+
+    # This is for handling self.widgets.rbt_reverse.set_active(True)
+    def on_rbt_reverse_clicked(self, widget, data=None):
+        if widget.get_active():
+            widget.set_image(self.widgets.img_spindle_reverse_on)
         else:
             widget.set_image(self.widgets.img_spindle_reverse)
         # Toggling the sensitive property is important here! See the commit description.
@@ -4072,11 +4103,13 @@ class gmoccapy(object):
             # get the current spindle speed
             if not abs(self.stat.settings[2]):
                 if self.widgets.rbt_forward.get_active() or self.widgets.rbt_reverse.get_active():
-                    speed = self.stat.spindle[0]['speed']
+                    #speed = self.stat.spindle[0]['speed'] does not work when using G96 mode (issue #3449)
+                    speed = hal.get_value("spindle.0.speed-out")
                 else:
                     speed = 0
             else:
-                speed = abs(self.stat.spindle[0]['speed'])
+                #speed = abs(self.stat.spindle[0]['speed']) does not work when using G96 mode (issue #3449)
+                speed = abs(hal.get_value("spindle.0.speed-out"))
             spindle_override_in = widget_value / 100
             spindle_speed_out = speed * spindle_override_in
 
@@ -4604,11 +4637,12 @@ class gmoccapy(object):
     def on_rbtn_run_from_line_toggled(self, widget, data=None):
         if widget.get_active():
             if widget == self.widgets.rbtn_no_run_from_line:
-                self.prefs.putpref("run_from_line", "no_run")
+                self.run_from_line = "no_run"
                 self.widgets.btn_from_line.set_sensitive(False)
             else:  # widget == self.widgets.rbtn_run_from_line:
-                self.prefs.putpref("run_from_line", "run")
+                self.run_from_line = "run"
                 self.widgets.btn_from_line.set_sensitive(True)
+            self.prefs.putpref("run_from_line", self.run_from_line)
 
     def on_chk_use_kb_on_offset_toggled(self, widget, data=None):
         self.prefs.putpref("show_keyboard_on_offset", widget.get_active())

@@ -1,0 +1,488 @@
+;
+; L&W Magic Boy MB-1000
+; originally MELDASMAGIC 64
+;
+; 0: X  MDS-B-SVJ2-07 HC102
+; 1: Y  MDS-B-SVJ2-07 HC102
+; 2: Z  MDS-B-SVJ2-07 HC102
+; 5: SP MDS-A-SPJ-75 SJ-PF7.5-01
+;
+; G0 TC 100 ms (1.7 m/s/s)
+; G1 TC 30 ms (2.8 m/s/s)
+; FF 40%
+; backlash [9, 26, 20]
+; OT X -1000.5 .. 0.5
+; OT Y  -500.5 .. 0.5
+; OT Z  -530.5 .. 0.5
+; G53 2nd ref [0, 0, -149.3]
+;
+; 2025, http://yurtaev.com
+;
+
+SV001	1	1	1	;
+SV002	1	1	1	;
+SV003	33	33	33	;
+SV004	86	86	86	;
+SV005	100	100	100	;
+SV006	0	0	0	;
+SV007	0	0	0	;
+SV008	1900	1900	1900	;
+SV009	8192	8192	8192	;
+SV010	8192	8192	8192	;
+SV011	768	768	768	;
+SV012	768	768	768	;
+SV013	500	500	500	;
+SV014	500	500	500	;
+SV015	100	100	100	;
+SV016	40	40	40	;
+SV017	0x0000	0x0000	0x0000	;
+SV018	5	5	5	;
+SV019	25	25	25	;
+SV020	25	25	25	;
+SV021	60	60	60	;
+SV022	150	150	150	;
+SV023	6	6	6	;
+SV024	30	30	30	;
+SV025	0x22B1	0x22B1	0x22B1	;
+SV026	6	6	6	;
+SV027	0xC230	0xC230	0xC230	;
+SV028	0	0	0	;
+SV029	0	0	0	;
+SV030	100	200	100	;
+SV031	0	0	0	;
+SV032	0	0	0	;
+SV033	0x0408	0x0408	0x0408	;
+SV034	0x0000	0x0000	0x0000	;
+SV035	0x0000	0x0000	0x0000	;
+SV036	0x1000	0x1000	0x1000	;
+SV037	250	180	250	;
+SV038	0	0	0	;
+SV039	10	10	10	;
+SV040	0	0	0	;
+SV041	40	40	40	;
+SV042	0	0	0	;
+SV043	0	300	0	;
+SV044	0	200	0	;
+SV045	0	0	0	;
+SV046	60	60	60	;
+SV047	100	100	100	;
+SV048	0	0	0	;
+SV049	15	15	15	;
+SV050	0	0	0	;
+SV051	0	0	0	;
+SV052	0	0	0	;
+SV053	0	0	0	;
+SV054	0	0	0	;
+SV055	0	0	0	;
+SV056	0	0	0	;
+SV057	187	187	187	;
+SV058	0	0	0	;
+SV059	0	0	0	;
+SV060	0	0	0	;
+SV061	0	0	0	;
+SV062	0	0	0	;
+SV063	0	0	0	;
+SV064	0	0	0	;
+SV065	0	0	0	;
+SV066				;
+SV067				;
+SV068	0x0404	0x0404	0x0404	; 3.55ms cycle
+SV069	0	0	0	; rapid hi
+SV070	10000	10000	7000	; rapid low
+SV071	0	0	0	; clamp hi
+SV072	5000	5000	5000	; clamp low
+SV073	-	-	-	;
+SV074	-	-	-	;
+SV075	-	-	-	;
+SV076	-	-	-	;
+SV077	-	-	-	;
+SV078	-	-	-	; origin abs
+SV079	-	-	-	; origin hi
+SV080	-	-	-	; origin low
+
+AXIS 5
+
+SP001	100	;
+SP002	100	;
+SP003	15	;
+SP004	80	;
+SP005	0	;
+SP006	20	;
+SP007	400	;
+SP008	0	;
+SP009	15	;
+SP010	15	;
+SP011	0	;
+SP012	0	;
+SP013	0	;
+SP014	0	;
+SP015	0	;
+SP016	0	;
+SP017	8000	;
+SP018	50	;
+SP019	200	;
+SP020	800	;
+SP021	10	;
+SP022	63	;
+SP023	60	;
+SP024	0	;
+SP025	1	;
+SP026	1	;
+SP027	1	;
+SP028	1	;
+SP029	1	;
+SP030	1	;
+SP031	1	;
+SP032	1	;
+SP033	0x0000	;
+SP034	0x0000	;
+SP035	0x0000	;
+SP036	0x0000	;
+SP037	0x0004	;
+SP038	0x0004	;
+SP039	0x0000	;
+SP040	0x1008	;
+SP041	0x2900	;
+SP042	0	;
+SP043	0	;
+SP044	1028	;
+SP045	0	;
+SP046	0	;
+SP047	30	;
+SP048	15	;
+SP049	20	;
+SP050	30	;
+SP051	40	;
+SP052	50	;
+SP053	60	;
+SP054	70	;
+SP055	12	;
+SP056	50	;
+SP057	0	;
+SP058	0	;
+SP059	0	;
+SP060	0	;
+SP061	0	;
+SP062	0	;
+SP063	60	;
+SP064	110	;
+SP065	100	;
+SP066	0	;
+SP067	5000	;
+SP068	10000	;
+SP069	64	;
+SP070	0	;
+SP071	0	;
+SP072	0	;
+SP073	0	;
+SP074	0	;
+SP075	0	;
+SP076	0	;
+SP077	0	;
+SP078	0	;
+SP079	0	;
+SP080	0	;
+SP081	0	;
+SP082	0	;
+SP083	0	;
+SP084	0	;
+SP085	0	;
+SP086	0	;
+SP087	75	;
+SP088	3000	;
+SP089	0	;
+SP090	0	;
+SP091	0	;
+SP092	0	;
+SP093	0	;
+SP094	0	;
+SP095	0	;
+SP096	0	;
+SP097	0x0020	;
+SP098	63	;
+SP099	60	;
+SP100	15	;
+SP101	16	;
+SP102	32767	;
+SP103	200	;
+SP104	100	;
+SP105	100	;
+SP106	100	;
+SP107	0	;
+SP108	0	;
+SP109	0	;
+SP110	0	;
+SP111	0	;
+SP112	0	;
+SP113	0	;
+SP114	0	;
+SP115	0	;
+SP116	0	;
+SP117	0	;
+SP118	0	;
+SP119	0	;
+SP120	0	;
+SP121	0	;
+SP122	0	;
+SP123	0	;
+SP124	0	;
+SP125	0	;
+SP126	0	;
+SP127	0	;
+SP128	0	;
+SP129	0x0000	;
+SP130	0	;
+SP131	0	;
+SP132	0	;
+SP133	0	;
+SP134	0	;
+SP135	0	;
+SP136	0	;
+SP137	0	;
+SP138	0	;
+SP139	0	;
+SP140	0	;
+SP141	0	;
+SP142	0	;
+SP143	0	;
+SP144	0	;
+SP145	0	;
+SP146	0	;
+SP147	0	;
+SP148	0	;
+SP149	0	;
+SP150	0	;
+SP151	0x0000	;
+SP152	0x0000	;
+SP153	0x0000	;
+SP154	0x0000	;
+SP155	0x0000	;
+SP156	0	;
+SP157	0	;
+SP158	0	;
+SP159	0	;
+SP160	0	;
+SP161	0	;
+SP162	0	;
+SP163	0	;
+SP164	0	;
+SP165	0	;
+SP166	0	;
+SP167	0	;
+SP168	0	;
+SP169	0	;
+SP170	0	;
+SP171	0	;
+SP172	0	;
+SP173	0	;
+SP174	0	;
+SP175	0	;
+SP176	0	;
+SP177	0x0000	;
+SP178	63	;
+SP179	60	;
+SP180	15	;
+SP181	100	;
+SP182	0	;
+SP183	20	;
+SP184	0	;
+SP185	16	;
+SP186	32767	;
+SP187	100	;
+SP188	100	;
+SP189	0	;
+SP190	0	;
+SP191	0	;
+SP192	0	;
+SP193	0x4011	;
+SP194	63	;
+SP195	60	;
+SP196	15	;
+SP197	0	;
+SP198	100	;
+SP199	0	;
+SP200	0	;
+SP201	0	;
+SP202	0	;
+SP203	0	;
+SP204	0	;
+SP205	0	;
+SP206	0	;
+SP207	0	;
+SP208	0	;
+SP209	0	;
+SP210	0	;
+SP211	0	;
+SP212	0	;
+SP213	0	;
+SP214	50	;
+SP215	1	;
+SP216	0	;
+SP217	16	;
+SP218	32767	;
+SP219	100	;
+SP220	100	;
+SP221	0	;
+SP222	0	;
+SP223	0	;
+SP224	0	;
+SP225	0	;
+SP226	0	;
+SP227	0	;
+SP228	0	;
+SP229	0	;
+SP230	0	;
+SP231	0	;
+SP232	0	;
+SP233	0	;
+SP234	0	;
+SP235	0	;
+SP236	0	;
+SP237	0	;
+SP238	0	;
+SP239	0	;
+SP240	0	;
+SP241	0	;
+SP242	0	;
+SP243	0	;
+SP244	0	;
+SP245	0	;
+SP246	0	;
+SP247	0	;
+SP248	0	;
+SP249	0	;
+SP250	0	;
+SP251	0	;
+SP252	0	;
+SP253	0	;
+SP254	0	;
+SP255	0	;
+SP256	0	;
+SP257	0x0001	; RPM	H winding: speed unit            
+SP258	0x2710	; NR	.. max, speed                    
+SP259	0x1770	; NP	.. constant output speed         
+SP260	0x05DC	; NB	.. basic speed                    
+SP261	0x0708	; NF	.. magnatic flux rpm             
+SP262	0x0002	; PM	.. pair of magnetic pole         
+SP263	0x1000	; PLG	.. PLG pulse number x4           
+SP264	0x032B	; KVP	.. speed propotional gain        
+SP265	0x0E69	; KVI	.. speed integral gain           
+SP266	0x0057	; KVF	.. speed delay advance gain      
+SP267	0x0881	; KFP	.. magnetic control P gain       
+SP268	0x135B	; KFI	.. magnatic control gain         
+SP269	0x0000	; PYLT	.. Ids current min value         
+SP270	0x0040	; KDP	.. Ids propotional gain          
+SP271	0x03CB	; KDI	.. Ids integral gain             
+SP272	0x00B2	; KQP	.. Iqs proportional gain         
+SP273	0x0A89	; KQI	.. Iqs integral gain             
+SP274	0x01E8	; IDSM	.. field current at 100%         
+SP275	0x054E	; IQSM	.. torque current at 100%        
+SP276	0x00D1	; KVDS	.. q-d interface ratio           
+SP277	0x004A	; KVQS	.. d-q interface ratio           
+SP278	0x0C00	; TMLR	.. decel current limit (75%)     
+SP279	0x1333	; TMLD	.. accel current limit (120%)    
+SP280	0x1800	; TMLS	.. constant curret limit (150%)  
+SP281	0x001C	; KWS	.. Kws at power running          
+SP282	0x001C	; KWSR	.. Kws at regeneration           
+SP283	0x0BBC	; IQ1	.. Iqs 100% for calculation      
+SP284	0x0A85	; M0	.. MO for M saturation           
+SP285	0x0773	; M2	.. M2 for M saturation           
+SP286	0x0BFE	; FLUX	.. FLUX1 for M saturation        
+SP287	0x0159	; KR2	.. R2 for ,2 F/B calculation     
+SP288	0x0000	; LR2	.. phs2 F/B clamp value          
+SP289	0x09C4	; ICT	.. CT setting cunent             
+SP290	0x048A	; KI1	.. current F/B compensation      
+SP291	0x0000	; TI	.. current loop sampling Ts      
+SP292	0x09C4	; VPWM	.. PWM triangle resolution       
+SP293	0	; IDLM	.. flux F/B clamp (min)          
+SP294	0	;
+SP295	0	;
+SP296	0	;
+SP297	0	;
+SP298	0	;
+SP299	0	;
+SP300	0	;
+SP301	0	;
+SP302	0	;
+SP303	0	;
+SP304	0	;
+SP305	0	;
+SP306	0	;
+SP307	0	;
+SP308	0	;
+SP309	0	;
+SP310	0	;
+SP311	0	;
+SP312	0	;
+SP313	0	;
+SP314	0	;
+SP315	0	;
+SP316	0	;
+SP317	0	;
+SP318	0	;
+SP319	0	;
+SP320	0	;
+SP321	0	;
+SP322	0	;
+SP323	0	;
+SP324	0	;
+SP325	0	;
+SP326	0	;
+SP327	0	;
+SP328	0	;
+SP329	0	;
+SP330	0	;
+SP331	0	;
+SP332	0	;
+SP333	0	;
+SP334	0	;
+SP335	0	;
+SP336	0	;
+SP337	0	;
+SP338	0	;
+SP339	0	;
+SP340	0	;
+SP341	0	;
+SP342	0	;
+SP343	0	;
+SP344	0	;
+SP345	0	;
+SP346	0	;
+SP347	0	;
+SP348	0	;
+SP349	0	;
+SP350	0	;
+SP351	0	;
+SP352	0	;
+SP353	0	;
+SP354	0	;
+SP355	0	;
+SP356	0	;
+SP357	0	;
+SP358	0	;
+SP359	0	;
+SP360	0	;
+SP361	0	;
+SP362	0	;
+SP363	0	;
+SP364	0	;
+SP365	0	;
+SP366	0	;
+SP367	0	;
+SP368	0	;
+SP369	0	;
+SP370	0	;
+SP371	0	;
+SP372	0	;
+SP373	0	;
+SP374	0	;
+SP375	0	;
+SP376	0	;
+SP377	0	;
+SP378	0	;
+SP379	0	;
+SP380	0	;
+SP381	0	;
+SP382	0	;
+SP383	0	;
+SP384	0	;
