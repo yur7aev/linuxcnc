@@ -79,6 +79,9 @@
 #define RTAPI_END_DECLS
 #endif
 
+#define RTAPI_CLOCK (CLOCK_REALTIME)
+//#define RTAPI_CLOCK (CLOCK_MONOTONIC)
+
 RTAPI_BEGIN_DECLS
 
 /***********************************************************************

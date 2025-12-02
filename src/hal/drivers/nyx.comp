@@ -27,6 +27,7 @@ pin out      bit servo-##.absolute[16 : personality];
 pin out      bit servo-##.abs-lost[16 : personality];
 pin out      bit servo-##.abs-ok[16 : personality];
 pin out      bit servo-##.z-passed[16 : personality];
+pin out      bit servo-##.fb-valid[16 : personality];
 
 pin out   signed servo-##.counts[16 : personality];
 pin out   signed servo-##.counts-hi[16 : personality];
@@ -86,10 +87,27 @@ pin  io      bit servo-##.index-enable[16 : personality];
 pin  in      bit servo-##.undroop[16 : personality];
 
 pin out      bit ready "card is in sync with NC";
-pin out    float phase "sync pulse deviation, periods";
+pin out   signed phase "sync pulse deviation, periods";
+pin out   signed phase1 "sync pulse deviation, periods";
+pin out   signed phase2 "sync pulse deviation, periods";
+pin out   signed phase3 "sync pulse deviation, periods";
+pin out    float phase_ns "sync pulse deviation, periods";
 pin out   signed error-cnt "missed comm cycles when not in sync";
 pin out   signed error-rx;
 pin out   signed error-tx;
+pin out      bit has-servo-fb;
+
+
+pin out   signed clock-monotonic;
+pin out   signed clock-monotonic-raw;
+pin out   signed clock-tai;
+pin out   signed rx-timestamp;
+pin out   signed tx-timestamp;
+pin out   signed func-timestamp;
+pin out   signed rx-period;
+pin out   signed pll;
+pin in       bit pll-disable;
+param rw  signed pll-limit = 1000;
 //pin out    float jitter;
 //pin  in      bit enable = 1;
 
@@ -223,8 +241,12 @@ typedef struct yssc2 {
 	long long int prev_clock;
 
 	servo_params par[NYX_AXES];
-
+	int rx_errors;
+	int rx_error_delay;
 	int eth;
+
+	uint64_t rxts[2];
+	int pll_corr;
 } YSSC2;
 
 //
@@ -237,8 +259,11 @@ typedef struct yssc2 {
 uint32_t yssc2_magic(YSSC2 *y)		{ return y->dpram->magic; }
 int yssc2_axes(YSSC2 *y)		{ return y->num_axes; }
 int yssc2_fb_seq(YSSC2 *y)		{ return y->dpram->fb.seq; }
-double yssc2_irq_time_us(YSSC2 *y)	{ return y->dpram->fb.irq_time / 45.0; }
-int yssc2_irq_time(YSSC2 *y)	{ return y->dpram->fb.irq_time; }
+double yssc2_irq_time_us(YSSC2 *y)	{ return y->dpram->fb.irq_time[0] / 45.0; }
+int yssc2_irq_time(YSSC2 *y)	{ return y->dpram->fb.irq_time[0]; }
+int yssc2_irq1_time(YSSC2 *y)	{ return y->dpram->fb.irq_time[1]; }
+int yssc2_irq2_time(YSSC2 *y)	{ return y->dpram->fb.irq_time[2]; }
+int yssc2_irq3_time(YSSC2 *y)	{ return y->dpram->fb.irq_time[3]; }
 ///double yssc2_debug(YSSC2 *y, int n)	{ return 0; } ///y->dpram->dbg[n]; }
 double yssc2_rx_time(YSSC2 *y, int n)	{ return FB(n).rxtime; }
 int yssc2_z_offs(YSSC2 *y, int n)       { return FB(n).smth2; }
@@ -643,7 +668,7 @@ int rtapi_app_main(void) {
 		hal_exit(comp_id);
 	} else {
 		hal_ready(comp_id);
-		rtapi_print_msg(RTAPI_MSG_ERR, "\nnyx ready %d\n", count);
+//		rtapi_print_msg(RTAPI_MSG_ERR, "\nnyx ready %d\n", count);
 	}
 
 	return r;
@@ -664,8 +689,6 @@ EXTRA_SETUP()
 
 	enc_changed[0] = -1;
 	enc_changed[1] = -1;
-
-		rtapi_print_msg(RTAPI_MSG_ERR, "\nREADY 3\n");
 
 	return 0;
 }
@@ -695,6 +718,8 @@ int freq(YSSC2 *y, int event)
 }
 
 #include <rtapi_math.h>
+#include <linux/net_tstamp.h>
+#include <time.h>
 
 FUNCTION(_)
 {
@@ -703,11 +728,35 @@ FUNCTION(_)
 	wr(__comp_inst, period);
 }
 
+int per = 222242;
+
+uint64_t clk(int c)
+{
+	struct timespec tai;
+	clock_gettime(c, &tai);
+	return tai.tv_sec * 1000000000LL + tai.tv_nsec;
+}
+
+int64_t us(void)
+{
+	struct timespec tai;
+	clock_gettime(RTAPI_CLOCK, &tai);
+	return (tai.tv_sec * 1000000000LL + tai.tv_nsec) / 1000;
+}
+
 FUNCTION(rd)
 {
 	if (v_seq & ((1<<cycle[v_boardno]) - 1)) return;	// skip
 	YSSC2 *y = yssc2_board(v_boardno);
 	if (y == NULL) return;
+
+	per = period;
+
+	uint64_t clock = clk(RTAPI_CLOCK);
+	clock_monotonic = clk(CLOCK_MONOTONIC) - clock;
+	clock_monotonic_raw = clk(CLOCK_MONOTONIC_RAW) - clock;
+	clock_tai = clk(CLOCK_TAI) - clock;
+
 /*
 	if (!enable) {
 		phase = 0;
@@ -722,10 +771,31 @@ FUNCTION(rd)
 //	y->prev_clock = c;
 
 	if (yssc2_receive(y)) error_rx += 1;	// should be the very first routine
+	rx_period = (y->rxts[0] - y->rxts[1] - period);
+	rx_timestamp = y->rxts[0] - rtapi_task_pll_get_reference();	// -180000 ... -260000
+	func_timestamp = rtapi_get_time() - rtapi_task_pll_get_reference() + 222222;
+
+	if (pll_disable) {
+		y->pll_corr = 0;
+	} else {
+//		y->pll_corr = rx_timestamp + 185000;
+//		y->pll_corr = rx_timestamp + 20000;
+		y->pll_corr = rx_timestamp + 200000;
+		if (pll_limit > 0) {
+			if (y->pll_corr > pll_limit) y->pll_corr = pll_limit;
+			if (y->pll_corr < -pll_limit) y->pll_corr = -pll_limit;
+		}
+	}
+	rtapi_task_pll_set_correction(y->pll_corr);
+	pll = y->pll_corr;
 
 	int insync;
 	phase = yssc2_irq_time(y);
+	phase1 = yssc2_irq1_time(y);
+	phase2 = yssc2_irq2_time(y);
+	phase3 = yssc2_irq3_time(y);
 	insync = (yssc2_fb_seq(y) & YS_INSYNC) != 0;
+	phase_ns = ((9999 - phase + 5000) % 10000) * 22.2222;
 
 	if (y->num_dbg > 0) dbg0 = y->dp_dbg[0];
 	if (y->num_dbg > 1) dbg1 = y->dp_dbg[1];
@@ -770,15 +840,18 @@ FUNCTION(rd)
 
 	yssc2_process(y);	// state machine, request servo data: absolute origin, encoder res, etc
 
+	has_servo_fb = yssc2_has_fb(y);
+
 	// parse received feedback data
 	int a;
 	for (a = 0; a < yssc2_axes(y); a++) {
 		if (ready && yssc2_online(y, a)) {
 			if (yssc2_feedback_res(y, a) == 0) continue;
 
+			servo_fb_valid(a) = yssc2_valid(y, a);
+
 			if (yssc2_has_fb(y)) {
 				if (yssc2_valid(y, a)) {
-
 					{
 						int state = y->amp[a].zsm;
 						switch (state) {
@@ -1253,6 +1326,7 @@ FUNCTION(wr)
 	}
 
 	yssc2_transmit(y);
+	tx_timestamp = rtapi_get_time() - rtapi_task_pll_get_reference();
 }
 
 //
@@ -1915,6 +1989,7 @@ void yssc2_cleanup()
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <net/if.h>
 
 int yssc2_init()
 {
@@ -1969,20 +2044,23 @@ int yssc2_init()
 		freq_init(y);
 		y->was_ready = 0;
 		y->prev_fb_seq = 0;
+		y->rx_errors = 0;
+		y->rx_error_delay = 0;
+		y->pll_corr = 0;
 	}
 
 	// ethernet
 
 	for (int i = 0; num_boards < YSSC2_MAX_BOARDS && i < YSSC2_MAX_BOARDS; i++, num_boards++) {
 		if(ip[i] == NULL || !ip[i]) break;
-		rtapi_print_msg(RTAPI_MSG_ERR, "IP = %s", ip[i]);
+//		rtapi_print_msg(RTAPI_MSG_ERR, "IP = %s", ip[i]);
 
 		y = &yssc2_brd[num_boards];
 		y->no = num_boards;
 		y->eth = 1;
 
 
-		y->fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+		y->fd = socket(PF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_IP);
 		if (y->fd < 0) {
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: socket() failed", num_boards);
 			break;
@@ -2000,22 +2078,69 @@ int yssc2_init()
 			break;
 		}
 
-                struct timeval timeout;
-                timeout.tv_sec = 0;
-                timeout.tv_usec = 5;
+		{
 
-                rc = setsockopt(y->fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
-                if (rc < 0) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: set receive timeout failed", num_boards);
-			close(y->fd);
-                        break;
-                }
-		
-                rc = setsockopt(y->fd, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
-                if (rc < 0) {
-			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: set send timeout failed", num_boards);
-			close(y->fd);
-                        break;
+			/* timeouts do not work - 12ms min
+	                struct timeval timeout;
+	                timeout.tv_sec = 0;
+	                timeout.tv_usec = 20000;
+
+	                rc = setsockopt(y->fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+	                if (rc < 0) {
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: set receive timeout failed", num_boards);
+				close(y->fd);
+	                        break;
+	                }
+			
+	                rc = setsockopt(y->fd, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout));
+	                if (rc < 0) {
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: set send timeout failed", num_boards);
+				close(y->fd);
+	                        break;
+	                }
+			*/
+
+			// set priority to queue with TAPRIO qdisc
+			int prio = 1;
+	                rc = setsockopt(y->fd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio));
+	                if (rc < 0) {
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: set socket priority failed", num_boards);
+				close(y->fd);
+	                        break;
+	                }
+
+			int size = 1600;
+	                rc = setsockopt(y->fd, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size));
+	                if (rc < 0) {
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: set sndbuf failed", num_boards);
+				close(y->fd);
+	                        break;
+	                }
+/*
+			// Timestamping configuration
+			struct ifreq hwtstamp;
+			struct hwtstamp_config tsCfg;
+			tsCfg.flags = 0;
+			tsCfg.tx_type = HWTSTAMP_TX_OFF;
+			tsCfg.rx_filter = HWTSTAMP_FILTER_ALL;
+			memset(&hwtstamp, 0, sizeof(hwtstamp));
+			strncpy(hwtstamp.ifr_name, "enp2s0", sizeof(hwtstamp.ifr_name));
+			hwtstamp.ifr_data = (void *)&tsCfg;
+
+#define SIOCGHWTSTAMP	0x89b1		// get config
+#define SIOCSHWTSTAMP	0x89b0		// set and get config
+
+			if (ioctl(y->fd, SIOCSHWTSTAMP, &hwtstamp) < 0) {
+				rtapi_print_msg(RTAPI_MSG_ERR, "Cannot enable Hardware timestamping on %s", hwtstamp.ifr_name);
+			}
+*/
+
+//			unsigned int time_stamp_cfg = SOF_TIMESTAMPING_RX_SOFTWARE | SOF_TIMESTAMPING_RX_HARDWARE | SOF_TIMESTAMPING_RAW_HARDWARE;
+			unsigned int time_stamp_cfg = SOF_TIMESTAMPING_RX_SOFTWARE | SOF_TIMESTAMPING_SOFTWARE;
+			if (setsockopt(y->fd, SOL_SOCKET, SO_TIMESTAMPING, &time_stamp_cfg, sizeof(time_stamp_cfg)) < 0) {
+				rtapi_print_msg(RTAPI_MSG_ERR, "Failed to set up Rx Hardware timestamping\n");
+			}
+			
                 }
 
 		y->dpram = calloc(sizeof(nyx_dpram), 1);
@@ -2025,9 +2150,22 @@ int yssc2_init()
 			return -1;
 		}
 
-		rc = send(y->fd, "helo", 4, 0);
-		rc = recv(y->fd, y->dpram, sizeof(y->dpram), 0);
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: received %d", num_boards, rc);
+		{
+			char helo[4] = "helo";
+			int retries = 3;
+			do {
+				rc = send(y->fd, helo, 4, 0);
+				usleep(20000);
+				rc = recv(y->fd, y->dpram, 4, 0);
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: recv %d %x", i, rc, y->dpram->magic);
+			} while (rc != 4 && --retries > 0);
+
+			if (!retries) {
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: no answer from $s - abort", i, ip[i]);
+//				y->dpram->magic = 0x6f6c6568;
+				return -2;
+			}
+		}
 
 		if (config_dpram(y))
 			return -1;
@@ -2038,7 +2176,7 @@ int yssc2_init()
 		y->was_ready = 0;
 		y->prev_fb_seq = 0;
 
-		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: IP done", num_boards);
+//		rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: IP done", num_boards);
 	}
 
 	if (num_boards < 1) {
@@ -2098,7 +2236,7 @@ void yssc2_process(YSSC2 *y)
 		case Y_TYPE_ORIGIN:
 			if (y->amp[a].fbres == 0) {
 
-rtapi_print_msg(RTAPI_MSG_ERR, "fbres:%d\n", fb->fbres);
+//rtapi_print_msg(RTAPI_MSG_ERR, "fbres:%d\n", fb->fbres);
 
 				y->amp[a].fbres = encres[a] ? encres[a] : fb->fbres;
 				y->amp[a].cyc0 = fb->cyc0;
@@ -2207,6 +2345,50 @@ int yssc2_transmit(YSSC2 *y)
 
 #else // __USERSPACE__
 
+int recv_ts(int fd, void *buffer, int buffer_len, uint64_t *timestamp)
+{
+	struct msghdr msghdr;
+	struct sockaddr_in remote_addr4;
+	struct iovec iov;
+	struct {
+		struct cmsghdr cm;
+		char control[512];
+	} control;
+
+	memset(&control, 0, sizeof(control));
+
+	iov.iov_base = buffer;
+	iov.iov_len = buffer_len;
+
+	memset(&msghdr, 0, sizeof(msghdr));
+
+	//msghdr.msg_name = &remote_addr4;
+	//msghdr.msg_namelen = sizeof(remote_addr4);
+
+	msghdr.msg_iov = &iov;
+	msghdr.msg_iovlen = 1;
+	msghdr.msg_control = &control;
+	msghdr.msg_controllen = sizeof(control);
+
+	int len = recvmsg(fd, &msghdr, 0);
+
+	struct cmsghdr *cmsg;
+	for (cmsg = CMSG_FIRSTHDR(&msghdr); cmsg != NULL; cmsg = CMSG_NXTHDR(&msghdr, cmsg)) {
+		if(cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_TIMESTAMPING) {
+			struct scm_timestamping {
+				struct timespec ts[3];
+			};
+			struct scm_timestamping * pTs = (struct scm_timestamping *)CMSG_DATA(cmsg);
+			uint64_t ts0 = pTs->ts[0].tv_sec * 1000000000LL + pTs->ts[0].tv_nsec;
+			uint64_t ts2 = pTs->ts[2].tv_sec * 1000000000LL + pTs->ts[2].tv_nsec;
+//			int64_t offset = clk(CLOCK_REALTIME) - clk(RTAPI_CLOCK);
+			*timestamp = ts0;
+		}
+	}
+
+	return len;
+}
+
 int yssc2_receive(YSSC2 *y)
 {
 	int rc = 0;
@@ -2219,14 +2401,35 @@ int yssc2_receive(YSSC2 *y)
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: read err %d", y->no, rc);
 			y->dpram->magic = 0;	// mark
 		}
-	} else {
-		rc = recv(y->fd, &y->dpram->fb_magic, SIZE_FB(y)+4, 0);
+	} else if (y->initial_delay) {
+		//rc = recv(y->fd, &y->dpram->fb_magic, SIZE_FB(y)+4, 0);
+		uint64_t ts;
+		y->rxts[1] = y->rxts[0];
+		rc = recv_ts(y->fd, &y->dpram->fb_magic, SIZE_FB(y)+4, &y->rxts[0]);
 		if (rc != SIZE_FB(y)+4) {
-//			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: recv err %d", y->no, rc);
-			y->dpram->magic = 0;	// mark
-			rc = -2;
+			rc = recv_ts(y->fd, &y->dpram->fb_magic, SIZE_FB(y)+4, &y->rxts[0]);
+			if (rc != SIZE_FB(y)+4) {
+				int seq1 = y->dpram->fb.seq & 0xff;
+	//			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: recv err %d", y->no, rc);
+				y->dpram->magic = 0;	// mark
+				memset(&y->dpram->fb_magic, 0, SIZE_FB(y)+4);
+				rc = -2;
+				if (!y->rx_errors++) {
+					rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: rx err %d", y->no, seq1);
+				}
+			}
 		} else {
+			if (y->rx_errors) y->rx_errors = 0;
 			rc = 0;
+			uint64_t ts2;
+			int seq1 = y->dpram->fb.seq & 0xff;
+			if (SIZE_FB(y)+4 == recv_ts(y->fd, &y->dpram->fb_magic, SIZE_FB(y)+4, &ts2)) {
+				int seq2 = y->dpram->fb.seq & 0xff;
+				int t1 = y->rxts[0] - rtapi_task_pll_get_reference();	// -180000 ... -260000
+				int t2 = ts2 - rtapi_task_pll_get_reference();	// -180000 ... -260000
+				rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: dup! %d(%d) %d(%d)", y->no, seq1, t1, seq2, t2);
+//				y->rxts[0] = ts2;
+			}
 		}
 	}
 
@@ -2250,9 +2453,11 @@ int yssc2_transmit(YSSC2 *y)
 		if (rc <= 0)
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: write err %d\n", y->no, rc);
 	} else {
+		if (y->rx_errors > 5 && ++y->rx_error_delay < 4500) return -1;
+		y->rx_error_delay = 0;
 		y->dpram->cmd_magic = 0xcccccccc;
 		rc = send(y->fd, &y->dpram->cmd_magic, SIZE_CMD(y)+4, 0);
-		if (rc <= 0)
+		if (rc <= 0 && y->rx_errors == 0)
 			rtapi_print_msg(RTAPI_MSG_ERR, "nyx.%d: send err %d\n", y->no, rc);
 	}
 

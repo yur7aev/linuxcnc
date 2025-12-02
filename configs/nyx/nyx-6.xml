@@ -21,8 +21,10 @@
 <labelframe text="Controller">
 <hbox>
 	<led halpin="led-ready" size="18" />
-	<number halpin="phase" format="+4.2f" />
+	<led halpin="led-hb" on_color="yellow" off_color="black" size="18" />
+	<s32 halpin="phase" format="+4d" />
 </hbox>
+<checkbutton halpin="pll-disable" text="No PLL" />
 </labelframe>
 
 <labelframe text="Amp online/ready/on">

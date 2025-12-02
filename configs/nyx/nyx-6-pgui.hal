@@ -5,7 +5,10 @@
 #
 
 net nyx-ready nyx.0.ready => pyvcp.led-ready
+#net nyx-hb nyx.0.heart => pyvcp.led-hb
 net nyx-phase nyx.0.phase => pyvcp.phase
+net nyx-pll-disable nyx.0.pll-disable <= pyvcp.pll-disable
+
 
 net trq0 nyx.0.servo-00.trq-fb => pyvcp.trq0
 net trq1 nyx.0.servo-01.trq-fb => pyvcp.trq1

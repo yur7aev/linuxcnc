@@ -81,7 +81,7 @@ struct XenomaiApp : RtapiApp {
         pthread_setspecific(key, arg);
 
         struct timespec now;
-        clock_gettime(CLOCK_MONOTONIC, &now);
+        clock_gettime(RTAPI_CLOCK, &now);
 
         // originally, I used pthread_make_periodic_np here, and
         // pthread_wait_np in wait(), but in about 1 run in 50 this led to
@@ -127,7 +127,7 @@ struct XenomaiApp : RtapiApp {
         }
         rtapi_timespec_advance(task->nextstart, task->nextstart, task->period + task->pll_correction);
         struct timespec now;
-        clock_gettime(CLOCK_MONOTONIC, &now);
+        clock_gettime(RTAPI_CLOCK, &now);
         if(rtapi_timespec_less(task->nextstart, now))
         {
             if(policy == SCHED_FIFO)
@@ -135,7 +135,7 @@ struct XenomaiApp : RtapiApp {
         }
         else
         {
-            int res = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &task->nextstart, nullptr);
+            int res = clock_nanosleep(RTAPI_CLOCK, TIMER_ABSTIME, &task->nextstart, nullptr);
             if(res < 0) perror("clock_nanosleep");
         }
     }
@@ -171,13 +171,13 @@ struct XenomaiApp : RtapiApp {
 
     long long do_get_time() {
         struct timespec ts;
-        clock_gettime(CLOCK_MONOTONIC, &ts);
+        clock_gettime(RTAPI_CLOCK, &ts);
         return ts.tv_sec * 1000000000LL + ts.tv_nsec;
     }
 
     void do_delay(long ns) {
         struct timespec ts = {0, ns};
-        clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, nullptr);
+        clock_nanosleep(RTAPI_CLOCK, 0, &ts, nullptr);
     }
 };
 

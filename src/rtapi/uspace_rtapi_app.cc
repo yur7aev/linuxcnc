@@ -124,7 +124,7 @@ void *queue_function(void *arg) {
         });
         pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
         struct timespec ts = {0, 10000000};
-        rtapi_clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL, NULL);
+        rtapi_clock_nanosleep(RTAPI_CLOCK, 0, &ts, NULL, NULL);
     }
     return nullptr;
 }
@@ -650,7 +650,7 @@ struct Posix : RtapiApp
 
     long long do_get_time(void) {
         struct timespec ts;
-        clock_gettime(CLOCK_MONOTONIC, &ts);
+        clock_gettime(RTAPI_CLOCK, &ts);
         return ts.tv_sec * 1000000000LL + ts.tv_nsec;
     }
 
@@ -1060,8 +1060,6 @@ int Posix::task_start(int task_id, unsigned long int period_nsec)
   return 0;
 }
 
-#define RTAPI_CLOCK (CLOCK_MONOTONIC)
-
 pthread_once_t Posix::key_once = PTHREAD_ONCE_INIT;
 pthread_once_t Posix::lock_once = PTHREAD_ONCE_INIT;
 pthread_key_t Posix::key;
@@ -1089,6 +1087,9 @@ void *Posix::wrapper(void *arg)
 
   struct timespec now;
   clock_gettime(RTAPI_CLOCK, &now);
+  long long next = (rtapi_get_time() / task->period + 1) * task->period;   // align on integer periods	
+  now.tv_sec = next / 1000000000;
+  now.tv_nsec = next % 1000000000;
   rtapi_timespec_advance(task->nextstart, now, task->period + task->pll_correction);
 
   /* call the task function with the task argument */
@@ -1167,7 +1168,7 @@ void Posix::do_outb(unsigned char val, unsigned int port)
 
 void Posix::do_delay(long ns) {
     struct timespec ts = {0, ns};
-    rtapi_clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL, NULL);
+    rtapi_clock_nanosleep(RTAPI_CLOCK, 0, &ts, NULL, NULL);
 }
 int rtapi_prio_highest(void)
 {

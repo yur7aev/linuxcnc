@@ -20,15 +20,18 @@
 #ifndef NYX_H
 #define NYX_H
 
+#define VERSION "v4.0.0"
 #define NYX_VER_MAJ 4
 #define NYX_VER_MIN 0
 #define NYX_VER_REV 0
 
+// was 18
 #ifndef NYX_AXES
-#define NYX_AXES 18
+#define NYX_AXES (16)
 #endif
 
-#define MAX_AXES 18
+#define MAX_AXES (16)
+
 #define YIO_SLAVES 8
 
 // per-axis nyx_servo_cmd.flags
@@ -210,6 +213,7 @@ typedef struct nyx_servo_fb {
 			};
 		};
 	};
+	int32_t aux[4];
 } _P nyx_servo_fb;	// 8 dwords 32 bytes
 
 //////////////////////////////////
@@ -244,10 +248,12 @@ typedef struct nyx_servo_fb {
 #define SERVO_SSCNET3	3
 #define SERVO_SSCNET3H	31
 #define SERVO_MTL2	4
+#define SERVO_MTL3	5
 #define SERVO_MTL1	6
-#define SERVO_MDS	11
-#define SERVO_MDS3	13
-#define SERVO_MDS3H	15
+#define SERVO_MDS3	10
+#define SERVO_MDS5	11
+#define SERVO_MDS7	13
+#define SERVO_MDS8	15
 
 #define FUNC_RD_PARAM	0x0011
 #define FUNC_WR_PARAM	0x0012
@@ -338,10 +344,10 @@ struct nyx_req {
 		uint32_t dword[1*64];		// 480-256=224
 	};
 
-#define TTYOUT_SIZE 128
+#define TTYOUT_SIZE 64
 	struct nyx_ring ttyout;
 	char ttyout_buf[TTYOUT_SIZE];			// 208-128=80
-#define TTYIN_SIZE 64
+#define TTYIN_SIZE 16
 	struct nyx_ring ttyin;
 	char ttyin_buf[TTYIN_SIZE];				// 80-64=16
 //	char unused[224-TTYOUT_SIZE-TTYIN_SIZE-16];
@@ -363,7 +369,7 @@ struct nyx_req_flash {
 	uint32_t password;		// not used
 	uint32_t addr;
 	uint32_t len;
-	uint8_t buf[480];
+	uint8_t buf[480-128];
 } _P;
 
 typedef struct nyx_snoop {
@@ -427,7 +433,7 @@ typedef struct nyx2_dp_cmd {
 typedef struct nyx3_dp_fb {
 	// realtime controller status
 	uint32_t seq;		// YS_ goes here
-	int32_t irq_time;
+	int32_t irq_time[4];
 	uint32_t valid;		// servo_fb valid bitmap
 	uint32_t gpi[(NUM_GPI)/32+1];
 	uint32_t enc[NUM_ENC];			// ..10
@@ -479,20 +485,20 @@ typedef struct nyx_dpram {
 				struct nyx_req_dump req_dump;
 			};
 		};
-		uint8_t reqpage[512];
+		uint8_t reqpage[512-128];
 		struct {
-			uint8_t _filler1[512-4];
+			uint8_t _filler1[512-128-4];
 			uint32_t fb_magic;
-		}
+		};
 	};
 #ifdef YIO_SLAVES
 	union {				// host <- board
 		nyx3_dp_fb fb;
 		nyx2_dp_fb fb2;
 		nyx_snoop snoop;
-		uint8_t fbpage[768];	// 192 dwords
+		uint8_t fbpage[768+128];	// 192 dwords
 		struct {
-			uint8_t _filler2[768-4];
+			uint8_t _filler2[768+128-4];
 			uint32_t cmd_magic;
 		};
 	};
@@ -522,4 +528,6 @@ typedef struct nyx_iomem {
 	struct nyx_dpram dpram;
 } _P nyx_iomem;
 
+
 #endif // NYX_H
+
