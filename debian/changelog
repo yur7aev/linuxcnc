@@ -1,9 +1,26 @@
-linuxcnc (1:2.9.7nyx55) bookworm; urgency=low
+linuxcnc (1:2.9.8nyx56) bookworm; urgency=low
 
   * upstream merge
   * minor config cleanups
 
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sun, 09 Nov 2025 14:21:36 +0400
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Tue, 24 Feb 2026 15:39:01 +0400
+
+linuxcnc (1:2.9.8) UNRELEASED; urgency=medium
+
+  * backport #3516 to fix #3679
+  * Only initialize python if not yet initialized.
+  * hal_gpio: Adapt to use libgpiod3 or libgpiod2 according to what is installed
+  * Merge pull request #3671 from smoe/docs_image_handling
+  * core-components.adoc remove duplicate descriptions
+  * Merge pull request #3642 from LinuxCNC/2.9_#2460
+  * Update LinuxCNC RTAI Install instructions
+  * Merge pull request #3555 from smoe/lintian_warnings
+  * Merge pull request #3588 from f355/2.9
+  * [ci] publish releases with artifacts
+  * debian: Addressed lintian warnings
+  * axis.py: restore mdi queuing provision       #2460 
+
+ -- andypugh <andy@bodgesoc.org>  Wed, 31 Dec 2025 19:39:48 +0000
 
 linuxcnc (1:2.9.7) bookworm; urgency=low
 
