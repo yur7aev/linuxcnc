@@ -3,7 +3,7 @@
  *
  * License: GPL Version 2
  *
- * (c) 2016-2024 http://yurtaev.com
+ * (c) 2016-2026 http://yurtaev.com
  */
 
 component nyx "YxxxxP servo interface card driver";
@@ -12,6 +12,7 @@ param rw  signed servo-##.origin[16 : personality] = 0;		// 32bit servo command-
 param rw   float servo-##.pos-scale[16 : personality] = 5.0;	// travel units per revolution (5mm)
 param rw   float servo-##.vel-scale[16 : personality] = 10.0;	// rpm (1 rpm resolution)
 param rw   float servo-##.trq-scale[16 : personality] = 1.0;	// 1% resolution
+param rw  signed pll-limit = 0;
 
 pin out      bit servo-##.online[16 : personality] "drive detected";
 pin out      bit servo-##.offline[16 : personality] = 1 "no drive detected";
@@ -219,6 +220,7 @@ typedef struct yssc2 {
 	struct freq_data freq;
 	int was_ready;
 	long long int prev_clock;
+	int pll_corr;
 
 	servo_params par[NYX_AXES];
 } YSSC2;
@@ -713,6 +715,15 @@ FUNCTION(rd)
 	int insync;
 	phase = yssc2_irq_time_us(y) * 45.0;
 	insync = (yssc2_fb_seq(y) & YS_INSYNC) != 0;
+
+	if (pll_limit > 0) {
+		y->pll_corr = -yssc2_irq_time_us(y) * 1000;
+		if (y->pll_corr > pll_limit) y->pll_corr = pll_limit;
+		if (y->pll_corr < -pll_limit) y->pll_corr = -pll_limit;
+	} else {
+		y->pll_corr = 0;
+	}
+	rtapi_task_pll_set_correction(y->pll_corr);
 
 	if (y->num_dbg > 0) dbg0 = y->dp_dbg[0];
 	if (y->num_dbg > 1) dbg1 = y->dp_dbg[1];
@@ -1925,6 +1936,7 @@ int yssc2_init()
 		freq_init(y);
 		y->was_ready = 0;
 		y->prev_fb_seq = 0;
+		y->pll_corr = 0;
 	}
 
 	if (num_boards < 1) {

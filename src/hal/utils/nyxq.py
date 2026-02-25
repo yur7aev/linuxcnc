@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 #
 # nyxq - YxxxxP control utility
 #
 # License: GPL Version 2
 #
-# 2018-2024, dmitry@yurtaev.com
+# 2018-2026, dmitry@yurtaev.com
 #
 
 from glob import glob
@@ -17,7 +17,7 @@ import re
 import string
 
 
-VER = "nyxq v3.5.0"
+VER = "nyxq v3.7.0"
 
 class nyx_dpram_hdr(Structure):
 	_fields_ = [
@@ -534,14 +534,14 @@ def dump(b, a=0):
 
 import subprocess
 
-def reboot():
+def reboot(a=0x80000):
 	conf = subprocess.check_output(['/usr/bin/setpci', '-s', pcidev, '10.l', '4.w', 'latency_timer']).split()
 	dp.code = 0
 	while (dp.status & 2) == 0: time.sleep(0.01)
-	dp.arg1 = 1
+	dp.arg1 = a
 	dp.code = 0x00060000
 	print("rebooting...")
-	time.sleep(2)
+	time.sleep(0.5)
 	res = subprocess.check_output(['/usr/bin/setpci', '-s', pcidev, '10.l='+conf[0].decode('ascii'), '4.w='+conf[1].decode('ascii'), 'latency_timer='+conf[2].decode('ascii')])
 	print(res.decode('ascii'))
 
@@ -694,7 +694,9 @@ try:
 		else:
 			print("error: nyxq servo ?")
 	elif cmd == 'reboot':
-		reboot()
+		image_no = int(arg(2, "", 1))
+		addr = 0x10000 + image_no * 0x70000;
+		reboot(addr)
 	elif cmd == 'pll':
 		msg = "pll <insync> <kp> <ki> <step> <hunt>"
 		y = arg(2, msg)
@@ -717,15 +719,22 @@ try:
 		elif subcmd == 'erase':
 			a = int(arg(3, "flash erase <addr>"), 16)
 			flash_erase(a)
-		elif subcmd == 'program':
-			f = arg(3, "flash program <file.bit>")
-			flash_program(f, 0x80000)
 		elif subcmd == 'programsafe':
 			f = arg(3, "flash programsafe <file.bit>")
 			flash_program(f, 0x10000)
+		elif subcmd == 'program':
+			f = arg(3, "flash program <file.bit>")
+			flash_program(f, 0x80000)
+		elif subcmd == 'program2':
+			f = arg(3, "flash program2 <file.bit>")
+			flash_program(f, 0xf0000)
+		elif subcmd == 'program3':
+			f = arg(3, "flash program3 <file.bit>")
+			flash_program(f, 0x160000)
 		elif subcmd == 'verify':
-			f = arg(3, "flash verify <file.bit> <addr>")
-			a = int(arg(4, "flash verify <file.bit> <addr>"), 16)
+			msg = "flash verify <file.bit> <addr>"
+			f = arg(3, msg)
+			a = int(arg(4, msg), 16)
 			flash_program(f, a, 1)
 		elif subcmd == 'bootloader':
 			flash_bootloader()
