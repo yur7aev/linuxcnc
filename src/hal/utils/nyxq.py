@@ -402,12 +402,12 @@ def servo_mon():
 def param2no(s):
 	s = s.upper()
 	j4g = "ABCDEFGHJOSLTN"
-	m = re.match('^P(['+j4g+'])(\d{1,2})$', s)	# J3/J4
+	m = re.match('^P(['+j4g+'])(\\d{1,2})$', s)	# J3/J4
 	if m:
 		g = j4g.find(m.group(1))
 		if g < 0: exit(1)
 		return (g << 8) + int(m.group(2))
-	m = re.match('(P|SV|SP)(\d+)$', s)		# J2/J2S/MDS
+	m = re.match('(P|SV|SP)(\\d+)$', s)		# J2/J2S/MDS
 	if m: return int(m.group(2))
 	m = re.match('PN([0-9A-F]+)(L?)$', s)		# SGDS/SGDV
 	if m:
@@ -420,7 +420,7 @@ def param2no(s):
 def axrange(s):
 	l = []
 	for i in s.split(','):
-		m = re.match("(\d+)-(\d+)", i)
+		m = re.match("(\\d+)-(\\d+)", i)
 		if m:
 			l += range(int(m.group(1)), int(m.group(2))+1)
 		else:
@@ -432,7 +432,7 @@ def servo_pr(l):
 	first = 0
 	second = 0
 	for s in l:
-		r = re.match('([0-9,-]+):(\S+)', s)
+		r = re.match('([0-9,-]+):(\\S+)', s)
 		if r:
 			ax = axrange(r.group(1))
 			p = param2no(r.group(2))
@@ -468,7 +468,7 @@ def servo_pw(nv, l):
 	first = 0
 	second = 0
 	for s in l:
-		r = re.match('([0-9,-]+):(\S+)=([0-9a-fA-Fx]+)', s)		# J2/J2S/MDS
+		r = re.match('([0-9,-]+):(\\S+)=([0-9a-fA-Fx]+)', s)		# J2/J2S/MDS
 		if r:
 			ax = axrange(r.group(1))
 			v = int(r.group(3), 0)
