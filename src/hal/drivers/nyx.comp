@@ -28,6 +28,8 @@ pin out      bit servo-##.abs-lost[16 : personality];
 pin out      bit servo-##.abs-ok[16 : personality];
 pin out      bit servo-##.z-passed[16 : personality];
 pin out      bit servo-##.fb-valid[16 : personality];
+pin out      bit servo-##.fb-avail[16 : personality];
+pin out      bit servo-##.fb-missed[16 : personality];
 
 pin out   signed servo-##.counts[16 : personality];
 pin out   signed servo-##.counts-hi[16 : personality];
@@ -57,8 +59,13 @@ pin out    float servo-##.trq-fb[16 : personality];
 pin out   signed servo-##.droop[16 : personality];
 pin out   signed servo-##.mon1[16 : personality];
 pin out   signed servo-##.mon2[16 : personality];
+pin out   signed servo-##.mon3[16 : personality];
+pin out   signed servo-##.mon4[16 : personality];
 pin out   signed servo-##.mon12[16 : personality];
 pin  in unsigned servo-##.mon[16 : personality];
+pin out unsigned servo-##.monla[16 : personality];
+pin out unsigned servo-##.monlb[16 : personality];
+pin out unsigned servo-##.monlc[16 : personality];
 
 pin out   signed servo-##.error-cnt[16 : personality] "drive feedback error count";
 
@@ -88,9 +95,8 @@ pin  in      bit servo-##.undroop[16 : personality];
 
 pin out      bit ready "card is in sync with NC";
 pin out   signed phase "sync pulse deviation, periods";
-pin out   signed phase1 "sync pulse deviation, periods";
-pin out   signed phase2 "sync pulse deviation, periods";
-pin out   signed phase3 "sync pulse deviation, periods";
+pin out   signed time-##-a[16];
+pin out   signed time-##-b[16];
 pin out    float phase_ns "sync pulse deviation, periods";
 pin out   signed error-cnt "missed comm cycles when not in sync";
 pin out   signed error-rx;
@@ -108,6 +114,7 @@ pin out   signed rx-period;
 pin out   signed pll;
 pin in       bit pll-disable;
 param rw  signed pll-limit = 1000;
+param rw  signed pll-offs = 200000;
 //pin out    float jitter;
 //pin  in      bit enable = 1;
 
@@ -261,9 +268,8 @@ int yssc2_axes(YSSC2 *y)		{ return y->num_axes; }
 int yssc2_fb_seq(YSSC2 *y)		{ return y->dpram->fb.seq; }
 double yssc2_irq_time_us(YSSC2 *y)	{ return y->dpram->fb.irq_time[0] / 45.0; }
 int yssc2_irq_time(YSSC2 *y)	{ return y->dpram->fb.irq_time[0]; }
-int yssc2_irq1_time(YSSC2 *y)	{ return y->dpram->fb.irq_time[1]; }
-int yssc2_irq2_time(YSSC2 *y)	{ return y->dpram->fb.irq_time[2]; }
-int yssc2_irq3_time(YSSC2 *y)	{ return y->dpram->fb.irq_time[3]; }
+int yssc2_irq_timeN(YSSC2 *y, int n)	{ return y->dpram->fb.irq_time[n]; }
+int yssc2_irq_time2N(YSSC2 *y, int n)	{ return y->dpram->fb.irq_time2[n]; }
 ///double yssc2_debug(YSSC2 *y, int n)	{ return 0; } ///y->dpram->dbg[n]; }
 double yssc2_rx_time(YSSC2 *y, int n)	{ return FB(n).rxtime; }
 int yssc2_z_offs(YSSC2 *y, int n)       { return FB(n).smth2; }
@@ -448,16 +454,25 @@ RTAPI_MP_ARRAY_STRING(ip, YSSC2_MAX_BOARDS, "IP address if YUSI1");
 //
 //
 
+#include <unistd.h>
+
 static int export_io(char *prefix, int inst_num)
 {
 	int i, j;
-	int rc = 0;
+	int rc;
 	struct io_pins *io = hal_malloc(sizeof(struct io_pins));
 	YSSC2 *y = yssc2_board(inst_num);
 
-	yssc2_receive(y);
+	y->initial_delay = 1;
+	yssc2_transmit(y);
+	usleep(1000);
+	rc = yssc2_receive(y);
+	rtapi_print_msg(RTAPI_MSG_ERR, "seq:%x yi:%x\n", *(int*)y->dp_yi, y->dpram->fb.seq);
+
+
 	io->yi16 = io->yo16 = io->yao2 = 0;
 
+	rc = 0;
 	for (i = 0; i < y->num_yio; i++) {
 		uint32_t iotype = yssc2_yi(y, i) >> 24;
 
@@ -780,7 +795,7 @@ FUNCTION(rd)
 	} else {
 //		y->pll_corr = rx_timestamp + 185000;
 //		y->pll_corr = rx_timestamp + 20000;
-		y->pll_corr = rx_timestamp + 200000;
+		y->pll_corr = rx_timestamp + pll_offs;
 		if (pll_limit > 0) {
 			if (y->pll_corr > pll_limit) y->pll_corr = pll_limit;
 			if (y->pll_corr < -pll_limit) y->pll_corr = -pll_limit;
@@ -791,9 +806,10 @@ FUNCTION(rd)
 
 	int insync;
 	phase = yssc2_irq_time(y);
-	phase1 = yssc2_irq1_time(y);
-	phase2 = yssc2_irq2_time(y);
-	phase3 = yssc2_irq3_time(y);
+	for (int j = 1; j < 16; ++j) {
+		time_a(j) = yssc2_irq_timeN(y, j);
+		time_b(j) = yssc2_irq_time2N(y, j);
+	}
 	insync = (yssc2_fb_seq(y) & YS_INSYNC) != 0;
 	phase_ns = ((9999 - phase + 5000) % 10000) * 22.2222;
 
@@ -846,12 +862,16 @@ FUNCTION(rd)
 	int a;
 	for (a = 0; a < yssc2_axes(y); a++) {
 		if (ready && yssc2_online(y, a)) {
+			servo_fb_valid(a) = (FB(a).state & YF_VALID);	//yssc2_valid(y, a);
+			servo_fb_avail(a) = y->dpram->fb.valid & (1<<a);
+			servo_fb_missed(a) = servo_fb_avail(a) && !servo_fb_valid(a);
+
 			if (yssc2_feedback_res(y, a) == 0) continue;
 
-			servo_fb_valid(a) = yssc2_valid(y, a);
 
-			if (yssc2_has_fb(y)) {
-				if (yssc2_valid(y, a)) {
+			if (yssc2_has_fb(y) && (y->dpram->fb.valid & (1<<a))) {
+				if (FB(a).state & YF_VALID) {
+				//if (yssc2_valid(y, a)) {
 					{
 						int state = y->amp[a].zsm;
 						switch (state) {
@@ -951,6 +971,13 @@ FUNCTION(rd)
 					servo_mon12(a) =
 					((servo_mon1(a) = yssc2_mon1(y, a))<<16)
 					|(uint16_t)(servo_mon2(a) = yssc2_mon2(y, a));
+
+					servo_mon3(a) = FB(a).mon3;
+					servo_mon4(a) = FB(a).mon4;
+
+					servo_monla(a) = FB(a).monl[0];
+					servo_monlb(a) = FB(a).monl[1];
+					servo_monlc(a) = FB(a).monl[2];
 				} else {
 					servo_dbg(a) = 0;
 					++servo_error_cnt(a);
@@ -958,6 +985,7 @@ FUNCTION(rd)
 			}
 
 		} else {
+			servo_dbg(a) = FB(a).state;
 			servo_online(a) = 0;
 			servo_offline(a) = 1;
 			servo_ready(a) = 0;
@@ -1361,7 +1389,6 @@ int strtol(char *s, char **endptr, int base)
 
 #include <sys/stat.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 
@@ -1791,7 +1818,7 @@ int config_dpram(YSSC2 *y)
 		y->dp_servo_cmd = (nyx_servo_cmd*)(y->dp_yo + y->num_yio*2);
 		y->yio_size = 2;
 	} else if (magic == 0x6f6c6568) {	// YUSI helo
-		y->num_axes = 8;
+		y->num_axes = 16;
 		y->num_yio = 8;
 		y->num_enc = 6;
 		y->num_dac = 2;

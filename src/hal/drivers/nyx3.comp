@@ -1996,7 +1996,7 @@ void yssc2_process(YSSC2 *y)
 				params_get_span(&y->par[a], pq->first, 10, &pr->mask, pr->param);
 				pr->first = pq->first;
 				pr->count = 10;	// max number if fb struct
-//				rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d param req %x\n", a, pq->first);
+//				rtapi_print_msg(RTAPI_MSG_ERR, "nyx: #%d param req %d => %x\n", a, pq->first, pr->mask);
 			}
 			break;
 		case Y_TYPE_PARAM1: {

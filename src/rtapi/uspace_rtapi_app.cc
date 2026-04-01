@@ -1087,9 +1087,9 @@ void *Posix::wrapper(void *arg)
 
   struct timespec now;
   clock_gettime(RTAPI_CLOCK, &now);
-  long long next = (rtapi_get_time() / task->period + 1) * task->period;   // align on integer periods	
-  now.tv_sec = next / 1000000000;
-  now.tv_nsec = next % 1000000000;
+//  long long next = (rtapi_get_time() / task->period + 1) * task->period;   // align on integer periods	
+//  now.tv_sec = next / 1000000000;
+//  now.tv_nsec = next % 1000000000;
   rtapi_timespec_advance(task->nextstart, now, task->period + task->pll_correction);
 
   /* call the task function with the task argument */

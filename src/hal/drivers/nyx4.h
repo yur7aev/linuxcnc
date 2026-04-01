@@ -27,10 +27,10 @@
 
 // was 18
 #ifndef NYX_AXES
-#define NYX_AXES (16)
+#define NYX_AXES (12)
 #endif
 
-#define MAX_AXES (16)
+#define MAX_AXES (12)
 
 #define YIO_SLAVES 8
 
@@ -433,7 +433,8 @@ typedef struct nyx2_dp_cmd {
 typedef struct nyx3_dp_fb {
 	// realtime controller status
 	uint32_t seq;		// YS_ goes here
-	int32_t irq_time[4];
+	int16_t irq_time[16];
+	int16_t irq_time2[16];
 	uint32_t valid;		// servo_fb valid bitmap
 	uint32_t gpi[(NUM_GPI)/32+1];
 	uint32_t enc[NUM_ENC];			// ..10
