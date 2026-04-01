@@ -18,7 +18,7 @@ SV006	0	0	0	; VGN2  speed loop gain 2	-1000-1000
 SV007	20	20	0	; VIL	Speed loop delay comp	0-32768
 SV008	1900	1900	1900	; VIA	speed loop lead comp	1-9999
 SV009	2048	2048	2048	; IQA	cur loop q lead comp	1-20480
-SV010	2048	3048	2048	; IDA	cur loop d lead comp	1-20480
+SV010	2048	2048	2048	; IDA	cur loop d lead comp	1-20480
 SV011	256	256	512	; IQG	cur loop q gain		1-2560
 SV012	512	512	512 	; IDG	cur loop d gin		1-2560
 SV013	500	500 	500 	; ILMT	current limit		0-500%
