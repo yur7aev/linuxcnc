@@ -560,16 +560,16 @@ def flash_bootloader():
 	data = [
 		0xFFFFFFFF,    #  DUMMYWORD,  DUMMYWORD
 		0xAA995566,    #  SYNCWORD
-		0x31E1FFFF,
+		0x31E1FFFF,	# ..1 1. ..1111 ....1	CWDT = ffff
 		0x32610000 + (BOOT_OFFS&0xffff),     #  GENERAL1 multiboot[15:0] = 0000
 		0x32810300 + ((BOOT_OFFS>>16)&0xff), #  GENERAL2 SPIx1 read cmd = 03, multiboot[23:16] = 08
 		0x32A10000 + (SAFE_OFFS&0xffff),     #  GENERAL3 fallback[15:0] =  0000
 		0x32C10300 + ((SAFE_OFFS>>16)&0xff), #  GENERAL4 read cmd, fallbach[23:16] = 01
-		0x32E10000,
+		0x32E10000,	# GENERAL5
 		0x30A10000,
-		0x33012100,
-		0x3201001F,
-		0x30A1000E,
+		0x33012100,     # ..1 1. .11... ....1   MODE_REG = 2100
+		0x3201001F,	# ..1 1. .1.... ....1	HC_OPT_REG = 1f
+		0x30A1000E,	# ..1 1. ...1.1 ....1	CMD = e
 		0x20002000,    #  NOOP, NOOP
 		0x20002000,
 		0x20002000,

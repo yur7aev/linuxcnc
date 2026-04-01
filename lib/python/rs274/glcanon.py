@@ -1194,6 +1194,8 @@ class GlCanonDraw:
 
         glDisable(GL_LIGHTING)
         glMatrixMode(GL_MODELVIEW)
+        glRotatef(90, 1, 0, 0) # welder
+        glRotatef(90, 0, 1, 0) #
         self.draw_grid()
         if self.get_show_program():
             if self.get_program_alpha():
@@ -1421,6 +1423,8 @@ class GlCanonDraw:
                         # if Rotation = 180 - back tool
                         if self.stat.rotation_xy == 180:
                             glRotatef(180, 1, 0, 0)
+                    if 1:
+                        glRotatef(90, -1, 0, 0) # welder
                     cone = self.dlist("cone", gen=self.make_cone)
                     glScalef(cone_scale, cone_scale, cone_scale)
                     glColor3f(*self.colors['cone'])

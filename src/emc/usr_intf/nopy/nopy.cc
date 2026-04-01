@@ -233,7 +233,7 @@ void file_browser(void)
 		}
 		read_dir = false;
 		new_dir = true;
-	} 
+	}
 
 
 //	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, {15, 15});
@@ -246,7 +246,7 @@ void file_browser(void)
 	}
 
 	static ImGuiTableFlags table_flags =
-		  ImGuiTableFlags_ScrollY 
+		  ImGuiTableFlags_ScrollY
 		| ImGuiTableFlags_RowBg
 		| ImGuiTableFlags_BordersV
 		| ImGuiTableFlags_Resizable
@@ -320,7 +320,7 @@ void file_browser(void)
 	static std::string ngc_file;
 	static bool load_new_file = false;
 
-	if (sel < 0) {	
+	if (sel < 0) {
 		PushItemFlag(ImGuiItemFlags_Disabled, true);
 		PushStyleVar(ImGuiStyleVar_Alpha, GetStyle().Alpha * 0.5f);
 	}
@@ -392,7 +392,7 @@ void w_msgs(void)
 			}
 			SameLine();
 			Text("%s", it->msg.c_str());
-		}	
+		}
 
 /*		for (int n = 0; n < 100; n++) {
 			const bool is_selected = (pos == n);
@@ -484,10 +484,10 @@ BeginChild("##op_panel", ImVec2(-FLT_MIN, 56 * 3 + 8 * 2), ImGuiChildFlags_Alway
 
 	bool opt_stop = emcStatus->task.optional_stop_state;
 	if (LedButton("M1 Break", opt_stop, s)) sendSetOptionalStop(!opt_stop);
-	SameLine(); 
+	SameLine();
 	bool block_delete = emcStatus->task.block_delete_state;
 	if (LedButton("Block Del", block_delete, s)) sendSetBlockDelete(!block_delete);
-	SameLine(); 
+	SameLine();
 	bool feed_hold = emcStatus->motion.traj.feed_hold_enabled;
 	if (LedButton("Feed Hold", feed_hold, s)) sendSetFeedHoldEnable(!feed_hold);
 	SameLine();
@@ -642,11 +642,11 @@ if (IsKeyPressed(ImGuiKey_GraveAccent)) {
 		const ImGuiViewport* viewport = GetMainViewport();
 		SetNextWindowPos(viewport->WorkPos);
 		SetNextWindowSize(viewport->WorkSize);
-		Begin("MainWindow", 0, 
-			ImGuiWindowFlags_NoDecoration | 
-			ImGuiWindowFlags_NoMove | 
-			ImGuiWindowFlags_NoSavedSettings | 
-			ImGuiWindowFlags_NoBackground | 
+		Begin("MainWindow", 0,
+			ImGuiWindowFlags_NoDecoration |
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoSavedSettings |
+			ImGuiWindowFlags_NoBackground |
 			ImGuiWindowFlags_NoBringToFrontOnFocus);
 		GetWindowDrawList()->AddRectFilledMultiColor(ImVec2(0,0), io.DisplaySize, bg_gradient[0], bg_gradient[1], bg_gradient[2], bg_gradient[3]);
 		main_window = GetCurrentWindow();
@@ -699,7 +699,7 @@ if (IsKeyPressed(ImGuiKey_GraveAccent)) {
 
 		// Tiles
 
-		for (auto i = tabs.begin(); i != tabs.end(); i++) 
+		for (auto i = tabs.begin(); i != tabs.end(); i++)
 			if (!i->opened) {
 				float size1 = i->height;
 				float size2 = 100;
@@ -833,7 +833,7 @@ int main(int argc, char** argv) {
 		std::cerr << "ini dir:" << ini_dir << " name:" << ini_filename << std::endl;
 
 		fprintf(stderr, "parsing ini %s\n", emcStatus->task.ini_filename);
-		
+
 		IniFile	inifile;
 		if (inifile.Open(emcStatus->task.ini_filename)) {
 			if ((s = inifile.Find("PARAMETER_FILE", "RS274NGC"))) {

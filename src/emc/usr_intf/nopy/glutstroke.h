@@ -3,33 +3,33 @@
 
 /* Copyright (c) Mark J. Kilgard, 1994. */
 
-/* This program is freely distributable without licensing fees 
-   and is provided without guarantee or warrantee expressed or 
+/* This program is freely distributable without licensing fees
+   and is provided without guarantee or warrantee expressed or
    implied. This program is -not- in the public domain. */
 
 typedef struct {
-  float x;
-  float y;
+	float x;
+	float y;
 } CoordRec, *CoordPtr;
 
 typedef struct {
-  int num_coords;
-  const CoordRec *coord;
+	int num_coords;
+	const CoordRec *coord;
 } StrokeRec, *StrokePtr;
 
 typedef struct {
-  int num_strokes;
-  const StrokeRec *stroke;
-  float center;
-  float right;
+	int num_strokes;
+	const StrokeRec *stroke;
+	float center;
+	float right;
 } StrokeCharRec, *StrokeCharPtr;
 
 typedef struct {
-  const char *name;
-  int num_chars;
-  const StrokeCharRec *ch;
-  float top;
-  float bottom;
+	const char *name;
+	int num_chars;
+	const StrokeCharRec *ch;
+	float top;
+	float bottom;
 } StrokeFontRec, *StrokeFontPtr;
 
 typedef void *GLUTstrokeFont;
@@ -43,6 +43,5 @@ int glutPrintf(const char *fmt, ...);
 #define ALIGN_MIDDLE 0x10
 #define ALIGN_BOTTOM 0x20
 int glutAPrintf(int align, const char *fmt, ...);
-
 
 #endif /* __glutstroke_h__ */

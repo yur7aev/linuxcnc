@@ -80,6 +80,27 @@ class Scale(Collection):
     def unapply(self):
         glPopMatrix()
 
+class HalScale(Collection):
+    def __init__(self, parts, comp, var):
+        self.comp = comp
+        self.var = var
+        self.parts = parts
+
+    def apply(self):
+        v = self.comp[self.var]
+        glPushMatrix()
+        glScalef(v, v, v)
+
+#        glLightfv(GL_LIGHT0+2, GL_POSITION, (0, 0, 0, 0))
+#        glLightfv(GL_LIGHT0+2, GL_AMBIENT, (.0,.0,.0,0))
+        glLightfv(GL_LIGHT0+2, GL_AMBIENT, (v,v,v,1))
+        glLightfv(GL_LIGHT0+2, GL_DIFFUSE, (v,v,v,1))
+        #glLightf(GL_LIGHT0+2, GL_LINEAR_ATTENUATION, 0.1);
+#        glEnable(GL_LIGHT0+2)
+
+    def unapply(self):
+        glPopMatrix()
+
 class HalTranslate(Collection):
     def __init__(self, parts, comp, var, x, y, z):
         self.parts = parts
@@ -788,11 +809,25 @@ class O(rs274.OpenGLTk.Opengl):
         glLightfv(GL_LIGHT0+1, GL_POSITION, (-1, -1, .5, 0))
         glLightfv(GL_LIGHT0+1, GL_AMBIENT, (.0,.0,.0,0))
         glLightfv(GL_LIGHT0+1, GL_DIFFUSE, (.0,.0,.4,0))
+
+        glLightfv(GL_LIGHT0+2, GL_POSITION, (0, 0, 0, 1))
+        glLightfv(GL_LIGHT0+2, GL_AMBIENT, (.0,.0,.0,0))
+        glLightfv(GL_LIGHT0+2, GL_DIFFUSE, (.0,.0,.0,0))
+        glLightf(GL_LIGHT0+2, GL_LINEAR_ATTENUATION, 0.01);
+#        glLightf(GL_LIGHT0+2, GL_QUADRATIC_ATTENUATION, 0.01);
+
+#        glLightfv(GL_LIGHT0+2, GL_POSITION, (0, 0, 0, 0))
+#        glLightfv(GL_LIGHT0+2, GL_AMBIENT, (.0,.0,.0,0))
+#        glLightfv(GL_LIGHT0+2, GL_DIFFUSE, (.5,.5,.5,0))
+#        glLightf(GL_LIGHT0+2, GL_LINEAR_ATTENUATION, 0.1);
+#        glEnable(GL_LIGHT0+2)
+
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, (1,1,1,0))
         glDisable(GL_CULL_FACE)
         glEnable(GL_LIGHTING)
         glEnable(GL_LIGHT0)
         glEnable(GL_LIGHT0+1)
+        glEnable(GL_LIGHT0+2)
         glDepthFunc(GL_LESS)
         glEnable(GL_DEPTH_TEST)
         glMatrixMode(GL_MODELVIEW)
@@ -898,6 +933,19 @@ class Color(Collection):
     def apply(self):
         glPushAttrib(GL_LIGHTING_BIT)
         glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, self.color)
+
+    def unapply(self):
+        glPopAttrib()
+
+class Color2(Collection):
+    def __init__(self, color, parts):
+        self.color = color
+        Collection.__init__(self, parts)
+
+    def apply(self):
+        glPushAttrib(GL_LIGHTING_BIT)
+        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, self.color)
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, [0,0,0,0])
 
     def unapply(self):
         glPopAttrib()
@@ -1013,6 +1061,7 @@ old_plotclear = False
 
 def main(model, tool, work, size=10, hud=0, rotation_vectors=None, lat=0, lon=0):
     app = tkinter.Tk()
+    app.geometry("1000x1000")
 
     t = O(app, double=1, depth=1)
     # set which axes to rotate around

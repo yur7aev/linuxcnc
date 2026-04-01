@@ -71,16 +71,16 @@ void Interp::plot(const char *filename) {
 	}
 
 	ii->close();
-}	
+}
 
 extern "C" PyObject* PyInit_emctask(void);
 extern "C" PyObject* PyInit_interpreter(void);
 extern "C" PyObject* PyInit_emccanon(void);
 extern "C" struct _inittab builtin_modules[];
 struct _inittab builtin_modules[] = {
-    { "interpreter", PyInit_interpreter },
-    { "emccanon", PyInit_emccanon },
-    { NULL, NULL }
+	{ "interpreter", PyInit_interpreter },
+	{ "emccanon", PyInit_emccanon },
+	{ NULL, NULL }
 };
 
 CANON_PLANE plane = CANON_PLANE_XY;
@@ -97,7 +97,7 @@ void arc_to_segments(
 	int lineno,
 	double x1, double y1,
 	double cx, double cy, int rot,
-	double z1, 
+	double z1,
 	double a, double b, double c,
 	double u, double v, double w
 );
@@ -166,7 +166,7 @@ void SET_G5X_OFFSET(int origin,
 }
 void SET_G92_OFFSET(double x, double y, double z,
                            double a, double b, double c,
-                           double u, double v, double w) 
+                           double u, double v, double w)
 {
 	g92offset[0] = x;
 	g92offset[1] = y;
@@ -186,7 +186,7 @@ void SET_XY_ROTATION(double t) {
 	rotation_active = (t != 0.0);
 	fprintf(stderr, "set rot %f\n", t);
 }
-void CANON_UPDATE_END_POINT(double x, double y, double z, 
+void CANON_UPDATE_END_POINT(double x, double y, double z,
 				   double a, double b, double c,
 				   double u, double v, double w)
 {
@@ -231,12 +231,12 @@ void STOP_SPEED_FEED_SYNCH() {}
 void ARC_FEED(int lineno,
                      double first_end, double second_end,
 		     double first_axis, double second_axis, int rotation,
-		     double axis_end_point, 
+		     double axis_end_point,
                      double a, double b, double c,
                      double u, double v, double w)
 {
 /*
-    printf("arc -> %f %f %f %f %d %f\n", 
+    printf("arc -> %f %f %f %f %d %f\n",
                      first_end, second_end,
 		     first_axis, second_axis, rotation,
 		     axis_end_point);
@@ -244,7 +244,7 @@ void ARC_FEED(int lineno,
 	arc_to_segments(lineno,
                      first_end,  second_end,
 		     first_axis, second_axis, rotation,
-		     axis_end_point, 
+		     axis_end_point,
                      a, b, c,
                      u, v, w);
 }
@@ -308,10 +308,10 @@ void USE_TOOL_LENGTH_OFFSET(EmcPose offset) {
 }
 void CHANGE_TOOL(int slot) {
 	fprintf(stderr, "CHANGE TOOL %d\n", slot);
-}	
+}
 void SELECT_TOOL(int tool) {
 	fprintf(stderr, "SELECT TOOL %d\n", tool);
-}	
+}
 void CHANGE_TOOL_NUMBER(int number) {
 	fprintf(stderr, "change TOOL %d\n", number);
 }
@@ -340,7 +340,7 @@ void PALLET_SHUTTLE() {}
 void TURN_PROBE_OFF() {}
 void TURN_PROBE_ON() {}
 void UNCLAMP_AXIS(CANON_AXIS axis) {}
-void NURB_KNOT_VECTOR() {}	
+void NURB_KNOT_VECTOR() {}
 void NURB_CONTROL_POINT(int i, double x, double y, double z,
 			       double w) {}
 void NURB_FEED(double sStart, double sEnd) {}
@@ -371,15 +371,15 @@ CANON_MOTION_MODE GET_EXTERNAL_MOTION_CONTROL_MODE() { return CANON_EXACT_STOP; 
 double GET_EXTERNAL_MOTION_CONTROL_TOLERANCE() { return 0.0; }
 
 extern void SET_PARAMETER_FILE_NAME(const char *name) {
-    fprintf(stderr, "SET PARAMETER_FILE %s\n", name);
+	fprintf(stderr, "SET PARAMETER_FILE %s\n", name);
 }
 double GET_EXTERNAL_MOTION_CONTROL_NAIVECAM_TOLERANCE() { return 0.0; }
 void GET_EXTERNAL_PARAMETER_FILE_NAME(char *filename, int max_size) {
 //	filename[0] = 0;
 //    snprintf(filename, max_size, "%s", "/home/dmitry/sim_mm1.var");
 	std::string params = ini_dir + "/" + parameter_file + ".plot";
-    snprintf(filename, max_size, "%s", params.c_str());
-    fprintf(stderr, "GET PARAMETER_FILE:%s\n", filename);
+	snprintf(filename, max_size, "%s", params.c_str());
+	fprintf(stderr, "GET PARAMETER_FILE:%s\n", filename);
 }
 CANON_PLANE GET_EXTERNAL_PLANE() { return CANON_PLANE_XY; }
 double GET_EXTERNAL_POSITION_A() { return 0.0; }
@@ -414,20 +414,20 @@ double GET_EXTERNAL_TOOL_LENGTH_COFFSET() { return 0.0; }
 double GET_EXTERNAL_TOOL_LENGTH_UOFFSET() { return 0.0; }
 double GET_EXTERNAL_TOOL_LENGTH_VOFFSET() { return 0.0; }
 double GET_EXTERNAL_TOOL_LENGTH_WOFFSET() { return 0.0; }
-int GET_EXTERNAL_TOOL_SLOT() { 
+int GET_EXTERNAL_TOOL_SLOT() {
 	fprintf(stderr, "TOOL SLOT?\n");
 	return 1;
 }
-int GET_EXTERNAL_SELECTED_TOOL_SLOT() { 
+int GET_EXTERNAL_SELECTED_TOOL_SLOT() {
 	fprintf(stderr, "SELECTED SLOT?\n");
-	return 2; 
+	return 2;
 }
-CANON_TOOL_TABLE GET_EXTERNAL_TOOL_TABLE(int pocket) { 
+CANON_TOOL_TABLE GET_EXTERNAL_TOOL_TABLE(int pocket) {
 //fprintf(stderr, ">>>>>> POCKET %d\n", pocket);
-//	CANON_TOOL_TABLE retval = tooldata_entry_init(); 
-	CANON_TOOL_TABLE retval; 
+//	CANON_TOOL_TABLE retval = tooldata_entry_init();
+	CANON_TOOL_TABLE retval;
 	retval.toolno = retval.pocketno = -1;
-	return retval; 
+	return retval;
 }
 int GET_EXTERNAL_TC_FAULT() { return 0; }
 int GET_EXTERNAL_TC_REASON() { return 0; }
@@ -443,10 +443,10 @@ void FINISH(void) { fprintf(stderr, "FINISH\n"); }
 void ON_RESET(void) {}
 
 void CANON_ERROR(const char *fmt, ...) {
-  va_list args;
-  va_start (args, fmt);
-  vfprintf (stderr, fmt, args);
-  va_end (args);
+	va_list args;
+	va_start (args, fmt);
+	vfprintf (stderr, fmt, args);
+	va_end (args);
 }
 
 void PLUGIN_CALL(int len, const char *call) {}
@@ -464,15 +464,15 @@ EmcPose GET_EXTERNAL_OFFSETS() {
 }
 
 static void unrotate(double &x, double &y, double c, double s) {
-    double tx = x * c + y * s;
-    y = -x * s + y * c;
-    x = tx;
+	double tx = x * c + y * s;
+	y = -x * s + y * c;
+	x = tx;
 }
 
 static void rotate(double &x, double &y, double c, double s) {
-    double tx = x * c - y * s;
-    y = x * s + y * c;
-    x = tx;
+	double tx = x * c - y * s;
+	y = x * s + y * c;
+	x = tx;
 }
 
 #ifndef hypot
@@ -482,7 +482,7 @@ static void rotate(double &x, double &y, double c, double s) {
 void arc_to_segments(int lineno,
                      double x1, double y1,
 		     double cx, double cy, int rot,
-		     double z1, 
+		     double z1,
                      double a, double b, double c,
                      double u, double v, double w
 ) {

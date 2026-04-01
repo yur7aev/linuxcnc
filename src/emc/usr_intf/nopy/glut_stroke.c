@@ -18,30 +18,26 @@ const float spacing = 20;
 
 void glutStrokeCharacter(int c)
 {
-  const StrokeCharRec *ch;
-  const StrokeRec *stroke;
-  const CoordRec *coord;
-  StrokeFontPtr fontinfo;
-  int i, j;
+	const StrokeCharRec *ch;
+	const StrokeRec *stroke;
+	const CoordRec *coord;
+	StrokeFontPtr fontinfo;
+	int i, j;
 
-  fontinfo = (StrokeFontPtr) &FONT;
+	fontinfo = (StrokeFontPtr) &FONT;
 
-  if (c < 0 || c >= fontinfo->num_chars) {
-    return;
-  }
-  ch = &(fontinfo->ch[c]);
-  if (ch) {
-    for (i = ch->num_strokes, stroke = ch->stroke;
-      i > 0; i--, stroke++) {
-      glBegin(GL_LINE_STRIP);
-      for (j = stroke->num_coords, coord = stroke->coord;
-        j > 0; j--, coord++) {
-        glVertex2f(coord->x, coord->y);
-      }
-      glEnd();
-    }
-    glTranslatef(ch->right + spacing, 0.0, 0.0);
-  }
+	if (c < 0 || c >= fontinfo->num_chars) return;
+	ch = &(fontinfo->ch[c]);
+	if (ch) {
+		for (i = ch->num_strokes, stroke = ch->stroke; i > 0; i--, stroke++) {
+			glBegin(GL_LINE_STRIP);
+			for (j = stroke->num_coords, coord = stroke->coord; j > 0; j--, coord++) {
+				glVertex2f(coord->x, coord->y);
+			}
+			glEnd();
+		}
+		glTranslatef(ch->right + spacing, 0.0, 0.0);
+	}
 }
 
 float glutStrlen(const char *s)
@@ -50,7 +46,7 @@ float glutStrlen(const char *s)
 	StrokeFontPtr fontinfo = (StrokeFontPtr) &FONT;
 	float l = 0.0f;
 	int c;
-	while ((c = *s++)) 
+	while ((c = *s++))
 		if (c > 0 && c < fontinfo->num_chars)
 			l += fontinfo->ch[c].right + spacing;
 	return l;
