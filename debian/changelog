@@ -1,3 +1,9 @@
+linuxcnc (1:2.9.8nyx57) bookworm; urgency=low
+
+  * modbus support
+
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Tue, 21 Apr 2026 15:02:20 +0300
+
 linuxcnc (1:2.9.8nyx56) bookworm; urgency=low
 
   * upstream merge

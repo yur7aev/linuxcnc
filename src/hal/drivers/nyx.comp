@@ -375,6 +375,15 @@ struct yo32n {
 	hal_bit_t *fault;
 };
 
+struct maio {
+	uint8_t type;
+	int nai;
+	int nao;
+	hal_float_t *value[16];
+	hal_float_t *scale[16];
+	hal_float_t *bias[16];
+};
+
 struct io_pins {
 	hal_bit_t *in[16][32];
 	hal_bit_t *in_not[16][32];
@@ -386,10 +395,12 @@ struct io_pins {
 //	hal_bit_t x4[16];
 	uint32_t yi16, yo16, yao2;	// set bit indicates corresponding slave is present
 	uint32_t yi32, yo32p, yo32n;		// set bit indicates corresponding slave is present
+	uint32_t mai;
 
 	struct yao2 ao2[16][2];
 	struct yo32p o32p[16];
 	struct yo32n o32n[16];
+	struct maio maio[16];
 };
 
 static int nodma;
@@ -436,7 +447,9 @@ static int export_io(char *prefix, int inst_num)
 			|| iotype == YIO_TYPE_AO2
 			|| iotype == YIO_TYPE_I32
 			|| iotype == YIO_TYPE_O32P
-			|| iotype == YIO_TYPE_O32N )
+			|| iotype == YIO_TYPE_O32N
+			|| (iotype >= YIO_TYPE_MB_AI && iotype <= YIO_TYPE_MB_AO+15)
+			)
 		{
 			rc = hal_pin_bit_newf(HAL_OUT, &(io->alarm[i]), comp_id,
 					"%s.yio-%02d.alarm", prefix, i);
@@ -576,6 +589,38 @@ static int export_io(char *prefix, int inst_num)
 				io->ao2[i][j].x4_mode = 1;
 				io->ao2[i][j].enc_chg = -1;
 			}
+
+		} else if (iotype >= YIO_TYPE_MB_AI && iotype <= YIO_TYPE_MB_AI+15) {
+			int nai = iotype - YIO_TYPE_MB_AI+1;
+			io->mai |= 1<<i;
+			for (j = 0; j < nai; ++j) {
+				rc = hal_pin_float_newf(HAL_OUT, &(io->maio[i].value[j]), comp_id, "%s.yio-%02d.adc-%02d.value", prefix, i, j);
+				rc = hal_pin_float_newf(HAL_IN,  &(io->maio[i].scale[j]), comp_id, "%s.yio-%02d.adc-%02d.scale", prefix, i, j);
+				rc = hal_pin_float_newf(HAL_IN,  &(io->maio[i].bias[j]), comp_id, "%s.yio-%02d.adc-%02d.bias", prefix, i, j);
+				*io->maio[i].value[j] = 0.0;
+				*io->maio[i].scale[j] = 0.001;
+				*io->maio[i].bias[j] = 0.0;
+				if(rc != 0) return rc;
+			}
+
+			io->maio[i].nai = nai;
+			io->maio[i].nao = 0;
+
+		} else if (iotype >= YIO_TYPE_MB_AO && iotype <= YIO_TYPE_MB_AO+15) {
+			int nao = iotype - YIO_TYPE_MB_AO+1;
+			io->mai |= 1<<i;
+			for (j = 0; j < nao; ++j) {
+				rc = hal_pin_float_newf(HAL_IN, &(io->maio[i].value[j]), comp_id, "%s.yio-%02d.dac-%02d.value", prefix, i, j);
+				rc = hal_pin_float_newf(HAL_IN, &(io->maio[i].scale[j]), comp_id, "%s.yio-%02d.dac-%02d.scale", prefix, i, j);
+				rc = hal_pin_float_newf(HAL_IN, &(io->maio[i].bias[j]), comp_id, "%s.yio-%02d.dac-%02d.bias", prefix, i, j);
+				*io->maio[i].value[j] = 0.0;
+				*io->maio[i].scale[j] = 0.001;
+				*io->maio[i].bias[j] = 0.0;
+				if(rc != 0) return rc;
+			}
+
+			io->maio[i].nai = 0;
+			io->maio[i].nao = nao;
 		}
 	}
 
@@ -591,6 +636,7 @@ static int export_io(char *prefix, int inst_num)
 #define yio_pin_alarm(a) (*(y->io->alarm[a]))
 #define yio_pin_error_cnt(a) (*(y->io->yio_error_cnt[a]))
 #define yio_pin_enc(a) (*(y->io->enc[a]))
+#define yio_pin_maio(a) (*(y->io->maio[a]))
 #define yio_yi16(a) (y->io->yi16 & (1<<a))
 #define yio_yo16(a) (y->io->yo16 & (1<<a))
 #define yio_yi32(a) (y->io->yi32 & (1<<a))
@@ -598,6 +644,7 @@ static int export_io(char *prefix, int inst_num)
 #define yio_yo32n(a) (y->io->yo32n & (1<<a))
 //#define yio_yenc(a) (y->io->yenc & (1<<a))
 #define yio_yao2(a) (y->io->yao2 & (1<<a))
+#define yio_mai(a) (y->io->mai & (1<<a))
 
 #define yio_pin_ao2(a,n,f) (*(y->io->ao2[a][n].f))
 #define yio_param_ao2(a,n,f) (y->io->ao2[a][n].f)
@@ -974,6 +1021,34 @@ FUNCTION(rd)
 					    (yssc2_yi(y,a) & 0xc0);
 		}
 
+		if (yio_mai(a)) {	//
+			uint16_t *yi = (uint16_t*)&y->dp_yi[a * y->yio_size];
+			struct maio *maio = &y->io->maio[a];
+
+			yio_pin_error_cnt(a) = yi[1] & 0xff;
+			yio_pin_alarm(a) = yio_pin_error_cnt(a) > 10 ? 1 : 0;
+
+			int j = 0;
+			for (n = 0; n < maio->nai; n++) {
+				double s = *(maio->scale[n]);
+				double b = *(maio->bias[n]);
+
+				uint16_t v;
+				switch (j++) {
+				case 0: v = *yi++;
+					yi++;
+					break;
+				case 1: v = *yi++;
+					break;
+				case 2: v = *yi++;
+					j = 0;
+					break;
+				}
+
+				*(maio->value[n]) = v * s + b;
+			}
+		}
+
 /*
 		if (yio_yenc(a)) {
 			uint16_t n = (int16_t)yssc2_yi(y, a);
@@ -1224,7 +1299,7 @@ FUNCTION(wr)
 			uint32_t outs = 0;
 		        for (n = 1; n >= 0; n--) {
 				double s = yio_pin_ao2(a, n, scale);
-				if (s == 0) s = 0;
+				if (s == 0) s = 1;
 		                double f = yio_pin_ao2(a, n, value) / s + yio_pin_ao2(a, n, bias);
 		                if (f < -1) f = -1;
 		                if (f > 1) f = 1;
@@ -1246,6 +1321,20 @@ FUNCTION(wr)
 
 //			if (yio_param_ao2(a, n, index_request)) {
 
+		}
+
+		if (yio_mai(a)) {	//
+			uint16_t *yo = (uint16_t*)&y->dp_yo[a * y->yio_size];
+			struct maio *maio = &y->io->maio[a];
+
+			int j = 0;
+			for (n = 0; n < maio->nao; n++) {
+				double s = *(maio->scale[n]);
+				double b = *(maio->bias[n]);
+				double v = *(maio->value[n]);
+				if (s == 0) s = 1;
+				*yo++ = v / s + b;
+			}
 		}
 	}
 

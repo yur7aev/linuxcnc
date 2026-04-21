@@ -17,7 +17,7 @@ import re
 import string
 
 
-VER = "nyxq v3.7.0"
+VER = "nyxq v3.8.0"
 
 class nyx_dpram_hdr(Structure):
 	_fields_ = [
@@ -288,7 +288,8 @@ def io_info():
 	print("GPI:     " + bin(dp.rly.gpi[0], 29))
 	print("GPO:     " + bin(dp.cmd.gpo[0], 8))
 
-	for i in range(num_yio):
+	i = 0;
+	while i < num_yio:
 		yi = dp.rly.yi[i*2]
 		yi2 = dp.rly.yi[i*2+1]
 		yo = dp.cmd.yo[i*2]
@@ -322,14 +323,77 @@ def io_info():
 				print("YAO2 " + "%+.3fV %05d %c%c %+.3fV %05d %c%c" % (
 					((yo2 & 0xffff) - 32767) * 10.0 / 32768 , yi2 & 0xffff, i1, o1,
 					((yo2 >> 16) - 32767) * 10.0 / 32768 , yi2 >> 16, i2, o2), end="")
+			elif typ >= 0x50 and typ <= 0x5f:
+				n = (typ - 0x4f)
+				print("MBAI%d" % n, end="")
+				for j in range(n):
+					q = j % 3
+					if q == 0:
+						v = yi & 0xffff
+					elif q == 1:
+						v = yi2 >> 16
+					else:
+						v = yi2 & 0xffff
+						i = i + 1
+						yi = dp.rly.yi[i*2]
+						yi2 = dp.rly.yi[i*2+1]
+					print(" i%d=%.3fV" % (j, v/1000.0), end="")
+			elif typ >= 0x60 and typ <= 0x6f:
+				n = (typ - 0x5f)
+				print("MBAO%d" % n, end="")
+				for j in range(n):
+					q = j % 4
+					if q == 0:
+						v = yo & 0xffff
+					elif q == 1:
+						v = yo >> 16
+					elif q == 2:
+						v = yo2 & 0xffff
+					else:
+						v = yo2 >> 16
+						i = i + 1
+						yo = dp.cmd.yo[i*2]
+						yo2 = dp.cmd.yo[i*2+1]
+					print(" o%d=%.3fV" % (j, v/1000.0), end="")
 			else:
-				print("%x? %x,%x %x,%x" % (typ, yi,yi2, yo,yo2), end="")
-#			print(" [%x,%x %x,%x]" % (yi,yi2, yo,yo2), end="")
+				print("%x? i=%x,%x o=%x,%x" % (typ, yi,yi2, yo,yo2), end="")
 			if ok:
 				print(" err:", ok)
 			else:
 				print()
+		i = i + 1
 	print("-------- fedcba9876543210fedcba9876543210")
+
+def modbus_info():
+#	try:
+		req(0x000c0001)
+		print("%d baud, %d slaves" % (dp.arg1, dp.arg2))
+		for i in range(num_yio):
+			addr = dp.buf.dword[i*4]
+			typ = dp.buf.dword[i*4+1]
+			reg = dp.buf.dword[i*4+2]
+			count = dp.buf.dword[i*4+3]
+			if typ != 0:
+				if typ == 0x50: s = "AI"
+				elif typ == 0x60: s = "AO"
+				else: s = "?"
+				print("%d: %s(0x%x) @ 0x%x reg=0x%x cnt=%d" % (i, s, typ, addr, reg, count))
+#	except:
+#		pass
+
+def modbus_baud(b):
+	if b >= 9600 and b <= 5000000:
+		req(0x000c0002, b)	# enable
+	else:
+		req(0x000c0003)		# disable
+
+def modbus_slave_del(no):
+	req(0x000c0022, no)		#erase
+
+def modbus_slave(no, ty, addr, reg, cnt):
+	dp.buf.dword[0] = reg
+	dp.buf.dword[1] = cnt
+	req(0x000c0023, no, ty, addr)
 
 def servo_info():
 	req(0x00030001)
@@ -709,6 +773,36 @@ try:
 		io_info()
 	elif cmd == 'config':
 		config(arg(2))
+	elif cmd == 'modbus':			# 2     3     4           5      6       7
+		msg = "modbus [info|baud <baud>|slave <0..7> [ai|ao|del] <addr> <reg> <count>]"
+		subcmd = arg(2, msg)
+		if subcmd == 'info':
+			modbus_info()
+		elif subcmd == 'baud':
+			b = int(arg(3, msg))
+			modbus_baud(b)
+		elif subcmd == 'slave':
+			n = int(arg(3, msg))	# index
+			t = arg(4, msg)	# type
+			print("t:", t)
+			if t == "ai":
+				t = 0x50
+			elif t == "ao":
+				t = 0x60
+			else:
+				t = 0
+
+			if t == 0:
+				modbus_slave_del(n)
+			else:
+				a = int(arg(5, None, 0), 16)	# reg
+				r = int(arg(6, None, 0), 16)	# reg
+				c = int(arg(7, None, 1))	# count
+				if c < 0 or c > 16: t = 0;
+				modbus_slave(n, t, a, r, c)
+		else:
+			print("usage: nyxq " + msg)
+
 	elif cmd == 'dna':
 		dna()
 	elif cmd == 'flash':

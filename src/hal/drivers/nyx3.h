@@ -21,7 +21,7 @@
 #define NYX_H
 
 #define NYX_VER_MAJ 3
-#define NYX_VER_MIN 5
+#define NYX_VER_MIN 8
 #define NYX_VER_REV 0
 
 #ifndef NYX_AXES
@@ -457,6 +457,8 @@ typedef struct nyx3_dp_cmd {
 #define YIO_TYPE_I32	0x11
 #define YIO_TYPE_O32P	0x12
 #define YIO_TYPE_O32N	0x13
+#define YIO_TYPE_MB_AI	0x50
+#define YIO_TYPE_MB_AO	0x60
 
 // board status
 #define STATUS_REALTIME		0x01
