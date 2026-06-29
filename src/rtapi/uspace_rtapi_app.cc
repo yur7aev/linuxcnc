@@ -274,6 +274,11 @@ static int do_comp_args(void *module, vector<string> args) {
 static int do_load_cmd(string name, vector<string> args) {
     void *w = modules[name];
     if(w == NULL) {
+        //Sanitize the name
+        if(name.find("/") != std::string::npos || name.find("..") != std::string::npos){
+            rtapi_print_msg(RTAPI_MSG_ERR, "%s: Not allowed as module name. Slashes or with \"..\" (even /a..b/) are not allowed.\n", name.c_str());
+            return -1;
+        }
         char what[LINELEN+1];
         snprintf(what, LINELEN, "%s/%s.so", EMC2_RTLIB_DIR, name.c_str());
         void *module = modules[name] = dlopen(what, RTLD_GLOBAL | RTLD_NOW);
@@ -286,6 +291,12 @@ static int do_load_cmd(string name, vector<string> args) {
         int (*start)(void) = DLSYM<int(*)(void)>(module, "rtapi_app_main");
         if(!start) {
             rtapi_print_msg(RTAPI_MSG_ERR, "%s: dlsym: %s\n", name.c_str(), dlerror());
+            dlclose(module);
+            modules.erase(name);
+            return -1;
+        }
+        if(!DLSYM<void(*)(void)>(module, "rtapi_app_exit")) {
+            rtapi_print_msg(RTAPI_MSG_ERR, "%s: component is missing rtapi_app_exit\n", name.c_str());
             dlclose(module);
             modules.erase(name);
             return -1;
@@ -321,7 +332,7 @@ static int do_unload_cmd(string name) {
         rtapi_print_msg(RTAPI_MSG_ERR, "%s: not loaded\n", name.c_str());
 	return -1;
     } else {
-        int (*stop)(void) = DLSYM<int(*)(void)>(w, "rtapi_app_exit");
+        void (*stop)(void) = DLSYM<void(*)(void)>(w, "rtapi_app_exit");
 	if(stop) stop();
 	modules.erase(modules.find(name));
         dlclose(w);
@@ -869,6 +880,14 @@ int RtapiApp::prio_bound(int prio) const {
     return prio;
 }
 
+bool RtapiApp::prio_check(int prio) const {
+    if(rtapi_prio_highest() > rtapi_prio_lowest()) {
+        return (prio <= rtapi_prio_highest()) && (prio >= rtapi_prio_lowest());
+    } else {
+        return (prio <= rtapi_prio_lowest()) && (prio >= rtapi_prio_highest());
+    }
+}
+
 int RtapiApp::prio_next_higher(int prio) const
 {
     prio = prio_bound(prio);
@@ -899,8 +918,10 @@ int RtapiApp::allocate_task_id()
 int RtapiApp::task_new(void (*taskcode) (void*), void *arg,
         int prio, int owner, unsigned long int stacksize, int uses_fp) {
   /* check requested priority */
-  if ((prio > rtapi_prio_highest()) || (prio < rtapi_prio_lowest()))
+  if (!prio_check(prio))
   {
+    rtapi_print_msg(RTAPI_MSG_ERR,"rtapi:task_new prio is not in bound lowest %i prio %i highest %i\n",
+        rtapi_prio_lowest(), prio, rtapi_prio_highest());
     return -EINVAL;
   }
 

@@ -1312,6 +1312,28 @@ G10 L1 P#5400 Z#<zworkoffset> (set new tool offset)
 G43
 ----
 
+[[gcode:probe-machine-coordinates]]
+Probe results in #5061 to #5069 are expressed in the current work
+coordinate system, not in machine coordinates. To convert one, add the
+offset between the two frames. That offset is the difference between the
+current position reported in both frames at once: #5021 to #5029 hold the
+absolute machine position and #5420 to #5428 hold the work position.
+Because the offset is the same everywhere, it can be read at any later
+position and still applies to the earlier probe result.
+
+.Reading the machine coordinates of a probe
+[source,{ngc}]
+----
+G38.2 Z-100 F100
+#<zmachine> = [#5063 + #5023 - #5422]
+----
+
+#5063 is the probed Z in the work frame, and #5023 - #5422 is the
+machine-to-work Z offset (current machine Z minus current work Z). The
+same pattern applies to the other axes using their respective parameters.
+This holds whichever coordinate system, G92/G52 or tool length offset is
+active, as long as no coordinate-system rotation is in effect.
+
 A comment of the form '(PROBEOPEN filename.txt)' will open
 'filename.txt' and store the 9-number coordinate consisting of
 XYZABCUVW of each successful straight probe in it.

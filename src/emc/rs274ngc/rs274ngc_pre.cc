@@ -975,7 +975,8 @@ int Interp::init()
             }
 
             rtapi_strxcpy(tmpdirs,inistring);
-            nextdir = strtok(tmpdirs,":");  // first token
+            char *saveptr;
+            nextdir = strtok_r(tmpdirs,":",&saveptr);  // first token
             dct = 0;
             while (1) {
                 char tmp_path[PATH_MAX];
@@ -996,7 +997,7 @@ int Interp::init()
                    logDebug("too many entries in SUBROUTINE_PATH, max=%d", MAX_SUB_DIRS);
                    break;
                 }
-                nextdir = strtok(NULL,":");
+                nextdir = strtok_r(NULL,":",&saveptr);
                 if (nextdir == NULL) break; // no more tokens
              }
           }
@@ -1611,6 +1612,18 @@ int Interp::_read(const char *command)  //!< may be NULL or a string to read
   _setup.parameters[5426] = _setup.u_current;
   _setup.parameters[5427] = _setup.v_current;
   _setup.parameters[5428] = _setup.w_current;
+
+  double abs_pos[9];
+  get_abs_position(&_setup, abs_pos);
+  _setup.parameters[5021] = abs_pos[0];
+  _setup.parameters[5022] = abs_pos[1];
+  _setup.parameters[5023] = abs_pos[2];
+  _setup.parameters[5024] = abs_pos[3];
+  _setup.parameters[5025] = abs_pos[4];
+  _setup.parameters[5026] = abs_pos[5];
+  _setup.parameters[5027] = abs_pos[6];
+  _setup.parameters[5028] = abs_pos[7];
+  _setup.parameters[5029] = abs_pos[8];
 
   if(_setup.file_pointer)
   {
@@ -2518,15 +2531,9 @@ int Interp::init_tool_parameters()
   if (_setup.random_toolchanger) {
      // random_toolchanger: tool at startup expected
     _setup.parameters[5400] = _setup.tool_table[0].toolno;
-    _setup.parameters[5401] = _setup.tool_table[0].offset.tran.x;
-    _setup.parameters[5402] = _setup.tool_table[0].offset.tran.y;
-    _setup.parameters[5403] = _setup.tool_table[0].offset.tran.z;
-    _setup.parameters[5404] = _setup.tool_table[0].offset.a;
-    _setup.parameters[5405] = _setup.tool_table[0].offset.b;
-    _setup.parameters[5406] = _setup.tool_table[0].offset.c;
-    _setup.parameters[5407] = _setup.tool_table[0].offset.u;
-    _setup.parameters[5408] = _setup.tool_table[0].offset.v;
-    _setup.parameters[5409] = _setup.tool_table[0].offset.w;
+    // #5401-#5409 reflect the applied tool length offset (Fanuc #5081-#5088
+    // semantic). Written only by G43/G43.1/G43.2/G49.  At startup no G43
+    // has been issued, so leave them at their default zero.  See #2994.
     _setup.parameters[5410] = _setup.tool_table[0].diameter;
     _setup.parameters[5411] = _setup.tool_table[0].frontangle;
     _setup.parameters[5412] = _setup.tool_table[0].backangle;
@@ -2543,15 +2550,8 @@ int Interp::init_tool_parameters()
 int Interp::default_tool_parameters()
 {
   _setup.parameters[5400] =  0; // toolno
-  _setup.parameters[5401] =  0; // x offset
-  _setup.parameters[5402] =  0; // y offset RESERVED
-  _setup.parameters[5403] =  0; // z offset
-  _setup.parameters[5404] =  0; // a offset RESERVED
-  _setup.parameters[5405] =  0; // b offset RESERVED
-  _setup.parameters[5406] =  0; // c offset RESERVED
-  _setup.parameters[5407] =  0; // u offset RESERVED
-  _setup.parameters[5408] =  0; // v offset RESERVED
-  _setup.parameters[5409] =  0; // w offset RESERVED
+  // #5401-#5409 reflect the applied tool length offset (G43-family).
+  // Not touched here; managed by convert_tool_length_offset.  See #2994.
   _setup.parameters[5410] =  0; // diameter
   _setup.parameters[5411] =  0; // frontangle
   _setup.parameters[5412] =  0; // backangle
@@ -2569,15 +2569,9 @@ int Interp::set_tool_parameters()
     return 0;
   }
   _setup.parameters[5400] = _setup.tool_table[0].toolno;
-  _setup.parameters[5401] = _setup.tool_table[0].offset.tran.x;
-  _setup.parameters[5402] = _setup.tool_table[0].offset.tran.y;
-  _setup.parameters[5403] = _setup.tool_table[0].offset.tran.z;
-  _setup.parameters[5404] = _setup.tool_table[0].offset.a;
-  _setup.parameters[5405] = _setup.tool_table[0].offset.b;
-  _setup.parameters[5406] = _setup.tool_table[0].offset.c;
-  _setup.parameters[5407] = _setup.tool_table[0].offset.u;
-  _setup.parameters[5408] = _setup.tool_table[0].offset.v;
-  _setup.parameters[5409] = _setup.tool_table[0].offset.w;
+  // #5401-#5409 reflect the applied tool length offset (G43-family) and
+  // are deliberately not updated by M6: M6 changes the loaded tool but
+  // does not by itself apply its offset to motion.  See #2994.
   _setup.parameters[5410] = _setup.tool_table[0].diameter;
   _setup.parameters[5411] = _setup.tool_table[0].frontangle;
   _setup.parameters[5412] = _setup.tool_table[0].backangle;
