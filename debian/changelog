@@ -1,10 +1,20 @@
-linuxcnc (1:2.9.9nyx58) UNRELEASED; urgency=low
+linuxcnc (1:2.9.10nyx59) UNRELEASED; urgency=low
 
   * upstream merge
 
- -- Dmitry Yurtaev <dmitry@yurtaev.com>  Mon, 29 Jun 2026 15:20:32 +0300
+ -- Dmitry Yurtaev <dmitry@yurtaev.com>  Sat, 04 Jul 2026 19:07:11 +0300
 
-linuxcnc (1:2.9.9) UNRELEASED; urgency=medium
+linuxcnc (1:2.9.10) UNRELEASED; urgency=medium
+
+  * Merge pull request #4219 from grandixximo/fix/4216-applied-tlo-params
+  * tests: restore #5401-#5409 loaded-offset assertions
+  * interp: split loaded vs applied tool offset params (#5401-#5409, #5081-#5089)
+  * Merge pull request #4211 from BsAtHome/fix_libboost_python-versioning-2.9
+  * build: Select the libboost_python matching the python version.
+
+ -- andypugh <andy@bodgesoc.org>  Thu, 02 Jul 2026 21:14:35 +0100
+
+linuxcnc (1:2.9.9) unstable; urgency=medium
 
   * Merge pull request #4190 from tzuohann/check_config-2.9-datatypes
   * Merge pull request #4188 from grandixximo/fix/genclean-soname-2.9
@@ -108,6 +118,7 @@ linuxcnc (1:2.9.9) UNRELEASED; urgency=medium
   * gmoccapy: reduce font size of dro VCP to fit minimal window size (#3611)
   * gmoccapy: add LinuxCNC version to window title
 
+<<<<<<< HEAD
  -- andypugh <andy@bodgesoc.org>  Thu, 25 Jun 2026 23:04:56 +0100
 
 linuxcnc (1:2.9.8nyx57) bookworm; urgency=low
@@ -122,6 +133,9 @@ linuxcnc (1:2.9.8nyx56) bookworm; urgency=low
   * minor config cleanups
 
  -- Dmitry Yurtaev <dmitry@yurtaev.com>  Tue, 24 Feb 2026 15:39:01 +0400
+=======
+ -- andypugh <andy@bodgesoc.org>  Thu, 02 Jul 2026 21:14:01 +0100
+>>>>>>> v2.9.10
 
 linuxcnc (1:2.9.8) UNRELEASED; urgency=medium
 
